@@ -29,13 +29,13 @@ function busIcon(bus: ScheduledBus): L.DivIcon {
     html: `
       <div class="relative cursor-pointer">
         <div class="w-8 h-8 rounded-lg shadow-md flex items-center justify-center text-white ring-2 ring-white"
-             style="background-color: ${bus.lineColor}">
+             style="background-color: ${escapeHtml(bus.lineColor)}">
           <span class="text-label font-bold tracking-tight">${bus.lineNumber}</span>
         </div>
         <div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-0 h-0"
              style="transform: translateX(-50%) rotate(${bus.bearing}deg) translateY(-15px);
                     border-left: 4px solid transparent; border-right: 4px solid transparent;
-                    border-bottom: 7px solid ${bus.lineColor};"></div>
+                    border-bottom: 7px solid ${escapeHtml(bus.lineColor)};"></div>
       </div>
     `,
     iconSize: [32, 32],
@@ -55,7 +55,7 @@ function popupNode(bus: ScheduledBus, onOpenLine: (lineId: string) => void, lang
   node.innerHTML = `
     <div style="min-width: 200px; padding: 2px; font-family: var(--font-sans); color: var(--c-ink);">
       <button type="button" data-open-line="1" style="display:flex; align-items:center; gap:8px; margin-bottom:6px; background:none; border:none; padding:0; cursor:pointer; text-align:left; font-family:inherit;">
-        <span style="background-color:${bus.lineColor}; color:#fff; font-weight:700; font-size:12px; padding:3px 7px; border-radius:5px;">${escapeHtml(bus.lineNumber)}</span>
+        <span style="background-color:${escapeHtml(bus.lineColor)}; color:#fff; font-weight:700; font-size:12px; padding:3px 7px; border-radius:5px;">${escapeHtml(bus.lineNumber)}</span>
         <span style="font-weight:600; font-size:13px; color:var(--c-ink); text-decoration:underline; text-underline-offset:2px;">${escapeHtml(bus.destination)}</span>
       </button>
       <div style="font-size:12px; color:var(--c-ink-2);">${escapeHtml(t.map.nextStop)}: <b>${escapeHtml(bus.nextStopName)}</b></div>
@@ -133,7 +133,7 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
         markersRef.current[bus.id] = marker;
       }
     });
-  }, [map, buses, visibleLineIds, showBuses]);
+  }, [map, buses, visibleLineIds, showBuses, lang]);
 
   // Drop every marker when the map itself goes away.
   useEffect(
