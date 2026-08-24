@@ -118,7 +118,8 @@ async function fetchAlerts(now: number): Promise<AlertSyncResult> {
         // Lugo)", which tells the operator's server that the city council is calling —
         // it is not, and DATA.md says so in as many words. A scraper should be
         // identifiable and honest about who it is.
-        'User-Agent': 'UrbanosLugoBot/1.0 (+https://github.com/urbanos-lugo; unofficial timetable reader)',
+        'User-Agent':
+          'UrbanosLugoBot/1.0 (+https://github.com/braisbrg/urbanos-lugo; unofficial timetable reader)',
         'Accept': 'text/html,application/xhtml+xml',
       },
     });

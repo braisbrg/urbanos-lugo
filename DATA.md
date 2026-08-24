@@ -1,5 +1,9 @@
 # Where the data comes from, and under what terms
 
+This is an unofficial project. It is not made, reviewed or endorsed by AULUSA, Grupo
+Monbus or the Concello de Lugo; it reads what the operator publishes. Where a timetable
+matters, the operator's own page is the authority.
+
 The MIT licence in `LICENSE` covers the source code. The datasets under `src/data/`
 are not the authors' to relicense, and each has its own provenance.
 

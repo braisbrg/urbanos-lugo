@@ -3,6 +3,11 @@
 Aplicación web para consultar a rede de autobús urbano de Lugo (concesión de AULUSA /
 Grupo Monbus): liñas, paradas, tempos de paso, planificador de traxectos e mapa da rede.
 
+> **Proxecto non oficial.** Non está feito, revisado nin respaldado por AULUSA, Grupo
+> Monbus nin o Concello de Lugo. Le os horarios que o operador publica en
+> <https://buslugo.com> e amosa de onde vén cada hora. Para calquera cousa que dependa
+> dun horario, a fonte oficial manda.
+
 ---
 
 ## Índice
