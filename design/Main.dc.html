@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Tabular Spec Sheet · tone: technical · anchor hue: blue 255
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.5 0.15 250); } a:hover { color: oklch(0.4 0.15 250); }
+    .m { font-family: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 900px; background: oklch(0.985 0.002 265); padding: 40px 44px 46px; box-sizing: border-box; color: oklch(0.22 0.015 265)">
+
+  <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px">
+    <h1 style="margin: 0; font-size: 29px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.14">Las tres etiquetas de tiempo</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.58; color: oklch(0.4 0.02 265); max-width: 66ch; text-wrap: pretty">
+      Hoy se distinguen <strong>solo por el color</strong>: azul frente a gris. Eso desaparece con un daltonismo, a pleno sol en una marquesina y en gris impreso. La regla nueva no es un estilo — es una estructura: tres señales independientes por etiqueta, de modo que quitando cualquiera de las tres aún se distingan.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 128px repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; overflow: hidden; background: oklch(0.995 0.0015 255); margin-bottom: 30px">
+
+    <div style="padding: 16px 18px; background: oklch(0.97 0.003 265); border-bottom: 1px solid oklch(0.92 0.005 265)"></div>
+    <div style="padding: 16px 18px; background: oklch(0.97 0.003 265); border-bottom: 1px solid oklch(0.92 0.005 265); border-left: 1px solid oklch(0.94 0.005 265)">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.38 0.02 265)">HORARIO OFICIAL</div>
+    </div>
+    <div style="padding: 16px 18px; background: oklch(0.97 0.003 265); border-bottom: 1px solid oklch(0.92 0.005 265); border-left: 1px solid oklch(0.94 0.005 265)">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.38 0.02 265)">~ ESTIMADO</div>
+    </div>
+    <div style="padding: 16px 18px; background: oklch(0.97 0.003 265); border-bottom: 1px solid oklch(0.92 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); display: flex; align-items: center; gap: 8px">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.48 0.02 265)">EN DIRECTO</div>
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; background: oklch(0.93 0.004 265); color: oklch(0.45 0.02 265); border-radius: 4px; padding: 2px 5px">RESERVADO</span>
+    </div>
+
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); font-size: 12px; font-weight: 600; color: oklch(0.45 0.02 265)">1 · Forma</div>
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); font-size: 12px; line-height: 1.45">Fondo <strong>sólido</strong></div>
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); font-size: 12px; line-height: 1.45">Vacío, borde <strong>discontinuo</strong></div>
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); font-size: 12px; line-height: 1.45; color: oklch(0.45 0.02 265)">Sólido <strong>+ señal que late</strong></div>
+
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); font-size: 12px; font-weight: 600; color: oklch(0.45 0.02 265)">2 · Glifo</div>
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); display: flex; align-items: center; gap: 10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(0.3 0.02 265)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      <span style="font-size: 12px">Verificado</span>
+    </div>
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); display: flex; align-items: center; gap: 10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(0.3 0.02 265)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 13c2.5-4 5-4 7.5 0s5 4 7.5 0"/></svg>
+      <span style="font-size: 12px">Onda</span>
+    </div>
+    <div style="padding: 20px 18px; border-bottom: 1px solid oklch(0.94 0.005 265); border-left: 1px solid oklch(0.94 0.005 265); display: flex; align-items: center; gap: 10px; color: oklch(0.45 0.02 265)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(0.5 0.02 265)" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M2.5 12a9.5 9.5 0 0 1 19 0" opacity="0.55"/></svg>
+      <span style="font-size: 12px">Ondas emitiendo</span>
+    </div>
+
+    <div style="padding: 20px 18px; font-size: 12px; font-weight: 600; color: oklch(0.45 0.02 265)">3 · La hora</div>
+    <div style="padding: 20px 18px; border-left: 1px solid oklch(0.94 0.005 265)"><span class="m" style="font-size: 15px; font-weight: 600">17:10</span></div>
+    <div style="padding: 20px 18px; border-left: 1px solid oklch(0.94 0.005 265)"><span class="m" style="font-size: 15px; font-weight: 600">~17:06</span></div>
+    <div style="padding: 20px 18px; border-left: 1px solid oklch(0.94 0.005 265); color: oklch(0.45 0.02 265)"><span class="m" style="font-size: 15px; font-weight: 600">17:10<span style="font-size: 12px">:24</span></span></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px">
+
+    <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.45 0.02 265)">La prueba: se quita el color</div>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; filter: grayscale(1)">
+        <div style="display: inline-flex; align-items: center; gap: 6px; background: oklch(0.42 0.14 258); color: white; border-radius: 6px; padding: 6px 10px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          <span class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em">HORARIO OFICIAL</span>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 6px; color: oklch(0.44 0.055 75); border: 1.5px dashed oklch(0.6 0.09 75); border-radius: 6px; padding: 5px 9px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M3 13c2.5-4 5-4 7.5 0s5 4 7.5 0"/></svg>
+          <span class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em">~ ESTIMADO</span>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.4 0.02 265)">
+        Siguen siendo dos cosas distintas. <strong>Ese es el listón.</strong> Si al quitar el color se convierten en la misma etiqueta, el rediseño rompió lo que sostiene la aplicación.
+      </p>
+    </div>
+
+    <div style="background: oklch(0.965 0.004 265); border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.45 0.02 265)">Por qué «en directo» no se usa</div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.4 0.02 265)">
+        La red de Lugo <strong>no tiene GPS público</strong> de flota. Ninguna hora de la aplicación se mide ahora mismo: todas salen del cuadro horario. La etiqueta se define aquí para que exista el hueco —y para que nadie la improvise después pisando las otras dos— pero <strong>no se pinta en ninguna pantalla</strong>.
+      </p>
+      <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.4 0.02 265)">
+        Es la única con movimiento. Ese movimiento es la promesa: <em>esto se está midiendo</em>. Prestada a un dato que no se mide, sería mentira.
+      </p>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

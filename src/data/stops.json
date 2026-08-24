@@ -1,0 +1,9176 @@
+[
+  {
+    "id": "s1",
+    "code": "1",
+    "officialIds": [
+      1,
+      84,
+      169,
+      252
+    ],
+    "officialToken": null,
+    "name": "Opuesto Piscina Pedreiras",
+    "lat": 42.9913572,
+    "lng": -7.5440267,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s2",
+    "code": "TPlG",
+    "officialIds": [
+      2,
+      85,
+      170,
+      253
+    ],
+    "officialToken": "TPlG",
+    "name": "Alfonso X (Empresariales)",
+    "lat": 42.9911137,
+    "lng": -7.5489401,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s3",
+    "code": "3",
+    "officialIds": [
+      3,
+      86,
+      171,
+      254
+    ],
+    "officialToken": null,
+    "name": "Alfonso X (Santo Anxo)",
+    "lat": 42.9921337,
+    "lng": -7.551263,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "Campus USC",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s4",
+    "code": "nUnk",
+    "officialIds": [
+      4,
+      87,
+      255
+    ],
+    "officialToken": "nUnk",
+    "name": "Alfonso X (desp. C. Novos)",
+    "lat": 42.9932875,
+    "lng": -7.5524806,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Campus USC",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s5",
+    "code": "WPVO",
+    "officialIds": [
+      5,
+      88,
+      256
+    ],
+    "officialToken": "WPVO",
+    "name": "Alfonso X 17",
+    "lat": 42.9946877,
+    "lng": -7.5544172,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s6",
+    "code": "QdoI",
+    "officialIds": [
+      6,
+      89,
+      257,
+      614,
+      780
+    ],
+    "officialToken": "QdoI",
+    "name": "Agro da Torna (Psicotécnico)",
+    "lat": 42.9960599,
+    "lng": -7.554943,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS",
+      "5.2"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s7",
+    "code": "NKNF",
+    "officialIds": [
+      7,
+      90,
+      258,
+      615,
+      781
+    ],
+    "officialToken": "NKNF",
+    "name": "Agro da Torna (Plaza)",
+    "lat": 42.9959167,
+    "lng": -7.5533953,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS",
+      "5.2"
+    ],
+    "zone": "Campus USC",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s8",
+    "code": "8",
+    "officialIds": [
+      8,
+      91,
+      259,
+      616,
+      782
+    ],
+    "officialToken": null,
+    "name": "Rda. Fingoi (Carballeira)",
+    "lat": 42.9966755,
+    "lng": -7.5527235,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS",
+      "5.2"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s9",
+    "code": "RBeA",
+    "officialIds": [
+      9,
+      92,
+      260,
+      617
+    ],
+    "officialToken": "RBeA",
+    "name": "Rúa Armórica (cr. Fingoi)",
+    "lat": 42.998567,
+    "lng": -7.5503161,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s10",
+    "code": "Xnjz",
+    "officialIds": [
+      10,
+      93,
+      261,
+      618
+    ],
+    "officialToken": "Xnjz",
+    "name": "Rúa Armórica (enfte. Nº 138)",
+    "lat": 42.9993436,
+    "lng": -7.5518791,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s11",
+    "code": "topo",
+    "officialIds": [
+      11,
+      94,
+      262,
+      619
+    ],
+    "officialToken": "topo",
+    "name": "Rúa Armórica (Ambulatorio)",
+    "lat": 42.9999343,
+    "lng": -7.5526845,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Fingoi",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s12",
+    "code": "twva",
+    "officialIds": [
+      12,
+      95,
+      263
+    ],
+    "officialToken": "twva",
+    "name": "Rúa Armórica 39",
+    "lat": 43.0023189,
+    "lng": -7.5537108,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s13",
+    "code": "ynxQ",
+    "officialIds": [
+      13,
+      96,
+      264,
+      446,
+      658,
+      820,
+      1132
+    ],
+    "officialToken": "ynxQ",
+    "name": "Ramón Ferreiro 31",
+    "lat": 43.0037515,
+    "lng": -7.553087,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "3.1",
+      "5DS",
+      "5.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s14",
+    "code": "zzhI",
+    "officialIds": [
+      14,
+      97,
+      265,
+      447,
+      659,
+      821,
+      875,
+      1133
+    ],
+    "officialToken": "zzhI",
+    "name": "Ramón Ferreiro 19",
+    "lat": 43.0056096,
+    "lng": -7.5552689,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "3.1",
+      "5DS",
+      "5.2",
+      "6",
+      "11-Santa Comba"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s15",
+    "code": "LXCQ",
+    "officialIds": [
+      15,
+      98,
+      236,
+      266,
+      448,
+      520,
+      578,
+      876
+    ],
+    "officialToken": "LXCQ",
+    "name": "Praza Bretaña",
+    "lat": 43.0069695,
+    "lng": -7.5536745,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "3.1",
+      "4.1",
+      "4.2",
+      "6"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s16",
+    "code": "NjxB",
+    "officialIds": [
+      16,
+      99,
+      237,
+      267,
+      449,
+      521,
+      579,
+      877
+    ],
+    "officialToken": "NjxB",
+    "name": "Rúa Dinán",
+    "lat": 43.0078449,
+    "lng": -7.5530142,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "3.1",
+      "4.1",
+      "4.2",
+      "6"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s17",
+    "code": "qHRE",
+    "officialIds": [
+      17,
+      100,
+      238,
+      268,
+      339,
+      450,
+      522,
+      580,
+      761,
+      878
+    ],
+    "officialToken": "qHRE",
+    "name": "San Roque (Jardín)",
+    "lat": 43.0096161,
+    "lng": -7.5522966,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "3.1",
+      "4.1",
+      "4.2",
+      "5.1",
+      "6"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s18",
+    "code": "oTWQ",
+    "officialIds": [
+      18,
+      101,
+      269,
+      340,
+      451,
+      762,
+      879
+    ],
+    "officialToken": "oTWQ",
+    "name": "Rda. Muralla 25 (Arenal)",
+    "lat": 43.0107766,
+    "lng": -7.5528764,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "2",
+      "3.1",
+      "5.1",
+      "6"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s19",
+    "code": "uilP",
+    "officialIds": [
+      19,
+      102,
+      186,
+      270,
+      341,
+      394,
+      452,
+      453,
+      511,
+      512,
+      569,
+      570,
+      604,
+      763,
+      880,
+      998,
+      1020,
+      1021,
+      1056,
+      1174
+    ],
+    "officialToken": "uilP",
+    "name": "Rda. Muralla 56 (Sindicatos)",
+    "lat": 43.0134361,
+    "lng": -7.5553414,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "3.1",
+      "3.2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "6",
+      "11",
+      "11-Igrexa de Bóveda",
+      "13"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s20",
+    "code": "sEBS",
+    "officialIds": [
+      20,
+      103,
+      187,
+      271,
+      342,
+      881
+    ],
+    "officialToken": "sEBS",
+    "name": "Avda. Coruña 2",
+    "lat": 43.014926,
+    "lng": -7.5585137,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "6"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s21",
+    "code": "mivY",
+    "officialIds": [
+      21,
+      104,
+      188,
+      272,
+      343,
+      882,
+      946,
+      999,
+      1136
+    ],
+    "officialToken": "mivY",
+    "name": "Avda. Coruña 58",
+    "lat": 43.0164827,
+    "lng": -7.5599212,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "6",
+      "9",
+      "11",
+      "12"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s22",
+    "code": "ItTV",
+    "officialIds": [
+      22,
+      105,
+      189,
+      273,
+      344,
+      883,
+      947,
+      1137
+    ],
+    "officialToken": "ItTV",
+    "name": "Avda. Coruña 102",
+    "lat": 43.0179603,
+    "lng": -7.5610999,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "6",
+      "9",
+      "12"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s23",
+    "code": "GgFB",
+    "officialIds": [
+      23,
+      106,
+      190,
+      274,
+      345,
+      884,
+      948,
+      1138
+    ],
+    "officialToken": "GgFB",
+    "name": "Avda. Coruña 144",
+    "lat": 43.01896,
+    "lng": -7.5618973,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "6",
+      "9",
+      "12"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s24",
+    "code": "LDME",
+    "officialIds": [
+      24,
+      107,
+      191,
+      275,
+      346,
+      686,
+      885,
+      1000,
+      1139
+    ],
+    "officialToken": "LDME",
+    "name": "Avda. Coruña (Pq. Milagrosa)",
+    "lat": 43.0220926,
+    "lng": -7.5644222,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES",
+      "6",
+      "11",
+      "12"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s25",
+    "code": "fHsI",
+    "officialIds": [
+      25,
+      108,
+      192,
+      276,
+      347,
+      687,
+      886,
+      1001
+    ],
+    "officialToken": "fHsI",
+    "name": "Avda. Coruña (Pza. 1 Maio)",
+    "lat": 43.0239231,
+    "lng": -7.5659055,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES",
+      "6",
+      "11"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s26",
+    "code": "HpOC",
+    "officialIds": [
+      26,
+      109,
+      193,
+      277,
+      348,
+      688
+    ],
+    "officialToken": "HpOC",
+    "name": "Avda. Coruña 344",
+    "lat": 43.0264728,
+    "lng": -7.5679919,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES"
+    ],
+    "zone": "Garabolos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s27",
+    "code": "kZtJ",
+    "officialIds": [
+      27,
+      110,
+      194,
+      278,
+      349,
+      689,
+      1002
+    ],
+    "officialToken": "kZtJ",
+    "name": "Avda. Coruña 394",
+    "lat": 43.0280741,
+    "lng": -7.5692925,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES",
+      "11"
+    ],
+    "zone": "Garabolos",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s28",
+    "code": "fgTW",
+    "officialIds": [
+      28,
+      111,
+      195,
+      279,
+      350
+    ],
+    "officialToken": "fgTW",
+    "name": "Avda. Coruña 436",
+    "lat": 43.0297768,
+    "lng": -7.5706619,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s29",
+    "code": "RMmq",
+    "officialIds": [
+      29,
+      112,
+      196,
+      280,
+      351
+    ],
+    "officialToken": "RMmq",
+    "name": "Avda. Coruña 488",
+    "lat": 43.0311827,
+    "lng": -7.571767,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s30",
+    "code": "lcJT",
+    "officialIds": [
+      30,
+      113,
+      352
+    ],
+    "officialToken": "lcJT",
+    "name": "N-VI (Os Caraveis)",
+    "lat": 43.0344961,
+    "lng": -7.5742395,
+    "lines": [
+      "1.1",
+      "1.2",
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s31",
+    "code": "xsBP",
+    "officialIds": [
+      31,
+      114
+    ],
+    "officialToken": "xsBP",
+    "name": "Benigno Rivera (Palacios)",
+    "lat": 43.0387654,
+    "lng": -7.5736836,
+    "lines": [
+      "1.1",
+      "1.2"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s32",
+    "code": "32",
+    "officialIds": [
+      32,
+      115
+    ],
+    "officialToken": null,
+    "name": "Benigno Rivera 68",
+    "lat": 43.0416606,
+    "lng": -7.5713833,
+    "lines": [
+      "1.1",
+      "1.2"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s33",
+    "code": "33",
+    "officialIds": [
+      33,
+      50,
+      116,
+      215,
+      302
+    ],
+    "officialToken": null,
+    "name": "As Termas (rtda. Abeiro Gold)",
+    "lat": 43.0396415,
+    "lng": -7.5676569,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s34",
+    "code": "34",
+    "officialIds": [
+      34,
+      117,
+      199,
+      283
+    ],
+    "officialToken": null,
+    "name": "Benigno Rivera (H. Ferreiro)",
+    "lat": 43.044238,
+    "lng": -7.5693906,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s35",
+    "code": "ADwz",
+    "officialIds": [
+      35,
+      118,
+      200,
+      284
+    ],
+    "officialToken": "ADwz",
+    "name": "Rúa Industria (Sum. La Ronda)",
+    "lat": 43.0465447,
+    "lng": -7.5675744,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s36",
+    "code": "bNMH",
+    "officialIds": [
+      36,
+      119,
+      201,
+      285
+    ],
+    "officialToken": "bNMH",
+    "name": "Rúa Industria (esq. R. Vidro)",
+    "lat": 43.0454657,
+    "lng": -7.565083,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s37",
+    "code": "37",
+    "officialIds": [
+      37,
+      202,
+      286
+    ],
+    "officialToken": null,
+    "name": "Rúa Industria (Arenal)",
+    "lat": 43.0442253,
+    "lng": -7.5623299,
+    "lines": [
+      "1.1",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s38",
+    "code": "38",
+    "officialIds": [
+      38,
+      132,
+      203,
+      299
+    ],
+    "officialToken": null,
+    "name": "Rúa industria (T. Pereira)",
+    "lat": 43.0442144,
+    "lng": -7.5619861,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s39",
+    "code": "yGyH",
+    "officialIds": [
+      39,
+      40,
+      204,
+      205
+    ],
+    "officialToken": "yGyH",
+    "name": "Rúa Mercadorías (Terminal)",
+    "lat": 43.0458728,
+    "lng": -7.5610632,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s41",
+    "code": "CqJU",
+    "officialIds": [
+      41,
+      206
+    ],
+    "officialToken": "CqJU",
+    "name": "Rúa Leiteiras (esq. Cesteiras)",
+    "lat": 43.0488799,
+    "lng": -7.5586674,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s42",
+    "code": "42",
+    "officialIds": [
+      42,
+      207
+    ],
+    "officialToken": null,
+    "name": "Rúa Leiteiras (Transp. Arias)",
+    "lat": 43.0508676,
+    "lng": -7.5633668,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s43",
+    "code": "TeYq",
+    "officialIds": [
+      43,
+      208
+    ],
+    "officialToken": "TeYq",
+    "name": "Rúa Vidro (Sidegal)",
+    "lat": 43.0479556,
+    "lng": -7.5631518,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s44",
+    "code": "44",
+    "officialIds": [
+      44,
+      209
+    ],
+    "officialToken": null,
+    "name": "Rúa Agricultura (Chousa)",
+    "lat": 43.0475993,
+    "lng": -7.5663921,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s45",
+    "code": "45",
+    "officialIds": [
+      45,
+      210
+    ],
+    "officialToken": null,
+    "name": "Rúa Industria",
+    "lat": 43.0469574,
+    "lng": -7.5691515,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s46",
+    "code": "HmSE",
+    "officialIds": [
+      46,
+      211
+    ],
+    "officialToken": "HmSE",
+    "name": "Rúa Industria (Teolindo)",
+    "lat": 43.0475961,
+    "lng": -7.571963,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s47",
+    "code": "47",
+    "officialIds": [
+      47,
+      212
+    ],
+    "officialToken": null,
+    "name": "Rúa Industria (esq. Inspección)",
+    "lat": 43.0476612,
+    "lng": -7.5744042,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s48",
+    "code": "oFxn",
+    "officialIds": [
+      48,
+      213
+    ],
+    "officialToken": "oFxn",
+    "name": "Rúa dos Canteiros",
+    "lat": 43.0462982,
+    "lng": -7.5734438,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s49",
+    "code": "EziS",
+    "officialIds": [
+      49,
+      214
+    ],
+    "officialToken": "EziS",
+    "name": "Rúa dos Artesáns",
+    "lat": 43.0454396,
+    "lng": -7.5707884,
+    "lines": [
+      "1.1",
+      "1.3"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s51",
+    "code": "51",
+    "officialIds": [
+      51,
+      135
+    ],
+    "officialToken": null,
+    "name": "Benigno Rivera (Renault)",
+    "lat": 43.0414977,
+    "lng": -7.5718802,
+    "lines": [
+      "1.1",
+      "1.2"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s52",
+    "code": "mZVD",
+    "officialIds": [
+      52,
+      136
+    ],
+    "officialToken": "mZVD",
+    "name": "Benigno Rivera (Remar)",
+    "lat": 43.0388425,
+    "lng": -7.5738341,
+    "lines": [
+      "1.1",
+      "1.2"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s53",
+    "code": "Rxhe",
+    "officialIds": [
+      53,
+      137,
+      369
+    ],
+    "officialToken": "Rxhe",
+    "name": "N-VI (Os Caraveis)",
+    "lat": 43.0343839,
+    "lng": -7.5744496,
+    "lines": [
+      "1.1",
+      "1.2",
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s54",
+    "code": "xptt",
+    "officialIds": [
+      54,
+      138,
+      370
+    ],
+    "officialToken": "xptt",
+    "name": "Avda. Garabolos (Pista Meilán-Chaos)",
+    "lat": 43.0295137,
+    "lng": -7.5745891,
+    "lines": [
+      "1.1",
+      "1.2",
+      "2"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s55",
+    "code": "hVrc",
+    "officialIds": [
+      55,
+      139,
+      371
+    ],
+    "officialToken": "hVrc",
+    "name": "Avda. Garabolos (Medusa)",
+    "lat": 43.0288863,
+    "lng": -7.5717888,
+    "lines": [
+      "1.1",
+      "1.2",
+      "2"
+    ],
+    "zone": "Garabolos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s56",
+    "code": "nNMs",
+    "officialIds": [
+      56,
+      140,
+      220,
+      307,
+      372,
+      693,
+      1015
+    ],
+    "officialToken": "nNMs",
+    "name": "Avda. Coruña 433 (Restaurante Suso)",
+    "lat": 43.0288647,
+    "lng": -7.5699991,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES",
+      "11"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s57",
+    "code": "idQk",
+    "officialIds": [
+      57,
+      141,
+      221,
+      308,
+      373,
+      694
+    ],
+    "officialToken": "idQk",
+    "name": "Avda. Coruña 405",
+    "lat": 43.0278539,
+    "lng": -7.5691863,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES"
+    ],
+    "zone": "Garabolos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s58",
+    "code": "KCxT",
+    "officialIds": [
+      58,
+      142,
+      222,
+      309,
+      374,
+      695
+    ],
+    "officialToken": "KCxT",
+    "name": "Avda. Coruña 369",
+    "lat": 43.0264565,
+    "lng": -7.5680291,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES"
+    ],
+    "zone": "Garabolos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s59",
+    "code": "RkaG",
+    "officialIds": [
+      59,
+      143,
+      223,
+      310,
+      375,
+      696,
+      1016
+    ],
+    "officialToken": "RkaG",
+    "name": "Avda. Coruña 325",
+    "lat": 43.0252424,
+    "lng": -7.5670539,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES",
+      "11"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s60",
+    "code": "BIXK",
+    "officialIds": [
+      60,
+      144,
+      224,
+      311,
+      376,
+      697
+    ],
+    "officialToken": "BIXK",
+    "name": "Avda. Coruña 281",
+    "lat": 43.0237539,
+    "lng": -7.5658619,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s61",
+    "code": "sBlJ",
+    "officialIds": [
+      61,
+      145,
+      225,
+      312,
+      377,
+      698,
+      1017,
+      1165
+    ],
+    "officialToken": "sBlJ",
+    "name": "Avda. Coruña 211 (Pq. Milagrosa)",
+    "lat": 43.0220403,
+    "lng": -7.5644737,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "5ES",
+      "11",
+      "12"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s62",
+    "code": "RJay",
+    "officialIds": [
+      62,
+      146,
+      226,
+      313,
+      378,
+      403,
+      1166
+    ],
+    "officialToken": "RJay",
+    "name": "Avda. Coruña 131",
+    "lat": 43.0189518,
+    "lng": -7.5619733,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "3.1",
+      "12"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s63",
+    "code": "oaHT",
+    "officialIds": [
+      63,
+      147,
+      227,
+      314,
+      379,
+      404,
+      1167
+    ],
+    "officialToken": "oaHT",
+    "name": "Avda. Coruña 97",
+    "lat": 43.0179797,
+    "lng": -7.5611996,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "3.1",
+      "12"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s64",
+    "code": "Vvvt",
+    "officialIds": [
+      64,
+      148,
+      228,
+      315,
+      380,
+      1018,
+      1168
+    ],
+    "officialToken": "Vvvt",
+    "name": "Avda. Coruña 39",
+    "lat": 43.0161757,
+    "lng": -7.5597598,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "11",
+      "12"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s65",
+    "code": "qFuw",
+    "officialIds": [
+      65,
+      149,
+      229,
+      316,
+      381,
+      513,
+      571,
+      764,
+      892,
+      919,
+      1169
+    ],
+    "officialToken": "qFuw",
+    "name": "Rda. Muralla 95 (S. Fernando)",
+    "lat": 43.0146822,
+    "lng": -7.5591756,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "7",
+      "8",
+      "12"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s66",
+    "code": "RnND",
+    "officialIds": [
+      66,
+      150,
+      230,
+      317,
+      382,
+      514,
+      572,
+      765,
+      893,
+      920,
+      1170
+    ],
+    "officialToken": "RnND",
+    "name": "Rda. Muralla 118",
+    "lat": 43.0140433,
+    "lng": -7.5608181,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "7",
+      "8",
+      "12"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s67",
+    "code": "XpKC",
+    "officialIds": [
+      67,
+      151,
+      231,
+      318,
+      383,
+      515,
+      573,
+      766,
+      894,
+      1019,
+      1171
+    ],
+    "officialToken": "XpKC",
+    "name": "Rda. Muralla (Obras Públicas)",
+    "lat": 43.0127249,
+    "lng": -7.5622557,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "7",
+      "11",
+      "12"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s68",
+    "code": "ypYT",
+    "officialIds": [
+      68,
+      152,
+      232,
+      319,
+      384,
+      516,
+      574,
+      714,
+      847,
+      1087
+    ],
+    "officialToken": "ypYT",
+    "name": "Rda. Muralla (Fogar Sta. María)",
+    "lat": 43.0110735,
+    "lng": -7.5623791,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "6",
+      "11-Calde"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s69",
+    "code": "Zjge",
+    "officialIds": [
+      69,
+      153,
+      233,
+      320,
+      385,
+      517,
+      575,
+      715,
+      848,
+      1088
+    ],
+    "officialToken": "Zjge",
+    "name": "Rda. Muralla 163-164",
+    "lat": 43.0092149,
+    "lng": -7.559903,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "6",
+      "11-Calde"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s70",
+    "code": "RThl",
+    "officialIds": [
+      70,
+      154,
+      234,
+      321,
+      386,
+      518,
+      576,
+      716,
+      849,
+      996,
+      1089
+    ],
+    "officialToken": "RThl",
+    "name": "Rúa Vilalba 6",
+    "lat": 43.0079521,
+    "lng": -7.5570901,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5.1",
+      "6",
+      "10",
+      "11-Calde"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s71",
+    "code": "nIaS",
+    "officialIds": [
+      71,
+      155,
+      235,
+      322,
+      387,
+      519,
+      577,
+      660,
+      717,
+      822,
+      850,
+      970,
+      997,
+      1057,
+      1090,
+      1091,
+      1134
+    ],
+    "officialToken": "nIaS",
+    "name": "Ramón Ferreiro (Feminino)",
+    "lat": 43.0067816,
+    "lng": -7.5562737,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "2",
+      "4.1",
+      "4.2",
+      "5DS",
+      "5.1",
+      "5.2",
+      "6",
+      "10",
+      "11-Calde",
+      "11-Santa Comba"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s72",
+    "code": "uiZZ",
+    "officialIds": [
+      72,
+      156,
+      323,
+      388,
+      661,
+      718,
+      823,
+      851,
+      971,
+      1058,
+      1092
+    ],
+    "officialToken": "uiZZ",
+    "name": "Ramón Ferreiro (Anexa)",
+    "lat": 43.0051339,
+    "lng": -7.5551686,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "2",
+      "5DS",
+      "5.1",
+      "5.2",
+      "6",
+      "10",
+      "11-Calde",
+      "11-Santa Comba"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s73",
+    "code": "umcC",
+    "officialIds": [
+      73,
+      157,
+      324,
+      389,
+      662,
+      719,
+      1093
+    ],
+    "officialToken": "umcC",
+    "name": "Ramón Ferreiro 26",
+    "lat": 43.0035541,
+    "lng": -7.553268,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "2",
+      "5DS",
+      "5.1",
+      "11-Santa Comba"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s74",
+    "code": "qPol",
+    "officialIds": [
+      74,
+      158,
+      325,
+      663
+    ],
+    "officialToken": "qPol",
+    "name": "Rúa Marina Española 24",
+    "lat": 43.0026254,
+    "lng": -7.5535981,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s75",
+    "code": "cWlq",
+    "officialIds": [
+      75,
+      159,
+      326,
+      664
+    ],
+    "officialToken": "cWlq",
+    "name": "Rúa Armórica 100",
+    "lat": 43.000584,
+    "lng": -7.5530464,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s76",
+    "code": "nrLQ",
+    "officialIds": [
+      76,
+      160,
+      327,
+      665
+    ],
+    "officialToken": "nrLQ",
+    "name": "Rúa Aviación Española 14",
+    "lat": 42.9990166,
+    "lng": -7.5536617,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s77",
+    "code": "TajF",
+    "officialIds": [
+      77,
+      161,
+      328,
+      666
+    ],
+    "officialToken": "TajF",
+    "name": "Rúa Aviación Española 32",
+    "lat": 42.9977201,
+    "lng": -7.554437,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s78",
+    "code": "tOKN",
+    "officialIds": [
+      78,
+      162,
+      329,
+      667,
+      826
+    ],
+    "officialToken": "tOKN",
+    "name": "Alfonso X (esq. Valiño)",
+    "lat": 42.9961489,
+    "lng": -7.5551094,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "5DS",
+      "5.2"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s79",
+    "code": "cVsR",
+    "officialIds": [
+      79,
+      163,
+      330
+    ],
+    "officialToken": "cVsR",
+    "name": "Alfonso X (cr. Magoi)",
+    "lat": 42.9945048,
+    "lng": -7.5544062,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s80",
+    "code": "zGZr",
+    "officialIds": [
+      80,
+      164,
+      331
+    ],
+    "officialToken": "zGZr",
+    "name": "Alfonso X (antes. C. Novos)",
+    "lat": 42.9935617,
+    "lng": -7.5529803,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s81",
+    "code": "Qrdv",
+    "officialIds": [
+      81,
+      165,
+      332
+    ],
+    "officialToken": "Qrdv",
+    "name": "Alfonso X (Escuela Taller)",
+    "lat": 42.9917035,
+    "lng": -7.5509888,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s82",
+    "code": "JDhT",
+    "officialIds": [
+      82,
+      166,
+      333
+    ],
+    "officialToken": "JDhT",
+    "name": "Alfonso X (Fac. Ciencias)",
+    "lat": 42.9910507,
+    "lng": -7.5485556,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s83",
+    "code": "gJRz",
+    "officialIds": [
+      83,
+      167,
+      334
+    ],
+    "officialToken": "gJRz",
+    "name": "As Pedreiras",
+    "lat": 42.9913572,
+    "lng": -7.5440267,
+    "lines": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s120",
+    "code": "120",
+    "officialIds": [
+      120,
+      287
+    ],
+    "officialToken": null,
+    "name": "Polígono Gándaras (enf. SERFUJA)",
+    "lat": 43.0416479,
+    "lng": -7.5536606,
+    "lines": [
+      "1.2",
+      "1.4"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s121",
+    "code": "zwHS",
+    "officialIds": [
+      121,
+      288,
+      1154,
+      1155
+    ],
+    "officialToken": "zwHS",
+    "name": "Polígono Gándaras (Begasa)",
+    "lat": 43.0362379,
+    "lng": -7.5550685,
+    "lines": [
+      "1.2",
+      "1.4",
+      "12"
+    ],
+    "zone": "As Gándaras",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s122",
+    "code": "122",
+    "officialIds": [
+      122,
+      289,
+      594
+    ],
+    "officialToken": null,
+    "name": "As Gándaras (R. Amenta)",
+    "lat": 43.0339708,
+    "lng": -7.5550619,
+    "lines": [
+      "1.2",
+      "1.4",
+      "4.2"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s123",
+    "code": "123",
+    "officialIds": [
+      123,
+      290
+    ],
+    "officialToken": null,
+    "name": "As Gándaras (Campo Fútbol)",
+    "lat": 43.0337573,
+    "lng": -7.5503055,
+    "lines": [
+      "1.2",
+      "1.4"
+    ],
+    "zone": "As Gándaras",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s124",
+    "code": "124",
+    "officialIds": [
+      124,
+      291,
+      541,
+      590
+    ],
+    "officialToken": null,
+    "name": "Rotonda Rda. Norte (Falcón)",
+    "lat": 43.0312668,
+    "lng": -7.5355326,
+    "lines": [
+      "1.2",
+      "1.4",
+      "4.1",
+      "4.2"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s125",
+    "code": "jELq",
+    "officialIds": [
+      125,
+      126,
+      292,
+      293,
+      542,
+      543,
+      591,
+      592,
+      638,
+      639,
+      690,
+      691,
+      740,
+      741,
+      800,
+      801,
+      1035,
+      1045
+    ],
+    "officialToken": "jELq",
+    "name": "HULA (Ent. Principal)",
+    "lat": 43.0196525,
+    "lng": -7.5327446,
+    "lines": [
+      "1.2",
+      "1.4",
+      "4.1",
+      "4.2",
+      "5DS",
+      "5ES",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s127",
+    "code": "zQdy",
+    "officialIds": [
+      127,
+      294,
+      544,
+      593,
+      640,
+      692,
+      742,
+      802,
+      1036,
+      1046
+    ],
+    "officialToken": "zQdy",
+    "name": "HULA (Ent. Personal)",
+    "lat": 43.0185481,
+    "lng": -7.5370916,
+    "lines": [
+      "1.2",
+      "1.4",
+      "4.1",
+      "4.2",
+      "5DS",
+      "5ES",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s128",
+    "code": "128",
+    "officialIds": [
+      128,
+      295,
+      558
+    ],
+    "officialToken": null,
+    "name": "Rotonda Ronda Norte (Vía de servizo)",
+    "lat": 43.0322116,
+    "lng": -7.5348068,
+    "lines": [
+      "1.2",
+      "1.4",
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s129",
+    "code": "129",
+    "officialIds": [
+      129,
+      296
+    ],
+    "officialToken": null,
+    "name": "Polígono Gándaras (esq. R. Miñato)",
+    "lat": 43.0339383,
+    "lng": -7.5479137,
+    "lines": [
+      "1.2",
+      "1.4"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s130",
+    "code": "130",
+    "officialIds": [
+      130,
+      297,
+      1153
+    ],
+    "officialToken": null,
+    "name": "Polígono Gándaras Rúa D (esq. R. B)",
+    "lat": 43.0375622,
+    "lng": -7.5506943,
+    "lines": [
+      "1.2",
+      "1.4",
+      "12"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s131",
+    "code": "131",
+    "officialIds": [
+      131,
+      298,
+      1150
+    ],
+    "officialToken": null,
+    "name": "Polígono Gándaras (Audi)",
+    "lat": 43.0419718,
+    "lng": -7.5532848,
+    "lines": [
+      "1.2",
+      "1.4",
+      "12"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s133",
+    "code": "133",
+    "officialIds": [
+      133,
+      300
+    ],
+    "officialToken": null,
+    "name": "Rúa Industria (Aula 9)",
+    "lat": 43.0458049,
+    "lng": -7.5658678,
+    "lines": [
+      "1.2",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s134",
+    "code": "134",
+    "officialIds": [
+      134,
+      301
+    ],
+    "officialToken": null,
+    "name": "Rúa Industria (Gadis)",
+    "lat": 43.0466951,
+    "lng": -7.5677947,
+    "lines": [
+      "1.2",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s168",
+    "code": "xqTs",
+    "officialIds": [
+      168,
+      251,
+      434,
+      491
+    ],
+    "officialToken": "xqTs",
+    "name": "Facultad Humanidades",
+    "lat": 42.9921018,
+    "lng": -7.5428741,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s172",
+    "code": "172",
+    "officialIds": [
+      172,
+      863
+    ],
+    "officialToken": null,
+    "name": "Prof. Carvalho Calero",
+    "lat": 42.9946997,
+    "lng": -7.5493893,
+    "lines": [
+      "1.3",
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s173",
+    "code": "173",
+    "officialIds": [
+      173,
+      864,
+      865
+    ],
+    "officialToken": null,
+    "name": "Facultade Veterinaria",
+    "lat": 42.9948045,
+    "lng": -7.5463268,
+    "lines": [
+      "1.3",
+      "6"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s174",
+    "code": "174",
+    "officialIds": [
+      174,
+      495,
+      1128
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid (McDonald´s)",
+    "lat": 42.9972404,
+    "lng": -7.5454577,
+    "lines": [
+      "1.3",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s175",
+    "code": "qEYJ",
+    "officialIds": [
+      175,
+      496,
+      1129
+    ],
+    "officialToken": "qEYJ",
+    "name": "Avda. Madrid F.P.",
+    "lat": 42.9989652,
+    "lng": -7.5470795,
+    "lines": [
+      "1.3",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s176",
+    "code": "GglP",
+    "officialIds": [
+      176,
+      497,
+      622,
+      722,
+      784
+    ],
+    "officialToken": "GglP",
+    "name": "Xosé Castiñeira (Conservatorio)",
+    "lat": 42.9995928,
+    "lng": -7.5471832,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s177",
+    "code": "177",
+    "officialIds": [
+      177,
+      623,
+      723,
+      785
+    ],
+    "officialToken": null,
+    "name": "Rda. Mercedes 50",
+    "lat": 43.0012841,
+    "lng": -7.5454388,
+    "lines": [
+      "1.3",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s178",
+    "code": "IHeX",
+    "officialIds": [
+      178,
+      503,
+      624,
+      724,
+      786
+    ],
+    "officialToken": "IHeX",
+    "name": "Fontiñas 203",
+    "lat": 43.0025539,
+    "lng": -7.5451865,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s179",
+    "code": "LxsF",
+    "officialIds": [
+      179,
+      504,
+      625,
+      725,
+      787
+    ],
+    "officialToken": "LxsF",
+    "name": "Fontiñas (Inst. San Xillao)",
+    "lat": 43.0051291,
+    "lng": -7.5470064,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s180",
+    "code": "Smcn",
+    "officialIds": [
+      180,
+      505,
+      626,
+      726,
+      788
+    ],
+    "officialToken": "Smcn",
+    "name": "Fontiñas (Parque)",
+    "lat": 43.0068218,
+    "lng": -7.548573,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s181",
+    "code": "181",
+    "officialIds": [
+      181,
+      506,
+      627,
+      727,
+      789
+    ],
+    "officialToken": null,
+    "name": "Fontiñas 119",
+    "lat": 43.0087516,
+    "lng": -7.5484394,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s182",
+    "code": "hHbm",
+    "officialIds": [
+      182,
+      507,
+      628,
+      728,
+      790
+    ],
+    "officialToken": "hHbm",
+    "name": "Fontiñas 87",
+    "lat": 43.0104807,
+    "lng": -7.5485111,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s183",
+    "code": "GgdY",
+    "officialIds": [
+      183,
+      508,
+      629,
+      729,
+      791,
+      1026
+    ],
+    "officialToken": "GgdY",
+    "name": "Fontiñas 41",
+    "lat": 43.0123451,
+    "lng": -7.5492568,
+    "lines": [
+      "1.3",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s184",
+    "code": "QEdQ",
+    "officialIds": [
+      184,
+      509,
+      1054
+    ],
+    "officialToken": "QEdQ",
+    "name": "Pza. Conde Fontao (Estda. FFCC)",
+    "lat": 43.0145778,
+    "lng": -7.5516794,
+    "lines": [
+      "1.3",
+      "3.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s185",
+    "code": "YSbT",
+    "officialIds": [
+      185,
+      510,
+      568,
+      603,
+      1055,
+      1199
+    ],
+    "officialToken": "YSbT",
+    "name": "Rúa Castelao 53",
+    "lat": 43.0141106,
+    "lng": -7.5532339,
+    "lines": [
+      "1.3",
+      "3.2",
+      "4.1",
+      "4.2",
+      "11-Igrexa de Bóveda",
+      "13"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s197",
+    "code": "GsjP",
+    "officialIds": [
+      197,
+      281
+    ],
+    "officialToken": "GsjP",
+    "name": "Avda. Paulo Fabio Máximo 48",
+    "lat": 43.0333445,
+    "lng": -7.5678735,
+    "lines": [
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s198",
+    "code": "wurV",
+    "officialIds": [
+      198,
+      282
+    ],
+    "officialToken": "wurV",
+    "name": "Avda. Inf. Elena (Enft. Lidl)",
+    "lat": 43.0352098,
+    "lng": -7.5648299,
+    "lines": [
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s216",
+    "code": "216",
+    "officialIds": [
+      216,
+      303
+    ],
+    "officialToken": null,
+    "name": "As Termas",
+    "lat": 43.0390486,
+    "lng": -7.5672827,
+    "lines": [
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s217",
+    "code": "xOSp",
+    "officialIds": [
+      217,
+      304
+    ],
+    "officialToken": "xOSp",
+    "name": "Avda. Paulo Fabio Máximo (desp. Inf. Elena)",
+    "lat": 43.034513,
+    "lng": -7.5656504,
+    "lines": [
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s218",
+    "code": "AeSs",
+    "officialIds": [
+      218,
+      305
+    ],
+    "officialToken": "AeSs",
+    "name": "Avda. Paulo Fabio Máximo (enfte. Nº 48)",
+    "lat": 43.0333405,
+    "lng": -7.5683244,
+    "lines": [
+      "1.3",
+      "1.4"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s219",
+    "code": "XasI",
+    "officialIds": [
+      219,
+      306
+    ],
+    "officialToken": "XasI",
+    "name": "Avda. Coruña 493",
+    "lat": 43.031092,
+    "lng": -7.5717892,
+    "lines": [
+      "1.3",
+      "1.4"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s239",
+    "code": "EthF",
+    "officialIds": [
+      239,
+      523,
+      581
+    ],
+    "officialToken": "EthF",
+    "name": "Montero Ríos 4",
+    "lat": 43.0109186,
+    "lng": -7.5524825,
+    "lines": [
+      "1.3",
+      "4.1",
+      "4.2"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s240",
+    "code": "fClD",
+    "officialIds": [
+      240,
+      408,
+      457,
+      1025
+    ],
+    "officialToken": "fClD",
+    "name": "Fontiñas (esq. Caiños)",
+    "lat": 43.0127483,
+    "lng": -7.5495498,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s241",
+    "code": "241",
+    "officialIds": [
+      241,
+      409,
+      458,
+      649,
+      751,
+      811
+    ],
+    "officialToken": null,
+    "name": "Fontiñas 94",
+    "lat": 43.0103466,
+    "lng": -7.5487128,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s242",
+    "code": "MJdF",
+    "officialIds": [
+      242,
+      410,
+      459,
+      650,
+      752,
+      812
+    ],
+    "officialToken": "MJdF",
+    "name": "Fontiñas 134",
+    "lat": 43.0087497,
+    "lng": -7.5486907,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s243",
+    "code": "243",
+    "officialIds": [
+      243,
+      411,
+      460,
+      651,
+      753,
+      813
+    ],
+    "officialToken": null,
+    "name": "Fontiñas 180",
+    "lat": 43.0067488,
+    "lng": -7.5488028,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s244",
+    "code": "WQPK",
+    "officialIds": [
+      244,
+      412,
+      461,
+      652,
+      754,
+      814
+    ],
+    "officialToken": "WQPK",
+    "name": "Fontiñas (enf. San Xillao)",
+    "lat": 43.0043901,
+    "lng": -7.5461929,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s245",
+    "code": "yshn",
+    "officialIds": [
+      245,
+      413,
+      462,
+      653,
+      755,
+      815
+    ],
+    "officialToken": "yshn",
+    "name": "Fontiñas 310",
+    "lat": 43.0022823,
+    "lng": -7.5453428,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s246",
+    "code": "xxXF",
+    "officialIds": [
+      246,
+      420,
+      463,
+      654,
+      756,
+      816
+    ],
+    "officialToken": "xxXF",
+    "name": "Rda. Mercedes 53",
+    "lat": 43.0013302,
+    "lng": -7.5457023,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s247",
+    "code": "EXzD",
+    "officialIds": [
+      247,
+      443,
+      470,
+      655,
+      757,
+      817
+    ],
+    "officialToken": "EXzD",
+    "name": "Rda. Mercedes 11",
+    "lat": 43.0002017,
+    "lng": -7.5473653,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s248",
+    "code": "Aroa",
+    "officialIds": [
+      248,
+      422,
+      471,
+      1096
+    ],
+    "officialToken": "Aroa",
+    "name": "Avda. Madrid 32 (Augas Férreas)",
+    "lat": 42.99907,
+    "lng": -7.5474658,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s249",
+    "code": "249",
+    "officialIds": [
+      249,
+      423,
+      472,
+      1097
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid 46 (cr. Pardo Ouro)",
+    "lat": 42.9970785,
+    "lng": -7.5455776,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s250",
+    "code": "250",
+    "officialIds": [
+      250,
+      425,
+      474,
+      1098
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid (enfte. Aresa)",
+    "lat": 42.9942348,
+    "lng": -7.5429035,
+    "lines": [
+      "1.3",
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s335",
+    "code": "HVqZ",
+    "officialIds": [
+      335,
+      393,
+      783
+    ],
+    "officialToken": "HVqZ",
+    "name": "Xosé Castiñeira (Froiz)",
+    "lat": 42.9982953,
+    "lng": -7.5496902,
+    "lines": [
+      "2",
+      "5.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s336",
+    "code": "Uitq",
+    "officialIds": [
+      336,
+      444,
+      656,
+      758,
+      818,
+      1130
+    ],
+    "officialToken": "Uitq",
+    "name": "Avda. Madrid 47-49",
+    "lat": 43.0004932,
+    "lng": -7.5485232,
+    "lines": [
+      "2",
+      "3.1",
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s337",
+    "code": "uIDG",
+    "officialIds": [
+      337,
+      759
+    ],
+    "officialToken": "uIDG",
+    "name": "San Roque 175",
+    "lat": 43.003491,
+    "lng": -7.5504519,
+    "lines": [
+      "2",
+      "5.1"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s338",
+    "code": "bJTI",
+    "officialIds": [
+      338,
+      760
+    ],
+    "officialToken": "bJTI",
+    "name": "San Roque 72 (Rampa Claudio López)",
+    "lat": 43.0068346,
+    "lng": -7.5512888,
+    "lines": [
+      "2",
+      "5.1"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s353",
+    "code": "MFLw",
+    "officialIds": [
+      353
+    ],
+    "officialToken": "MFLw",
+    "name": "N-VI (Peugeot)",
+    "lat": 43.0370893,
+    "lng": -7.5763535,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s354",
+    "code": "354",
+    "officialIds": [
+      354
+    ],
+    "officialToken": null,
+    "name": "N-VI (Pista Serradoiro)",
+    "lat": 43.0403141,
+    "lng": -7.578828,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s355",
+    "code": "vcIE",
+    "officialIds": [
+      355
+    ],
+    "officialToken": "vcIE",
+    "name": "N-VI (Renting. Antiga Opel)",
+    "lat": 43.0430871,
+    "lng": -7.5819475,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s356",
+    "code": "gknL",
+    "officialIds": [
+      356
+    ],
+    "officialToken": "gknL",
+    "name": "N-VI (Restaurante Mateu)",
+    "lat": 43.0442946,
+    "lng": -7.5839018,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s357",
+    "code": "357",
+    "officialIds": [
+      357
+    ],
+    "officialToken": null,
+    "name": "N-VI (Taller eléctrico)",
+    "lat": 43.0458513,
+    "lng": -7.5863631,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s358",
+    "code": "358",
+    "officialIds": [
+      358
+    ],
+    "officialToken": null,
+    "name": "N-VI (Autocaravanas)",
+    "lat": 43.0484481,
+    "lng": -7.5900044,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s359",
+    "code": "359",
+    "officialIds": [
+      359,
+      360
+    ],
+    "officialToken": null,
+    "name": "N-VI (Piensos Flores)",
+    "lat": 43.0562228,
+    "lng": -7.597476,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s361",
+    "code": "ddSU",
+    "officialIds": [
+      361
+    ],
+    "officialToken": "ddSU",
+    "name": "N-VI (Gaima)",
+    "lat": 43.0576214,
+    "lng": -7.5982703,
+    "lines": [
+      "2"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s362",
+    "code": "QclH",
+    "officialIds": [
+      362
+    ],
+    "officialToken": "QclH",
+    "name": "N-VI (Caseta Obr. Públicas)",
+    "lat": 43.0523926,
+    "lng": -7.5957341,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s363",
+    "code": "HiRc",
+    "officialIds": [
+      363
+    ],
+    "officialToken": "HiRc",
+    "name": "N-VI (Cruce est. Ombreiro)",
+    "lat": 43.04849,
+    "lng": -7.590423,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s364",
+    "code": "USgG",
+    "officialIds": [
+      364
+    ],
+    "officialToken": "USgG",
+    "name": "N-VI (Casa da Fonte)",
+    "lat": 43.0455606,
+    "lng": -7.5861942,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s365",
+    "code": "tNDa",
+    "officialIds": [
+      365
+    ],
+    "officialToken": "tNDa",
+    "name": "N-VI (Cereijo)",
+    "lat": 43.0439891,
+    "lng": -7.5837238,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s366",
+    "code": "TreP",
+    "officialIds": [
+      366
+    ],
+    "officialToken": "TreP",
+    "name": "N-VI (enf. Embotelladora)",
+    "lat": 43.0425588,
+    "lng": -7.5814332,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s367",
+    "code": "TRjy",
+    "officialIds": [
+      367
+    ],
+    "officialToken": "TRjy",
+    "name": "N-VI 583 (Pista Meilán)",
+    "lat": 43.0398434,
+    "lng": -7.5786988,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s368",
+    "code": "soSB",
+    "officialIds": [
+      368
+    ],
+    "officialToken": "soSB",
+    "name": "N-VI (Rectificadora Lucense)",
+    "lat": 43.036906,
+    "lng": -7.5764709,
+    "lines": [
+      "2"
+    ],
+    "zone": "Cemiterio",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s390",
+    "code": "WggZ",
+    "officialIds": [
+      390,
+      620,
+      720,
+      1094
+    ],
+    "officialToken": "WggZ",
+    "name": "Ramón Ferreiro 34 (Fonte do Rei)",
+    "lat": 43.0022859,
+    "lng": -7.5509028,
+    "lines": [
+      "2",
+      "5DS",
+      "5.1",
+      "11-Santa Comba"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s391",
+    "code": "ZWPe",
+    "officialIds": [
+      391,
+      621,
+      721,
+      1095
+    ],
+    "officialToken": "ZWPe",
+    "name": "Avda. Madrid (Cruz Vermella)",
+    "lat": 43.0006244,
+    "lng": -7.5489385,
+    "lines": [
+      "2",
+      "5DS",
+      "5.1",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s392",
+    "code": "YNhr",
+    "officialIds": [
+      392
+    ],
+    "officialToken": "YNhr",
+    "name": "Rda. Fingoi 15",
+    "lat": 42.9988182,
+    "lng": -7.5499423,
+    "lines": [
+      "2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s395",
+    "code": "xCKl",
+    "officialIds": [
+      395,
+      454,
+      1022,
+      1175
+    ],
+    "officialToken": "xCKl",
+    "name": "Rúa Monforte 2-4",
+    "lat": 43.0147891,
+    "lng": -7.5570007,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Igrexa de Bóveda",
+      "13"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s396",
+    "code": "396",
+    "officialIds": [
+      396,
+      455,
+      1023,
+      1176
+    ],
+    "officialToken": null,
+    "name": "Rúa Monforte 40",
+    "lat": 43.015707,
+    "lng": -7.5556998,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Igrexa de Bóveda",
+      "13"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s397",
+    "code": "397",
+    "officialIds": [
+      397,
+      1177
+    ],
+    "officialToken": null,
+    "name": "Rúa Paradai de Arriba 28-31",
+    "lat": 43.0175144,
+    "lng": -7.5569458,
+    "lines": [
+      "3.1",
+      "13"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s398",
+    "code": "uDvR",
+    "officialIds": [
+      398,
+      1178
+    ],
+    "officialToken": "uDvR",
+    "name": "Rúa Río Sil 50",
+    "lat": 43.0184031,
+    "lng": -7.557424,
+    "lines": [
+      "3.1",
+      "13"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s399",
+    "code": "XwWd",
+    "officialIds": [
+      399,
+      1179
+    ],
+    "officialToken": "XwWd",
+    "name": "Alexandre Bóveda 16",
+    "lat": 43.0211252,
+    "lng": -7.5592673,
+    "lines": [
+      "3.1",
+      "13"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s402",
+    "code": "402",
+    "officialIds": [
+      402
+    ],
+    "officialToken": null,
+    "name": "Río Narla (Biblioteca P. Milagrosa - MIHL)",
+    "lat": 43.0222011,
+    "lng": -7.5624352,
+    "lines": [
+      "3.1"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s405",
+    "code": "405",
+    "officialIds": [
+      405
+    ],
+    "officialToken": null,
+    "name": "Rúa Irmáns Carro 10",
+    "lat": 43.0168104,
+    "lng": -7.5594528,
+    "lines": [
+      "3.1"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s406",
+    "code": "406",
+    "officialIds": [
+      406
+    ],
+    "officialToken": null,
+    "name": "Río Sil 7",
+    "lat": 43.0161758,
+    "lng": -7.5561677,
+    "lines": [
+      "3.1"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s407",
+    "code": "407",
+    "officialIds": [
+      407,
+      456,
+      1024
+    ],
+    "officialToken": null,
+    "name": "Rúa Miguel de Cervantes (escalinata)",
+    "lat": 43.0145723,
+    "lng": -7.5535339,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s414",
+    "code": "414",
+    "officialIds": [
+      414,
+      442,
+      469
+    ],
+    "officialToken": null,
+    "name": "Rda. Mercedes 53",
+    "lat": 43.0013302,
+    "lng": -7.5457023,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s415",
+    "code": "415",
+    "officialIds": [
+      415,
+      464,
+      498
+    ],
+    "officialToken": null,
+    "name": "Paseo Estudantes (esq. Xosé Castiñeira)",
+    "lat": 43.0005389,
+    "lng": -7.5456789,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s416",
+    "code": "416",
+    "officialIds": [
+      416,
+      465,
+      499
+    ],
+    "officialToken": null,
+    "name": "Paseo Estudantes (ant. Rúa Artes)",
+    "lat": 42.9990137,
+    "lng": -7.5442288,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s417",
+    "code": "BZWk",
+    "officialIds": [
+      417,
+      439,
+      466
+    ],
+    "officialToken": "BZWk",
+    "name": "Rúa Virxe Esperanza (enf. Nº 3)",
+    "lat": 42.9999688,
+    "lng": -7.5420777,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s418",
+    "code": "YSrP",
+    "officialIds": [
+      418,
+      440,
+      501
+    ],
+    "officialToken": "YSrP",
+    "name": "Rúa Rof Codina (esq. R. Form.)",
+    "lat": 43.0014671,
+    "lng": -7.5415402,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s419",
+    "code": "419",
+    "officialIds": [
+      419,
+      441,
+      468,
+      502
+    ],
+    "officialToken": null,
+    "name": "Rúa Rof Codina 45",
+    "lat": 43.0018177,
+    "lng": -7.5434845,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s421",
+    "code": "421",
+    "officialIds": [
+      421
+    ],
+    "officialToken": null,
+    "name": "Rda. Mercedes 11",
+    "lat": 43.0002017,
+    "lng": -7.5473653,
+    "lines": [
+      "3.1"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s424",
+    "code": "424",
+    "officialIds": [
+      424,
+      473
+    ],
+    "officialToken": null,
+    "name": "Avda. Pablo Iglesias (Veterinaria)",
+    "lat": 42.9948081,
+    "lng": -7.5453655,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": false
+  },
+  {
+    "id": "s426",
+    "code": "426",
+    "officialIds": [
+      426,
+      475,
+      1099
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid (antes rtda.)",
+    "lat": 42.9920079,
+    "lng": -7.5408,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s427",
+    "code": "427",
+    "officialIds": [
+      427,
+      433,
+      476,
+      490,
+      1100
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid 306 (Casa María)",
+    "lat": 42.9909295,
+    "lng": -7.5384071,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s428",
+    "code": "428",
+    "officialIds": [
+      428,
+      477,
+      1101
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid 324",
+    "lat": 42.9902002,
+    "lng": -7.5366946,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s429",
+    "code": "429",
+    "officialIds": [
+      429,
+      430,
+      478,
+      1102
+    ],
+    "officialToken": null,
+    "name": "A Tolda (UNED)",
+    "lat": 42.9881141,
+    "lng": -7.5350149,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s431",
+    "code": "wfPT",
+    "officialIds": [
+      431,
+      488,
+      1123
+    ],
+    "officialToken": "wfPT",
+    "name": "A Tolda (Cruce pista Bosende)",
+    "lat": 42.9887243,
+    "lng": -7.5352232,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s432",
+    "code": "432",
+    "officialIds": [
+      432,
+      489,
+      1124
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid 317-319",
+    "lat": 42.9902305,
+    "lng": -7.536617,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s435",
+    "code": "435",
+    "officialIds": [
+      435,
+      492,
+      1126
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid 253 (desp. Rtda.)",
+    "lat": 42.9921635,
+    "lng": -7.5406605,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s436",
+    "code": "436",
+    "officialIds": [
+      436,
+      493,
+      1127
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid 169-171",
+    "lat": 42.9943961,
+    "lng": -7.542771,
+    "lines": [
+      "3.1",
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Fingoi",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s437",
+    "code": "CCGs",
+    "officialIds": [
+      437,
+      494
+    ],
+    "officialToken": "CCGs",
+    "name": "Avda. Pablo Iglesias (Veterinaria)",
+    "lat": 42.9948081,
+    "lng": -7.5453655,
+    "lines": [
+      "3.1",
+      "3.2"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s438",
+    "code": "438",
+    "officialIds": [
+      438
+    ],
+    "officialToken": null,
+    "name": "Rúa das Artes, (enfte. E. Ramón Falcón)",
+    "lat": 42.9988091,
+    "lng": -7.5433453,
+    "lines": [
+      "3.1"
+    ],
+    "zone": "Fingoi",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s445",
+    "code": "BfrN",
+    "officialIds": [
+      445,
+      657,
+      819,
+      1131
+    ],
+    "officialToken": "BfrN",
+    "name": "Ramón Ferreiro 47-49 (Fonte do Rei)",
+    "lat": 43.0026272,
+    "lng": -7.5512001,
+    "lines": [
+      "3.1",
+      "5DS",
+      "5.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s467",
+    "code": "467",
+    "officialIds": [
+      467
+    ],
+    "officialToken": null,
+    "name": "Rúa Rof Codina (esq. R. Form.)",
+    "lat": 43.0014671,
+    "lng": -7.5415402,
+    "lines": [
+      "3.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s479",
+    "code": "479",
+    "officialIds": [
+      479,
+      1103
+    ],
+    "officialToken": null,
+    "name": "N-VI (vía de servicio 6)",
+    "lat": 42.9835443,
+    "lng": -7.5294023,
+    "lines": [
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s480",
+    "code": "480",
+    "officialIds": [
+      480,
+      1104
+    ],
+    "officialToken": null,
+    "name": "N-VI (Losada y Veiga)",
+    "lat": 42.9811212,
+    "lng": -7.5261416,
+    "lines": [
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s481",
+    "code": "MGHS",
+    "officialIds": [
+      481,
+      1105
+    ],
+    "officialToken": "MGHS",
+    "name": "N-VI (Babilonia)",
+    "lat": 42.9786216,
+    "lng": -7.5225994,
+    "lines": [
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s482",
+    "code": "VLLs",
+    "officialIds": [
+      482,
+      483,
+      1106
+    ],
+    "officialToken": "VLLs",
+    "name": "N-VI (Torre de Núñez)",
+    "lat": 42.977513,
+    "lng": -7.5170123,
+    "lines": [
+      "3.2",
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s484",
+    "code": "484",
+    "officialIds": [
+      484
+    ],
+    "officialToken": null,
+    "name": "N-VI (Ballestas Relámpago)",
+    "lat": 42.9779589,
+    "lng": -7.5146278,
+    "lines": [
+      "3.2"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s485",
+    "code": "Cubu",
+    "officialIds": [
+      485
+    ],
+    "officialToken": "Cubu",
+    "name": "N-VI (Ent. Fortaleza)",
+    "lat": 42.9778388,
+    "lng": -7.5169448,
+    "lines": [
+      "3.2"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s486",
+    "code": "pHlf",
+    "officialIds": [
+      486
+    ],
+    "officialToken": "pHlf",
+    "name": "N-VI (enfte. Babilonia)",
+    "lat": 42.9789181,
+    "lng": -7.5223208,
+    "lines": [
+      "3.2"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s487",
+    "code": "487",
+    "officialIds": [
+      487
+    ],
+    "officialToken": null,
+    "name": "N-VI (Carretillas)",
+    "lat": 42.9832282,
+    "lng": -7.5282068,
+    "lines": [
+      "3.2"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s500",
+    "code": "500",
+    "officialIds": [
+      500
+    ],
+    "officialToken": null,
+    "name": "Rúa Virxe Esperanza (enf. Nº 3)",
+    "lat": 42.9999688,
+    "lng": -7.5420777,
+    "lines": [
+      "3.2"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s524",
+    "code": "MAlq",
+    "officialIds": [
+      524,
+      582
+    ],
+    "officialToken": "MAlq",
+    "name": "Montero Ríos 86",
+    "lat": 43.0141926,
+    "lng": -7.5508916,
+    "lines": [
+      "4.1",
+      "4.2"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s525",
+    "code": "Ibpr",
+    "officialIds": [
+      525
+    ],
+    "officialToken": "Ibpr",
+    "name": "Adolfo Suárez 24-26",
+    "lat": 43.0161272,
+    "lng": -7.5496544,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s526",
+    "code": "526",
+    "officialIds": [
+      526
+    ],
+    "officialToken": null,
+    "name": "Adolfo Suárez 50",
+    "lat": 43.0166336,
+    "lng": -7.5483532,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s527",
+    "code": "527",
+    "officialIds": [
+      527
+    ],
+    "officialToken": null,
+    "name": "Adolfo Suárez 112",
+    "lat": 43.0187672,
+    "lng": -7.5478074,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s528",
+    "code": "Lqcf",
+    "officialIds": [
+      528
+    ],
+    "officialToken": "Lqcf",
+    "name": "Estda. Fervedoira 20",
+    "lat": 43.0214274,
+    "lng": -7.5469042,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s529",
+    "code": "meMR",
+    "officialIds": [
+      529
+    ],
+    "officialToken": "meMR",
+    "name": "Estda. Fervedoira (enfte. Nº 15)",
+    "lat": 43.0249269,
+    "lng": -7.5449831,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s530",
+    "code": "rPMi",
+    "officialIds": [
+      530
+    ],
+    "officialToken": "rPMi",
+    "name": "Estda. Fervedoira 58",
+    "lat": 43.0276586,
+    "lng": -7.5434525,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s531",
+    "code": "qTAO",
+    "officialIds": [
+      531
+    ],
+    "officialToken": "qTAO",
+    "name": "N-640 (O Pazo)",
+    "lat": 43.0303092,
+    "lng": -7.5376265,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s532",
+    "code": "532",
+    "officialIds": [
+      532,
+      545
+    ],
+    "officialToken": null,
+    "name": "N-640 (Taller López y Vázquez)",
+    "lat": 43.0315207,
+    "lng": -7.5352216,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s533",
+    "code": "533",
+    "officialIds": [
+      533,
+      546
+    ],
+    "officialToken": null,
+    "name": "N-640 (Jorge I)",
+    "lat": 43.0345524,
+    "lng": -7.5310584,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s534",
+    "code": "Uifo",
+    "officialIds": [
+      534
+    ],
+    "officialToken": "Uifo",
+    "name": "N-640 (Grúas Castelao)",
+    "lat": 43.0357636,
+    "lng": -7.5292112,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s535",
+    "code": "535",
+    "officialIds": [
+      535
+    ],
+    "officialToken": null,
+    "name": "Pista Muxa (Gasolineira BP)",
+    "lat": 43.0372197,
+    "lng": -7.5281383,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s536",
+    "code": "536",
+    "officialIds": [
+      536,
+      549
+    ],
+    "officialToken": null,
+    "name": "Pista Muxa (Cruce pista urbanización)",
+    "lat": 43.0395245,
+    "lng": -7.5284061,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s537",
+    "code": "IiLo",
+    "officialIds": [
+      537
+    ],
+    "officialToken": "IiLo",
+    "name": "Urbanización Campiña",
+    "lat": 43.0389174,
+    "lng": -7.5298713,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s538",
+    "code": "538",
+    "officialIds": [
+      538,
+      556
+    ],
+    "officialToken": null,
+    "name": "Pista Mercedes Ditram 14",
+    "lat": 43.0364447,
+    "lng": -7.5329305,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s539",
+    "code": "539",
+    "officialIds": [
+      539
+    ],
+    "officialToken": null,
+    "name": "N-640 (Ditram)",
+    "lat": 43.034584,
+    "lng": -7.5318424,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s540",
+    "code": "DtLp",
+    "officialIds": [
+      540
+    ],
+    "officialToken": "DtLp",
+    "name": "N-640 (antes rtda. Rda. Norte)",
+    "lat": 43.0322116,
+    "lng": -7.5348068,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s547",
+    "code": "547",
+    "officialIds": [
+      547
+    ],
+    "officialToken": null,
+    "name": "N-640 (Grúas Castelao)",
+    "lat": 43.0357636,
+    "lng": -7.5292112,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s548",
+    "code": "WieC",
+    "officialIds": [
+      548
+    ],
+    "officialToken": "WieC",
+    "name": "Pista Muxa (Gasolineira BP)",
+    "lat": 43.0372197,
+    "lng": -7.5281383,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s550",
+    "code": "550",
+    "officialIds": [
+      550
+    ],
+    "officialToken": null,
+    "name": "Pista Muxa (dir. Muxa)*",
+    "lat": 43.0408402,
+    "lng": -7.5292382,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s551",
+    "code": "551",
+    "officialIds": [
+      551
+    ],
+    "officialToken": null,
+    "name": "Pista Muxa (enf. Serradoiro) *",
+    "lat": 43.0447248,
+    "lng": -7.5302831,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s552",
+    "code": "552",
+    "officialIds": [
+      552
+    ],
+    "officialToken": null,
+    "name": "Igrexa Muxa *",
+    "lat": 43.0478423,
+    "lng": -7.5261631,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s553",
+    "code": "553",
+    "officialIds": [
+      553
+    ],
+    "officialToken": null,
+    "name": "Pista Muxa 40 *",
+    "lat": 43.0447498,
+    "lng": -7.5304436,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s554",
+    "code": "554",
+    "officialIds": [
+      554
+    ],
+    "officialToken": null,
+    "name": "Pista Muxa 8 *",
+    "lat": 43.0407045,
+    "lng": -7.5292274,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s555",
+    "code": "555",
+    "officialIds": [
+      555
+    ],
+    "officialToken": null,
+    "name": "Urbanización Campiña",
+    "lat": 43.0389174,
+    "lng": -7.5298713,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s557",
+    "code": "Ltqu",
+    "officialIds": [
+      557
+    ],
+    "officialToken": "Ltqu",
+    "name": "N-640 (Ditram)",
+    "lat": 43.034584,
+    "lng": -7.5318424,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s559",
+    "code": "whcm",
+    "officialIds": [
+      559
+    ],
+    "officialToken": "whcm",
+    "name": "N-640 (pista Serradoiro)",
+    "lat": 43.0309123,
+    "lng": -7.536715,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s560",
+    "code": "VqtX",
+    "officialIds": [
+      560
+    ],
+    "officialToken": "VqtX",
+    "name": "N-640 (Fuente)",
+    "lat": 43.0287849,
+    "lng": -7.5424978,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "As Gándaras",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s561",
+    "code": "Emlv",
+    "officialIds": [
+      561
+    ],
+    "officialToken": "Emlv",
+    "name": "N-640 (Taller Tractores)",
+    "lat": 43.0268585,
+    "lng": -7.5442363,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s562",
+    "code": "MOjh",
+    "officialIds": [
+      562
+    ],
+    "officialToken": "MOjh",
+    "name": "Estda. Fervedoira 15",
+    "lat": 43.0245788,
+    "lng": -7.5452671,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s563",
+    "code": "wcio",
+    "officialIds": [
+      563
+    ],
+    "officialToken": "wcio",
+    "name": "Estda. Fervedoira (enfte. Nº 20)",
+    "lat": 43.0219455,
+    "lng": -7.5470286,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s564",
+    "code": "564",
+    "officialIds": [
+      564
+    ],
+    "officialToken": null,
+    "name": "Adolfo Suárez 81",
+    "lat": 43.0188199,
+    "lng": -7.5478949,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s565",
+    "code": "565",
+    "officialIds": [
+      565
+    ],
+    "officialToken": null,
+    "name": "Adolfo Suárez 33",
+    "lat": 43.0165823,
+    "lng": -7.5485593,
+    "lines": [
+      "4.1"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s566",
+    "code": "NxuP",
+    "officialIds": [
+      566,
+      1197
+    ],
+    "officialToken": "NxuP",
+    "name": "Adolfo Suárez (cr. Serra de Meira)",
+    "lat": 43.0163495,
+    "lng": -7.5506725,
+    "lines": [
+      "4.1",
+      "13"
+    ],
+    "zone": "Estación",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s567",
+    "code": "LEhk",
+    "officialIds": [
+      567,
+      602,
+      1198
+    ],
+    "officialToken": "LEhk",
+    "name": "Montero Ríos (enfte. Nº 83)",
+    "lat": 43.0143481,
+    "lng": -7.551256,
+    "lines": [
+      "4.1",
+      "4.2",
+      "13"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s583",
+    "code": "dOol",
+    "officialIds": [
+      583
+    ],
+    "officialToken": "dOol",
+    "name": "Serra de Meira 16",
+    "lat": 43.0167138,
+    "lng": -7.5517375,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s584",
+    "code": "fSJm",
+    "officialIds": [
+      584
+    ],
+    "officialToken": "fSJm",
+    "name": "Serra de Meira 68",
+    "lat": 43.0177955,
+    "lng": -7.5542074,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s585",
+    "code": "585",
+    "officialIds": [
+      585
+    ],
+    "officialToken": null,
+    "name": "Czda. Gándaras (enfte. Nº 53)",
+    "lat": 43.0200277,
+    "lng": -7.5534611,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s586",
+    "code": "586",
+    "officialIds": [
+      586
+    ],
+    "officialToken": null,
+    "name": "Czda. Gándaras 134",
+    "lat": 43.0227133,
+    "lng": -7.5516673,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s587",
+    "code": "vRRn",
+    "officialIds": [
+      587,
+      1186
+    ],
+    "officialToken": "vRRn",
+    "name": "Czda. Gándaras 284",
+    "lat": 43.0267256,
+    "lng": -7.5500791,
+    "lines": [
+      "4.2",
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s588",
+    "code": "PcGp",
+    "officialIds": [
+      588,
+      1187
+    ],
+    "officialToken": "PcGp",
+    "name": "Czda. Gándaras 366",
+    "lat": 43.0296021,
+    "lng": -7.5495738,
+    "lines": [
+      "4.2",
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s589",
+    "code": "dsZY",
+    "officialIds": [
+      589
+    ],
+    "officialToken": "dsZY",
+    "name": "Czda. Gándaras (enfte. Residencia)",
+    "lat": 43.0313257,
+    "lng": -7.549635,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s595",
+    "code": "lisr",
+    "officialIds": [
+      595,
+      1188,
+      1189
+    ],
+    "officialToken": "lisr",
+    "name": "Czda. Gándaras (Residencia)",
+    "lat": 43.0311586,
+    "lng": -7.5496931,
+    "lines": [
+      "4.2",
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s596",
+    "code": "MhoI",
+    "officialIds": [
+      596,
+      1190
+    ],
+    "officialToken": "MhoI",
+    "name": "Czda. Gándaras 335",
+    "lat": 43.0295046,
+    "lng": -7.5496839,
+    "lines": [
+      "4.2",
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s597",
+    "code": "akCa",
+    "officialIds": [
+      597,
+      1191
+    ],
+    "officialToken": "akCa",
+    "name": "Czda. Gándaras (Cruce Virxe Soidade)",
+    "lat": 43.0265229,
+    "lng": -7.5501732,
+    "lines": [
+      "4.2",
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s598",
+    "code": "rNHd",
+    "officialIds": [
+      598,
+      1192
+    ],
+    "officialToken": "rNHd",
+    "name": "Czda. Gándaras 197",
+    "lat": 43.024333,
+    "lng": -7.5511398,
+    "lines": [
+      "4.2",
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s599",
+    "code": "mRTI",
+    "officialIds": [
+      599
+    ],
+    "officialToken": "mRTI",
+    "name": "Czda. Gándaras 53",
+    "lat": 43.0200351,
+    "lng": -7.5535928,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s600",
+    "code": "moil",
+    "officialIds": [
+      600
+    ],
+    "officialToken": "moil",
+    "name": "Serra de Meira (enfte. Nº 68)",
+    "lat": 43.0175394,
+    "lng": -7.5542639,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s601",
+    "code": "bVJY",
+    "officialIds": [
+      601
+    ],
+    "officialToken": "bVJY",
+    "name": "Serra de Meira (Parque)",
+    "lat": 43.0166304,
+    "lng": -7.5517147,
+    "lines": [
+      "4.2"
+    ],
+    "zone": "Estación",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s605",
+    "code": "xRiq",
+    "officialIds": [
+      605,
+      677,
+      710,
+      770,
+      771,
+      835,
+      927,
+      1063
+    ],
+    "officialToken": "xRiq",
+    "name": "Avda. Américas 36 (Amadeus)",
+    "lat": 43.0101741,
+    "lng": -7.5686238,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s606",
+    "code": "frSm",
+    "officialIds": [
+      606,
+      711,
+      772,
+      940,
+      1085
+    ],
+    "officialToken": "frSm",
+    "name": "Avda. Américas 51",
+    "lat": 43.0102347,
+    "lng": -7.5684053,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s607",
+    "code": "IjDO",
+    "officialIds": [
+      607,
+      773,
+      896
+    ],
+    "officialToken": "IjDO",
+    "name": "Rda. do Carme 69 (Mercadona)",
+    "lat": 43.0105103,
+    "lng": -7.5658294,
+    "lines": [
+      "5DS",
+      "5.2",
+      "7"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s608",
+    "code": "gjuB",
+    "officialIds": [
+      608,
+      774,
+      897
+    ],
+    "officialToken": "gjuB",
+    "name": "Rda. do Carme 51",
+    "lat": 43.008725,
+    "lng": -7.5655339,
+    "lines": [
+      "5DS",
+      "5.2",
+      "7"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s609",
+    "code": "fOwh",
+    "officialIds": [
+      609,
+      775,
+      898
+    ],
+    "officialToken": "fOwh",
+    "name": "Rda. do Carme 23-25",
+    "lat": 43.0061408,
+    "lng": -7.5645762,
+    "lines": [
+      "5DS",
+      "5.2",
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s610",
+    "code": "QXpz",
+    "officialIds": [
+      610,
+      776,
+      853
+    ],
+    "officialToken": "QXpz",
+    "name": "Avda. Magoi 12",
+    "lat": 43.0016184,
+    "lng": -7.5582711,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s611",
+    "code": "611",
+    "officialIds": [
+      611,
+      777,
+      854
+    ],
+    "officialToken": null,
+    "name": "Avda. Magoi 58",
+    "lat": 42.9992024,
+    "lng": -7.5583735,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s612",
+    "code": "HVHn",
+    "officialIds": [
+      612,
+      778,
+      855
+    ],
+    "officialToken": "HVHn",
+    "name": "Avda. Magoi 80",
+    "lat": 42.9968225,
+    "lng": -7.5571268,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s613",
+    "code": "YxuP",
+    "officialIds": [
+      613,
+      779,
+      856,
+      861
+    ],
+    "officialToken": "YxuP",
+    "name": "Avda. Magoi 92",
+    "lat": 42.9952859,
+    "lng": -7.5560023,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s630",
+    "code": "eaAp",
+    "officialIds": [
+      630,
+      730,
+      792,
+      1027
+    ],
+    "officialToken": "eaAp",
+    "name": "San Eufrasio 38",
+    "lat": 43.0128985,
+    "lng": -7.5487552,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s631",
+    "code": "POqt",
+    "officialIds": [
+      631,
+      731,
+      793,
+      1028
+    ],
+    "officialToken": "POqt",
+    "name": "San Eufrasio 108",
+    "lat": 43.0103269,
+    "lng": -7.5477237,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s632",
+    "code": "jSgd",
+    "officialIds": [
+      632,
+      732,
+      794,
+      1029
+    ],
+    "officialToken": "jSgd",
+    "name": "San Eufrasio 172",
+    "lat": 43.0083803,
+    "lng": -7.5440964,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s633",
+    "code": "633",
+    "officialIds": [
+      633,
+      733,
+      795,
+      1030
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada (desp. Vía tren)",
+    "lat": 43.010402,
+    "lng": -7.5405612,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s634",
+    "code": "634",
+    "officialIds": [
+      634,
+      734,
+      796,
+      1031
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada (enf. Pista Iglesia)",
+    "lat": 43.0105777,
+    "lng": -7.5387995,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s635",
+    "code": "imEB",
+    "officialIds": [
+      635,
+      735,
+      798,
+      1033
+    ],
+    "officialToken": "imEB",
+    "name": "Estda. Fonsagrada (pista Castelo de abaixo)",
+    "lat": 43.0119314,
+    "lng": -7.5314489,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s636",
+    "code": "636",
+    "officialIds": [
+      636,
+      736,
+      797,
+      1032
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada 102 (dir. HULA)",
+    "lat": 43.0115568,
+    "lng": -7.5337458,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s637",
+    "code": "doPB",
+    "officialIds": [
+      637,
+      737,
+      799,
+      1034
+    ],
+    "officialToken": "doPB",
+    "name": "Estda. Fonsagrada (pista O Campo)",
+    "lat": 43.0121649,
+    "lng": -7.5286529,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s641",
+    "code": "641",
+    "officialIds": [
+      641,
+      743,
+      803,
+      1047
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada (pista Militares)",
+    "lat": 43.0122775,
+    "lng": -7.5286439,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s642",
+    "code": "WrSQ",
+    "officialIds": [
+      642,
+      744,
+      804,
+      1048
+    ],
+    "officialToken": "WrSQ",
+    "name": "Estda. Fonsagrada (cruce estda. Vella)",
+    "lat": 43.0118971,
+    "lng": -7.5327931,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s643",
+    "code": "hMoJ",
+    "officialIds": [
+      643,
+      745,
+      805
+    ],
+    "officialToken": "hMoJ",
+    "name": "Estda. Fonsagrada (nueva variante)",
+    "lat": 43.0113315,
+    "lng": -7.5347603,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s644",
+    "code": "QQjZ",
+    "officialIds": [
+      644,
+      746,
+      806,
+      1049
+    ],
+    "officialToken": "QQjZ",
+    "name": "Estda. Fonsagrada (pista Iglesia)",
+    "lat": 43.0106664,
+    "lng": -7.5388247,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s645",
+    "code": "645",
+    "officialIds": [
+      645,
+      747,
+      807,
+      1050
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada (desp. Vía tren)",
+    "lat": 43.0098255,
+    "lng": -7.5415331,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s646",
+    "code": "ZCkD",
+    "officialIds": [
+      646,
+      748,
+      808,
+      1051
+    ],
+    "officialToken": "ZCkD",
+    "name": "San Eufrasio 165 (Bar)",
+    "lat": 43.0084207,
+    "lng": -7.5442511,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s647",
+    "code": "crQm",
+    "officialIds": [
+      647,
+      749,
+      809,
+      1052
+    ],
+    "officialToken": "crQm",
+    "name": "San Eufrasio (enfte. Nº 108)",
+    "lat": 43.0103575,
+    "lng": -7.5476222,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Fontiñas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s648",
+    "code": "wduu",
+    "officialIds": [
+      648,
+      750,
+      810,
+      1053
+    ],
+    "officialToken": "wduu",
+    "name": "San Eufrasio 7 (Abrite)",
+    "lat": 43.012493,
+    "lng": -7.5487256,
+    "lines": [
+      "5DS",
+      "5.1",
+      "5.2",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s668",
+    "code": "jUcg",
+    "officialIds": [
+      668,
+      870
+    ],
+    "officialToken": "jUcg",
+    "name": "Avda. Magoi (dte. Gadis)",
+    "lat": 42.9952579,
+    "lng": -7.5556865,
+    "lines": [
+      "5DS",
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s669",
+    "code": "Hbev",
+    "officialIds": [
+      669,
+      827,
+      871
+    ],
+    "officialToken": "Hbev",
+    "name": "Avda. Magoi 23",
+    "lat": 42.9968248,
+    "lng": -7.556909,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s670",
+    "code": "KhdH",
+    "officialIds": [
+      670,
+      828,
+      872
+    ],
+    "officialToken": "KhdH",
+    "name": "Avda. Magoi (dte. Auditorio)",
+    "lat": 42.9991736,
+    "lng": -7.5581891,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "A Ponte",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s671",
+    "code": "FccT",
+    "officialIds": [
+      671,
+      829,
+      873
+    ],
+    "officialToken": "FccT",
+    "name": "Avda. Magoi 9-11-13",
+    "lat": 43.0014948,
+    "lng": -7.5580368,
+    "lines": [
+      "5DS",
+      "5.2",
+      "6"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s672",
+    "code": "uMsY",
+    "officialIds": [
+      672,
+      830,
+      912,
+      1060
+    ],
+    "officialToken": "uMsY",
+    "name": "Rda. do Carme 6",
+    "lat": 43.0055126,
+    "lng": -7.5637754,
+    "lines": [
+      "5DS",
+      "5.2",
+      "7",
+      "11-Calde"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s673",
+    "code": "KWnB",
+    "officialIds": [
+      673,
+      831,
+      913,
+      1061
+    ],
+    "officialToken": "KWnB",
+    "name": "Rda. do Carme (esq. Rúa Valuro)",
+    "lat": 43.0090132,
+    "lng": -7.5653419,
+    "lines": [
+      "5DS",
+      "5.2",
+      "7",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s674",
+    "code": "Ukul",
+    "officialIds": [
+      674,
+      832,
+      914
+    ],
+    "officialToken": "Ukul",
+    "name": "Rda. do Carme 52",
+    "lat": 43.0105335,
+    "lng": -7.5655613,
+    "lines": [
+      "5DS",
+      "5.2",
+      "7"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s675",
+    "code": "dhHs",
+    "officialIds": [
+      675,
+      678,
+      709,
+      768,
+      833,
+      925,
+      1062
+    ],
+    "officialToken": "dhHs",
+    "name": "Fonte dos Ranchos 29-30",
+    "lat": 43.0121026,
+    "lng": -7.5670541,
+    "lines": [
+      "5DS",
+      "5ES",
+      "5.1",
+      "5.2",
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s676",
+    "code": "tUZl",
+    "officialIds": [
+      676,
+      679,
+      769,
+      834,
+      926
+    ],
+    "officialToken": "tUZl",
+    "name": "Rúa Saúde (dte. Antiguo Hospital Xeral)",
+    "lat": 43.0117177,
+    "lng": -7.5692557,
+    "lines": [
+      "5DS",
+      "5ES",
+      "5.1",
+      "5.2",
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s680",
+    "code": "pgpS",
+    "officialIds": [
+      680,
+      961
+    ],
+    "officialToken": "pgpS",
+    "name": "Rúa Aquilino Iglesias 17",
+    "lat": 43.0150403,
+    "lng": -7.5721068,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s681",
+    "code": "LHMI",
+    "officialIds": [
+      681,
+      962
+    ],
+    "officialToken": "LHMI",
+    "name": "Rúa Aquilino Iglesias 1 (Farmacia)",
+    "lat": 43.0168592,
+    "lng": -7.5721244,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s682",
+    "code": "rNyM",
+    "officialIds": [
+      682,
+      963
+    ],
+    "officialToken": "rNyM",
+    "name": "Rúa Lamas de Prado 141",
+    "lat": 43.0166686,
+    "lng": -7.5706338,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s683",
+    "code": "PQlB",
+    "officialIds": [
+      683,
+      964
+    ],
+    "officialToken": "PQlB",
+    "name": "Rúa Lamas de Prado 93",
+    "lat": 43.0161906,
+    "lng": -7.5680248,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s684",
+    "code": "nPhL",
+    "officialIds": [
+      684,
+      965
+    ],
+    "officialToken": "nPhL",
+    "name": "Rúa Amizade 1 (esq. Rúa Quiroga)",
+    "lat": 43.0151685,
+    "lng": -7.5668131,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s685",
+    "code": "LEoU",
+    "officialIds": [
+      685
+    ],
+    "officialToken": "LEoU",
+    "name": "Rda. Valle Inclán 6",
+    "lat": 43.0189616,
+    "lng": -7.5665552,
+    "lines": [
+      "5ES"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s699",
+    "code": "JVXE",
+    "officialIds": [
+      699,
+      949
+    ],
+    "officialToken": "JVXE",
+    "name": "Praza Agro do Rolo",
+    "lat": 43.0208872,
+    "lng": -7.5653875,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s700",
+    "code": "EEzJ",
+    "officialIds": [
+      700,
+      950
+    ],
+    "officialToken": "EEzJ",
+    "name": "Rda. Valle Inclán 21",
+    "lat": 43.0191151,
+    "lng": -7.5664457,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s701",
+    "code": "qulH",
+    "officialIds": [
+      701,
+      951
+    ],
+    "officialToken": "qulH",
+    "name": "Rúa dos Gardas 1-3",
+    "lat": 43.0162426,
+    "lng": -7.5669129,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s702",
+    "code": "BNrX",
+    "officialIds": [
+      702,
+      952
+    ],
+    "officialToken": "BNrX",
+    "name": "Rúa Lamas de Prado 118",
+    "lat": 43.016351,
+    "lng": -7.5687459,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s703",
+    "code": "ETof",
+    "officialIds": [
+      703,
+      953
+    ],
+    "officialToken": "ETof",
+    "name": "Rúa Lamas de Prado 164-166",
+    "lat": 43.0168807,
+    "lng": -7.5712801,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s704",
+    "code": "GCtl",
+    "officialIds": [
+      704,
+      954
+    ],
+    "officialToken": "GCtl",
+    "name": "Rúa Lamas de Prado 212",
+    "lat": 43.0174085,
+    "lng": -7.5735567,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s705",
+    "code": "ySql",
+    "officialIds": [
+      705,
+      955
+    ],
+    "officialToken": "ySql",
+    "name": "Rúa Oliveira 4",
+    "lat": 43.017104,
+    "lng": -7.5760497,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s706",
+    "code": "706",
+    "officialIds": [
+      706,
+      956
+    ],
+    "officialToken": null,
+    "name": "Rúa Orquídea 125",
+    "lat": 43.0161212,
+    "lng": -7.5767431,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s707",
+    "code": "LpVH",
+    "officialIds": [
+      707,
+      957,
+      958
+    ],
+    "officialToken": "LpVH",
+    "name": "Rúa Orquídea 55 (Colexio Casás)",
+    "lat": 43.0140557,
+    "lng": -7.5741631,
+    "lines": [
+      "5ES",
+      "9"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s708",
+    "code": "708",
+    "officialIds": [
+      708
+    ],
+    "officialToken": null,
+    "name": "Rúa Saúde (dte. Antiguo Hospital Xeral)",
+    "lat": 43.0115096,
+    "lng": -7.5691885,
+    "lines": [
+      "5ES"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s738",
+    "code": "738",
+    "officialIds": [
+      738,
+      1037
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada (Taller Tractores)",
+    "lat": 43.012844,
+    "lng": -7.5215621,
+    "lines": [
+      "5.1",
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s712",
+    "code": "cvzh",
+    "officialIds": [
+      712,
+      915,
+      941,
+      1086
+    ],
+    "officialToken": "cvzh",
+    "name": "Fonte dos Ranchos 42-43",
+    "lat": 43.0123869,
+    "lng": -7.5656709,
+    "lines": [
+      "5.1",
+      "7",
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s713",
+    "code": "QQBy",
+    "officialIds": [
+      713,
+      916,
+      942,
+      967
+    ],
+    "officialToken": "QQBy",
+    "name": "Rúa Doutor Gasalla 3",
+    "lat": 43.013067,
+    "lng": -7.5631213,
+    "lines": [
+      "5.1",
+      "7",
+      "8",
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s767",
+    "code": "YvEK",
+    "officialIds": [
+      767,
+      895,
+      924
+    ],
+    "officialToken": "YvEK",
+    "name": "Fonte dos Ranchos 8 (Cafetería Prados)",
+    "lat": 43.012855,
+    "lng": -7.5656459,
+    "lines": [
+      "5.1",
+      "7",
+      "8"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s824",
+    "code": "cHqH",
+    "officialIds": [
+      824,
+      852,
+      972,
+      1059
+    ],
+    "officialToken": "cHqH",
+    "name": "Pintor Corredoira (Politécnico)",
+    "lat": 43.0038934,
+    "lng": -7.5568929,
+    "lines": [
+      "5.2",
+      "6",
+      "10",
+      "11-Calde"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s825",
+    "code": "825",
+    "officialIds": [
+      825
+    ],
+    "officialToken": null,
+    "name": "Rda. Fingoi (cenf. R.Illa de Man)",
+    "lat": 43.0010185,
+    "lng": -7.554303,
+    "lines": [
+      "5.2"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s836",
+    "code": "bBXD",
+    "officialIds": [
+      836,
+      890
+    ],
+    "officialToken": "bBXD",
+    "name": "Rúa Sto. Graal 147",
+    "lat": 43.0261303,
+    "lng": -7.5733612,
+    "lines": [
+      "6"
+    ],
+    "zone": "Garabolos",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s837",
+    "code": "Onjq",
+    "officialIds": [
+      837
+    ],
+    "officialToken": "Onjq",
+    "name": "Rúa Sto. Graal 119",
+    "lat": 43.0252988,
+    "lng": -7.5730613,
+    "lines": [
+      "6"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s838",
+    "code": "lqog",
+    "officialIds": [
+      838
+    ],
+    "officialToken": "lqog",
+    "name": "Rúa Sto. Graal (enfte. Nº 58)",
+    "lat": 43.0235397,
+    "lng": -7.5722,
+    "lines": [
+      "6"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s839",
+    "code": "pQFr",
+    "officialIds": [
+      839
+    ],
+    "officialToken": "pQFr",
+    "name": "Rúa Sto. Graal 1 (esq. Mar Cantábrico)",
+    "lat": 43.0219017,
+    "lng": -7.5704791,
+    "lines": [
+      "6"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s840",
+    "code": "MsKS",
+    "officialIds": [
+      840
+    ],
+    "officialToken": "MsKS",
+    "name": "Rúa Camiño Real 197",
+    "lat": 43.0203138,
+    "lng": -7.5678988,
+    "lines": [
+      "6"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s841",
+    "code": "qeHY",
+    "officialIds": [
+      841
+    ],
+    "officialToken": "qeHY",
+    "name": "Rúa Camiño Real 141",
+    "lat": 43.0189076,
+    "lng": -7.5658051,
+    "lines": [
+      "6"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s842",
+    "code": "842",
+    "officialIds": [
+      842
+    ],
+    "officialToken": null,
+    "name": "Rúa Camiño Real 119",
+    "lat": 43.0181852,
+    "lng": -7.5648303,
+    "lines": [
+      "6"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s843",
+    "code": "GcLN",
+    "officialIds": [
+      843
+    ],
+    "officialToken": "GcLN",
+    "name": "Rúa Camiño Real 93",
+    "lat": 43.0172989,
+    "lng": -7.563772,
+    "lines": [
+      "6"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s844",
+    "code": "844",
+    "officialIds": [
+      844
+    ],
+    "officialToken": null,
+    "name": "Rúa Camiño Real 61",
+    "lat": 43.0162564,
+    "lng": -7.5624983,
+    "lines": [
+      "6"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s845",
+    "code": "845",
+    "officialIds": [
+      845
+    ],
+    "officialToken": null,
+    "name": "Rúa Concepción Arenal 48",
+    "lat": 43.0148288,
+    "lng": -7.5614251,
+    "lines": [
+      "6"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s846",
+    "code": "846",
+    "officialIds": [
+      846
+    ],
+    "officialToken": null,
+    "name": "Rúa Anduriñas 5",
+    "lat": 43.0128143,
+    "lng": -7.5628862,
+    "lines": [
+      "6"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s857",
+    "code": "DvZR",
+    "officialIds": [
+      857
+    ],
+    "officialToken": "DvZR",
+    "name": "Rúa da Zarra 1 (esq. Avda. Magoi)",
+    "lat": 42.9946482,
+    "lng": -7.5550198,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s858",
+    "code": "yadT",
+    "officialIds": [
+      858
+    ],
+    "officialToken": "yadT",
+    "name": "Rúa da Zarra (esq. Rúa Torna)",
+    "lat": 42.9933605,
+    "lng": -7.5551798,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s859",
+    "code": "kDMV",
+    "officialIds": [
+      859
+    ],
+    "officialToken": "kDMV",
+    "name": "Rúa da Torna 1",
+    "lat": 42.9945204,
+    "lng": -7.5576778,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s860",
+    "code": "QPlK",
+    "officialIds": [
+      860
+    ],
+    "officialToken": "QPlK",
+    "name": "Rúa do Valiño (esq. Rúa Bouza)",
+    "lat": 42.995268,
+    "lng": -7.5567218,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s862",
+    "code": "862",
+    "officialIds": [
+      862
+    ],
+    "officialToken": null,
+    "name": "Avda. Magoi (esq. Campos novos)",
+    "lat": 42.9947884,
+    "lng": -7.5512946,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s866",
+    "code": "YUmz",
+    "officialIds": [
+      866
+    ],
+    "officialToken": "YUmz",
+    "name": "Prof. Carvalho Calero (Col. Sta. María)",
+    "lat": 42.994994,
+    "lng": -7.54668,
+    "lines": [
+      "6"
+    ],
+    "zone": "Fingoi",
+    "shelter": true,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s867",
+    "code": "867",
+    "officialIds": [
+      867
+    ],
+    "officialToken": null,
+    "name": "Prof. Carvalho Calero (esq. Estda. Granxa)",
+    "lat": 42.994816,
+    "lng": -7.5493946,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s868",
+    "code": "WGCe",
+    "officialIds": [
+      868
+    ],
+    "officialToken": "WGCe",
+    "name": "Avda. Magoi 69 (Pizzbur)",
+    "lat": 42.9948499,
+    "lng": -7.5505194,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s869",
+    "code": "mgOP",
+    "officialIds": [
+      869
+    ],
+    "officialToken": "mgOP",
+    "name": "Avda. Magoi 110 (enfte. Bodega Pedro)",
+    "lat": 42.9948085,
+    "lng": -7.5536279,
+    "lines": [
+      "6"
+    ],
+    "zone": "Campus USC",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s874",
+    "code": "zJCJ",
+    "officialIds": [
+      874
+    ],
+    "officialToken": "zJCJ",
+    "name": "Pintor Corredoira (Politécnico)",
+    "lat": 43.0034192,
+    "lng": -7.5571947,
+    "lines": [
+      "6"
+    ],
+    "zone": "Sur / Ramón Ferreiro",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s887",
+    "code": "IJUk",
+    "officialIds": [
+      887
+    ],
+    "officialToken": "IJUk",
+    "name": "Rúa Lavandeira 10",
+    "lat": 43.0264517,
+    "lng": -7.5686802,
+    "lines": [
+      "6"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s888",
+    "code": "888",
+    "officialIds": [
+      888
+    ],
+    "officialToken": null,
+    "name": "Rúa Lavandeira (cr. Angelo Colocci)",
+    "lat": 43.025951,
+    "lng": -7.5697037,
+    "lines": [
+      "6"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s889",
+    "code": "Hfvz",
+    "officialIds": [
+      889
+    ],
+    "officialToken": "Hfvz",
+    "name": "Rúa Flor de Malva 14",
+    "lat": 43.0265217,
+    "lng": -7.5716821,
+    "lines": [
+      "6"
+    ],
+    "zone": "Garabolos",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s891",
+    "code": "OoZC",
+    "officialIds": [
+      891,
+      918,
+      944,
+      945,
+      969,
+      1135,
+      1173
+    ],
+    "officialToken": "OoZC",
+    "name": "Bolaño Ribadeneira 1",
+    "lat": 43.0132756,
+    "lng": -7.5578354,
+    "lines": [
+      "7",
+      "8",
+      "9",
+      "12"
+    ],
+    "zone": "Centro / Muralla",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s899",
+    "code": "GYCs",
+    "officialIds": [
+      899,
+      973
+    ],
+    "officialToken": "GYCs",
+    "name": "Rúa Santiago 110",
+    "lat": 43.0045046,
+    "lng": -7.5628671,
+    "lines": [
+      "7",
+      "10"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s900",
+    "code": "900",
+    "officialIds": [
+      900,
+      974
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella de Santiago (Balneario)",
+    "lat": 43.002763,
+    "lng": -7.5622942,
+    "lines": [
+      "7",
+      "10"
+    ],
+    "zone": "A Ponte",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s901",
+    "code": "901",
+    "officialIds": [
+      901,
+      975
+    ],
+    "officialToken": null,
+    "name": "Rotonda Piugos (dir. Ponte)",
+    "lat": 42.9938419,
+    "lng": -7.5667078,
+    "lines": [
+      "7",
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s902",
+    "code": "902",
+    "officialIds": [
+      902
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella de Santiago 169",
+    "lat": 42.9965412,
+    "lng": -7.5668566,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s903",
+    "code": "IyYu",
+    "officialIds": [
+      903
+    ],
+    "officialToken": "IyYu",
+    "name": "Polusa",
+    "lat": 42.9985198,
+    "lng": -7.5678813,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s904",
+    "code": "904",
+    "officialIds": [
+      904
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella de Santiago 115",
+    "lat": 42.9981664,
+    "lng": -7.5651531,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s905",
+    "code": "905",
+    "officialIds": [
+      905
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella de Santiago 39",
+    "lat": 43.0005031,
+    "lng": -7.5633159,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s906",
+    "code": "906",
+    "officialIds": [
+      906,
+      907
+    ],
+    "officialToken": null,
+    "name": "A Ponte (cruce Fluvial)",
+    "lat": 43.0013215,
+    "lng": -7.5634193,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s908",
+    "code": "908",
+    "officialIds": [
+      908
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella de Santiago 24",
+    "lat": 43.0005874,
+    "lng": -7.5633477,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s909",
+    "code": "eIoX",
+    "officialIds": [
+      909
+    ],
+    "officialToken": "eIoX",
+    "name": "Estda. Vella de Santiago 100",
+    "lat": 42.9981936,
+    "lng": -7.5652285,
+    "lines": [
+      "7"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s910",
+    "code": "910",
+    "officialIds": [
+      910,
+      991
+    ],
+    "officialToken": null,
+    "name": "Estda. Portomarín (Restaurante Aniceto)",
+    "lat": 42.9959166,
+    "lng": -7.5671359,
+    "lines": [
+      "7",
+      "10"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": false
+  },
+  {
+    "id": "s911",
+    "code": "911",
+    "officialIds": [
+      911,
+      992
+    ],
+    "officialToken": null,
+    "name": "Rotonda Piugos (dir. Centro)",
+    "lat": 42.9931,
+    "lng": -7.567201,
+    "lines": [
+      "7",
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s917",
+    "code": "DPEv",
+    "officialIds": [
+      917,
+      943,
+      968,
+      1172
+    ],
+    "officialToken": "DPEv",
+    "name": "Rúa Montevideo 7 (Sanatorio NSOG)",
+    "lat": 43.0119356,
+    "lng": -7.5620234,
+    "lines": [
+      "7",
+      "8",
+      "9",
+      "12"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s921",
+    "code": "sJDV",
+    "officialIds": [
+      921
+    ],
+    "officialToken": "sJDV",
+    "name": "Rúa Ourense 6 (esq. Rda. Muralla)",
+    "lat": 43.0132699,
+    "lng": -7.5620794,
+    "lines": [
+      "8"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s922",
+    "code": "NTlk",
+    "officialIds": [
+      922
+    ],
+    "officialToken": "NTlk",
+    "name": "Rúa Ourense 48",
+    "lat": 43.0146261,
+    "lng": -7.5641789,
+    "lines": [
+      "8"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s923",
+    "code": "XgVX",
+    "officialIds": [
+      923
+    ],
+    "officialToken": "XgVX",
+    "name": "Rúa Tui 50",
+    "lat": 43.0141235,
+    "lng": -7.565413,
+    "lines": [
+      "8"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s928",
+    "code": "HUNw",
+    "officialIds": [
+      928,
+      1064
+    ],
+    "officialToken": "HUNw",
+    "name": "Avda. Américas 88",
+    "lat": 43.0090956,
+    "lng": -7.5712058,
+    "lines": [
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s929",
+    "code": "Tfiy",
+    "officialIds": [
+      929
+    ],
+    "officialToken": "Tfiy",
+    "name": "Carrefour (Polideportivo Palomar)",
+    "lat": 43.004698,
+    "lng": -7.5726936,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s930",
+    "code": "930",
+    "officialIds": [
+      930
+    ],
+    "officialToken": null,
+    "name": "Avda. Fábrica da Luz (Pazo de Feiras)",
+    "lat": 43.0022283,
+    "lng": -7.5722553,
+    "lines": [
+      "8"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s931",
+    "code": "fhNU",
+    "officialIds": [
+      931
+    ],
+    "officialToken": "fhNU",
+    "name": "Rúa Río Mandeo (esq. Río Lea)",
+    "lat": 43.0080473,
+    "lng": -7.5684508,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s932",
+    "code": "ZDMg",
+    "officialIds": [
+      932
+    ],
+    "officialToken": "ZDMg",
+    "name": "Rúa Río Eume 8",
+    "lat": 43.0068888,
+    "lng": -7.5689729,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s933",
+    "code": "RIVr",
+    "officialIds": [
+      933,
+      934
+    ],
+    "officialToken": "RIVr",
+    "name": "Rúa Río Pambre (A Cheda)",
+    "lat": 43.0058828,
+    "lng": -7.5689396,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s935",
+    "code": "HYYf",
+    "officialIds": [
+      935
+    ],
+    "officialToken": "HYYf",
+    "name": "Rúa Río Landro 5",
+    "lat": 43.0069584,
+    "lng": -7.568493,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s936",
+    "code": "fcqx",
+    "officialIds": [
+      936
+    ],
+    "officialToken": "fcqx",
+    "name": "Rúa Río Mandeo (esq. F.L. Cuevillas)",
+    "lat": 43.008547,
+    "lng": -7.5686838,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s937",
+    "code": "Oims",
+    "officialIds": [
+      937
+    ],
+    "officialToken": "Oims",
+    "name": "Avda. Marqués de Ombreiro 116",
+    "lat": 43.0077621,
+    "lng": -7.5710497,
+    "lines": [
+      "8"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s938",
+    "code": "iWOP",
+    "officialIds": [
+      938,
+      1083
+    ],
+    "officialToken": "iWOP",
+    "name": "Avda. Américas 107 (esq. Músico Falla)",
+    "lat": 43.0089961,
+    "lng": -7.5715584,
+    "lines": [
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s939",
+    "code": "uRxj",
+    "officialIds": [
+      939,
+      1084
+    ],
+    "officialToken": "uRxj",
+    "name": "Avda. Américas 83 (Parrillada Antonio)",
+    "lat": 43.009169,
+    "lng": -7.5701837,
+    "lines": [
+      "8",
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s959",
+    "code": "uzHA",
+    "officialIds": [
+      959
+    ],
+    "officialToken": "uzHA",
+    "name": "Rúa Trapero Pardo 22",
+    "lat": 43.010966,
+    "lng": -7.5722594,
+    "lines": [
+      "9"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s960",
+    "code": "oMAP",
+    "officialIds": [
+      960
+    ],
+    "officialToken": "oMAP",
+    "name": "Rúa Trapero Pardo 3",
+    "lat": 43.0110928,
+    "lng": -7.5710551,
+    "lines": [
+      "9"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s966",
+    "code": "Xqcv",
+    "officialIds": [
+      966
+    ],
+    "officialToken": "Xqcv",
+    "name": "Rúa Doutor Gasalla 28",
+    "lat": 43.0141188,
+    "lng": -7.5647512,
+    "lines": [
+      "9"
+    ],
+    "zone": "Fonte dos Ranchos",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s976",
+    "code": "MDGT",
+    "officialIds": [
+      976
+    ],
+    "officialToken": "MDGT",
+    "name": "Estda. Vella Santiago 172 (Taller Crende)",
+    "lat": 42.9960723,
+    "lng": -7.5674158,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s977",
+    "code": "WLGx",
+    "officialIds": [
+      977
+    ],
+    "officialToken": "WLGx",
+    "name": "Estda. Vella Santiago 244",
+    "lat": 42.994416,
+    "lng": -7.5694127,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s978",
+    "code": "978",
+    "officialIds": [
+      978
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella Santiago (Aqualive)",
+    "lat": 42.9922221,
+    "lng": -7.5737455,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s979",
+    "code": "979",
+    "officialIds": [
+      979
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella Santiago (Cruce Louzaneta)",
+    "lat": 42.9905551,
+    "lng": -7.5777529,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s980",
+    "code": "BtIg",
+    "officialIds": [
+      980,
+      1079
+    ],
+    "officialToken": "BtIg",
+    "name": "Polígono Louzaneta, Rúa Mte. Torrón (Urbanización)",
+    "lat": 42.989122,
+    "lng": -7.5847522,
+    "lines": [
+      "10",
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s981",
+    "code": "UQHR",
+    "officialIds": [
+      981,
+      1080
+    ],
+    "officialToken": "UQHR",
+    "name": "Rotonda Estda. Friol (Hotel Santiago)",
+    "lat": 42.9869794,
+    "lng": -7.58988,
+    "lines": [
+      "10",
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s982",
+    "code": "DMoA",
+    "officialIds": [
+      982
+    ],
+    "officialToken": "DMoA",
+    "name": "Estda. Friol 35 (Verdilugo)",
+    "lat": 42.9878673,
+    "lng": -7.5856151,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s983",
+    "code": "pmQi",
+    "officialIds": [
+      983
+    ],
+    "officialToken": "pmQi",
+    "name": "Estda. Friol 21 (Aspnais)",
+    "lat": 42.9883776,
+    "lng": -7.5819106,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s984",
+    "code": "jNQO",
+    "officialIds": [
+      984,
+      985
+    ],
+    "officialToken": "jNQO",
+    "name": "Cementerio San Froilán",
+    "lat": 42.9855393,
+    "lng": -7.5806582,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s986",
+    "code": "kCBO",
+    "officialIds": [
+      986,
+      1076
+    ],
+    "officialToken": "kCBO",
+    "name": "Cementerio (esq. Estda. Friol, Taberna Xesús)",
+    "lat": 42.9858432,
+    "lng": -7.5815991,
+    "lines": [
+      "10",
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s987",
+    "code": "987",
+    "officialIds": [
+      987,
+      1077
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella Santiago (desp. Cruce est. Friol)",
+    "lat": 42.9891177,
+    "lng": -7.5788453,
+    "lines": [
+      "10",
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s988",
+    "code": "988",
+    "officialIds": [
+      988
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella Santiago (desp. Cruce Louzaneta)",
+    "lat": 42.9909042,
+    "lng": -7.5772937,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s989",
+    "code": "UBur",
+    "officialIds": [
+      989
+    ],
+    "officialToken": "UBur",
+    "name": "Estda. Vella Santiago 271 (enfte. Aqualive)",
+    "lat": 42.9922407,
+    "lng": -7.5734988,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s990",
+    "code": "990",
+    "officialIds": [
+      990
+    ],
+    "officialToken": null,
+    "name": "Estda. Vella Santiago 221",
+    "lat": 42.994146,
+    "lng": -7.5697877,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s993",
+    "code": "xryH",
+    "officialIds": [
+      993
+    ],
+    "officialToken": "xryH",
+    "name": "Rúa Santiago (Pavillón Deportes)",
+    "lat": 43.004742,
+    "lng": -7.5624712,
+    "lines": [
+      "10"
+    ],
+    "zone": "A Ponte",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s994",
+    "code": "BZsM",
+    "officialIds": [
+      994
+    ],
+    "officialToken": "BZsM",
+    "name": "Rúa Santiago (enfte. Czda da Ponte)",
+    "lat": 43.0069071,
+    "lng": -7.5622477,
+    "lines": [
+      "10"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s995",
+    "code": "pTQz",
+    "officialIds": [
+      995
+    ],
+    "officialToken": "pTQz",
+    "name": "Rúa Santiago 3",
+    "lat": 43.0082696,
+    "lng": -7.5598451,
+    "lines": [
+      "10"
+    ],
+    "zone": "Casco Histórico",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1003",
+    "code": "1003",
+    "officialIds": [
+      1003
+    ],
+    "officialToken": null,
+    "name": "Bagueixos",
+    "lat": 43.0507979,
+    "lng": -7.5846682,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1004",
+    "code": "1004",
+    "officialIds": [
+      1004
+    ],
+    "officialToken": null,
+    "name": "A Brea 33",
+    "lat": 43.0620209,
+    "lng": -7.5924225,
+    "lines": [
+      "11"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1005",
+    "code": "1005",
+    "officialIds": [
+      1005
+    ],
+    "officialToken": null,
+    "name": "A Brea 14",
+    "lat": 43.0645237,
+    "lng": -7.5917236,
+    "lines": [
+      "11"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1006",
+    "code": "1006",
+    "officialIds": [
+      1006
+    ],
+    "officialToken": null,
+    "name": "A Brea",
+    "lat": 43.057415,
+    "lng": -7.5868592,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1007",
+    "code": "1007",
+    "officialIds": [
+      1007
+    ],
+    "officialToken": null,
+    "name": "Tirimol",
+    "lat": 43.0584326,
+    "lng": -7.5804981,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1008",
+    "code": "1008",
+    "officialIds": [
+      1008
+    ],
+    "officialToken": null,
+    "name": "Seivane",
+    "lat": 43.0594814,
+    "lng": -7.5752852,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1009",
+    "code": "1009",
+    "officialIds": [
+      1009
+    ],
+    "officialToken": null,
+    "name": "Pedrouzón",
+    "lat": 43.0573018,
+    "lng": -7.5710432,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1010",
+    "code": "1010",
+    "officialIds": [
+      1010
+    ],
+    "officialToken": null,
+    "name": "Pías 13",
+    "lat": 43.0629971,
+    "lng": -7.5639415,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1011",
+    "code": "1011",
+    "officialIds": [
+      1011
+    ],
+    "officialToken": null,
+    "name": "Pías 2",
+    "lat": 43.068293,
+    "lng": -7.5579355,
+    "lines": [
+      "11"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1012",
+    "code": "1012",
+    "officialIds": [
+      1012,
+      1013
+    ],
+    "officialToken": null,
+    "name": "Pías 11",
+    "lat": 43.0618002,
+    "lng": -7.5658087,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1014",
+    "code": "1014",
+    "officialIds": [
+      1014
+    ],
+    "officialToken": null,
+    "name": "Porto (dir. Ceao)",
+    "lat": 43.0559349,
+    "lng": -7.5655734,
+    "lines": [
+      "11"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1038",
+    "code": "1038",
+    "officialIds": [
+      1038
+    ],
+    "officialToken": null,
+    "name": "Barbaín (dir. Bóveda)",
+    "lat": 43.0073441,
+    "lng": -7.5175337,
+    "lines": [
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1039",
+    "code": "1039",
+    "officialIds": [
+      1039
+    ],
+    "officialToken": null,
+    "name": "Cruce Farxocos - Bóveda (dir. Bóveda)",
+    "lat": 43.0012059,
+    "lng": -7.4924215,
+    "lines": [
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1040",
+    "code": "1040",
+    "officialIds": [
+      1040,
+      1041
+    ],
+    "officialToken": null,
+    "name": "Igrexa de Bóveda",
+    "lat": 42.997158,
+    "lng": -7.4963791,
+    "lines": [
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1042",
+    "code": "1042",
+    "officialIds": [
+      1042
+    ],
+    "officialToken": null,
+    "name": "Cruce Farxocos - Bóveda (dir. centro)",
+    "lat": 43.0011032,
+    "lng": -7.4922973,
+    "lines": [
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1043",
+    "code": "1043",
+    "officialIds": [
+      1043
+    ],
+    "officialToken": null,
+    "name": "Barbaín (dir. centro)",
+    "lat": 43.0073157,
+    "lng": -7.5173516,
+    "lines": [
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1044",
+    "code": "1044",
+    "officialIds": [
+      1044
+    ],
+    "officialToken": null,
+    "name": "Estda. Fonsagrada 196",
+    "lat": 43.0128784,
+    "lng": -7.522106,
+    "lines": [
+      "11-Igrexa de Bóveda"
+    ],
+    "zone": "HULA",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1065",
+    "code": "1065",
+    "officialIds": [
+      1065,
+      1082
+    ],
+    "officialToken": null,
+    "name": "Estda. Nova Santiago (Monte Segade)",
+    "lat": 43.0091297,
+    "lng": -7.5712505,
+    "lines": [
+      "11-Calde"
+    ],
+    "zone": "Oeste / Américas",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1066",
+    "code": "1066",
+    "officialIds": [
+      1066,
+      1081
+    ],
+    "officialToken": null,
+    "name": "Estda. Nova Santiago (Comp. Santiago)",
+    "lat": 42.9978867,
+    "lng": -7.5870439,
+    "lines": [
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1067",
+    "code": "1067",
+    "officialIds": [
+      1067
+    ],
+    "officialToken": null,
+    "name": "Vía Servicio (enfte. Exágono)",
+    "lat": 42.9853036,
+    "lng": -7.5882547,
+    "lines": [
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1068",
+    "code": "1068",
+    "officialIds": [
+      1068,
+      1069
+    ],
+    "officialToken": null,
+    "name": "Calde (Hospital)",
+    "lat": 42.9549118,
+    "lng": -7.6013503,
+    "lines": [
+      "11-Calde"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1078",
+    "code": "iDDe",
+    "officialIds": [
+      1078
+    ],
+    "officialToken": "iDDe",
+    "name": "Polígono Louzaneta, Rúa Mte. Torrón (Monbus)",
+    "lat": 42.9900669,
+    "lng": -7.5815242,
+    "lines": [
+      "11-Calde"
+    ],
+    "zone": "A Cheda",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1107",
+    "code": "1107",
+    "officialIds": [
+      1107
+    ],
+    "officialToken": null,
+    "name": "N-VI (Curva Cuco)",
+    "lat": 42.9766488,
+    "lng": -7.5123321,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1108",
+    "code": "1108",
+    "officialIds": [
+      1108
+    ],
+    "officialToken": null,
+    "name": "N-VI (dte. Fábrica de Leche)",
+    "lat": 42.9721122,
+    "lng": -7.5089316,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1109",
+    "code": "1109",
+    "officialIds": [
+      1109
+    ],
+    "officialToken": null,
+    "name": "N-VI Nadela (pista San Xoán Campo)",
+    "lat": 42.9708161,
+    "lng": -7.5060739,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1110",
+    "code": "1110",
+    "officialIds": [
+      1110
+    ],
+    "officialToken": null,
+    "name": "Nadela (ent. Estda. Sarria)",
+    "lat": 42.9696208,
+    "lng": -7.5036067,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": false
+  },
+  {
+    "id": "s1111",
+    "code": "1111",
+    "officialIds": [
+      1111
+    ],
+    "officialToken": null,
+    "name": "Nadela (enfte. Centro Saúde)",
+    "lat": 42.9673936,
+    "lng": -7.502236,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1112",
+    "code": "1112",
+    "officialIds": [
+      1112
+    ],
+    "officialToken": null,
+    "name": "Nadela (ent. Pista Tableros Hispanos)",
+    "lat": 42.9625537,
+    "lng": -7.5001054,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1113",
+    "code": "1113",
+    "officialIds": [
+      1113,
+      1114
+    ],
+    "officialToken": null,
+    "name": "Santa Comba (Calfensa)",
+    "lat": 42.9532502,
+    "lng": -7.4959409,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1115",
+    "code": "1115",
+    "officialIds": [
+      1115
+    ],
+    "officialToken": null,
+    "name": "Nadela (Mundisofá)",
+    "lat": 42.9667525,
+    "lng": -7.5015214,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1116",
+    "code": "MBbI",
+    "officialIds": [
+      1116
+    ],
+    "officialToken": "MBbI",
+    "name": "Nadela (Campo da Feira)",
+    "lat": 42.9702118,
+    "lng": -7.5045323,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s1117",
+    "code": "1117",
+    "officialIds": [
+      1117
+    ],
+    "officialToken": null,
+    "name": "Recimil",
+    "lat": 42.9805437,
+    "lng": -7.4854852,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1118",
+    "code": "1118",
+    "officialIds": [
+      1118
+    ],
+    "officialToken": null,
+    "name": "Vilar",
+    "lat": 42.9818817,
+    "lng": -7.4945606,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1119",
+    "code": "1119",
+    "officialIds": [
+      1119
+    ],
+    "officialToken": null,
+    "name": "San Mamede",
+    "lat": 42.9797623,
+    "lng": -7.5042617,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": null,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1120",
+    "code": "1120",
+    "officialIds": [
+      1120
+    ],
+    "officialToken": null,
+    "name": "Conturiz (Iglesia)",
+    "lat": 42.9796751,
+    "lng": -7.5138627,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Rural",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1121",
+    "code": "1121",
+    "officialIds": [
+      1121
+    ],
+    "officialToken": null,
+    "name": "Bosende (canteira)",
+    "lat": 42.9922357,
+    "lng": -7.5155774,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1122",
+    "code": "1122",
+    "officialIds": [
+      1122
+    ],
+    "officialToken": null,
+    "name": "Bosende",
+    "lat": 42.9933111,
+    "lng": -7.5256408,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "A Tolda / Montirón",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1125",
+    "code": "1125",
+    "officialIds": [
+      1125
+    ],
+    "officialToken": null,
+    "name": "Avda. Madrid (enfte. Casa María)",
+    "lat": 42.9910394,
+    "lng": -7.53857,
+    "lines": [
+      "11-Santa Comba"
+    ],
+    "zone": "Acea de Olga",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1140",
+    "code": "znCf",
+    "officialIds": [
+      1140
+    ],
+    "officialToken": "znCf",
+    "name": "Rúa Montefaro (enfte. Nº 21)",
+    "lat": 43.0229048,
+    "lng": -7.5636598,
+    "lines": [
+      "12"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s1141",
+    "code": "oePt",
+    "officialIds": [
+      1141
+    ],
+    "officialToken": "oePt",
+    "name": "Rúa Montefaro (enfte. Nº 57)",
+    "lat": 43.0243101,
+    "lng": -7.5629686,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1142",
+    "code": "xydT",
+    "officialIds": [
+      1142
+    ],
+    "officialToken": "xydT",
+    "name": "Rúa Montefaro (Piscina Municipal)",
+    "lat": 43.0267076,
+    "lng": -7.5625534,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1143",
+    "code": "Jaad",
+    "officialIds": [
+      1143
+    ],
+    "officialToken": "Jaad",
+    "name": "Avda. Padre Gómez (cruce Illas Canarias)",
+    "lat": 43.0276097,
+    "lng": -7.5628515,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s1144",
+    "code": "gZcW",
+    "officialIds": [
+      1144
+    ],
+    "officialToken": "gZcW",
+    "name": "Rúa Illas Canarias 204",
+    "lat": 43.0285262,
+    "lng": -7.5622923,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1145",
+    "code": "tYhR",
+    "officialIds": [
+      1145
+    ],
+    "officialToken": "tYhR",
+    "name": "Rúa Fisterra (desp. Ponte Ferrocarril)",
+    "lat": 43.0299061,
+    "lng": -7.5610704,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1146",
+    "code": "vePG",
+    "officialIds": [
+      1146
+    ],
+    "officialToken": "vePG",
+    "name": "Rúa Vilisqueiras (esq. Rúa Fisterra)",
+    "lat": 43.0309058,
+    "lng": -7.560104,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1147",
+    "code": "lmbJ",
+    "officialIds": [
+      1147
+    ],
+    "officialToken": "lmbJ",
+    "name": "Rúa Pedáneo Xoán Diego 100",
+    "lat": 43.0322874,
+    "lng": -7.558868,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1148",
+    "code": "1148",
+    "officialIds": [
+      1148
+    ],
+    "officialToken": null,
+    "name": "Rúa Camiño do Souto 8",
+    "lat": 43.0338746,
+    "lng": -7.5586885,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1149",
+    "code": "PQTW",
+    "officialIds": [
+      1149
+    ],
+    "officialToken": "PQTW",
+    "name": "Rúa Camiño do Souto (esq. R. Couselo)",
+    "lat": 43.0357464,
+    "lng": -7.559807,
+    "lines": [
+      "12"
+    ],
+    "zone": "O Ceao",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1151",
+    "code": "1151",
+    "officialIds": [
+      1151
+    ],
+    "officialToken": null,
+    "name": "Polígono Gándaras Rúa F (esq. R. B)",
+    "lat": 43.0418975,
+    "lng": -7.549673,
+    "lines": [
+      "12"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1152",
+    "code": "1152",
+    "officialIds": [
+      1152
+    ],
+    "officialToken": null,
+    "name": "Polígono Gándaras Rúa B (esq. R. E)",
+    "lat": 43.0397462,
+    "lng": -7.5502192,
+    "lines": [
+      "12"
+    ],
+    "zone": "As Gándaras",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1156",
+    "code": "iHiT",
+    "officialIds": [
+      1156
+    ],
+    "officialToken": "iHiT",
+    "name": "Rúa Fisterra (cr. R. Amenta)",
+    "lat": 43.033571,
+    "lng": -7.55678,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1157",
+    "code": "Hxqd",
+    "officialIds": [
+      1157
+    ],
+    "officialToken": "Hxqd",
+    "name": "Rúa Pedáneo Xoán Diego 81",
+    "lat": 43.0322901,
+    "lng": -7.558999,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1158",
+    "code": "WDvB",
+    "officialIds": [
+      1158
+    ],
+    "officialToken": "WDvB",
+    "name": "Rúa Vilisqueiras 33",
+    "lat": 43.0310078,
+    "lng": -7.5601632,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1159",
+    "code": "1159",
+    "officialIds": [
+      1159
+    ],
+    "officialToken": null,
+    "name": "Rúa Fisterra 1 (ant. Ponte Ferrocarril)",
+    "lat": 43.0297885,
+    "lng": -7.561483,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1160",
+    "code": "1160",
+    "officialIds": [
+      1160
+    ],
+    "officialToken": null,
+    "name": "Rúa Illas Canarias 181",
+    "lat": 43.0285867,
+    "lng": -7.5623415,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1161",
+    "code": "hfBZ",
+    "officialIds": [
+      1161
+    ],
+    "officialToken": "hfBZ",
+    "name": "Rúa Illas Canarias 143 (esq. Rúa Illa Madeira)",
+    "lat": 43.0277603,
+    "lng": -7.563054,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1162",
+    "code": "oNal",
+    "officialIds": [
+      1162
+    ],
+    "officialToken": "oNal",
+    "name": "Rúa Illas Canarias 99 (Ambulatorio)",
+    "lat": 43.0260838,
+    "lng": -7.563244,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1163",
+    "code": "kETW",
+    "officialIds": [
+      1163
+    ],
+    "officialToken": "kETW",
+    "name": "Rúa Illas Canarias 67 (esq. Rúa do Franco)",
+    "lat": 43.0247466,
+    "lng": -7.563552,
+    "lines": [
+      "12"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1164",
+    "code": "eXjt",
+    "officialIds": [
+      1164
+    ],
+    "officialToken": "eXjt",
+    "name": "Rúa Illas Canarias 1 (esq. Avda. Coruña)",
+    "lat": 43.0227223,
+    "lng": -7.5646642,
+    "lines": [
+      "12"
+    ],
+    "zone": "Casás / Abella",
+    "shelter": false,
+    "bench": false,
+    "hasScreen": true
+  },
+  {
+    "id": "s1180",
+    "code": "1180",
+    "officialIds": [
+      1180
+    ],
+    "officialToken": null,
+    "name": "Alexandre Bóveda (Rtda. Avecus)",
+    "lat": 43.0225698,
+    "lng": -7.5582641,
+    "lines": [
+      "13"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1181",
+    "code": "1181",
+    "officialIds": [
+      1181
+    ],
+    "officialToken": null,
+    "name": "Alexandre Bóveda (Rtda. Camiño Roca)",
+    "lat": 43.0226738,
+    "lng": -7.5558092,
+    "lines": [
+      "13"
+    ],
+    "zone": "A Milagrosa",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1182",
+    "code": "YbHt",
+    "officialIds": [
+      1182
+    ],
+    "officialToken": "YbHt",
+    "name": "Rúa Casas Vellas 2 (dir. Gándaras)",
+    "lat": 43.0238453,
+    "lng": -7.5553682,
+    "lines": [
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": true,
+    "hasScreen": true
+  },
+  {
+    "id": "s1183",
+    "code": "1183",
+    "officialIds": [
+      1183
+    ],
+    "officialToken": null,
+    "name": "Rúa Camiño de Romay 30 (dir. Gándaras)",
+    "lat": 43.0249712,
+    "lng": -7.5549324,
+    "lines": [
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": false
+  },
+  {
+    "id": "s1184",
+    "code": "vFms",
+    "officialIds": [
+      1184
+    ],
+    "officialToken": "vFms",
+    "name": "Rúa Camiño de Romay (enfte. Nº 27)",
+    "lat": 43.0259153,
+    "lng": -7.5537217,
+    "lines": [
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": false,
+    "bench": null,
+    "hasScreen": true
+  },
+  {
+    "id": "s1185",
+    "code": "bkPf",
+    "officialIds": [
+      1185
+    ],
+    "officialToken": "bkPf",
+    "name": "Rúa Virxe da Soidade (enfte. Col. Gándaras)",
+    "lat": 43.0264766,
+    "lng": -7.5514373,
+    "lines": [
+      "13"
+    ],
+    "zone": "A Piringalla",
+    "shelter": true,
+    "bench": null,
+    "hasScreen": true
+  }
+]

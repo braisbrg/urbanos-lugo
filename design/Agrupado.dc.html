@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Workbench · tone: utilitarian · anchor hue: blue 255
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.45 0.13 250); } a:hover { color: oklch(0.36 0.13 250); }
+    .m { font-variant-numeric: tabular-nums; font-family: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .chip-of { display: inline-flex; align-items: center; gap: 5px; background: oklch(0.4 0.13 255); color: white; border-radius: 4px; padding: 4px 8px; }
+    .chip-es { display: inline-flex; align-items: center; gap: 5px; color: oklch(0.42 0.055 70); border: 1.5px dashed oklch(0.64 0.08 70); border-radius: 4px; padding: 3px 7px; }
+    .ct { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
+    .grp { border: 1px solid oklch(0.9 0.004 255); border-radius: 11px; overflow: hidden; margin-bottom: 9px; }
+    .ghead { display: flex; align-items: center; gap: 12px; padding: 10px 13px; min-height: 46px; cursor: pointer; }
+    .gbadge { width: 38px; height: 38px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .gdest { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gnext { font-size: 23px; font-weight: 700; flex-shrink: 0; letter-spacing: -0.02em; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; font-size: 15px; background: oklch(0.995 0.0015 255); color: oklch(0.22 0.008 255); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="border-bottom: 1px solid oklch(0.91 0.004 255); padding: 14px 18px 13px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+    <div style="min-width: 0">
+      <h1 style="margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.012em">Rda. Muralla 56</h1>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px">
+        <span class="m" style="font-size: 12px; font-weight: 500; color: oklch(0.42 0.01 255); background: oklch(0.945 0.004 255); border-radius: 4px; padding: 4px 8px">uilP</span>
+        <span style="font-size: 12px; color: oklch(0.5 0.01 255)">Sindicatos · 13 líneas</span>
+      </div>
+    </div>
+    <button style="width: 44px; height: 44px; border-radius: 10px; background: oklch(0.968 0.003 255); border: 1px solid oklch(0.89 0.004 255); color: oklch(0.32 0.01 255); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0" aria-label="Quitar de guardadas">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 14.3 9.3l5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"/></svg>
+    </button>
+  </div>
+
+  <div style="padding: 12px 18px 10px; display: flex; gap: 6px; border-bottom: 1px solid oklch(0.91 0.004 255)">
+    <button style="flex: 1; height: 44px; border-radius: 9px; background: transparent; border: 1px solid oklch(0.89 0.004 255); color: oklch(0.42 0.01 255); font-size: 15px; font-weight: 500; font-family: inherit; cursor: pointer">Próximas</button>
+    <button style="flex: 1; height: 44px; border-radius: 9px; background: oklch(0.28 0.02 255); border: 1px solid oklch(0.28 0.02 255); color: white; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer">Por línea</button>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 12px 18px 0">
+
+    <div class="grp" style="border-color: oklch(0.82 0.05 300)">
+      <div class="ghead" style="background: oklch(0.965 0.022 300)">
+        <div class="gbadge" style="background: oklch(0.42 0.13 300)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">1.3</span></div>
+        <div class="gdest">Rúa Mercadorías</div>
+        <div class="m gnext">7</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.03 300)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div style="padding: 11px 13px 12px; display: flex; align-items: center; gap: 12px; border-top: 1px solid oklch(0.92 0.01 300)">
+        <div class="chip-of"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="m ct">HORARIO OFICIAL</span></div>
+        <div style="flex: 1"></div>
+        <div class="m" style="font-size: 15px; color: oklch(0.4 0.01 255)">16:59 · 18:29</div>
+      </div>
+    </div>
+
+    <div class="grp" style="border-color: oklch(0.84 0.06 45)">
+      <div class="ghead" style="background: oklch(0.968 0.026 45)">
+        <div class="gbadge" style="background: oklch(0.48 0.14 45)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">3.2</span></div>
+        <div class="gdest">N-VI (Torre de Núñez)</div>
+        <div class="m gnext">8</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.04 45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div class="grp" style="border-color: oklch(0.85 0.05 85)">
+      <div class="ghead" style="background: oklch(0.97 0.024 85)">
+        <div class="gbadge" style="background: oklch(0.5 0.11 85)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">2</span></div>
+        <div class="gdest">N-VI (Piensos Flores)</div>
+        <div class="m gnext" style="color: oklch(0.35 0.01 255)">~15</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.04 85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div class="grp" style="border-color: oklch(0.85 0.06 10)">
+      <div class="ghead" style="background: oklch(0.968 0.024 10)">
+        <div class="gbadge" style="background: oklch(0.47 0.15 10)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">4.1</span></div>
+        <div class="gdest">HULA (Ent. Principal)</div>
+        <div class="m gnext" style="color: oklch(0.35 0.01 255)">23</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.04 10)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div class="grp" style="border-color: oklch(0.84 0.05 265)">
+      <div class="ghead" style="background: oklch(0.965 0.022 265)">
+        <div class="gbadge" style="background: oklch(0.4 0.15 265)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">13</span></div>
+        <div class="gdest">Czda. Gándaras</div>
+        <div class="m gnext" style="color: oklch(0.35 0.01 255)">23</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.04 265)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div class="grp" style="border-color: oklch(0.84 0.05 262)">
+      <div class="ghead" style="background: oklch(0.965 0.022 262)">
+        <div class="gbadge" style="background: oklch(0.42 0.15 262)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">6</span></div>
+        <div class="gdest">Rúa Sto. Graal 147</div>
+        <div class="m gnext" style="color: oklch(0.35 0.01 255)">28</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.04 262)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div class="grp" style="border-color: oklch(0.84 0.05 215)">
+      <div class="ghead" style="background: oklch(0.965 0.022 215)">
+        <div class="gbadge" style="background: oklch(0.45 0.11 215)"><span class="m" style="font-size: 15px; font-weight: 700; color: white">1.4</span></div>
+        <div class="gdest">HULA (Ent. Principal)</div>
+        <div class="m gnext" style="color: oklch(0.35 0.01 255)">30</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.04 215)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div style="text-align: center; padding: 4px 0 0">
+      <span style="font-size: 12px; color: oklch(0.55 0.01 255)">6 líneas más sin paso en la próxima hora</span>
+    </div>
+  </div>
+
+  <div style="display: flex; border-top: 1px solid oklch(0.91 0.004 255); padding-bottom: 6px">
+    <button style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: transparent; border: none; color: oklch(0.32 0.09 255); cursor: pointer; border-top: 2px solid oklch(0.45 0.13 250)">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10"/><path d="M4 17h16M7 20v-3M17 20v-3M4 11h16"/></svg>
+      <span style="font-size: 12px; font-weight: 600">Paradas</span>
+    </button>
+    <button style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: transparent; border: none; color: oklch(0.5 0.01 255); cursor: pointer">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>
+      <span style="font-size: 12px; font-weight: 450">Líneas</span>
+    </button>
+    <button style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: transparent; border: none; color: oklch(0.5 0.01 255); cursor: pointer">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m3 6.5 6-2.5 6 2.5 6-2.5v13l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13M15 6.5v13"/></svg>
+      <span style="font-size: 12px; font-weight: 450">Mapa</span>
+    </button>
+    <button style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: transparent; border: none; color: oklch(0.5 0.01 255); cursor: pointer">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 19 5M5 19h5M5 19v-5M19 5h-5M19 5v5"/></svg>
+      <span style="font-size: 12px; font-weight: 450">Ruta</span>
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

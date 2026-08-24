@@ -1,0 +1,100 @@
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+
+// GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
+// Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
+const base = process.env.BASE_PATH || '/';
+
+export default defineConfig(() => {
+  return {
+    base,
+    plugins: [
+      react(),
+      tailwindcss(),
+      // Everything the app computes — timetables, arrivals, route planning — runs from
+      // bundled data, so once the shell is cached it works with no connection at all.
+      // That is the normal case at a bus stop: signal is worst exactly where you need
+      // the departure time.
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg'],
+        manifest: {
+          name: 'Urbanos de Lugo',
+          short_name: 'Bus Lugo',
+          description: 'Liñas, paradas e tempos de paso do bus urbano de Lugo',
+          lang: 'gl',
+          theme_color: '#1e3a8a',
+          background_color: '#f1f5f9',
+          display: 'standalone',
+          start_url: base,
+          scope: base,
+          icons: [
+            // PNG for the install prompt, SVG for everything that scales.
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          // The geometry chunk is ~490 KB; the default 2 MB cap would drop it silently.
+          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+          globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          navigateFallback: `${base}index.html`,
+          navigateFallbackDenylist: [/\/api\//],
+          runtimeCaching: [
+            {
+              // The typeface.
+              //
+              // Atkinson Hyperlegible is loaded from Google's CDN and was the one asset
+              // with no caching rule, so a second visit with no signal fell back to the
+              // system sans — losing the face chosen for legibility exactly where it
+              // matters, at a shelter with no coverage. The stylesheet and the font
+              // files live on different hosts, so both are covered.
+              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts',
+                expiration: { maxEntries: 24, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Map tiles: show what was seen before rather than grey squares offline.
+              urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'map-tiles',
+                expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Service alerts are the only genuinely live data; prefer the network but
+              // fall back to the last answer instead of an error.
+              urlPattern: /\/api\/alerts/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'service-alerts',
+                networkTimeoutSeconds: 5,
+                expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 6 },
+              },
+            },
+          ],
+        },
+      }),
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+    server: {
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      hmr: process.env.DISABLE_HMR !== 'true',
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+  };
+});

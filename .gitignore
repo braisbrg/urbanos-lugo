@@ -1,0 +1,51 @@
+# Dependencies and build output
+node_modules/
+build/
+dist/
+dist-server/
+coverage/
+*.log
+
+# Environment
+.env*
+!.env.example
+
+# OS / editor
+.DS_Store
+.vscode/
+
+# Local caches
+.cache/
+
+# AI assistant and tooling state.
+#
+# These are NOT harmless dotfiles. `.antigravity/` holds a multi-megabyte transcript of
+# the assistant session — every prompt and reply verbatim — and `.impeccable/` records
+# absolute paths that include the machine's user name. Publishing this repository with
+# any of them tracked would publish that too.
+.antigravity/
+.claude/
+.agents/
+.codex/
+.impeccable/
+skills-lock.json
+# AI Studio leaves an empty self-ignoring stub here; assets/ holds nothing else.
+assets/
+
+# Tooling that installed itself under .github/. The real CI workflow stays tracked;
+# the 150-odd agent, hook and skill files beside it are local assistant config.
+.github/agents/
+.github/hooks/
+.github/skills/
+
+# One package manager: pnpm. That is what .github/workflows/deploy-pages.yml runs with
+# `--frozen-lockfile`, so pnpm-lock.yaml MUST stay tracked. The other lockfiles are
+# leftovers from experiments and would only make it ambiguous which tree is real.
+bun.lock
+package-lock.json
+
+# The seeded design canvas is a build artifact, like dist/. It is 2.4 MB and loads
+# support.js and vendor/react*.js, which the canvas tooling supplies at publish time and
+# which are not in this repository — so the committed copy cannot open. The artboards it
+# was built from stay tracked; re-seed with the design skill when they change.
+design/rediseno-urbanos-lugo.html

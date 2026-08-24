@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Tabular Spec Sheet · tone: technical · anchor hue: blue 255
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.45 0.13 250); } a:hover { color: oklch(0.36 0.13 250); }
+    .m { font-family: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+    .lbl { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: oklch(0.5 0.01 255); }
+    .chip-of { display: inline-flex; align-items: center; gap: 5px; background: oklch(0.4 0.13 255); color: white; border-radius: 4px; padding: 4px 8px; }
+    .chip-es { display: inline-flex; align-items: center; gap: 5px; color: oklch(0.42 0.055 70); border: 1.5px dashed oklch(0.64 0.08 70); border-radius: 4px; padding: 3px 7px; }
+    .chip-t { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
+    .row { display: flex; align-items: center; gap: 13px; padding: 11px 16px; border-top: 1px solid oklch(0.92 0.004 255); }
+    .badge { width: 42px; height: 42px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .dest { font-size: 15px; font-weight: 500; }
+    .num { font-size: 29px; font-weight: 600; line-height: 1; letter-spacing: -0.025em; }
+    .card { border: 1px solid oklch(0.9 0.004 255); border-radius: 12px; overflow: hidden; background: oklch(0.995 0.0015 255); }
+  </style>
+</helmet>
+
+<div style="width: 1180px; background: oklch(0.985 0.002 255); padding: 38px 42px 44px; box-sizing: border-box; color: oklch(0.22 0.008 255); font-size: 15px">
+
+  <h1 style="margin: 0 0 12px; font-size: 29px; font-weight: 600; letter-spacing: -0.02em">Destacar el bus más cercano</h1>
+  <p style="margin: 0 0 30px; font-size: 15px; line-height: 1.6; color: oklch(0.4 0.01 255); max-width: 82ch; text-wrap: pretty">
+    Cuatro formas de decir «este es el que viene ahora», con la misma pareja de salidas en las cuatro. Debajo, las mismas cuatro en escala de grises: <strong>lo que sobreviva ahí es lo que funciona</strong> para daltonismo, para sol directo y para una pantalla vieja.
+  </p>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 30px">
+
+    <div>
+      <div class="lbl" style="margin-bottom: 8px">A · Como está ahora — solo luminosidad</div>
+      <div class="card">
+        <div class="row" style="border-top: none">
+          <div class="badge" style="background: oklch(0.5 0.1 15)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest">HULA (Ent. Principal)</div>
+            <div class="chip-of" style="align-self: flex-start"><span class="m chip-t">HORARIO OFICIAL</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.22 0.008 255)">2</div>
+        </div>
+        <div class="row">
+          <div class="badge" style="background: oklch(0.48 0.11 85)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest">N-VI (Piensos Flores)</div>
+            <div class="chip-es" style="align-self: flex-start"><span class="m chip-t">~ ESTIMADO</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.35 0.01 255)">~7</div>
+        </div>
+      </div>
+      <p style="margin: 10px 2px 0; font-size: 12px; line-height: 1.5; color: oklch(0.45 0.01 255)">Sobrevive a todo, pero es tan sutil que no lo habías visto.</p>
+    </div>
+
+    <div>
+      <div class="lbl" style="margin-bottom: 8px">B · Luminosidad reforzada + peso</div>
+      <div class="card">
+        <div class="row" style="border-top: none">
+          <div class="badge" style="background: oklch(0.5 0.1 15)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest" style="font-weight: 600">HULA (Ent. Principal)</div>
+            <div class="chip-of" style="align-self: flex-start"><span class="m chip-t">HORARIO OFICIAL</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.18 0.008 255); font-weight: 700">2</div>
+        </div>
+        <div class="row">
+          <div class="badge" style="background: oklch(0.48 0.11 85)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest">N-VI (Piensos Flores)</div>
+            <div class="chip-es" style="align-self: flex-start"><span class="m chip-t">~ ESTIMADO</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.47 0.01 255); font-weight: 500">~7</div>
+        </div>
+      </div>
+      <p style="margin: 10px 2px 0; font-size: 12px; line-height: 1.5; color: oklch(0.45 0.01 255)">Mismo truco, empujado. Se ve sin mirar y no gasta ningún color del sistema.</p>
+    </div>
+
+    <div>
+      <div class="lbl" style="margin-bottom: 8px; color: oklch(0.5 0.15 25)">C · Color ámbar — el que tenías en mente</div>
+      <div class="card" style="border-color: oklch(0.82 0.09 25)">
+        <div class="row" style="border-top: none">
+          <div class="badge" style="background: oklch(0.5 0.1 15)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest">HULA (Ent. Principal)</div>
+            <div class="chip-of" style="align-self: flex-start"><span class="m chip-t">HORARIO OFICIAL</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.55 0.15 62)">2</div>
+        </div>
+        <div class="row">
+          <div class="badge" style="background: oklch(0.48 0.11 85)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest">N-VI (Piensos Flores)</div>
+            <div class="chip-es" style="align-self: flex-start"><span class="m chip-t">~ ESTIMADO</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.35 0.01 255)">~7</div>
+        </div>
+      </div>
+      <p style="margin: 10px 2px 0; font-size: 12px; line-height: 1.5; color: oklch(0.42 0.06 25)">
+        <strong>El choque:</strong> el ámbar ya significa «estimado» — mira el chip de abajo. Aquí un número ámbar se sienta al lado de un chip azul que dice <em>oficial</em>. La pantalla se contradice.
+      </p>
+    </div>
+
+    <div>
+      <div class="lbl" style="margin-bottom: 8px">D · Tamaño — lo que hace V2</div>
+      <div class="card">
+        <div class="row" style="border-top: none; padding: 14px 16px">
+          <div class="badge" style="background: oklch(0.5 0.1 15); width: 46px; height: 46px"><span class="m" style="font-size: 15px; font-weight: 600; color: white">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest" style="font-size: 19px; font-weight: 600">HULA (Ent. Principal)</div>
+            <div class="chip-of" style="align-self: flex-start"><span class="m chip-t">HORARIO OFICIAL</span></div>
+          </div>
+          <div class="m" style="font-size: 46px; font-weight: 600; line-height: 0.92; letter-spacing: -0.035em">2</div>
+        </div>
+        <div class="row">
+          <div class="badge" style="background: oklch(0.48 0.11 85)"><span class="m" style="font-size: 15px; font-weight: 600; color: white">2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div class="dest">N-VI (Piensos Flores)</div>
+            <div class="chip-es" style="align-self: flex-start"><span class="m chip-t">~ ESTIMADO</span></div>
+          </div>
+          <div class="m num" style="color: oklch(0.35 0.01 255)">~7</div>
+        </div>
+      </div>
+      <p style="margin: 10px 2px 0; font-size: 12px; line-height: 1.5; color: oklch(0.45 0.01 255)">Imposible de perder, pero se come un tercio de la pantalla por un solo bus.</p>
+    </div>
+  </div>
+
+  <div style="margin-top: 34px; padding-top: 26px; border-top: 1px solid oklch(0.9 0.004 255)">
+    <div class="lbl" style="margin-bottom: 14px">La prueba: las cuatro sin color</div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; filter: grayscale(1)">
+      <div class="card" style="padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span class="lbl">A</span>
+        <span class="m" style="font-size: 29px; font-weight: 600; color: oklch(0.22 0.008 255)">2</span>
+        <span class="m" style="font-size: 29px; font-weight: 600; color: oklch(0.35 0.01 255)">~7</span>
+      </div>
+      <div class="card" style="padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span class="lbl">B</span>
+        <span class="m" style="font-size: 29px; font-weight: 700; color: oklch(0.18 0.008 255)">2</span>
+        <span class="m" style="font-size: 29px; font-weight: 500; color: oklch(0.47 0.01 255)">~7</span>
+      </div>
+      <div class="card" style="padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span class="lbl">C</span>
+        <span class="m" style="font-size: 29px; font-weight: 600; color: oklch(0.55 0.15 62)">2</span>
+        <span class="m" style="font-size: 29px; font-weight: 600; color: oklch(0.35 0.01 255)">~7</span>
+      </div>
+      <div class="card" style="padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span class="lbl">D</span>
+        <span class="m" style="font-size: 46px; font-weight: 600; line-height: 0.92">2</span>
+        <span class="m" style="font-size: 29px; font-weight: 600; color: oklch(0.35 0.01 255)">~7</span>
+      </div>
+    </div>
+    <p style="margin: 16px 2px 0; font-size: 15px; line-height: 1.6; color: oklch(0.35 0.01 255); max-width: 88ch; text-wrap: pretty">
+      En gris, <strong>C se cae</strong>: el ámbar se convierte en un gris medio y el número más importante queda <em>más apagado</em> que el que tiene debajo — justo al revés de lo que se quería. A aguanta pero es tímida. B y D aguantan de sobra.
+    </p>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

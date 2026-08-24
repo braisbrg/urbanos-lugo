@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Tabular Spec Sheet · tone: technical · anchor hue: green 150
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.5 0.15 250); } a:hover { color: oklch(0.4 0.15 250); }
+    .m { font-family: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 900px; background: oklch(0.985 0.002 265); padding: 40px 44px 46px; box-sizing: border-box; color: oklch(0.22 0.015 265)">
+
+  <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px">
+    <h1 style="margin: 0; font-size: 29px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.14">Objetivos táctiles y escala de texto</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.58; color: oklch(0.4 0.02 265); max-width: 66ch; text-wrap: pretty">
+      A la anchura de un móvil, <strong>46 de 101</strong> elementos interactivos quedan bajo los 24 px que exige WCAG 2.2 AA y <strong>73 bajo los 44 px</strong> cómodos. Hay <strong>75 usos</strong> de texto menor de 12 px. No es una impresión: está medido en el navegador.
+    </p>
+  </div>
+
+  <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; padding: 26px; margin-bottom: 22px">
+    <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.5 0.02 265); margin-bottom: 20px">El selector de idioma</div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start">
+
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span style="width: 22px; height: 22px; border-radius: 50%; background: oklch(0.55 0.17 25); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">✕</span>
+          <span style="font-size: 15px; font-weight: 700">Ahora · 36 × 26 px</span>
+        </div>
+        <div style="background: oklch(0.24 0.04 260); border-radius: 10px; padding: 22px; display: flex; justify-content: center">
+          <div style="display: flex; background: oklch(0.19 0.05 265); border: 1px solid oklch(0.32 0.06 262); border-radius: 6px; padding: 2px">
+            <div style="width: 32px; height: 22px; background: oklch(0.5 0.16 258); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 700">GL</div>
+            <div style="width: 32px; height: 22px; display: flex; align-items: center; justify-content: center; color: oklch(0.72 0.06 260); font-size: 12px; font-weight: 700">ES</div>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.42 0.02 265)">
+          26 px de alto. Un dedo cubre unos 45. Se cambia de idioma <strong>sin querer</strong> al intentar tocar lo que tiene al lado, y para alguien con temblor es directamente inalcanzable.
+        </p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span style="width: 22px; height: 22px; border-radius: 50%; background: oklch(0.55 0.14 150); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">✓</span>
+          <span style="font-size: 15px; font-weight: 700">Propuesta · 46 × 36 px, área 46 × 44</span>
+        </div>
+        <div style="background: oklch(0.97 0.003 265); border: 1px solid oklch(0.91 0.005 265); border-radius: 10px; padding: 26px; display: flex; justify-content: center">
+          <div style="display: flex; background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.86 0.006 265); border-radius: 9px; position: relative">
+            <div style="position: absolute; inset: -4px; border: 1.5px dashed oklch(0.72 0.1 150); border-radius: 12px; pointer-events: none"></div>
+            <div style="width: 46px; height: 36px; background: oklch(0.31 0.02 250); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 700">GL</div>
+            <div style="width: 46px; height: 36px; display: flex; align-items: center; justify-content: center; color: oklch(0.45 0.014 250); font-size: 12px; font-weight: 600">ES</div>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.42 0.02 265)">
+          El <strong>dibujo</strong> mide 36 px de alto; el <strong>área que responde</strong> llega a 44 con el relleno invisible (el trazo discontinuo). Así el control no engorda visualmente pero deja de fallarse.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; margin-bottom: 22px">
+
+    <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; padding: 24px">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.5 0.02 265); margin-bottom: 18px">La escala, a tamaño real</div>
+      <div style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 18px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+          <div style="width: 24px; height: 24px; border-radius: 6px; background: oklch(0.93 0.04 25); border: 1.5px solid oklch(0.72 0.13 25)"></div>
+          <div class="m" style="font-size: 12px; font-weight: 700; color: oklch(0.5 0.14 25)">24</div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+          <div style="width: 44px; height: 44px; border-radius: 9px; background: oklch(0.93 0.04 150); border: 1.5px solid oklch(0.65 0.13 150)"></div>
+          <div class="m" style="font-size: 12px; font-weight: 700; color: oklch(0.44 0.12 150)">44</div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+          <div style="width: 56px; height: 56px; border-radius: 12px; background: oklch(0.92 0.05 150); border: 1.5px solid oklch(0.58 0.14 150)"></div>
+          <div class="m" style="font-size: 12px; font-weight: 700; color: oklch(0.44 0.12 150)">56</div>
+        </div>
+        <div style="flex: 1; padding-bottom: 26px; display: flex; flex-direction: column; gap: 7px">
+          <div style="font-size: 12px; line-height: 1.4"><strong style="color: oklch(0.5 0.14 25)">24</strong> · mínimo legal AA. Solo para controles secundarios rodeados de espacio.</div>
+          <div style="font-size: 12px; line-height: 1.4"><strong style="color: oklch(0.44 0.12 150)">44</strong> · el suelo real de todo lo que se toca.</div>
+          <div style="font-size: 12px; line-height: 1.4"><strong style="color: oklch(0.44 0.12 150)">56</strong> · acciones principales y barra inferior.</div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid oklch(0.93 0.005 265); padding-top: 16px; display: flex; flex-direction: column; gap: 9px">
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-size: 11px; width: 78px; flex-shrink: 0; color: oklch(0.55 0.02 265)" class="m">11 px</span>
+          <span style="font-size: 11px; text-decoration: line-through; color: oklch(0.6 0.02 265)">Prohibido. 75 usos en la versión actual.</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-size: 11px; width: 78px; flex-shrink: 0; color: oklch(0.55 0.02 265)" class="m">12 px</span>
+          <span style="font-size: 12px">Suelo absoluto. Solo etiquetas y metadatos.</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-size: 11px; width: 78px; flex-shrink: 0; color: oklch(0.55 0.02 265)" class="m">15 px</span>
+          <span style="font-size: 15px">Texto corriente. Nombres de parada y destinos.</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-size: 11px; width: 78px; flex-shrink: 0; color: oklch(0.55 0.02 265)" class="m">27 px+</span>
+          <span style="font-size: 29px; font-weight: 700; line-height: 1.1" class="m">2 min</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+      <div class="m" style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: oklch(0.5 0.02 265)">Zona del pulgar</div>
+      <div style="display: flex; gap: 16px; align-items: center">
+        <div style="width: 96px; height: 190px; border-radius: 14px; border: 1.5px solid oklch(0.85 0.006 265); position: relative; overflow: hidden; flex-shrink: 0; background: oklch(0.985 0.002 265)">
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 46%; background: oklch(0.9 0.06 150)"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 46%; height: 26%; background: oklch(0.95 0.04 90)"></div>
+          <div style="position: absolute; left: 0; right: 0; top: 0; height: 28%; background: oklch(0.94 0.035 25)"></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 11px">
+          <div style="display: flex; gap: 9px; align-items: flex-start">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: oklch(0.9 0.06 150); flex-shrink: 0; margin-top: 3px"></span>
+            <span style="font-size: 12px; line-height: 1.4">Cómodo con una mano. Aquí van la <strong>navegación</strong> y la acción principal.</span>
+          </div>
+          <div style="display: flex; gap: 9px; align-items: flex-start">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: oklch(0.95 0.04 90); flex-shrink: 0; margin-top: 3px"></span>
+            <span style="font-size: 12px; line-height: 1.4">Alcanzable estirando. Contenido que se lee más que se toca.</span>
+          </div>
+          <div style="display: flex; gap: 9px; align-items: flex-start">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: oklch(0.94 0.035 25); flex-shrink: 0; margin-top: 3px"></span>
+            <span style="font-size: 12px; line-height: 1.4">Solo se llega con la otra mano. <strong>Nada crítico</strong> aquí arriba.</span>
+          </div>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: oklch(0.42 0.02 265); border-top: 1px solid oklch(0.93 0.005 265); padding-top: 13px">
+        Esto es lo que mueve la barra de navegación <strong>abajo</strong>. Se consulta de pie, en la calle, con una mano, muchas veces con la otra ocupada.
+      </p>
+    </div>
+  </div>
+
+  <div style="background: oklch(0.965 0.004 265); border: 1px solid oklch(0.9 0.005 265); border-radius: 14px; padding: 24px; display: grid; grid-template-columns: 1.45fr 1fr; gap: 28px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 12px; font-weight: 700">Modo oscuro real</div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: oklch(0.42 0.02 265)">No es invertir colores. Fondo con matiz, nunca negro puro; el texto baja a ~0,94 de luminosidad para no dejar halo; las insignias de las líneas <strong>se suben</strong> de luminosidad para mantener el 4,5:1 sobre oscuro.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 12px; font-weight: 700">Movimiento</div>/div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: oklch(0.42 0.02 265)">Se respeta <span class="m" style="font-size: 12px">prefers-reduced-motion</span>. El único elemento animado del sistema es la señal de «en directo» — y merece la pena que pare para quien lo pida.</p>
+    </div>
+      <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-size: 12px; font-weight: 700">Foco visible</div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: oklch(0.42 0.02 265)">Anillo de 2 px con 2 px de separación en todo lo que recibe foco, en el color de acento. Sin eso, el teclado navega a ciegas.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 7px; border-top: 1px solid oklch(0.93 0.005 265); padding-top: 14px">
+        <div style="font-size: 15px; font-weight: 700">Escalado de fuente <span style="font-size: 12px; font-weight: 600; color: oklch(0.5 0.15 25)">· pendiente</span></div>
+        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: oklch(0.42 0.02 265)">Todas estas maquetas usan tamaños fijos en px, así que si alguien sube el tamaño de letra de su móvil <strong>no pasa nada</strong>. La app nueva de la MTA sí lo soporta, y en una aplicación que presume de accesible es incoherente no hacerlo. Al implementar: pasar la rampa a <span class="m" style="font-size: 12px">rem</span> y probar al 200 %.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

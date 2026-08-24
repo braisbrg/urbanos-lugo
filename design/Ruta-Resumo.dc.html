@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Step Sequence · tone: utilitarian · anchor hue: blue 255
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.45 0.13 250); } a:hover { color: oklch(0.36 0.13 250); }
+    .m { font-variant-numeric: tabular-nums; font-family: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .chip-of { display: inline-flex; align-items: center; gap: 5px; background: oklch(0.4 0.13 255); color: white; border-radius: 4px; padding: 4px 8px; }
+    .chip-es { display: inline-flex; align-items: center; gap: 5px; color: oklch(0.42 0.055 70); border: 1.5px dashed oklch(0.64 0.08 70); border-radius: 4px; padding: 3px 7px; }
+    .ct { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
+    .rail { position: relative; padding-left: 34px; }
+    .dot { position: absolute; left: 5px; width: 13px; height: 13px; border-radius: 50%; border: 3px solid oklch(0.4 0.13 255); background: oklch(0.995 0.0015 255); }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; font-size: 15px; background: oklch(0.995 0.0015 255); color: oklch(0.22 0.008 255); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="border-bottom: 1px solid oklch(0.91 0.004 255); padding: 12px 14px; display: flex; gap: 10px; align-items: center">
+    <button style="width: 44px; height: 44px; border-radius: 10px; background: transparent; border: none; color: oklch(0.32 0.01 255); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0" aria-label="Volver">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+    </button>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <div style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Avda. das Américas → HULA</div>
+      <div class="m" style="font-size: 12px; color: oklch(0.5 0.01 255)">sale a las 16:56 · llega a las 17:30</div>
+    </div>
+    <button style="width: 44px; height: 44px; border-radius: 10px; background: transparent; border: 1px solid oklch(0.89 0.004 255); color: oklch(0.32 0.01 255); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0" aria-label="Ver en el mapa">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m3 6.5 6-2.5 6 2.5 6-2.5v13l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13M15 6.5v13"/></svg>
+    </button>
+  </div>
+
+  <div style="padding: 14px 18px; border-bottom: 1px solid oklch(0.91 0.004 255); display: flex; align-items: baseline; gap: 12px">
+    <div class="m" style="font-size: 29px; font-weight: 700; line-height: 1; letter-spacing: -0.025em">38</div>
+    <div style="flex: 1; min-width: 0">
+      <div style="font-size: 15px; font-weight: 600">minutos en total</div>
+      <div style="font-size: 12px; color: oklch(0.5 0.01 255)">4 andando · 4 de espera · 30 en el bus</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0">
+      <span class="m" style="background: oklch(0.42 0.14 145); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700">5.1</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 16px 18px 0">
+
+    <div class="rail" style="padding-bottom: 18px; border-left: 3px dotted oklch(0.78 0.01 255); margin-left: 10px">
+      <div style="position: absolute; left: -8px; width: 13px; height: 13px; border-radius: 50%; background: oklch(0.4 0.13 255)"></div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px">
+        <div style="min-width: 0">
+          <div style="font-size: 15px; font-weight: 600">Avenida das Américas</div>
+          <div style="font-size: 12px; color: oklch(0.5 0.01 255); margin-top: 2px">Camina 266 m hasta el poste</div>
+        </div>
+        <div class="m" style="font-size: 15px; color: oklch(0.5 0.01 255); flex-shrink: 0">16:56</div>
+      </div>
+    </div>
+
+    <div class="rail" style="padding-bottom: 16px; border-left: 3px solid oklch(0.42 0.14 145); margin-left: 10px">
+      <div style="position: absolute; left: -8px; width: 13px; height: 13px; border-radius: 50%; border: 3px solid oklch(0.42 0.14 145); background: oklch(0.995 0.0015 255); box-sizing: border-box"></div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px">
+        <div style="min-width: 0">
+          <div style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em">Avda. Américas 36</div>
+          <div style="font-size: 12px; color: oklch(0.5 0.01 255); margin-top: 2px">Amadeus · cód. xRiq</div>
+        </div>
+        <div class="m" style="font-size: 19px; font-weight: 700; flex-shrink: 0">17:00</div>
+      </div>
+      <div class="chip-of" style="margin-bottom: 12px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="m ct">HORARIO OFICIAL</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: oklch(0.968 0.004 255); border-radius: 10px; margin-bottom: 12px">
+        <span class="m" style="background: oklch(0.42 0.14 145); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700; flex-shrink: 0">5.1</span>
+        <div style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.4">
+          <div style="font-weight: 600; color: oklch(0.28 0.01 255)">Sentido HULA (Ent. Principal)</div>
+          <div style="color: oklch(0.5 0.01 255)">Sale cada 60 min · última a las 20:00</div>
+        </div>
+      </div>
+
+      <button style="width: 100%; min-height: 46px; padding: 11px 14px; border-radius: 10px; background: transparent; border: 1px solid oklch(0.87 0.005 255); display: flex; align-items: center; gap: 11px; cursor: pointer; font-family: inherit; text-align: left">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.01 255)" stroke-width="2" stroke-linecap="round" style="flex-shrink: 0" aria-hidden="true"><circle cx="12" cy="6" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.6" fill="currentColor" stroke="none"/></svg>
+        <span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 500; color: oklch(0.28 0.01 255)">26 paradas · 30 min</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.01 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="rail" style="padding-bottom: 18px; border-left: 3px dotted oklch(0.78 0.01 255); margin-left: 10px">
+      <div style="position: absolute; left: -8px; width: 13px; height: 13px; border-radius: 50%; border: 3px solid oklch(0.42 0.14 145); background: oklch(0.995 0.0015 255); box-sizing: border-box"></div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px">
+        <div style="min-width: 0">
+          <div style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em">HULA (Ent. Principal)</div>
+          <div style="font-size: 12px; color: oklch(0.5 0.01 255); margin-top: 2px">Bájate aquí · cód. pHul</div>
+        </div>
+        <div class="m" style="font-size: 19px; font-weight: 700; flex-shrink: 0">17:30</div>
+      </div>
+      <div class="chip-of"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="m ct">HORARIO OFICIAL</span></div>
+    </div>
+
+    <div style="padding-left: 34px; margin-left: 10px; position: relative">
+      <div style="position: absolute; left: -8px; width: 13px; height: 13px; border-radius: 50%; background: oklch(0.35 0.14 145)"></div>
+      <div style="font-size: 15px; font-weight: 600">Hospital Lucus Augusti</div>
+      <div style="font-size: 12px; color: oklch(0.5 0.01 255); margin-top: 2px">Has llegado</div>
+    </div>
+  </div>
+
+  <div style="border-top: 1px solid oklch(0.91 0.004 255); padding: 13px 18px; display: flex; align-items: center; gap: 12px">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.01 255)" stroke-width="2" stroke-linejoin="round" style="flex-shrink: 0" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M2.5 10h19"/></svg>
+    <div style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.45; color: oklch(0.42 0.01 255)">
+      <strong style="font-weight: 600">0,45 €</strong> con Tarxeta Cidadá · 0,64 € billete sencillo
+    </div>
+    <button style="height: 44px; padding: 0 14px; border-radius: 10px; background: oklch(0.28 0.02 255); border: none; color: white; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; flex-shrink: 0">Avisarme</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

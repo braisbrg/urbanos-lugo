@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;500;600&family=Public+Sans:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Tabular Spec Sheet · tone: technical · anchor hue: blue 255
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.45 0.13 250); } a:hover { color: oklch(0.36 0.13 250); }
+    .m { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+    .cap { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: oklch(0.5 0.01 255); }
+  </style>
+</helmet>
+
+<div style="width: 1200px; background: oklch(0.995 0.0015 255); padding: 38px 42px 44px; box-sizing: border-box; color: oklch(0.22 0.008 255)">
+
+  <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 30px">
+    <h1 style="margin: 0; font-size: 29px; font-weight: 600; letter-spacing: -0.02em">Qué letra usa la aplicación</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: oklch(0.4 0.01 255); max-width: 76ch; text-wrap: pretty">
+      Tres candidatas sobrias, cada una con su argumento. Todas son gratuitas y cargan de Google Fonts. Se ven al tamaño real al que se usarían: nombre de parada a 15&nbsp;px, minutos a 29 y la etiqueta de procedencia a 12.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-bottom: 30px">
+
+    <div style="border: 1px solid oklch(0.9 0.004 255); border-radius: 12px; overflow: hidden">
+      <div style="padding: 16px 18px 14px; border-bottom: 1px solid oklch(0.92 0.004 255); background: oklch(0.972 0.004 255)">
+        <div style="font-family: 'IBM Plex Sans', sans-serif; font-size: 19px; font-weight: 600; margin-bottom: 4px">IBM Plex Sans</div>
+        <div style="font-size: 12px; color: oklch(0.45 0.01 255); line-height: 1.45">La que ya llevan las maquetas. Institucional sin ser anónima; tiene hermana monoespaciada de la misma familia.</div>
+      </div>
+      <div style="padding: 16px 18px 18px; font-family: 'IBM Plex Sans', sans-serif">
+        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid oklch(0.93 0.004 255)">
+          <div style="width: 42px; height: 42px; border-radius: 7px; background: oklch(0.5 0.1 15); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span class="m" style="font-size: 15px; font-weight: 600; color: white">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div style="font-size: 15px; font-weight: 500">HULA (Ent. Principal)</div>
+            <div style="display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; background: oklch(0.4 0.13 255); color: white; border-radius: 4px; padding: 4px 8px"><span class="m" style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em">HORARIO OFICIAL</span></div>
+          </div>
+          <div class="m" style="font-size: 23px; font-weight: 600; letter-spacing: -0.02em">2</div>
+        </div>
+        <div style="padding-top: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 12px; color: oklch(0.45 0.01 255)">Rda. Muralla · Fontiñas · Gándaras</div>
+          <div class="m" style="font-size: 15px; letter-spacing: -0.01em">0123456789 · 17:06 · ~7</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 1px solid oklch(0.9 0.004 255); border-radius: 12px; overflow: hidden">
+      <div style="padding: 16px 18px 14px; border-bottom: 1px solid oklch(0.92 0.004 255); background: oklch(0.972 0.004 255)">
+        <div style="font-family: 'Public Sans', sans-serif; font-size: 19px; font-weight: 600; margin-bottom: 4px">Public Sans</div>
+        <div style="font-size: 12px; color: oklch(0.45 0.01 255); line-height: 1.45">Hecha para servicios públicos: más neutra que Plex, sin tics. La más sobria de las tres.</div>
+      </div>
+      <div style="padding: 16px 18px 18px; font-family: 'Public Sans', sans-serif">
+        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid oklch(0.93 0.004 255)">
+          <div style="width: 42px; height: 42px; border-radius: 7px; background: oklch(0.5 0.1 15); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="font-family: 'Public Sans', sans-serif; font-size: 15px; font-weight: 700; color: white; font-variant-numeric: tabular-nums">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div style="font-size: 15px; font-weight: 500">HULA (Ent. Principal)</div>
+            <div style="display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; background: oklch(0.4 0.13 255); color: white; border-radius: 4px; padding: 4px 8px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em">HORARIO OFICIAL</span></div>
+          </div>
+          <div style="font-size: 23px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">2</div>
+        </div>
+        <div style="padding-top: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 12px; color: oklch(0.45 0.01 255)">Rda. Muralla · Fontiñas · Gándaras</div>
+          <div style="font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums">0123456789 · 17:06 · ~7</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 1px solid oklch(0.9 0.004 255); border-radius: 12px; overflow: hidden">
+      <div style="padding: 16px 18px 14px; border-bottom: 1px solid oklch(0.92 0.004 255); background: oklch(0.972 0.004 255)">
+        <div style="font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', sans-serif; font-size: 19px; font-weight: 700; margin-bottom: 4px">Atkinson Hyperlegible Next</div>
+        <div style="font-size: 12px; color: oklch(0.45 0.01 255); line-height: 1.45">Diseñada por el Braille Institute para baja visión: cada letra es inconfundible. Y desde 2025 tiene monoespaciada propia, así que las cifras no piden prestada otra familia.</div>
+      </div>
+      <div style="padding: 16px 18px 18px; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', sans-serif">
+        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid oklch(0.93 0.004 255)">
+          <div style="width: 42px; height: 42px; border-radius: 7px; background: oklch(0.5 0.1 15); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', sans-serif; font-size: 15px; font-weight: 700; color: white">4.2</span></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div style="font-size: 15px; font-weight: 400">HULA (Ent. Principal)</div>
+            <div style="display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; background: oklch(0.4 0.13 255); color: white; border-radius: 4px; padding: 4px 8px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em">HORARIO OFICIAL</span></div>
+          </div>
+          <div style="font-size: 23px; font-weight: 700; letter-spacing: -0.02em">2</div>
+        </div>
+        <div style="padding-top: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 12px; color: oklch(0.45 0.01 255)">Rda. Muralla · Fontiñas · Gándaras</div>
+          <div style="font-size: 15px">0123456789 · 17:06 · ~7</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px">
+    <div style="border: 1px solid oklch(0.9 0.004 255); border-radius: 12px; padding: 20px 22px">
+      <div class="cap" style="margin-bottom: 14px">La prueba que importa: 1, l, I, 0, O</div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: baseline; gap: 16px">
+          <span style="font-size: 12px; width: 132px; flex-shrink: 0; color: oklch(0.5 0.01 255)">IBM Plex Sans</span>
+          <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 19px; letter-spacing: 0.04em">1 l I 0 O 5.1 5DS</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px">
+          <span style="font-size: 12px; width: 132px; flex-shrink: 0; color: oklch(0.5 0.01 255)">Public Sans</span>
+          <span style="font-family: 'Public Sans', sans-serif; font-size: 19px; letter-spacing: 0.04em">1 l I 0 O 5.1 5DS</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px">
+          <span style="font-size: 12px; width: 132px; flex-shrink: 0; color: oklch(0.5 0.01 255)">Atkinson Next</span>
+          <span style="font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', sans-serif; font-size: 19px; letter-spacing: 0.04em">1 l I 0 O 5.1 5DS</span>
+        </div>
+      </div>
+      <p style="margin: 16px 0 0; font-size: 12px; line-height: 1.55; color: oklch(0.42 0.01 255); border-top: 1px solid oklch(0.93 0.004 255); padding-top: 14px">
+        En una red con líneas <strong>1.1</strong>, <strong>5.1</strong>, <strong>5DS</strong> y <strong>11</strong>, y con códigos de poste como <strong>uilP</strong> o <strong>xRiq</strong>, distinguir un uno de una ele no es un detalle tipográfico: es no bajarse en la parada equivocada.
+      </p>
+    </div>
+
+    <div style="border: 1px solid oklch(0.9 0.004 255); border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+      <div class="cap">Lo que yo haría</div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.6; color: oklch(0.3 0.01 255)">
+        <strong>Public Sans para todo</strong>, y la monoespaciada solo para las cifras que tienen que alinearse en columna: minutos, horas y códigos de poste.
+      </p>
+      <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.45 0.01 255)">
+        Es la más sobria y la que menos se nota, que es lo que pediste. Plex tiene demasiada personalidad para un servicio público; Atkinson resuelve mejor la baja visión, pero sus formas exageradas cansan en un tablero que se lee veinte veces al día.
+      </p>
+      <p style="margin: 0; font-size: 12px; line-height: 1.55; color: oklch(0.45 0.01 255); border-top: 1px solid oklch(0.93 0.004 255); padding-top: 12px">
+        Si en cambio priorizas la accesibilidad por encima de todo —es un argumento defendible en este proyecto— entonces Atkinson, y no pasa nada por que se note.
+      </p>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

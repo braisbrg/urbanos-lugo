@@ -1,0 +1,6 @@
+# One line ending in the repository, whatever each machine checks out with.
+# Mixed CRLF and LF inside a single file cost us a bad afternoon.
+* text=auto
+
+*.png binary
+*.svg text

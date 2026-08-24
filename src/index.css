@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+ * Design tokens · redesign v2
+ *
+ * Every colour, size and face the interface uses is named here. Components
+ * reference the names, never raw values, so the dark theme is one block of
+ * overrides rather than a conditional at every element.
+ *
+ * The type ramp is a 1.25 ratio in rem, NOT px: a fixed px ramp ignores the
+ * reader's own font-size setting, which is the one accessibility control most
+ * people with low vision actually use.
+ * ------------------------------------------------------------------------ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* surfaces */
+  --c-bg: oklch(0.995 0.0015 255);
+  --c-surface: oklch(0.968 0.003 255);
+  --c-line: oklch(0.91 0.004 255);
+  --c-line-soft: oklch(0.925 0.004 255);
+  --c-border: oklch(0.89 0.004 255);
+
+  /* ink */
+  --c-ink: oklch(0.22 0.008 255);
+  --c-ink-max: oklch(0.16 0.008 255);
+  --c-ink-2: oklch(0.35 0.01 255);
+  --c-ink-3: oklch(0.5 0.01 255);
+
+  /* the provenance system — the one thing a restyle must never flatten */
+  --c-official-bg: oklch(0.4 0.13 255);
+  --c-official-fg: oklch(1 0 0);
+  --c-estimated-fg: oklch(0.42 0.055 70);
+  --c-estimated-line: oklch(0.64 0.08 70);
+
+  --c-accent: oklch(0.45 0.13 250);
+  --c-on-accent: oklch(1 0 0);
+  --c-warn-bg: oklch(0.972 0.018 78);
+  --c-warn-fg: oklch(0.38 0.05 68);
+  --c-scrim: oklch(0.2 0.015 250 / 0.42);
+}
+
+.dark {
+  --c-bg: oklch(0.165 0.006 255);
+  --c-surface: oklch(0.225 0.009 255);
+  --c-line: oklch(0.28 0.01 255);
+  --c-line-soft: oklch(0.27 0.01 255);
+  --c-border: oklch(0.32 0.011 255);
+
+  --c-ink: oklch(0.94 0.004 255);
+  --c-ink-max: oklch(0.985 0.004 255);
+  --c-ink-2: oklch(0.72 0.01 255);
+  --c-ink-3: oklch(0.67 0.01 255);
+
+  /* The official chip inverts: a light chip on a dark ground reads as solid,
+     where a dark chip would disappear into the surface. */
+  --c-official-bg: oklch(0.75 0.12 252);
+  --c-official-fg: oklch(0.16 0.02 255);
+  --c-estimated-fg: oklch(0.84 0.09 78);
+  --c-estimated-line: oklch(0.56 0.08 78);
+
+  --c-accent: oklch(0.76 0.12 252);
+  --c-on-accent: oklch(0.16 0.02 255);
+  --c-warn-bg: oklch(0.225 0.026 78);
+  --c-warn-fg: oklch(0.87 0.07 72);
+  --c-scrim: oklch(0.08 0.01 250 / 0.6);
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-line: var(--c-line);
+  --color-line-soft: var(--c-line-soft);
+  --color-edge: var(--c-border);
+
+  --color-ink: var(--c-ink);
+  --color-ink-max: var(--c-ink-max);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+
+  --color-official: var(--c-official-bg);
+  --color-on-official: var(--c-official-fg);
+  --color-estimated: var(--c-estimated-fg);
+  --color-estimated-line: var(--c-estimated-line);
+
+  --color-accent: var(--c-accent);
+  --color-on-accent: var(--c-on-accent);
+  --color-warn: var(--c-warn-bg);
+  --color-warn-ink: var(--c-warn-fg);
+  --color-scrim: var(--c-scrim);
+
+  --font-sans: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* 12 · 15 · 19 · 23 · 29 · 46 at the default root size, but in rem so the
+     reader's own setting scales all of it together. */
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.35;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.45;
+  --text-emph: 1.1875rem;
+  --text-emph--line-height: 1.3;
+  --text-title: 1.4375rem;
+  --text-title--line-height: 1.2;
+  --text-num: 1.8125rem;
+  --text-num--line-height: 1;
+  --text-hero: 2.875rem;
+  --text-hero--line-height: 0.92;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+  }
+  /* Tabular figures everywhere a column of times or minutes has to line up. */
+  .tnum {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  /* Leaflet paints its popups white from its own sheet, which strands themed text on a
+     white card in dark mode. */
+  .leaflet-popup-content-wrapper,
+  .leaflet-popup-tip {
+    background: var(--c-bg) !important;
+    color: var(--c-ink) !important;
+  }
+
+  /* Leaflet's attribution is required, and at its default 11 px grey on a translucent
+     white it fails contrast in both themes. Keep it, make it readable. */
+  .leaflet-control-attribution {
+    background: var(--c-bg) !important;
+    color: var(--c-ink-2) !important;
+    font-size: var(--text-label) !important;
+  }
+  .leaflet-control-attribution a {
+    color: var(--c-accent) !important;
+  }
+
+  /* Leaflet draws its own controls at 30 px, which is under the tap floor everything
+     else in this app clears. Widen them rather than hiding them. */
+  .leaflet-touch .leaflet-bar a,
+  .leaflet-bar a {
+    /* Leaflet's own sheet is unlayered, so a layered rule would lose the cascade. */
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+  }
+
+  /* A row tinted with its own line colour, mixed against whatever the background
+     currently is. Hard-coding a pale tint gives a light-mode wash that glows on a
+     dark screen; mixing against --c-bg lands correctly in both themes from one rule.
+     Set --line inline from the line's colour. */
+  .tint {
+    background: color-mix(in oklch, var(--line) 13%, var(--c-bg));
+  }
+  .tint-edge {
+    border-color: color-mix(in oklch, var(--line) 26%, var(--c-bg));
+  }
+
+  /* The focus ring appears instantly — animating it hides it from anyone who
+     navigates fast with a keyboard. */
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

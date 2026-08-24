@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Workbench · tone: utilitarian · anchor hue: amber 60°
+     * component-scope: app shell state · genre: modern-minimal
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.48 0.12 60); } a:hover { color: oklch(0.38 0.12 60); }
+    .cond { font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    .cap { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; color: oklch(0.5 0.02 265); }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 690px; font-size: 15px; background: oklch(0.985 0.002 250); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; color: oklch(0.22 0.015 265)">
+        <div style="background: oklch(0.995 0.0015 255); border-bottom: 1px solid oklch(0.9 0.005 250); padding: 12px 14px; display: flex; gap: 8px; align-items: center">
+          <div style="flex: 1; height: 46px; background: oklch(0.965 0.003 250); border: 1px solid oklch(0.88 0.005 250); border-radius: 12px; display: flex; align-items: center; padding-left: 12px; gap: 9px; min-width: 0; overflow: hidden">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.5 0.012 250)" stroke-width="2" stroke-linecap="round" style="flex-shrink: 0" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span style="font-size: 15px; color: oklch(0.55 0.012 250)">Parada, liña ou rúa…</span>
+            <button style="width: 44px; height: 44px; margin-left: auto; background: transparent; border: none; border-left: 1px solid oklch(0.9 0.005 250); color: oklch(0.35 0.012 250); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0" aria-label="Escanear QR">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h3.5M17.5 14v7"/></svg>
+            </button>
+          </div>
+          <button style="width: 46px; height: 46px; border-radius: 12px; background: oklch(0.965 0.003 250); border: 1px solid oklch(0.88 0.005 250); color: oklch(0.3 0.012 250); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0" aria-label="Menú">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
+        </div>
+
+        <div style="flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; overflow: hidden">
+          <div class="cap" style="font-size: 12px; color: oklch(0.48 0.012 250)">As túas paradas</div>
+
+          <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.87 0.006 250); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+              <div style="font-size: 15px; font-weight: 600">Rda. Muralla 56</div>
+              <div style="display: flex; gap: 5px; align-items: center">
+                <span style="background: oklch(0.5 0.1 15); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700">4.2</span>
+                <span style="background: oklch(0.48 0.11 85); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700">2</span>
+                <span style="background: oklch(0.42 0.13 265); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700">13</span>
+                <span style="font-size: 12px; color: oklch(0.5 0.012 250)">+11</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0">
+              <div class="cond" style="font-size: 29px; font-weight: 700; line-height: 0.9; color: oklch(0.46 0.13 52)">2</div>
+              <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: oklch(0.48 0.012 250)">MIN</div>
+            </div>
+          </div>
+
+          <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.87 0.006 250); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+              <div style="font-size: 15px; font-weight: 600">Avda. das Américas 36</div>
+              <div style="display: flex; gap: 5px; align-items: center">
+                <span style="background: oklch(0.42 0.14 145); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700">5.1</span>
+                <span style="background: oklch(0.4 0.13 150); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700">5.2</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0">
+              <div class="cond" style="font-size: 29px; font-weight: 700; line-height: 0.9; color: oklch(0.3 0.012 250)">~11</div>
+              <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: oklch(0.48 0.012 250)">MIN</div>
+            </div>
+          </div>
+
+          <div class="cap" style="font-size: 12px; color: oklch(0.48 0.012 250); margin-top: 8px">Preto de min</div>
+
+          <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.9 0.006 250); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+            <div style="flex: 1; min-width: 0"><div style="font-size: 15px; font-weight: 500; color: oklch(0.3 0.012 250)">Praza Maior</div></div>
+            <span class="cond" style="font-size: 15px; font-weight: 600; color: oklch(0.5 0.012 250); flex-shrink: 0">180 m</span>
+          </div>
+          <div style="background: oklch(0.995 0.0015 255); border: 1px solid oklch(0.9 0.006 250); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+            <div style="flex: 1; min-width: 0"><div style="font-size: 15px; font-weight: 500; color: oklch(0.3 0.012 250)">San Roque (Xardín)</div></div>
+            <span class="cond" style="font-size: 15px; font-weight: 600; color: oklch(0.5 0.012 250); flex-shrink: 0">340 m</span>
+          </div>
+        </div>
+
+        <div style="display: flex; border-top: 1px solid oklch(0.9 0.005 250); background: oklch(0.995 0.0015 255)">
+          <div style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: oklch(0.42 0.13 55); border-top: 2px solid oklch(0.55 0.15 60)">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10"/><path d="M4 17h16M7 20v-3M17 20v-3M4 11h16"/></svg>
+            <span style="font-size: 12px; font-weight: 700">Paradas</span>
+          </div>
+          <div style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: oklch(0.48 0.012 250)">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>
+            <span style="font-size: 12px; font-weight: 600">Liñas</span>
+          </div>
+          <div style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: oklch(0.48 0.012 250)">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m3 6.5 6-2.5 6 2.5 6-2.5v13l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13M15 6.5v13"/></svg>
+            <span style="font-size: 12px; font-weight: 600">Mapa</span>
+          </div>
+          <div style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: oklch(0.48 0.012 250)">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 19 5M5 19h5M5 19v-5M19 5h-5M19 5v5"/></svg>
+            <span style="font-size: 12px; font-weight: 600">Ruta</span>
+          </div>
+        </div>
+      </div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

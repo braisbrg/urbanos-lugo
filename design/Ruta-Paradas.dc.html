@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <style>
+    /* Hallmark · macrostructure: Step Sequence · tone: utilitarian · anchor hue: green 145
+     * genre: modern-minimal · enrichment: none (typography only)
+     */
+    body { margin: 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    a { color: oklch(0.45 0.13 250); } a:hover { color: oklch(0.36 0.13 250); }
+    .m { font-variant-numeric: tabular-nums; font-family: 'Atkinson Hyperlegible Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .stop { display: flex; align-items: center; gap: 14px; padding: 7px 0 7px 34px; position: relative; }
+    .tick { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
+    .name { flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .t { font-size: 15px; flex-shrink: 0; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; font-size: 15px; background: oklch(0.995 0.0015 255); color: oklch(0.22 0.008 255); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="border-bottom: 1px solid oklch(0.91 0.004 255); padding: 12px 14px; display: flex; gap: 10px; align-items: center">
+    <button style="width: 44px; height: 44px; border-radius: 10px; background: transparent; border: none; color: oklch(0.32 0.01 255); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0" aria-label="Plegar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+    </button>
+    <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px">
+      <span class="m" style="background: oklch(0.42 0.14 145); color: white; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 700; flex-shrink: 0">5.1</span>
+      <div style="min-width: 0">
+        <div style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">26 paradas · 30 min</div>
+        <div class="m" style="font-size: 12px; color: oklch(0.5 0.01 255)">17:00 → 17:30</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 11px 18px; background: oklch(0.968 0.004 255); border-bottom: 1px solid oklch(0.91 0.004 255); display: flex; gap: 18px; align-items: center">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <span style="width: 13px; height: 13px; border-radius: 50%; background: oklch(0.4 0.13 255); flex-shrink: 0"></span>
+      <span style="font-size: 12px; color: oklch(0.4 0.01 255)">hora oficial</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <span style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); flex-shrink: 0"></span>
+      <span style="font-size: 12px; color: oklch(0.4 0.01 255)">calculada por carretera</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 12px 18px 0; position: relative">
+    <div style="position: absolute; left: 32px; top: 24px; bottom: 0; width: 3px; background: oklch(0.88 0.02 145)"></div>
+
+    <div class="stop" style="padding-top: 4px">
+      <span class="tick" style="width: 15px; height: 15px; border-radius: 50%; background: oklch(0.4 0.13 255); left: 7px; box-shadow: 0 0 0 4px oklch(0.995 0.0015 255)"></span>
+      <span class="name" style="font-weight: 700; font-size: 15px">Avda. Américas 36</span>
+      <span class="m t" style="font-weight: 700">17:00</span>
+    </div>
+
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Avda. Américas 51</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:01</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Rda. Muralla (Fogar Sta. María)</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:05</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Rda. Muralla 163-164</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:07</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Rúa Vilalba 6</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:09</span>
+    </div>
+
+    <div class="stop">
+      <span class="tick" style="width: 15px; height: 15px; border-radius: 50%; background: oklch(0.4 0.13 255); left: 7px; box-shadow: 0 0 0 4px oklch(0.995 0.0015 255)"></span>
+      <span class="name" style="font-weight: 600">Ramón Ferreiro (Feminino)</span>
+      <span class="m t" style="font-weight: 700">17:10</span>
+    </div>
+
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Ramón Ferreiro (Anexa)</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:11</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Avda. Madrid (Cruz Vermella)</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:13</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Rda. Mercedes 50</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:15</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">Fontiñas (Parque)</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:17</span>
+    </div>
+    <div class="stop">
+      <span class="tick" style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed oklch(0.6 0.06 70); background: oklch(0.995 0.0015 255); left: 10px; box-sizing: border-box"></span>
+      <span class="name" style="color: oklch(0.4 0.01 255)">San Eufrasio 108</span>
+      <span class="m t" style="color: oklch(0.5 0.01 255)">~17:21</span>
+    </div>
+
+    <div style="padding: 8px 0 8px 34px; position: relative">
+      <span style="position: absolute; left: 10px; top: 14px; width: 9px; display: flex; flex-direction: column; gap: 3px; align-items: center">
+        <span style="width: 3px; height: 3px; border-radius: 50%; background: oklch(0.72 0.02 145)"></span>
+        <span style="width: 3px; height: 3px; border-radius: 50%; background: oklch(0.72 0.02 145)"></span>
+        <span style="width: 3px; height: 3px; border-radius: 50%; background: oklch(0.72 0.02 145)"></span>
+      </span>
+      <span style="font-size: 12px; color: oklch(0.55 0.01 255)">14 paradas más por la Estda. da Fonsagrada</span>
+    </div>
+
+    <div class="stop" style="padding-bottom: 4px">
+      <span class="tick" style="width: 15px; height: 15px; border-radius: 50%; background: oklch(0.4 0.13 255); left: 7px; box-shadow: 0 0 0 4px oklch(0.995 0.0015 255)"></span>
+      <span class="name" style="font-weight: 700">HULA (Ent. Principal)</span>
+      <span class="m t" style="font-weight: 700">17:30</span>
+    </div>
+  </div>
+
+  <div style="border-top: 1px solid oklch(0.91 0.004 255); padding: 13px 18px; display: flex; gap: 11px; align-items: flex-start; background: oklch(0.972 0.006 255)">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.1 255)" stroke-width="2" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.1"/></svg>
+    <p style="margin: 0; font-size: 12px; line-height: 1.5; color: oklch(0.38 0.01 255)">
+      El operador solo publica hora en <strong>tres puntos</strong> de este trayecto. Las demás se calculan sumando el tiempo de carretera medido entre ellos, así que el error queda encerrado entre dos horas oficiales en vez de acumularse.
+    </p>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

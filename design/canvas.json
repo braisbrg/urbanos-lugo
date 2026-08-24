@@ -1,0 +1,307 @@
+{
+  "pages": [
+    {
+      "id": "proto",
+      "name": "Prototipo clicable"
+    },
+    {
+      "id": "decision",
+      "name": "La decisión"
+    },
+    {
+      "id": "ruta",
+      "name": "Ruta · como Google/Moovit"
+    },
+    {
+      "id": "letra",
+      "name": "Letra"
+    },
+    {
+      "id": "casco",
+      "name": "Casco compartido"
+    },
+    {
+      "id": "sistema",
+      "name": "Sistema"
+    },
+    {
+      "id": "escritorio",
+      "name": "Escritorio"
+    },
+    {
+      "id": "aprendido",
+      "name": "Lo aprendido fuera"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Prototipo.dc.html",
+      "title": "Prototipo · V1 + Atkinson",
+      "page": "proto",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "V1-Lista.dc.html",
+      "title": "V1 · Lista plana",
+      "page": "decision",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "V2-Destacada.dc.html",
+      "title": "V2 · Primera destacada",
+      "page": "decision",
+      "x": 460,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "V1-Escuro.dc.html",
+      "title": "V1 · en oscuro",
+      "page": "decision",
+      "x": 920,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Minutos.dc.html",
+      "title": "Destacar el bus más cercano",
+      "page": "decision",
+      "x": 0,
+      "y": 950,
+      "w": 1180,
+      "h": 880
+    },
+    {
+      "file": "Tipografia.dc.html",
+      "title": "Qué letra usa la app",
+      "page": "letra",
+      "x": 0,
+      "y": 0,
+      "w": 1200,
+      "h": 880
+    },
+    {
+      "file": "Inicio.dc.html",
+      "title": "Inicio · favoritos",
+      "page": "casco",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 690
+    },
+    {
+      "file": "Buscador.dc.html",
+      "title": "Buscador · con QR",
+      "page": "casco",
+      "x": 460,
+      "y": 0,
+      "w": 390,
+      "h": 690
+    },
+    {
+      "file": "Menu.dc.html",
+      "title": "Menú lateral",
+      "page": "casco",
+      "x": 920,
+      "y": 0,
+      "w": 390,
+      "h": 690
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "Las tres etiquetas de tiempo",
+      "page": "sistema",
+      "x": 0,
+      "y": 0,
+      "w": 900,
+      "h": 790
+    },
+    {
+      "file": "Tactil.dc.html",
+      "title": "Objetivos táctiles y escala",
+      "page": "sistema",
+      "x": 960,
+      "y": 0,
+      "w": 900,
+      "h": 1200
+    },
+    {
+      "file": "Escritorio.dc.html",
+      "title": "Escritorio · 1280 px",
+      "page": "escritorio",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 820
+    },
+    {
+      "file": "Ruta-Resumo.dc.html",
+      "title": "Ruta · resumen",
+      "page": "ruta",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Ruta-Paradas.dc.html",
+      "title": "Ruta · paradas desplegadas",
+      "page": "ruta",
+      "x": 460,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Agrupado.dc.html",
+      "title": "Arrivals agrupadas por línea",
+      "page": "aprendido",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    }
+  ],
+  "annotations": [
+    {
+      "id": "proto-nota",
+      "page": "proto",
+      "x": 460,
+      "y": 0,
+      "w": 600,
+      "text": "PROTOTIPO CLICABLE · V1 + Atkinson\n\nPRÓXIMAS vs POR LÍNEA — tenías razón, antes eran casi lo mismo. Ya no:\n\n· PRÓXIMAS ordena por hora y contesta «¿qué viene ahora?». Cinco filas, la primera es la que sale antes.\n· POR LÍNEA ordena por NÚMERO DE LÍNEA —para que encuentres la tuya— y enseña sus TRES próximos pasos con la frecuencia.\n\nLa diferencia se ve en la 1.3 desplegada: pasa a las 16:59 y la siguiente es a las 18:29. Hora y media. El listado cronológico te enseña «7 min» y se calla lo demás; aquí ves que si la pierdes, la pierdes de verdad.\n\nEso es lo que decide si corres o te vas andando, y es la razón de que el conmutador exista. Si aun así te sigue sobrando, lo quitamos: un botón que nadie entiende es peor que no tenerlo.\n\nTAMBIÉN FUNCIONA: las cuatro pestañas · entrar y salir de una parada · desplegar las paradas de la ruta · el menú lateral · las filas teñidas en Líneas.\n\nTRES INTERRUPTORES ARRIBA: tema, letra (Atkinson / Public Sans / IBM Plex) y énfasis de los minutos (A o B).\n\nNo es real: el mapa es un dibujo, la búsqueda no busca, los avisos no suenan."
+    },
+    {
+      "id": "decision-que-eliges",
+      "page": "decision",
+      "x": 0,
+      "y": -300,
+      "w": 860,
+      "text": "LO QUE HAY QUE DECIDIR\n\n1 · V1 o V2 — el único punto abierto del diseño. Todo lo demás ya está cerrado.\n2 · La letra — en la página «Letra». Ahí sí decides tú, porque es una elección de prioridad, no de gusto.\n\nY nada más. El casco (buscador, favoritos como inicio, QR pegado, menú) quedó acordado; el sistema de etiquetas es innegociable; el escritorio se derivará de lo que elijas aquí."
+    },
+    {
+      "id": "decision-v1",
+      "page": "decision",
+      "x": 0,
+      "y": -172,
+      "w": 390,
+      "text": "V1 · LISTA PLANA\nLas cinco salidas con el mismo peso. Sin tarjetas y sin fondos: líneas finas y ya.\n\nA favor: lo más sobrio posible, y lo que más cabe en pantalla.\nEn contra: si vas siempre a la misma línea, no te la destaca."
+    },
+    {
+      "id": "decision-v2",
+      "page": "decision",
+      "x": 460,
+      "y": -172,
+      "w": 390,
+      "text": "V2 · PRIMERA DESTACADA\nTu idea de B pero contenida: 46 px en vez de los 88 que se pasaban, fondo apenas más claro y el aviso como botón con texto.\n\nA favor: contesta de un vistazo sin leer nada.\nEn contra: gasta un tercio de la pantalla en un solo bus."
+    },
+    {
+      "id": "decision-oscuro",
+      "page": "decision",
+      "x": 920,
+      "y": -172,
+      "w": 390,
+      "text": "EL MODO OSCURO\nNo es invertir colores. Fondo con matiz (nunca negro puro), texto al 0,94 para no dejar halo, insignias de línea subidas de luminosidad para mantener el 4,5:1.\n\nLa etiqueta de horario oficial invierte: chip clara sobre fondo oscuro."
+    },
+    {
+      "id": "casco-cerrado",
+      "page": "casco",
+      "x": 0,
+      "y": -210,
+      "w": 860,
+      "text": "ESTO YA ESTÁ ACORDADO — no hay nada que decidir aquí\n\n1 · Los favoritos son el inicio, no una entrada de menú. Es lo que se abre nueve de cada diez veces, y se abre con los minutos ya puestos.\n2 · El QR va pegado al buscador. En la marquesina escanear el poste es más rápido que escribir el nombre; enterrarlo en un menú sería perder el camino más corto que tiene la aplicación.\n3 · En el menú queda lo que se consulta de vez en cuando: avisos (con marca cuando hay algo activo), tarifas, idioma y apariencia.\n\nAntes esto era un solo artboard con tres móviles dibujados dentro. Hallmark lo marcó como crítico —marcos de teléfono falsos— y tenía razón: en un lienzo, el artboard ya es el marco."
+    },
+    {
+      "id": "sistema-nota",
+      "page": "sistema",
+      "x": 0,
+      "y": -150,
+      "w": 900,
+      "text": "Esto no es un estilo, es una regla. Las etiquetas pueden vestirse distinto, pero ninguna versión puede fundirlas en una sola.\n\nLa prueba está abajo a la izquierda: quitando el color, siguen siendo dos cosas distintas. Ese es el listón."
+    },
+    {
+      "id": "letra-nota",
+      "page": "letra",
+      "x": 0,
+      "y": -190,
+      "w": 900,
+      "text": "PROBÁNDOLA EN CONTEXTO\n\nTodo el lienzo está ahora en Atkinson Hyperlegible Next para que la juzgues donde importa, no en una ficha. Esta página conserva las tres candidatas para comparar.\n\nUn hallazgo a favor: desde 2025 Atkinson tiene MONOESPACIADA propia. Eso resuelve lo de las cifras en columna sin pedirle prestada la familia a nadie — una sola familia en dos anchos, que es exactamente la estructura que acordamos.\n\nMíralo sobre todo en «La decisión» y en «Escritorio»: si en un tablero que se lee veinte veces al día sus formas exageradas te acaban cansando, ahí se verá. Si no cansan, es la elección correcta para este proyecto y no hay más que hablar."
+    },
+    {
+      "id": "escritorio-nota",
+      "page": "escritorio",
+      "x": 0,
+      "y": -160,
+      "w": 700,
+      "text": "ESCRITORIO ES OTRA PANTALLA, NO LA MISMA ESTIRADA\nTres columnas: guardadas, tablero y mapa a la vez — lo que un móvil no puede hacer.\n\nSe derivará de la versión que elijas, así que aquí no hay nada que decidir todavía. Está para que veas que la estructura aguanta."
+    },
+    {
+      "id": "decision-minutos",
+      "page": "decision",
+      "x": 0,
+      "y": 1880,
+      "w": 1180,
+      "text": "TU PREGUNTA DEL COLOR\n\nYa se destaca el bus más cercano, pero por LUMINOSIDAD, no por tono — por eso no lo habías visto.\n\nEl ámbar que tenías en la cabeza tiene un choque que no es de accesibilidad sino de significado: en este sistema el ámbar YA quiere decir «estimado». Un número ámbar junto a un chip azul que dice «oficial» se contradice, y en gris se cae del todo.\n\nMi voto es B. Si al final eliges V2, la cosa se resuelve sola: el tamaño ya hace el trabajo."
+    },
+    {
+      "id": "decision-cambios",
+      "page": "decision",
+      "x": 0,
+      "y": -460,
+      "w": 860,
+      "text": "QUÉ CAMBIÓ EN ESTA VUELTA\n\nDe los auditores: fuera los bordes de color a la izquierda, fuera el blanco puro, texto funcional al suelo de 12 px (había 81 usos por debajo), contraste AA corregido.\n\nY una escala de letra de verdad en TODO el lienzo — el escritorio se había quedado con diez tamaños mientras el móvil tenía cuatro. Ahora los diez artboards comparten la misma rampa: 12 etiqueta · 15 cuerpo · 19 énfasis · 29 los minutos."
+    },
+    {
+      "id": "ruta-nota",
+      "page": "ruta",
+      "x": 0,
+      "y": -260,
+      "w": 860,
+      "text": "EL PATRÓN DE GOOGLE / MOOVIT, CON ALGO QUE ELLOS NO TIENEN\n\nLa estructura es la que pediste y es la convención del sector: raíl vertical, cada tramo un paso, y las paradas intermedias plegadas tras un «26 paradas · 30 min» que se despliega.\n\nLo nuestro es lo de al lado. Google y Moovit te enseñan las paradas intermedias, pero todas con el mismo aspecto — como si todas las horas valieran lo mismo. Nosotros sabemos cuáles son oficiales: en este trayecto el operador solo publica hora en TRES puntos (salida, Ramón Ferreiro y HULA). El raíl lo dice con la forma del punto: relleno = hora oficial, hueco y discontinuo = calculada.\n\nAsí se ve de un vistazo dónde está la certeza y dónde el cálculo — y que el error queda encerrado entre dos horas oficiales en vez de acumularse."
+    },
+    {
+      "id": "ruta-itranvias",
+      "page": "ruta",
+      "x": 0,
+      "y": 900,
+      "w": 860,
+      "text": "LO QUE SAQUÉ DE iTRANVÍAS Y DE LA MTA\n\nDe iTranvías, tres funciones que no tenemos y son baratas: «últimas paradas consultadas» (historial), pantalla de inicio configurable (eliges si abre en favoritos, ubicación o un código), y consulta de transbordo gratuito entre dos líneas concretas.\n\nUn dato incómodo: sus peores reseñas son por horas que no cuadran — buses en cabecera marcando «1 min» que no salen. Y eso que A Coruña SÍ tiene GPS de flota. Es exactamente la grieta que nuestras etiquetas tapan.\n\nDe la MTA (app nueva de 2026, hecha en casa): «zero-tap information» —los tiempos se ven sin tocar nada, que es nuestra decisión de favoritos como inicio— y contador que funciona sin cobertura, que ya hacemos. Su planificador enseña la posición y la hora estimada en TODOS los destinos futuros: eso es justo la pantalla de la derecha.\n\nY una cosa que ellos resuelven y nosotros no: soporte de escalado de fuente del sistema. Ver la nota en «Sistema»."
+    },
+    {
+      "id": "apr-que-copiamos",
+      "page": "aprendido",
+      "x": 460,
+      "y": 0,
+      "w": 560,
+      "text": "LO QUE SÍ SE APRENDE DE iTRANVÍAS\n\n1 · AGRUPAR POR LÍNEA — es lo de aquí al lado, y es un modelo mental distinto al nuestro.\nNuestro tablero contesta «¿qué viene ahora?». El suyo contesta «¿cuándo pasa MI línea?».\nEn Sindicatos, con 13 líneas, una lista cronológica te enseña las cinco próximas y tu línea puede no estar. Agrupado la encuentras al instante.\nNo sustituye a V1/V2: convive como segunda vista con el conmutador de arriba.\n\n2 · LA FILA TEÑIDA CON EL COLOR DE SU LÍNEA — en su listado de líneas, toda la fila lleva un tinte pálido del color de la línea, no solo la insignia. Con 24 líneas eso se escanea de un vistazo.\nOJO: aquí solo lo uso en las cabeceras de grupo. En el tablero de salidas NO, porque un tinte ámbar al lado de un chip que dice «estimado» crea ruido justo donde no lo queremos.\n\n3 · PESTAÑAS IDA / VUELTA / INFORMACIÓN en el detalle de línea, más claras que nuestro selector ‹ ›.\n\n4 · MAPA ARRIBA + LISTA DEBAJO en «cerca de mí», en vez de mandarte a otra pestaña.\n\n5 · TRES FUNCIONES BARATAS: historial de últimas paradas, inicio configurable y consulta de transbordo gratuito entre dos líneas."
+    },
+    {
+      "id": "apr-que-no",
+      "page": "aprendido",
+      "x": 460,
+      "y": 430,
+      "w": 560,
+      "text": "LO QUE NO PODEMOS COPIAR — Y NO VAMOS A FINGIR\n\nBuena parte de lo que hace que su app se sienta viva es GPS de flota, y A Coruña lo tiene. Lugo no.\n\nNo podemos hacer: el bus dibujado sobre el raíl en su posición actual · el número de vehículo (381, 415…) · la distancia en metros hasta el bus · «dónde está ahora» (Plaza de Ourense) · el «Última actualización 08:13:52».\n\nEsas cinco cosas son medidas. Inventarlas sería exactamente la mentira que este proyecto lleva meses evitando.\n\nY hay una ironía que conviene recordar: SUS PEORES RESEÑAS son por horas que no cuadran — buses en cabecera marcando «1 min» que no salen. Teniendo GPS. Nosotros no podemos competir en inmediatez, pero sí en no prometer lo que no sabemos."
+    },
+    {
+      "id": "apr-web",
+      "page": "aprendido",
+      "x": 0,
+      "y": 900,
+      "w": 1020,
+      "text": "SOBRE LA WEB: no está actualizada. Pone V3.5.3, fechada el 14/11/2016 — tiene una década. Lo vivo es la app.\n\nLo que sí saqué de su changelog de entonces y sigue siendo buena idea: consulta de transbordos gratuitos, últimas paradas consultadas, lista de tarifas y aviso de novedades."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "decision"
+  }
+}

@@ -1,0 +1,70 @@
+name: Deploy to GitHub Pages
+
+# Pushes deploy the app. The schedule re-deploys with a fresh snapshot of the operator's
+# service notices, which is the only piece of data that changes on its own — the browser
+# cannot fetch buslugo.com directly because of CORS, and a static host has no server to
+# do it at runtime.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 * * * *' # hourly, off the hour to avoid the busiest minute
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - run: pnpm install --frozen-lockfile
+
+      # Never publish a build whose data contradicts itself, or whose times claim to be
+      # something they are not.
+      - run: pnpm run lint
+      - run: pnpm test
+
+      # Best effort: if buslugo.com is unreachable the committed snapshot is used as is.
+      - name: Refresh service notices
+        run: pnpm exec tsx tools/fetchAlerts.ts || echo "notice refresh failed, keeping the committed snapshot"
+
+      - name: Build
+        env:
+          # Project sites live at https://<user>.github.io/<repo>/. For a user site or a
+          # custom domain, set this to "/" instead.
+          BASE_PATH: /${{ github.event.repository.name }}/
+        run: pnpm run build
+
+      # Stops GitHub Pages from running Jekyll over the output.
+      - run: touch dist/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
