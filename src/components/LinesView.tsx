@@ -168,7 +168,8 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       setDirectionIndex(0);
                       setShowDetail(true);
                     }}
-                    className={`p-3.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-3 ${isCurrent ? 'bg-surface border-accent shadow-xs' : 'bg-bg border-edge hover:border-edge hover:bg-surface'}`}
+                    style={{ '--line': line.color } as React.CSSProperties}
+                    className={`tint tint-strong p-3.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-3 ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span
@@ -184,7 +185,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                             <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0" />
                           )}
                         </div>
-                        <div className="text-label text-ink-3 mt-0.5 flex items-center gap-2 flex-wrap">
+                        <div className="text-label text-ink-2 mt-0.5 flex items-center gap-2 flex-wrap">
                           <span>{frequencyLabel(line, lang)}</span>
                           <span>&bull;</span>
                           <span>{daysLabel(line, lang)}</span>

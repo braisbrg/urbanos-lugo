@@ -479,8 +479,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           {soon.map((a, idx) => (
             <li
               key={`${a.lineId}-${a.etaTime}-${idx}`}
-              className="tint tint-edge border-b px-3 py-3.5"
-              style={{ '--line': a.lineColor } as React.CSSProperties}
+              className="border-b border-line px-3 py-3.5"
             >
               <div className="flex items-center gap-3">
                 {lineButton(a.lineId, a.lineNumber, a.lineColor)}

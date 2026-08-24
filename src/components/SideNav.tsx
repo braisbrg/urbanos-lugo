@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Globe, Moon, Ticket } from 'lucide-react';
+import { AlertTriangle, Globe, Moon } from 'lucide-react';
 import { navSections, type Tab } from './navSections';
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
@@ -72,24 +72,20 @@ export const SideNav: React.FC<SideNavProps> = ({
       </nav>
 
       <div className="mt-5 flex flex-col gap-0.5 border-t border-line px-2.5 pt-4">
+        {/* Notices and fares are one screen, so they were two rows going to the same
+            place. The badge counts announced incidents; "the network is closed for the
+            night" is not an incident, and the banner already says it. */}
         <button
           onClick={onOpenInfo}
           className="flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body font-medium text-ink-2"
         >
           <AlertTriangle className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
-          <span className="flex-1">{t.menu.alertsShort}</span>
+          <span className="flex-1">{t.menu.alertsAndFares}</span>
           {alertCount > 0 && (
-            <span className="tnum rounded-[10px] bg-official px-2 py-0.5 text-label font-bold text-on-official">
+            <span className="tnum rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
               {alertCount}
             </span>
           )}
-        </button>
-        <button
-          onClick={onOpenInfo}
-          className="flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body font-medium text-ink-2"
-        >
-          <Ticket className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
-          {t.menu.faresShort}
         </button>
       </div>
 

@@ -22,6 +22,8 @@ import { MenuDrawer } from './components/MenuDrawer';
 import { useTheme } from './hooks/useTheme';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
 import { isLineInService } from './utils/schedule';
+import { isSnapshotStale } from './utils/snapshotAge';
+import alertSnapshot from './data/alerts.json';
 import { findStop } from './utils/transitEngine';
 import { BusStop, BusLine } from './types';
 import { Moon, X } from 'lucide-react';
@@ -90,6 +92,15 @@ export default function App() {
 
   const linesInService = BUS_LINES.filter((l) => isLineInService(l, now));
   const isOutOfService = linesInService.length === 0;
+  /**
+   * Incidents the operator has announced. The badge used to show 1 whenever the
+   * network was closed for the night, which is not an incident — and the banner
+   * already says that in a sentence. A snapshot too old to speak for the present
+   * does not get to claim there are none either, so it shows nothing at all.
+   */
+  const announcedIncidents = isSnapshotStale(alertSnapshot.fetchedAt)
+    ? 0
+    : alertSnapshot.alerts.length;
   const firstDepartureTomorrow = [...BUS_LINES]
     .map((l) => l.firstDeparture)
     .sort()[0];
@@ -202,7 +213,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenInfo={() => setActiveTab('info')}
-        alertCount={isOutOfService ? 1 : 0}
+        alertCount={announcedIncidents}
         lang={lang}
         setLang={setLang}
         theme={theme}
@@ -357,7 +368,7 @@ export default function App() {
         open={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onOpenInfo={() => setActiveTab('info')}
-        alertCount={isOutOfService ? 1 : 0}
+        alertCount={announcedIncidents}
         lang={lang}
         setLang={setLang}
         theme={theme}

@@ -13,9 +13,8 @@ export const es: Dict = {
 
   menu: {
     alerts: 'Avisos del servicio',
-    alertsShort: 'Avisos',
+    alertsAndFares: 'Avisos y tarifas',
     fares: 'Tarifas y billetes',
-    faresShort: 'Tarifas',
     language: 'Idioma',
     theme: 'Apariencia',
     themeAuto: 'Automática',
@@ -79,6 +78,9 @@ export const es: Dict = {
     refreshing: 'Sincronizando...',
     cooldownText: (seconds: number) => `Espere (${seconds}s)`,
     unknownStatusTitle: 'No se pudo comprobar si hay avisos',
+    staleStatusTitle: 'La última comprobación ya tiene tiempo',
+    staleStatusDesc:
+      'Esto es lo que decía el operador en la fecha de abajo, no lo que dice ahora. Pudo anunciarse algo después. Consulta buslugo.com si vas a hacer un trayecto importante.',
     unknownStatusDesc: 'No conseguimos leer la página del operador. Eso no quiere decir que todo esté bien: quiere decir que no lo sabemos. Consulta buslugo.com si vas a hacer un trayecto importante.',
     normalStatusTitle: 'Red de transporte operando con total normalidad',
     normalStatusDesc:

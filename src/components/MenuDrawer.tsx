@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDialog } from '../hooks/useDialog';
-import { AlertTriangle, ChevronRight, Globe, Moon, Ticket, X } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Globe, Moon, X } from 'lucide-react';
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
 
@@ -71,6 +71,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
         </div>
 
         <div className="flex flex-col gap-0.5 px-2.5 py-3">
+          {/* Both rows opened the same screen. One row, one destination. */}
           <button
             onClick={() => {
               onOpenInfo();
@@ -79,23 +80,12 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
             className="flex h-14 items-center gap-4 rounded-xl px-3 text-left"
           >
             <AlertTriangle className="h-[21px] w-[21px] shrink-0 text-estimated" strokeWidth={2} aria-hidden="true" />
-            <span className="flex-1 text-emph font-semibold">{t.menu.alerts}</span>
+            <span className="flex-1 text-emph font-semibold">{t.menu.alertsAndFares}</span>
             {alertCount > 0 && (
-              <span className="tnum shrink-0 rounded-[10px] bg-official px-2 py-0.5 text-label font-bold text-on-official">
+              <span className="tnum shrink-0 rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
                 {alertCount}
               </span>
             )}
-          </button>
-
-          <button
-            onClick={() => {
-              onOpenInfo();
-              onClose();
-            }}
-            className="flex h-14 items-center gap-4 rounded-xl px-3 text-left"
-          >
-            <Ticket className="h-[21px] w-[21px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
-            <span className="flex-1 text-body font-semibold">{t.menu.fares}</span>
             <ChevronRight className="h-[17px] w-[17px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>
 

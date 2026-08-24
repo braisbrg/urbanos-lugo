@@ -14,6 +14,7 @@ import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { calculateRelevanceScore, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
+import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { walkHopsOf } from '../src/services/walkingPath';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
 import {
@@ -1223,6 +1224,22 @@ ok('no colour is written straight into a class name', () => {
     `${offenders.length} fixed palette classes, which will not follow the theme: ` +
       [...new Set(offenders)].join(', '),
   );
+});
+
+ok('a saved snapshot stops speaking for the present once it is old', () => {
+  // The server path already refuses to round "could not read the page" down to
+  // "everything is fine". The client had its own way in: on static hosting there is
+  // no server, so the notices always come from the committed snapshot, and a stale
+  // one kept asserting "the network is running normally" in the present tense.
+  const now = new Date(2026, 7, 25, 12, 0);
+  const iso = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * 3600_000).toISOString();
+
+  assert(!isSnapshotStale(null, now), 'a live answer is not a snapshot');
+  assert(!isSnapshotStale(iso(1), now), 'an hour-old snapshot should still count');
+  assert(!isSnapshotStale(iso(5), now), 'five hours is inside the refresh window');
+  assert(isSnapshotStale(iso(7), now), 'seven hours should read as stale');
+  assert(isSnapshotStale(iso(24 * 5), now), 'a five-day-old snapshot is not evidence about now');
+  assert(isSnapshotStale('not a date', now), 'an unreadable date is not a fresh one');
 });
 
 console.log(`\n${checks} checks passed\n`);

@@ -27,9 +27,8 @@ export const gl = {
 
   menu: {
     alerts: 'Avisos do servizo',
-    alertsShort: 'Avisos',
+    alertsAndFares: 'Avisos e tarifas',
     fares: 'Tarifas e billetes',
-    faresShort: 'Tarifas',
     language: 'Idioma',
     theme: 'Aparencia',
     themeAuto: 'Automática',
@@ -93,6 +92,9 @@ export const gl = {
     refreshing: 'Sincronizando...',
     cooldownText: (seconds: number) => `Agarde (${seconds}s)`,
     unknownStatusTitle: 'Non se puido comprobar se hai avisos',
+    staleStatusTitle: 'A última comprobación xa ten tempo',
+    staleStatusDesc:
+      'Isto é o que dicía o operador na data de abaixo, non o que di agora. Puido anunciarse algo despois. Consulta buslugo.com se vas facer un traxecto importante.',
     unknownStatusDesc: 'Non conseguimos ler a páxina do operador. Iso non quere dicir que todo estea ben: quere dicir que non o sabemos. Consulta buslugo.com se vas facer un traxecto importante.',
     normalStatusTitle: 'Rede de transporte operando con total normalidade',
     normalStatusDesc:

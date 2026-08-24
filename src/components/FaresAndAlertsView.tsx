@@ -5,6 +5,7 @@ import { FARES_LIST } from '../data/transitData';
 import { ServiceAlert } from '../types';
 import type { AlertSyncResult } from '../services/alertSyncService';
 import alertSnapshot from '../data/alerts.json';
+import { isSnapshotStale } from '../utils/snapshotAge';
 
 interface FaresAndAlertsViewProps {
   lang: Lang;
@@ -107,6 +108,8 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
   const liveAlerts = alertData?.alerts || [];
   /** "Could not read the page" is not the same claim as "nothing is wrong". */
   const unreachable = alertData?.status === 'unreachable';
+  /** A snapshot past its refresh window cannot speak for the present. */
+  const stale = isSnapshotStale(snapshotAt);
   const currentHour = new Date().getHours();
   const isNightWindow = currentHour >= 22 || currentHour < 6;
 
@@ -278,11 +281,19 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
                 {unreachable ? <HelpCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
               </div>
               <div>
-                <h3 className={`text-body font-bold ${unreachable ? 'text-ink' : 'text-official'}`}>
-                  {unreachable ? t.fares.unknownStatusTitle : t.fares.normalStatusTitle}
+                <h3 className={`text-body font-bold ${unreachable || stale ? 'text-ink' : 'text-official'}`}>
+                  {unreachable
+                    ? t.fares.unknownStatusTitle
+                    : stale
+                      ? t.fares.staleStatusTitle
+                      : t.fares.normalStatusTitle}
                 </h3>
                 <p className="text-label text-ink-2 mt-0.5 leading-relaxed">
-                  {unreachable ? t.fares.unknownStatusDesc : t.fares.normalStatusDesc}
+                  {unreachable
+                    ? t.fares.unknownStatusDesc
+                    : stale
+                      ? t.fares.staleStatusDesc
+                      : t.fares.normalStatusDesc}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-label text-official font-medium">
                   <span>

@@ -24,9 +24,8 @@ export const en: Dict = {
 
   menu: {
     alerts: 'Service notices',
-    alertsShort: 'Notices',
+    alertsAndFares: 'Notices and fares',
     fares: 'Fares and tickets',
-    faresShort: 'Fares',
     language: 'Language',
     theme: 'Appearance',
     themeAuto: 'Automatic',
@@ -90,6 +89,9 @@ export const en: Dict = {
     refreshing: 'Syncing...',
     cooldownText: (seconds: number) => `Please wait (${seconds}s)`,
     unknownStatusTitle: 'Could not check for notices',
+    staleStatusTitle: 'The last check is not recent',
+    staleStatusDesc:
+      'This is what the operator said on the date below, not what it says now. Something may have been announced since. Check buslugo.com if the trip matters.',
     unknownStatusDesc: 'We could not read the operator page. That does not mean everything is fine — it means we do not know. Check buslugo.com if this trip matters.',
     normalStatusTitle: 'The network is running normally',
     normalStatusDesc:

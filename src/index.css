@@ -161,10 +161,20 @@
      dark screen; mixing against --c-bg lands correctly in both themes from one rule.
      Set --line inline from the line's colour. */
   .tint {
-    background: color-mix(in oklch, var(--line) 13%, var(--c-bg));
+    background: color-mix(in oklch, var(--line) var(--tint-mix, 13%), var(--c-bg));
   }
   .tint-edge {
-    border-color: color-mix(in oklch, var(--line) 26%, var(--c-bg));
+    border-color: color-mix(in oklch, var(--line) var(--tint-edge-mix, 26%), var(--c-bg));
+  }
+
+  /* The lines list is 24 rows of tint with nothing between them, so the tint has to
+     carry the difference on its own. At 13% the closest pair of line colours lands
+     9 apart in RGB, which is below what anyone can see; 22% puts it at 15. The
+     departures board keeps the quieter 13%: there the tint sits beside the official
+     and estimated chips, and it must not compete with them. */
+  .tint-strong {
+    --tint-mix: 22%;
+    --tint-edge-mix: 38%;
   }
 
   /* The focus ring appears instantly — animating it hides it from anyone who
