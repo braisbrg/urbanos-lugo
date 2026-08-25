@@ -59,6 +59,15 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
 }) => {
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
   const [view, setView] = useState<'next' | 'byLine'>('next');
+  /**
+   * A time to read the board at, or '' for now.
+   *
+   * The board answers "what is coming", which is the question at the pole. It is not
+   * the question the night before, when what you want is whether there is anything at
+   * a quarter past seven. The engine already takes any instant; this just lets someone
+   * name one.
+   */
+  const [atTime, setAtTime] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
   /**
@@ -135,11 +144,20 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
    * updated" to print: a timestamp would suggest a measurement that does not exist.
    */
   useEffect(() => {
-    const read = () => setArrivals(getArrivalsForStop(selectedStop.id).arrivals);
+    const at = () => {
+      if (!atTime) return new Date();
+      const [h, m] = atTime.split(':').map(Number);
+      const when = new Date();
+      when.setHours(h, m, 0, 0);
+      return when;
+    };
+    const read = () => setArrivals(getArrivalsForStop(selectedStop.id, at()).arrivals);
     read();
+    // A named time does not move, so there is nothing to refresh.
+    if (atTime) return;
     const interval = setInterval(read, 15000);
     return () => clearInterval(interval);
-  }, [selectedStop.id]);
+  }, [selectedStop.id, atTime]);
 
   // Only looked up when the board is empty, which is the only time it is worth showing.
   const nextService = useMemo(
@@ -301,7 +319,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   );
 
   const watchButton = (a: StopArrival) =>
-    a.etaMinutes > WATCH_LEAD_MINUTES ? (
+    !atTime && a.etaMinutes > WATCH_LEAD_MINUTES ? (
       <button
         onClick={() => toggleWatch(a.lineId, WATCH_LEAD_MINUTES)}
         title={t.arrivals.watchHint(WATCH_LEAD_MINUTES)}
@@ -416,6 +434,36 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 border-b border-line py-3">
+        <label className="flex items-center gap-2 text-label font-semibold text-ink-2">
+          <Clock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+          <span className="shrink-0">{t.arrivals.atTimeLabel}</span>
+          <input
+            type="time"
+            value={atTime}
+            onChange={(e) => setAtTime(e.target.value)}
+            className="h-11 rounded-[9px] border border-edge bg-bg px-2 font-mono text-body text-ink"
+          />
+        </label>
+        {atTime && (
+          <button
+            onClick={() => setAtTime('')}
+            className="h-11 rounded-[9px] border border-edge px-3 text-label font-semibold text-ink-2"
+          >
+            {t.arrivals.backToNow}
+          </button>
+        )}
+      </div>
+
+      {/* Say it plainly. Every row below is a scheduled passing time for an hour the
+          reader chose, and the countdown beside it counts from that hour, not from
+          now — which would read as live if nothing said otherwise. */}
+      {atTime && (
+        <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label font-semibold text-ink-2">
+          {t.arrivals.showingAt(atTime)}
+        </p>
+      )}
+
       {(alarmOn || alarmError) && (
         <div
           role={alarmFired ? 'alert' : undefined}
@@ -465,7 +513,9 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       {arrivals.length === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed border-edge px-5 py-10 text-center">
           <Clock className="mx-auto mb-3 h-7 w-7 text-ink-3" strokeWidth={1.6} aria-hidden="true" />
-          <p className="text-body text-ink-2">{t.arrivals.noArrivals}</p>
+          <p className="text-body text-ink-2">
+            {atTime ? t.arrivals.noneAtTime(atTime) : t.arrivals.noArrivals}
+          </p>
           {/* An empty board is the right answer at 03:00, but on its own it leaves
               someone standing at the stop wondering whether to wait. */}
           {nextService && (

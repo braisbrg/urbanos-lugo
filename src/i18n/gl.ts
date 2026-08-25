@@ -318,6 +318,10 @@ export const gl = {
 
   arrivals: {
     viewNext: 'Próximas',
+    atTimeLabel: 'Ver o paso ás',
+    showingAt: (time: string) => `Paso previsto ás ${time}, non agora mesmo.`,
+    backToNow: 'Volver a agora',
+    noneAtTime: (time: string) => `Non hai ningún paso previsto ás ${time} nesta parada.`,
     viewByLine: 'Por liña',
     viewNextHint: 'Todas as liñas, en orde de chegada',
     viewByLineHint: 'Cada liña coas súas próximas saídas',

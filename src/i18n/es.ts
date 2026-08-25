@@ -304,6 +304,10 @@ export const es: Dict = {
 
   arrivals: {
     viewNext: 'Próximas',
+    atTimeLabel: 'Ver el paso a las',
+    showingAt: (time: string) => `Paso previsto a las ${time}, no ahora mismo.`,
+    backToNow: 'Volver a ahora',
+    noneAtTime: (time: string) => `No hay ningún paso previsto a las ${time} en esta parada.`,
     viewByLine: 'Por línea',
     viewNextHint: 'Todas las líneas, en orden de llegada',
     viewByLineHint: 'Cada línea con sus próximas salidas',

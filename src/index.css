@@ -172,9 +172,16 @@
      9 apart in RGB, which is below what anyone can see; 22% puts it at 15. The
      departures board keeps the quieter 13%: there the tint sits beside the official
      and estimated chips, and it must not compete with them. */
+  /* In the lines list the tint has to answer "which line is this?", and a wash pale
+     enough to keep text at 4.5:1 cannot carry a hue you would recognise. So the two
+     jobs are split: the fill stays pale because text sits on it, and the border takes
+     the line colour at full strength, where nothing is written and 3:1 is the bar. */
   .tint-strong {
     --tint-mix: 22%;
-    --tint-edge-mix: 38%;
+    --tint-edge-mix: 100%;
+  }
+  .tint-strong.tint-edge {
+    border-width: 2px;
   }
 
   /* CARTO Dark Matter is honest cartography but nearly monochrome: the ground, the

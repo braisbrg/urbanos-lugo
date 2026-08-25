@@ -315,6 +315,10 @@ export const en: Dict = {
 
   arrivals: {
     viewNext: 'Next',
+    atTimeLabel: 'Show departures at',
+    showingAt: (time: string) => `Departures due at ${time}, not right now.`,
+    backToNow: 'Back to now',
+    noneAtTime: (time: string) => `Nothing is due at ${time} at this stop.`,
     viewByLine: 'By line',
     viewNextHint: 'Every line, in order of arrival',
     viewByLineHint: 'Each line with its next departures',
