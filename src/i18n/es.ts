@@ -328,6 +328,12 @@ export const es: Dict = {
     publishedHint: 'Hora publicada por el operador para esta parada.',
     estimatedHint:
       'Estimación a partir de la salida de cabecera y del tiempo de recorrido medido. Llega unos minutos antes.',
+    positionChecked:
+      'La posición de esta parada es la que el operador publica en su propia página, contrastada con el levantamiento independiente de OpenStreetMap.',
+    reportPosition: '¿Esta parada no está donde debería?',
+    reportCta: 'Abrir un aviso en el repositorio',
+    reportNotCouncil:
+      'El aviso llega a quien mantiene esta aplicación, que no tiene relación con el Concello de Lugo ni con el operador. Cualquier trámite oficial hay que hacerlo con ellos.',
     precisionNote:
       'Las horas marcadas como estimadas se calculan desde la salida de cabecera. No hay GPS público de la flota: para no perder el bus, llega a la parada unos minutos antes.',
     whyEstimatedTitle: '¿Por qué no hay horas oficiales en esta parada?',

@@ -237,6 +237,30 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   // unexplained it reads as the app being vague. Say why, and only where it applies.
   const nonePublished = arrivals.length > 0 && arrivals.every((a) => a.precision === 'estimated');
 
+  /**
+   * A report nobody has to assemble by hand.
+   *
+   * There is no server to post to and no account to hold reports, so this opens an
+   * issue on the repository with the identifiers already filled in. The stop's own id,
+   * pole code and coordinates are what makes a report actionable; asking a passenger
+   * standing at the pole to copy them is asking them not to bother.
+   */
+  const reportUrl = (() => {
+    const body = [
+      `${t.arrivals.reportPosition}`,
+      '',
+      `- ${selectedStop.name}`,
+      `- id: ${selectedStop.id}`,
+      `- ${t.map.stopCode}: ${poleCode(selectedStop) ?? '—'}`,
+      `- ${selectedStop.lat.toFixed(5)}, ${selectedStop.lng.toFixed(5)}`,
+      '',
+    ].join(String.fromCharCode(10));
+    return (
+      'https://github.com/braisbrg/urbanos-lugo/issues/new?' +
+      new URLSearchParams({ title: `Parada: ${selectedStop.name}`, body }).toString()
+    );
+  })();
+
   const withinHour = arrivals.filter((a) => a.etaMinutes <= NEXT_VIEW_HORIZON_MIN);
   const soon = withinHour.length > 0 ? withinHour : arrivals.slice(0, 1);
   const beyondCount = arrivals.length - soon.length;
@@ -657,6 +681,22 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           {t.arrivals.watchForeground}
         </p>
       )}
+
+      <details className="mt-4 border-t border-line pt-3">
+        <summary className="flex min-h-11 cursor-pointer items-center text-label font-semibold text-ink-2">
+          {t.arrivals.reportPosition}
+        </summary>
+        <p className="text-label leading-relaxed text-ink-3">{t.arrivals.positionChecked}</p>
+        <p className="mt-1.5 text-label leading-relaxed text-ink-3">{t.arrivals.reportNotCouncil}</p>
+        <a
+          href={reportUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex min-h-11 items-center text-label font-semibold text-accent underline"
+        >
+          {t.arrivals.reportCta}
+        </a>
+      </details>
 
       {nonePublished ? (
         <details className="mt-4 border-t border-line pt-3">

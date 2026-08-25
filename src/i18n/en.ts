@@ -339,6 +339,12 @@ export const en: Dict = {
     publishedHint: 'A time the operator publishes for this stop.',
     estimatedHint:
       'Worked out from the departure at the terminus plus the measured driving time. The bus reaches this stop a few minutes earlier.',
+    positionChecked:
+      'This stop sits where the operator publishes it on its own page, cross-checked against the independent survey in OpenStreetMap.',
+    reportPosition: 'Is this stop in the wrong place?',
+    reportCta: 'Open a report on the repository',
+    reportNotCouncil:
+      'The report reaches whoever maintains this app, which has no connection to the Concello de Lugo or to the operator. Anything official has to go to them.',
     precisionNote:
       'Times marked as estimated are worked out from the departure at the terminus. There is no public GPS for this fleet, so get to the stop a few minutes early.',
     whyEstimatedTitle: 'Why are there no official times at this stop?',
