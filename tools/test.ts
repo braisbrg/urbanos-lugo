@@ -907,10 +907,17 @@ ok('an hours-long walk is never the headline suggestion when a bus exists', () =
   // Ranking on duration alone made a 168-minute walk to Calde beat a bus 285 minutes
   // out, because the rural branch runs twice a day. No map app answers "walk for nearly
   // three hours". The walk stays in the list; it stops leading it.
+  //
+  // The ceiling is 75 minutes, not 45: an hour on foot that beats a five-hour wait is
+  // the honest answer, and hiding it below four bus cards was how the quickest way to
+  // get there became the one option nobody saw.
   const now = new Date(2026, 7, 20, 9, 30);
   const served = BUS_STOPS.filter((s) => s.lines.length > 0);
   let checked = 0;
-  for (let i = 0; i < 500; i++) {
+  // Widened from 500 pairs: allowing a change between two poles a short walk apart
+  // connected most of what used to fall back to walking, so the old sample turned up
+  // only three cases to judge.
+  for (let i = 0; i < 2000; i++) {
     const a = served[(i * 67) % served.length];
     const b = served[(i * 131 + 17) % served.length];
     if (a.id === b.id) continue;
@@ -918,7 +925,7 @@ ok('an hours-long walk is never the headline suggestion when a bus exists', () =
     const plans = planTrips(a.name, b.name, { now });
     const top = plans[0];
     if (!top || top.segments.some((seg) => seg.type === 'bus')) continue;
-    if (top.durationMinutes <= 45) continue;
+    if (top.durationMinutes <= 75) continue;
     checked++;
     const bus = plans.find((p) => p.segments.some((seg) => seg.type === 'bus'));
     assert(

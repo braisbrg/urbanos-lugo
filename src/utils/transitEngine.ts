@@ -917,6 +917,18 @@ function reachingInto(stopId: string, lines: string[]): Set<string> {
  * missed connection costs a whole headway, so those get a wider margin. Erring wide only
  * pushes a suggestion to the next bus; erring narrow leaves someone on the pavement.
  */
+/**
+ * How far somebody will walk between one bus and the next.
+ *
+ * Three hundred metres is about four minutes at the calibrated pace: two streets, the
+ * kind of change people already make without thinking of it as one. Much further and
+ * the walk stops being a transfer and starts being the trip.
+ */
+const MAX_TRANSFER_WALK_M = 300;
+/** Each candidate costs two timetable lookups; these caps keep a plan under 100 ms. */
+const MAX_SAME_POLE_HUBS = 40;
+const MAX_WALKING_HUBS = 20;
+
 const TRANSFER_BUFFER_MIN = 2;
 const TRANSFER_BUFFER_ESTIMATED_MIN = 4;
 
@@ -925,21 +937,48 @@ function buildTransfer(
   lang: Lang,
   startStop: BusStop,
   endStop: BusStop,
-  hub: BusStop,
+  hubIn: BusStop,
+  hubOut: BusStop,
   readyAt: number,
   now: Date,
 ): Itinerary | null {
-  if (hub.id === startStop.id || hub.id === endStop.id) return null;
+  if (hubIn.id === startStop.id || hubOut.id === endStop.id) return null;
 
-  const leg1Lines = startStop.lines.filter((l) => hub.lines.includes(l));
-  const leg2Lines = endStop.lines.filter((l) => hub.lines.includes(l));
+  const leg1Lines = startStop.lines.filter((l) => hubIn.lines.includes(l));
+  const leg2Lines = endStop.lines.filter((l) => hubOut.lines.includes(l));
   if (!leg1Lines.length || !leg2Lines.length) return null;
 
-  const first = buildLeg(lang, leg1Lines, startStop, hub, readyAt, now);
+  const first = buildLeg(lang, leg1Lines, startStop, hubIn, readyAt, now);
   if (!first) return null;
 
   const buffer = first.arrivalPrecision === 'published' ? TRANSFER_BUFFER_MIN : TRANSFER_BUFFER_ESTIMATED_MIN;
-  const second = buildLeg(lang, leg2Lines, hub, endStop, first.arrivalMinutes + buffer, now, hub.name);
+
+  // Getting off at one pole and on at another a couple of streets away is a normal
+  // change, and it is how half the network connects: line 8 ends at Bolaño Ribadeneira
+  // and the 1.x family runs along Ronda da Muralla, 275 m away. Requiring one shared
+  // pole meant the planner walked people 700 m to a different line instead.
+  const change: RoutePlanResult['segments'] = [];
+  let boardAt = first.arrivalMinutes + buffer;
+  if (hubIn.id !== hubOut.id) {
+    const walk = estimateWalk(getDistanceMeters(hubIn.lat, hubIn.lng, hubOut.lat, hubOut.lng));
+    change.push({
+      type: 'walk',
+      durationMinutes: walk.minutes,
+      walkMeters: walk.meters,
+      departureTime: formatMinutes(first.arrivalMinutes),
+      arrivalTime: formatMinutes(first.arrivalMinutes + walk.minutes),
+      instruction: translations(lang).engine.walkToStop(
+        walk.meters,
+        walk.minutes,
+        hubIn.name,
+        hubOut.name,
+        hubOut.code,
+      ),
+    });
+    boardAt = first.arrivalMinutes + walk.minutes + buffer;
+  }
+
+  const second = buildLeg(lang, leg2Lines, hubOut, endStop, boardAt, now, hubOut.name);
   if (!second) return null;
 
   // Getting off a bus to wait for the same line is never the answer. In the same
@@ -953,7 +992,7 @@ function buildTransfer(
   return {
     arrivalMinutes: second.arrivalMinutes,
     arrivalPrecision: second.arrivalPrecision,
-    segments: [...first.segments, ...second.segments],
+    segments: [...first.segments, ...change, ...second.segments],
     totalWaitMinutes: first.totalWaitMinutes + second.totalWaitMinutes,
     isServiceActive: first.isServiceActive && second.isServiceActive,
     serviceNotice: first.serviceNotice || second.serviceNotice,
@@ -965,19 +1004,40 @@ function buildTransfer(
  * origin AND able to reach the destination. Six hardcoded "central" stops missed most
  * real connections, e.g. anything crossing town without touching Ronda da Muralla.
  */
-function connectingHubs(startStop: BusStop, endStop: BusStop): BusStop[] {
+function connectingHubs(startStop: BusStop, endStop: BusStop): [BusStop, BusStop][] {
   const forward = reachableFrom(startStop.id, startStop.lines);
   const backward = reachingInto(endStop.id, endStop.lines);
 
-  const hubs: BusStop[] = [];
-  for (const id of forward) {
-    if (!backward.has(id) || id === endStop.id) continue;
-    const stop = BUS_STOPS.find((s) => s.id === id);
-    if (stop) hubs.push(stop);
+  const arrivals: BusStop[] = [];
+  const departures: BusStop[] = [];
+  for (const s of BUS_STOPS) {
+    if (forward.has(s.id) && s.id !== endStop.id) arrivals.push(s);
+    if (backward.has(s.id) && s.id !== startStop.id) departures.push(s);
   }
-  // Busiest first, then cap. Each candidate costs two timetable lookups, so 40 keeps a
-  // plan well under 100 ms while covering every interchange that matters.
-  return hubs.sort((a, b) => b.lines.length - a.lines.length).slice(0, 40);
+
+  // The same pole first: no walk, no risk, and it is most of the network.
+  const same = arrivals
+    .filter((s) => backward.has(s.id))
+    .sort((a, b) => b.lines.length - a.lines.length)
+    .slice(0, MAX_SAME_POLE_HUBS)
+    .map((s): [BusStop, BusStop] => [s, s]);
+
+  // Then pairs a short walk apart. Line 8 ends at Bolaño Ribadeneira and the 1.x
+  // family runs along Ronda da Muralla, 275 m away; without this the planner cannot
+  // see that change at all, and walks people 700 m to a different line instead.
+  const pairs: { pair: [BusStop, BusStop]; walk: number }[] = [];
+  for (const a of arrivals) {
+    if (backward.has(a.id)) continue; // already covered as a same-pole hub
+    for (const b of departures) {
+      if (a.id === b.id) continue;
+      const metres = getDistanceMeters(a.lat, a.lng, b.lat, b.lng);
+      if (metres > MAX_TRANSFER_WALK_M) continue;
+      pairs.push({ pair: [a, b], walk: metres });
+    }
+  }
+  pairs.sort((x, y) => x.walk - y.walk);
+
+  return [...same, ...pairs.slice(0, MAX_WALKING_HUBS).map((p) => p.pair)];
 }
 
 // Plan route between two locations/stops with smart multi-modal walking + bus optimization
@@ -1120,13 +1180,33 @@ function planDeparting(
 }
 
 /**
- * Past this, walking is something a person chooses, not something an app recommends.
- * Forty-five minutes is roughly 3.4 km at the calibrated pace — the far side of Lugo.
+ * How much sooner a bus has to get you there before walking stops being the answer.
+ *
+ * This used to be an absolute ceiling: any walk over 45 minutes was pushed below every
+ * bus plan. That is wrong whenever the buses are worse. On Avda. Américas to As Termas
+ * at half past one, walking takes 55 minutes and the best bus itinerary takes 95 — and
+ * the walk was ranked last, off the end of a four-card list, so the fastest way to get
+ * there was the one option the reader never saw.
+ *
+ * What the old rule was really protecting against is a long walk edging out a bus by a
+ * minute or two, which is a win on paper and a loss in the rain. So that is all this
+ * says now: the bus takes the near-ties, and a walk that is genuinely quicker gets to
+ * lead — whether it wins by six minutes on a 300 m hop or by forty on a crosstown trip.
  */
-const MAX_HEADLINE_WALK_MIN = 45;
+const WALK_MUST_BEAT_BUS_BY_MIN = 5;
 
-const isLongWalk = (p: RoutePlanResult) =>
-  !p.segments.some((seg) => seg.type === 'bus') && p.durationMinutes > MAX_HEADLINE_WALK_MIN;
+/**
+ * And past this, a walk stays in the list but stops leading it, however bad the bus is.
+ *
+ * Ranking on duration alone once put a 168-minute walk to Calde above a bus 285 minutes
+ * out, because the rural branch runs twice a day. Both things are true at once: an
+ * hour on foot that beats a five-hour wait is the honest answer, and three hours on
+ * foot is not an answer at all. Seventy-five minutes is about 5.6 km at the calibrated
+ * pace — a long walk somebody might choose, and the far edge of one they might not.
+ */
+const MAX_HEADLINE_WALK_MIN = 75;
+
+const isWalkOnly = (p: RoutePlanResult) => !p.segments.some((seg) => seg.type === 'bus');
 
 /**
  * A running service first, then whichever arrives sooner — except that an hours-long
@@ -1140,7 +1220,15 @@ const isLongWalk = (p: RoutePlanResult) =>
  */
 function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
   if (a.isServiceActive !== b.isServiceActive) return a.isServiceActive;
-  if (isLongWalk(a) !== isLongWalk(b)) return isLongWalk(b);
+  // A walk only leads when it wins clearly; a bus takes the near-ties.
+  if (isWalkOnly(a) !== isWalkOnly(b)) {
+    const walk = isWalkOnly(a) ? a : b;
+    const bus = isWalkOnly(a) ? b : a;
+    const walkWins =
+      walk.durationMinutes <= MAX_HEADLINE_WALK_MIN &&
+      walk.durationMinutes + WALK_MUST_BEAT_BUS_BY_MIN <= bus.durationMinutes;
+    return isWalkOnly(a) ? walkWins : !walkWins;
+  }
   return a.durationMinutes < b.durationMinutes;
 }
 
@@ -1265,7 +1353,9 @@ function planBetweenStops(
   const directLines = startStop.lines.filter((l) => endStop.lines.includes(l));
   const options = [
     buildLeg(lang, directLines, startStop, endStop, cursor, now),
-    ...connectingHubs(startStop, endStop).map((hub) => buildTransfer(lang, startStop, endStop, hub, cursor, now)),
+    ...connectingHubs(startStop, endStop).map(([hubIn, hubOut]) =>
+      buildTransfer(lang, startStop, endStop, hubIn, hubOut, cursor, now),
+    ),
   ].filter((o): o is Itinerary => o !== null);
 
   // Every option becomes a full itinerary. The caller picks, or shows them all.
