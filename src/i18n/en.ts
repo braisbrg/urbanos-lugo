@@ -209,6 +209,7 @@ export const en: Dict = {
     loadingMap: 'Loading the map…',
     subtitle: 'Routes, stops and where the buses should be',
     allLines: 'All',
+    openLineInfo: 'Open the full line details',
     liveBusesCount: 'buses running',
     centerLugo: 'Centre on Lugo',
     myLocation: 'My location',

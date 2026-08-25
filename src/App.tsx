@@ -82,6 +82,14 @@ export default function App() {
    * and out as the layer rebuilt on every zoom.
    */
   const [stopWasChosen, setStopWasChosen] = useState(false);
+  /**
+   * What the reader asked the map to show, so it can stop guessing.
+   *
+   * The map keeps both a selected stop and a selected line, and arriving from a stop
+   * used to leave the previous line's filter on: the route was drawn, the other stops
+   * were hidden, and if the stop was not on that line it was not there at all.
+   */
+  const [mapFocus, setMapFocus] = useState<'stop' | 'line'>('line');
   const [selectedLine, setSelectedLine] = useState<BusLine | null>(BUS_LINES[0]);
   // The stops tab opens on the saved-stops home; choosing a stop anywhere — search, QR,
   // map, a saved stop — switches it to that stop's board, and Back returns here.
@@ -208,11 +216,13 @@ export default function App() {
   const handleViewOnMap = (stop: BusStop) => {
     setSelectedStop(stop);
     setStopWasChosen(true);
+    setMapFocus('stop');
     setActiveTab('map');
   };
 
   const handleViewLineOnMap = (line: BusLine) => {
     setSelectedLine(line);
+    setMapFocus('line');
     setActiveTab('map');
   };
 
@@ -342,6 +352,7 @@ export default function App() {
             <InteractiveMap
             selectedStop={stopWasChosen ? selectedStop : undefined}
             selectedLine={selectedLine}
+            focus={mapFocus}
             onSelectStop={handleSelectStop}
             onSelectLine={(line) => {
               setSelectedLine(line);

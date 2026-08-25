@@ -24,6 +24,8 @@ const PRESET_CENTERS: Record<'hula' | 'campus' | 'ceao', [number, number]> = {
 
 interface TransitMapProps {
   selectedStop?: BusStop;
+  /** What the reader asked to see. Without it the map has to guess between the two. */
+  focus?: 'stop' | 'line';
   selectedLine?: BusLine | null;
   onSelectStop: (stop: BusStop) => void;
   onSelectLine: (line: BusLine) => void;
@@ -34,6 +36,7 @@ interface TransitMapProps {
 
 export const TransitMap: React.FC<TransitMapProps> = ({
   selectedStop,
+  focus = 'line',
   selectedLine,
   onSelectStop,
   onSelectLine,
@@ -118,6 +121,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
   // Sync selectedLine prop into activeLineId & zoom into line
   useEffect(() => {
+    if (focus === 'stop') return;
     if (selectedLine) {
       setActiveLineId(selectedLine.id);
       setFilterPreset('all');
@@ -130,15 +134,20 @@ export const TransitMap: React.FC<TransitMapProps> = ({
         }
       }
     }
-  }, [selectedLine, map]);
+  }, [selectedLine, map, focus]);
 
-  // Update center when selectedStop changes
+  // Centre on the stop the reader asked for — and drop the line filter, or the stop
+  // arrives on a map showing somebody else's route and possibly not showing it at all.
   useEffect(() => {
     if (selectedStop && map) {
+      if (focus === 'stop') {
+        setActiveLineId('all');
+        setFilterPreset('all');
+      }
       map.setView([selectedStop.lat, selectedStop.lng], 16, { animate: true });
       map.invalidateSize();
     }
-  }, [selectedStop, map]);
+  }, [selectedStop, map, focus]);
 
   // Periodic vehicle update
   useEffect(() => {
@@ -449,17 +458,22 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               {lines.map((line) => {
                 const isSelected = activeLineId === line.id;
                 return (
-                  <button
+                  <div
                     key={line.id}
-                    onClick={() => handleSelectLine(line)}
-                    aria-pressed={isSelected}
-                    className={`w-full min-h-11 p-2.5 rounded-[9px] text-left flex items-center justify-between gap-2 text-label transition-all border ${
+                    className={`flex items-stretch gap-1 rounded-[9px] text-label transition-all border ${
                       isSelected
                         ? 'bg-surface border-accent font-bold shadow-xs'
-                        : 'bg-surface border-line hover:bg-surface text-ink-2'
+                        : 'bg-surface border-line text-ink-2'
                     }`}
                   >
-                    <div className="flex items-center gap-2 truncate">
+                    {/* Drawing the route and reading the timetable are two different
+                        errands. The row did the first and the arrow only looked like it
+                        offered the second. */}
+                    <button
+                      onClick={() => handleSelectLine(line)}
+                      aria-pressed={isSelected}
+                      className="flex min-h-11 flex-1 items-center gap-2 truncate p-2.5 text-left"
+                    >
                       <span
                         className="w-6 h-6 rounded flex items-center justify-center text-label font-black text-white shrink-0"
                         style={{ backgroundColor: line.color }}
@@ -467,14 +481,20 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                         {line.number}
                       </span>
                       <span className="truncate">{line.name}</span>
-                    </div>
+                    </button>
 
-                    <ChevronRight
-                      className={`w-3.5 h-3.5 shrink-0 ${
-                        isSelected ? 'text-accent' : 'text-ink-3'
-                      }`}
-                    />
-                  </button>
+                    <button
+                      onClick={() => onOpenLine(line)}
+                      title={t.map.openLineInfo}
+                      aria-label={`${t.map.openLineInfo}: ${line.number}`}
+                      className="flex min-h-11 w-11 shrink-0 items-center justify-center rounded-r-[8px]"
+                    >
+                      <ChevronRight
+                        className={`w-4 h-4 shrink-0 ${isSelected ? 'text-accent' : 'text-ink-3'}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
                 );
               })}
             </div>
