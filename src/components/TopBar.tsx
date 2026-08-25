@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Menu, QrCode, Search, X } from 'lucide-react';
+import { MapPin, Menu, QrCode, Search, Star, X } from 'lucide-react';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
 import { BusLine, BusStop } from '../types';
@@ -9,6 +9,8 @@ interface TopBarProps {
   onSelectStop: (stop: BusStop) => void;
   onSelectLine: (line: BusLine) => void;
   onOpenQrScanner: () => void;
+  onOpenFavorites: () => void;
+  savedCount: number;
   onOpenMenu: () => void;
   lang: Lang;
 }
@@ -24,6 +26,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSelectStop,
   onSelectLine,
   onOpenQrScanner,
+  onOpenFavorites,
+  savedCount,
   onOpenMenu,
   lang,
 }) => {
@@ -95,9 +99,23 @@ export const TopBar: React.FC<TopBarProps> = ({
             </button>
           )}
           <button
-            onClick={onOpenQrScanner}
+            onClick={onOpenFavorites}
             className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center border-l border-line text-ink-2"
+            aria-label={t.favourites.title}
+            title={t.favourites.title}
+          >
+            <Star
+              className={`h-[19px] w-[19px] ${savedCount > 0 ? 'text-warn-ink' : ''}`}
+              strokeWidth={1.8}
+              fill={savedCount > 0 ? 'currentColor' : 'none'}
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            onClick={onOpenQrScanner}
+            className="flex h-11 w-11 shrink-0 items-center justify-center border-l border-line text-ink-2"
             aria-label={t.search.qr}
+            title={t.search.qr}
           >
             <QrCode className="h-[19px] w-[19px]" strokeWidth={2} aria-hidden="true" />
           </button>

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Compass, History, QrCode, Search, Star } from 'lucide-react';
-import { BusStop } from '../types';
-import { BUS_STOPS } from '../data/transitData';
+import { Compass, History, QrCode, Route, Search, Star } from 'lucide-react';
+import { BusLine, BusStop } from '../types';
+import { BUS_LINES, BUS_STOPS } from '../data/transitData';
 import { getArrivalsForStop, getNearbyStops } from '../utils/transitEngine';
 import { Lang, translations } from '../i18n';
 
 interface StopHomeProps {
   favoriteStopIds: string[];
+  favoriteLineIds: string[];
+  onSelectLine: (line: BusLine) => void;
   recentStopIds: string[];
   onClearRecent: () => void;
   onSelectStop: (stop: BusStop) => void;
@@ -28,6 +30,8 @@ const PER_STOP = 3;
  */
 export const StopHome: React.FC<StopHomeProps> = ({
   favoriteStopIds,
+  favoriteLineIds,
+  onSelectLine,
   recentStopIds,
   onClearRecent,
   onSelectStop,
@@ -70,6 +74,29 @@ export const StopHome: React.FC<StopHomeProps> = ({
     .map((id) => BUS_STOPS.find((s) => s.id === id))
     .filter((s): s is BusStop => Boolean(s))
     .map((stop) => ({ stop, arrivals: getArrivalsForStop(stop.id).arrivals.slice(0, PER_STOP) }));
+
+  /**
+   * A saved line, and when it next passes somewhere the reader actually stands.
+   *
+   * On its own a saved line was a shortcut to a page they could already reach from the
+   * lines tab in one tap — which is why it felt like it did nothing. Crossed with the
+   * stops they keep, it answers the question they saved it for.
+   */
+  const savedLines = favoriteLineIds
+    .map((id) => BUS_LINES.find((l) => l.id === id))
+    .filter((l): l is BusLine => Boolean(l))
+    .map((line) => {
+      const known = [
+        ...saved.map((s) => s.stop),
+        ...recentStopIds.map((id) => BUS_STOPS.find((s) => s.id === id)).filter((s): s is BusStop => Boolean(s)),
+      ];
+      for (const stop of known) {
+        if (!stop.lines.includes(line.id)) continue;
+        const next = getArrivalsForStop(stop.id).arrivals.find((a) => a.lineId === line.id);
+        if (next) return { line, stop, next };
+      }
+      return { line, stop: null, next: null };
+    });
 
   return (
     <div className="mx-auto w-full max-w-3xl px-3.5 pb-8 pt-4" data-tick={tick}>
@@ -144,6 +171,50 @@ export const StopHome: React.FC<StopHomeProps> = ({
 
       {/* Looking a stop up is what everybody does; saving one is what almost nobody
           does. The second visit should cost no typing either. */}
+      {savedLines.length > 0 && (
+        <section className="mt-7">
+          <h2 className="flex items-center gap-2 text-emph font-semibold">
+            <Route className="h-[19px] w-[19px] shrink-0 text-accent" strokeWidth={1.8} aria-hidden="true" />
+            {t.stopHome.savedLines}
+          </h2>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {savedLines.map(({ line, stop, next }) => (
+              <li key={line.id}>
+                <button
+                  onClick={() => onSelectLine(line)}
+                  style={{ '--line': line.color } as React.CSSProperties}
+                  className="tint tint-edge tint-strong flex w-full items-center gap-3 rounded-[10px] border px-2.5 py-2 text-left"
+                >
+                  <span
+                    className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-[7px] text-body font-bold text-white"
+                    style={{ backgroundColor: line.color }}
+                  >
+                    {line.number}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-body font-semibold" title={line.name}>
+                      {line.name}
+                    </span>
+                    <span className="block truncate text-label text-ink-2">
+                      {stop ? t.stopHome.savedLinesAt(stop.name) : t.stopHome.savedLinesNoStop}
+                    </span>
+                  </span>
+                  {next && (
+                    <span className="tnum shrink-0 text-right">
+                      <span className="block text-emph font-bold">
+                        {next.precision === 'published' ? '' : '~'}
+                        {next.etaMinutes}
+                      </span>
+                      <span className="block text-label text-ink-3">{t.common.min}</span>
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {recentStopIds.filter((id) => !favoriteStopIds.includes(id)).length > 0 && (
         <>
           <div className="mt-7 flex items-center gap-3">

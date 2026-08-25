@@ -246,6 +246,8 @@ export default function App() {
         {t.nav.skipToContent}
       </a>
       <TopBar
+        onOpenFavorites={() => setIsFavoritesOpen(true)}
+        savedCount={favoriteStopIds.length + favoriteLineIds.length}
         onSelectStop={handleSelectStop}
         onSelectLine={(line) => {
           setSelectedLine(line);
@@ -311,6 +313,11 @@ export default function App() {
             <div className={`lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? 'hidden' : ''}`}>
               <StopHome
                 favoriteStopIds={favoriteStopIds}
+                favoriteLineIds={favoriteLineIds}
+                onSelectLine={(line) => {
+                  setSelectedLine(line);
+                  setActiveTab('lines');
+                }}
                 recentStopIds={recentStopIds}
                 onClearRecent={clearRecentStops}
                 onSelectStop={handleSelectStop}

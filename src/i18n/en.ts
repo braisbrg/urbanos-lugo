@@ -50,6 +50,9 @@ export const en: Dict = {
   },
 
   stopHome: {
+    savedLines: 'Your lines',
+    savedLinesAt: (stop: string) => `next at ${stop}`,
+    savedLinesNoStop: 'save a stop to see a time',
     saved: 'Saved stops',
     recent: 'Recently viewed',
     clearRecent: 'Clear',

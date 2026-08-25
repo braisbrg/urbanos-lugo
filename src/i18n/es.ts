@@ -39,6 +39,9 @@ export const es: Dict = {
   },
 
   stopHome: {
+    savedLines: 'Tus líneas',
+    savedLinesAt: (stop: string) => `próxima en ${stop}`,
+    savedLinesNoStop: 'guarda una parada para ver la hora',
     saved: 'Paradas guardadas',
     recent: 'Vistas hace poco',
     clearRecent: 'Borrar',

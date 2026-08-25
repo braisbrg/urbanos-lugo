@@ -53,6 +53,9 @@ export const gl = {
   },
 
   stopHome: {
+    savedLines: 'As túas liñas',
+    savedLinesAt: (stop: string) => `próxima en ${stop}`,
+    savedLinesNoStop: 'garda unha parada para ver a hora',
     saved: 'Paradas gardadas',
     recent: 'Vistas hai pouco',
     clearRecent: 'Borrar',
