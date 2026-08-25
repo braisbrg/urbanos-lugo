@@ -322,6 +322,9 @@ export const gl = {
     days: 'Días de servizo',
     stopsInDirection: 'Paradas do percorrido',
     viewOnMap: 'Ver percorrido no Mapa',
+    approximatePathTitle: 'Trazado aproximado',
+    approximatePath:
+      'O trazado deste sentido no mapa non está topografiado: constrúese coa ruta que faría un coche entre as paradas, así que pode desviarse por onde o bus non pasa. As paradas e as horas son as oficiais.',
     scheduleTable: 'Saídas desde cabeceira',
     showingRun: 'Expedición amosada',
     runOf: (index: number, total: number) => `${index} de ${total} do día`,

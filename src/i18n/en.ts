@@ -319,6 +319,9 @@ export const en: Dict = {
     days: 'Days of service',
     stopsInDirection: 'Stops along the route',
     viewOnMap: 'Show the route on the map',
+    approximatePathTitle: 'Approximate path',
+    approximatePath:
+      'The path drawn for this direction has not been surveyed: it is built from the route a car would take between the stops, so it may detour where the bus does not. The stops and times are the official ones.',
     scheduleTable: 'Departures from the terminus',
     showingRun: 'Run shown',
     runOf: (index: number, total: number) => `${index} of ${total} today`,

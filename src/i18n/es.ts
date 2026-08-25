@@ -308,6 +308,9 @@ export const es: Dict = {
     days: 'Días de servicio',
     stopsInDirection: 'Paradas del recorrido',
     viewOnMap: 'Ver recorrido en el Mapa',
+    approximatePathTitle: 'Trazado aproximado',
+    approximatePath:
+      'El trazado de este sentido en el mapa no está topografiado: se construye con la ruta que haría un coche entre las paradas, así que puede desviarse por donde el bus no pasa. Las paradas y los horarios son los oficiales.',
     scheduleTable: 'Salidas desde cabecera',
     showingRun: 'Expedición mostrada',
     runOf: (index: number, total: number) => `${index} de ${total} del día`,

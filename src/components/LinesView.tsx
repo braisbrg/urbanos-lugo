@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Bus, Calendar, ChevronRight, Clock, MapPin, Route, Star } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bus,
+  Calendar,
+  ChevronRight,
+  Clock,
+  MapPin,
+  Route,
+  Star,
+  TriangleAlert,
+} from 'lucide-react';
 import { Lang, translations } from '../i18n';
 import { BusLine, BusStop, ScheduledBus } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
@@ -317,6 +327,20 @@ export const LinesView: React.FC<LinesViewProps> = ({
             <p className="text-label text-ink-2 mt-3 bg-surface/50 p-3 rounded-md border border-line">
               {currentLine.description}
             </p>
+
+            {direction.geometrySource && direction.geometrySource !== 'osm' && (
+              <p className="mt-3 flex gap-2 rounded-md border border-line bg-surface/50 p-3 text-label leading-relaxed text-ink-2">
+                <TriangleAlert
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-3"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="font-semibold text-ink">{t.lines.approximatePathTitle}.</span>{' '}
+                  {t.lines.approximatePath}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="bg-bg rounded-xl p-5 shadow-sm border border-edge">

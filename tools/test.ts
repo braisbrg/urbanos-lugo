@@ -1295,4 +1295,25 @@ ok('no two stops share a point', () => {
   }
 });
 
+ok('a route drawn from a car route says so', () => {
+  // 45 of the 48 directions follow the itinerary surveyed in OpenStreetMap; three are
+  // built from the route a car would take between the stops, which detours where a bus
+  // does not. Drawing those without a word is the map claiming to know something it
+  // does not, so the line page carries a note whenever the direction is not surveyed.
+  // If a rebuild silently turns more routes into car routes, this is where it shows up.
+  const bySource = new Map<string, string[]>();
+  for (const line of BUS_LINES) {
+    for (const d of line.directions) {
+      const src = d.geometrySource ?? 'missing';
+      bySource.set(src, [...(bySource.get(src) ?? []), `${line.number} ${d.name}`]);
+    }
+  }
+  assert(!bySource.has('missing'), 'a direction is drawn with no record of where the shape came from');
+  const approximate = [...(bySource.get('osrm') ?? []), ...(bySource.get('straight') ?? [])];
+  assert(
+    approximate.length <= 3,
+    `${approximate.length} directions are drawn from something other than a survey: ${approximate.join(', ')}`,
+  );
+});
+
 console.log(`\n${checks} checks passed\n`);
