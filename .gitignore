@@ -49,3 +49,6 @@ package-lock.json
 # which are not in this repository — so the committed copy cannot open. The artboards it
 # was built from stay tracked; re-seed with the design skill when they change.
 design/rediseno-urbanos-lugo.html
+
+# Backups written by the editing helper while working.
+*.snapshot
