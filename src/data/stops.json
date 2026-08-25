@@ -1,15 +1,21 @@
 [
   {
     "id": "s1",
-    "code": "1",
+    "code": "gJRz",
     "officialIds": [
       1,
+      83,
       84,
+      167,
       169,
-      252
+      252,
+      334
     ],
-    "officialToken": null,
-    "name": "Opuesto Piscina Pedreiras",
+    "officialToken": "gJRz",
+    "name": "As Pedreiras",
+    "aliases": [
+      "Opuesto Piscina Pedreiras"
+    ],
     "lat": 42.9913572,
     "lng": -7.5440267,
     "lines": [
@@ -21,7 +27,7 @@
     "zone": "Acea de Olga",
     "shelter": false,
     "bench": false,
-    "hasScreen": false
+    "hasScreen": true
   },
   {
     "id": "s2",
@@ -34,6 +40,7 @@
     ],
     "officialToken": "TPlG",
     "name": "Alfonso X (Empresariales)",
+    "aliases": [],
     "lat": 42.9911137,
     "lng": -7.5489401,
     "lines": [
@@ -58,6 +65,7 @@
     ],
     "officialToken": null,
     "name": "Alfonso X (Santo Anxo)",
+    "aliases": [],
     "lat": 42.9921337,
     "lng": -7.551263,
     "lines": [
@@ -81,6 +89,7 @@
     ],
     "officialToken": "nUnk",
     "name": "Alfonso X (desp. C. Novos)",
+    "aliases": [],
     "lat": 42.9932875,
     "lng": -7.5524806,
     "lines": [
@@ -103,6 +112,7 @@
     ],
     "officialToken": "WPVO",
     "name": "Alfonso X 17",
+    "aliases": [],
     "lat": 42.9946877,
     "lng": -7.5544172,
     "lines": [
@@ -127,6 +137,7 @@
     ],
     "officialToken": "QdoI",
     "name": "Agro da Torna (Psicotécnico)",
+    "aliases": [],
     "lat": 42.9960599,
     "lng": -7.554943,
     "lines": [
@@ -153,6 +164,9 @@
     ],
     "officialToken": "NKNF",
     "name": "Agro da Torna (Plaza)",
+    "aliases": [
+      "Agro da Torna (Praza)"
+    ],
     "lat": 42.9959167,
     "lng": -7.5533953,
     "lines": [
@@ -179,6 +193,7 @@
     ],
     "officialToken": null,
     "name": "Rda. Fingoi (Carballeira)",
+    "aliases": [],
     "lat": 42.9966755,
     "lng": -7.5527235,
     "lines": [
@@ -204,6 +219,7 @@
     ],
     "officialToken": "RBeA",
     "name": "Rúa Armórica (cr. Fingoi)",
+    "aliases": [],
     "lat": 42.998567,
     "lng": -7.5503161,
     "lines": [
@@ -228,6 +244,7 @@
     ],
     "officialToken": "Xnjz",
     "name": "Rúa Armórica (enfte. Nº 138)",
+    "aliases": [],
     "lat": 42.9993436,
     "lng": -7.5518791,
     "lines": [
@@ -252,6 +269,7 @@
     ],
     "officialToken": "topo",
     "name": "Rúa Armórica (Ambulatorio)",
+    "aliases": [],
     "lat": 42.9999343,
     "lng": -7.5526845,
     "lines": [
@@ -275,6 +293,7 @@
     ],
     "officialToken": "twva",
     "name": "Rúa Armórica 39",
+    "aliases": [],
     "lat": 43.0023189,
     "lng": -7.5537108,
     "lines": [
@@ -301,6 +320,7 @@
     ],
     "officialToken": "ynxQ",
     "name": "Ramón Ferreiro 31",
+    "aliases": [],
     "lat": 43.0037515,
     "lng": -7.553087,
     "lines": [
@@ -332,6 +352,7 @@
     ],
     "officialToken": "zzhI",
     "name": "Ramón Ferreiro 19",
+    "aliases": [],
     "lat": 43.0056096,
     "lng": -7.5552689,
     "lines": [
@@ -364,6 +385,7 @@
     ],
     "officialToken": "LXCQ",
     "name": "Praza Bretaña",
+    "aliases": [],
     "lat": 43.0069695,
     "lng": -7.5536745,
     "lines": [
@@ -396,6 +418,7 @@
     ],
     "officialToken": "NjxB",
     "name": "Rúa Dinán",
+    "aliases": [],
     "lat": 43.0078449,
     "lng": -7.5530142,
     "lines": [
@@ -430,6 +453,7 @@
     ],
     "officialToken": "qHRE",
     "name": "San Roque (Jardín)",
+    "aliases": [],
     "lat": 43.0096161,
     "lng": -7.5522966,
     "lines": [
@@ -463,6 +487,7 @@
     ],
     "officialToken": "oTWQ",
     "name": "Rda. Muralla 25 (Arenal)",
+    "aliases": [],
     "lat": 43.0107766,
     "lng": -7.5528764,
     "lines": [
@@ -506,6 +531,7 @@
     ],
     "officialToken": "uilP",
     "name": "Rda. Muralla 56 (Sindicatos)",
+    "aliases": [],
     "lat": 43.0134361,
     "lng": -7.5553414,
     "lines": [
@@ -542,6 +568,7 @@
     ],
     "officialToken": "sEBS",
     "name": "Avda. Coruña 2",
+    "aliases": [],
     "lat": 43.014926,
     "lng": -7.5585137,
     "lines": [
@@ -573,6 +600,7 @@
     ],
     "officialToken": "mivY",
     "name": "Avda. Coruña 58",
+    "aliases": [],
     "lat": 43.0164827,
     "lng": -7.5599212,
     "lines": [
@@ -606,6 +634,7 @@
     ],
     "officialToken": "ItTV",
     "name": "Avda. Coruña 102",
+    "aliases": [],
     "lat": 43.0179603,
     "lng": -7.5610999,
     "lines": [
@@ -638,6 +667,7 @@
     ],
     "officialToken": "GgFB",
     "name": "Avda. Coruña 144",
+    "aliases": [],
     "lat": 43.01896,
     "lng": -7.5618973,
     "lines": [
@@ -671,6 +701,7 @@
     ],
     "officialToken": "LDME",
     "name": "Avda. Coruña (Pq. Milagrosa)",
+    "aliases": [],
     "lat": 43.0220926,
     "lng": -7.5644222,
     "lines": [
@@ -704,6 +735,7 @@
     ],
     "officialToken": "fHsI",
     "name": "Avda. Coruña (Pza. 1 Maio)",
+    "aliases": [],
     "lat": 43.0239231,
     "lng": -7.5659055,
     "lines": [
@@ -734,6 +766,7 @@
     ],
     "officialToken": "HpOC",
     "name": "Avda. Coruña 344",
+    "aliases": [],
     "lat": 43.0264728,
     "lng": -7.5679919,
     "lines": [
@@ -763,6 +796,7 @@
     ],
     "officialToken": "kZtJ",
     "name": "Avda. Coruña 394",
+    "aliases": [],
     "lat": 43.0280741,
     "lng": -7.5692925,
     "lines": [
@@ -791,6 +825,7 @@
     ],
     "officialToken": "fgTW",
     "name": "Avda. Coruña 436",
+    "aliases": [],
     "lat": 43.0297768,
     "lng": -7.5706619,
     "lines": [
@@ -817,6 +852,7 @@
     ],
     "officialToken": "RMmq",
     "name": "Avda. Coruña 488",
+    "aliases": [],
     "lat": 43.0311827,
     "lng": -7.571767,
     "lines": [
@@ -841,6 +877,7 @@
     ],
     "officialToken": "lcJT",
     "name": "N-VI (Os Caraveis)",
+    "aliases": [],
     "lat": 43.0344961,
     "lng": -7.5742395,
     "lines": [
@@ -862,6 +899,7 @@
     ],
     "officialToken": "xsBP",
     "name": "Benigno Rivera (Palacios)",
+    "aliases": [],
     "lat": 43.0387654,
     "lng": -7.5736836,
     "lines": [
@@ -882,6 +920,7 @@
     ],
     "officialToken": null,
     "name": "Benigno Rivera 68",
+    "aliases": [],
     "lat": 43.0416606,
     "lng": -7.5713833,
     "lines": [
@@ -905,6 +944,7 @@
     ],
     "officialToken": null,
     "name": "As Termas (rtda. Abeiro Gold)",
+    "aliases": [],
     "lat": 43.0396415,
     "lng": -7.5676569,
     "lines": [
@@ -929,6 +969,7 @@
     ],
     "officialToken": null,
     "name": "Benigno Rivera (H. Ferreiro)",
+    "aliases": [],
     "lat": 43.044238,
     "lng": -7.5693906,
     "lines": [
@@ -953,6 +994,7 @@
     ],
     "officialToken": "ADwz",
     "name": "Rúa Industria (Sum. La Ronda)",
+    "aliases": [],
     "lat": 43.0465447,
     "lng": -7.5675744,
     "lines": [
@@ -977,6 +1019,7 @@
     ],
     "officialToken": "bNMH",
     "name": "Rúa Industria (esq. R. Vidro)",
+    "aliases": [],
     "lat": 43.0454657,
     "lng": -7.565083,
     "lines": [
@@ -1000,6 +1043,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Industria (Arenal)",
+    "aliases": [],
     "lat": 43.0442253,
     "lng": -7.5623299,
     "lines": [
@@ -1023,6 +1067,9 @@
     ],
     "officialToken": null,
     "name": "Rúa industria (T. Pereira)",
+    "aliases": [
+      "Rúa Industria (T. Pereira)"
+    ],
     "lat": 43.0442144,
     "lng": -7.5619861,
     "lines": [
@@ -1047,6 +1094,7 @@
     ],
     "officialToken": "yGyH",
     "name": "Rúa Mercadorías (Terminal)",
+    "aliases": [],
     "lat": 43.0458728,
     "lng": -7.5610632,
     "lines": [
@@ -1067,6 +1115,7 @@
     ],
     "officialToken": "CqJU",
     "name": "Rúa Leiteiras (esq. Cesteiras)",
+    "aliases": [],
     "lat": 43.0488799,
     "lng": -7.5586674,
     "lines": [
@@ -1087,6 +1136,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Leiteiras (Transp. Arias)",
+    "aliases": [],
     "lat": 43.0508676,
     "lng": -7.5633668,
     "lines": [
@@ -1107,6 +1157,7 @@
     ],
     "officialToken": "TeYq",
     "name": "Rúa Vidro (Sidegal)",
+    "aliases": [],
     "lat": 43.0479556,
     "lng": -7.5631518,
     "lines": [
@@ -1127,6 +1178,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Agricultura (Chousa)",
+    "aliases": [],
     "lat": 43.0475993,
     "lng": -7.5663921,
     "lines": [
@@ -1147,6 +1199,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Industria",
+    "aliases": [],
     "lat": 43.0469574,
     "lng": -7.5691515,
     "lines": [
@@ -1167,6 +1220,7 @@
     ],
     "officialToken": "HmSE",
     "name": "Rúa Industria (Teolindo)",
+    "aliases": [],
     "lat": 43.0475961,
     "lng": -7.571963,
     "lines": [
@@ -1187,6 +1241,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Industria (esq. Inspección)",
+    "aliases": [],
     "lat": 43.0476612,
     "lng": -7.5744042,
     "lines": [
@@ -1207,6 +1262,7 @@
     ],
     "officialToken": "oFxn",
     "name": "Rúa dos Canteiros",
+    "aliases": [],
     "lat": 43.0462982,
     "lng": -7.5734438,
     "lines": [
@@ -1227,6 +1283,7 @@
     ],
     "officialToken": "EziS",
     "name": "Rúa dos Artesáns",
+    "aliases": [],
     "lat": 43.0454396,
     "lng": -7.5707884,
     "lines": [
@@ -1247,6 +1304,7 @@
     ],
     "officialToken": null,
     "name": "Benigno Rivera (Renault)",
+    "aliases": [],
     "lat": 43.0414977,
     "lng": -7.5718802,
     "lines": [
@@ -1267,6 +1325,7 @@
     ],
     "officialToken": "mZVD",
     "name": "Benigno Rivera (Remar)",
+    "aliases": [],
     "lat": 43.0388425,
     "lng": -7.5738341,
     "lines": [
@@ -1288,6 +1347,7 @@
     ],
     "officialToken": "Rxhe",
     "name": "N-VI (Os Caraveis)",
+    "aliases": [],
     "lat": 43.0343839,
     "lng": -7.5744496,
     "lines": [
@@ -1310,6 +1370,7 @@
     ],
     "officialToken": "xptt",
     "name": "Avda. Garabolos (Pista Meilán-Chaos)",
+    "aliases": [],
     "lat": 43.0295137,
     "lng": -7.5745891,
     "lines": [
@@ -1332,6 +1393,7 @@
     ],
     "officialToken": "hVrc",
     "name": "Avda. Garabolos (Medusa)",
+    "aliases": [],
     "lat": 43.0288863,
     "lng": -7.5717888,
     "lines": [
@@ -1358,6 +1420,7 @@
     ],
     "officialToken": "nNMs",
     "name": "Avda. Coruña 433 (Restaurante Suso)",
+    "aliases": [],
     "lat": 43.0288647,
     "lng": -7.5699991,
     "lines": [
@@ -1387,6 +1450,7 @@
     ],
     "officialToken": "idQk",
     "name": "Avda. Coruña 405",
+    "aliases": [],
     "lat": 43.0278539,
     "lng": -7.5691863,
     "lines": [
@@ -1415,6 +1479,7 @@
     ],
     "officialToken": "KCxT",
     "name": "Avda. Coruña 369",
+    "aliases": [],
     "lat": 43.0264565,
     "lng": -7.5680291,
     "lines": [
@@ -1444,6 +1509,7 @@
     ],
     "officialToken": "RkaG",
     "name": "Avda. Coruña 325",
+    "aliases": [],
     "lat": 43.0252424,
     "lng": -7.5670539,
     "lines": [
@@ -1473,6 +1539,7 @@
     ],
     "officialToken": "BIXK",
     "name": "Avda. Coruña 281",
+    "aliases": [],
     "lat": 43.0237539,
     "lng": -7.5658619,
     "lines": [
@@ -1503,6 +1570,7 @@
     ],
     "officialToken": "sBlJ",
     "name": "Avda. Coruña 211 (Pq. Milagrosa)",
+    "aliases": [],
     "lat": 43.0220403,
     "lng": -7.5644737,
     "lines": [
@@ -1534,6 +1602,7 @@
     ],
     "officialToken": "RJay",
     "name": "Avda. Coruña 131",
+    "aliases": [],
     "lat": 43.0189518,
     "lng": -7.5619733,
     "lines": [
@@ -1564,6 +1633,7 @@
     ],
     "officialToken": "oaHT",
     "name": "Avda. Coruña 97",
+    "aliases": [],
     "lat": 43.0179797,
     "lng": -7.5611996,
     "lines": [
@@ -1594,6 +1664,7 @@
     ],
     "officialToken": "Vvvt",
     "name": "Avda. Coruña 39",
+    "aliases": [],
     "lat": 43.0161757,
     "lng": -7.5597598,
     "lines": [
@@ -1628,6 +1699,7 @@
     ],
     "officialToken": "qFuw",
     "name": "Rda. Muralla 95 (S. Fernando)",
+    "aliases": [],
     "lat": 43.0146822,
     "lng": -7.5591756,
     "lines": [
@@ -1666,6 +1738,7 @@
     ],
     "officialToken": "RnND",
     "name": "Rda. Muralla 118",
+    "aliases": [],
     "lat": 43.0140433,
     "lng": -7.5608181,
     "lines": [
@@ -1704,6 +1777,7 @@
     ],
     "officialToken": "XpKC",
     "name": "Rda. Muralla (Obras Públicas)",
+    "aliases": [],
     "lat": 43.0127249,
     "lng": -7.5622557,
     "lines": [
@@ -1741,6 +1815,7 @@
     ],
     "officialToken": "ypYT",
     "name": "Rda. Muralla (Fogar Sta. María)",
+    "aliases": [],
     "lat": 43.0110735,
     "lng": -7.5623791,
     "lines": [
@@ -1777,6 +1852,7 @@
     ],
     "officialToken": "Zjge",
     "name": "Rda. Muralla 163-164",
+    "aliases": [],
     "lat": 43.0092149,
     "lng": -7.559903,
     "lines": [
@@ -1814,6 +1890,7 @@
     ],
     "officialToken": "RThl",
     "name": "Rúa Vilalba 6",
+    "aliases": [],
     "lat": 43.0079521,
     "lng": -7.5570901,
     "lines": [
@@ -1858,6 +1935,7 @@
     ],
     "officialToken": "nIaS",
     "name": "Ramón Ferreiro (Feminino)",
+    "aliases": [],
     "lat": 43.0067816,
     "lng": -7.5562737,
     "lines": [
@@ -1899,6 +1977,7 @@
     ],
     "officialToken": "uiZZ",
     "name": "Ramón Ferreiro (Anexa)",
+    "aliases": [],
     "lat": 43.0051339,
     "lng": -7.5551686,
     "lines": [
@@ -1933,6 +2012,7 @@
     ],
     "officialToken": "umcC",
     "name": "Ramón Ferreiro 26",
+    "aliases": [],
     "lat": 43.0035541,
     "lng": -7.553268,
     "lines": [
@@ -1960,6 +2040,7 @@
     ],
     "officialToken": "qPol",
     "name": "Rúa Marina Española 24",
+    "aliases": [],
     "lat": 43.0026254,
     "lng": -7.5535981,
     "lines": [
@@ -1984,6 +2065,7 @@
     ],
     "officialToken": "cWlq",
     "name": "Rúa Armórica 100",
+    "aliases": [],
     "lat": 43.000584,
     "lng": -7.5530464,
     "lines": [
@@ -2008,6 +2090,7 @@
     ],
     "officialToken": "nrLQ",
     "name": "Rúa Aviación Española 14",
+    "aliases": [],
     "lat": 42.9990166,
     "lng": -7.5536617,
     "lines": [
@@ -2032,6 +2115,7 @@
     ],
     "officialToken": "TajF",
     "name": "Rúa Aviación Española 32",
+    "aliases": [],
     "lat": 42.9977201,
     "lng": -7.554437,
     "lines": [
@@ -2057,6 +2141,7 @@
     ],
     "officialToken": "tOKN",
     "name": "Alfonso X (esq. Valiño)",
+    "aliases": [],
     "lat": 42.9961489,
     "lng": -7.5551094,
     "lines": [
@@ -2081,6 +2166,7 @@
     ],
     "officialToken": "cVsR",
     "name": "Alfonso X (cr. Magoi)",
+    "aliases": [],
     "lat": 42.9945048,
     "lng": -7.5544062,
     "lines": [
@@ -2103,6 +2189,7 @@
     ],
     "officialToken": "zGZr",
     "name": "Alfonso X (antes. C. Novos)",
+    "aliases": [],
     "lat": 42.9935617,
     "lng": -7.5529803,
     "lines": [
@@ -2125,6 +2212,7 @@
     ],
     "officialToken": "Qrdv",
     "name": "Alfonso X (Escuela Taller)",
+    "aliases": [],
     "lat": 42.9917035,
     "lng": -7.5509888,
     "lines": [
@@ -2147,6 +2235,7 @@
     ],
     "officialToken": "JDhT",
     "name": "Alfonso X (Fac. Ciencias)",
+    "aliases": [],
     "lat": 42.9910507,
     "lng": -7.5485556,
     "lines": [
@@ -2160,28 +2249,6 @@
     "hasScreen": true
   },
   {
-    "id": "s83",
-    "code": "gJRz",
-    "officialIds": [
-      83,
-      167,
-      334
-    ],
-    "officialToken": "gJRz",
-    "name": "As Pedreiras",
-    "lat": 42.9913572,
-    "lng": -7.5440267,
-    "lines": [
-      "1.1",
-      "1.2",
-      "1.4"
-    ],
-    "zone": "Acea de Olga",
-    "shelter": false,
-    "bench": false,
-    "hasScreen": true
-  },
-  {
     "id": "s120",
     "code": "120",
     "officialIds": [
@@ -2190,6 +2257,7 @@
     ],
     "officialToken": null,
     "name": "Polígono Gándaras (enf. SERFUJA)",
+    "aliases": [],
     "lat": 43.0416479,
     "lng": -7.5536606,
     "lines": [
@@ -2212,6 +2280,7 @@
     ],
     "officialToken": "zwHS",
     "name": "Polígono Gándaras (Begasa)",
+    "aliases": [],
     "lat": 43.0362379,
     "lng": -7.5550685,
     "lines": [
@@ -2234,6 +2303,7 @@
     ],
     "officialToken": null,
     "name": "As Gándaras (R. Amenta)",
+    "aliases": [],
     "lat": 43.0339708,
     "lng": -7.5550619,
     "lines": [
@@ -2255,6 +2325,7 @@
     ],
     "officialToken": null,
     "name": "As Gándaras (Campo Fútbol)",
+    "aliases": [],
     "lat": 43.0337573,
     "lng": -7.5503055,
     "lines": [
@@ -2277,6 +2348,7 @@
     ],
     "officialToken": null,
     "name": "Rotonda Rda. Norte (Falcón)",
+    "aliases": [],
     "lat": 43.0312668,
     "lng": -7.5355326,
     "lines": [
@@ -2315,6 +2387,9 @@
     ],
     "officialToken": "jELq",
     "name": "HULA (Ent. Principal)",
+    "aliases": [
+      "HULA (Ent. principal)"
+    ],
     "lat": 43.0196525,
     "lng": -7.5327446,
     "lines": [
@@ -2350,6 +2425,9 @@
     ],
     "officialToken": "zQdy",
     "name": "HULA (Ent. Personal)",
+    "aliases": [
+      "HULA (Ent. personal)"
+    ],
     "lat": 43.0185481,
     "lng": -7.5370916,
     "lines": [
@@ -2370,14 +2448,18 @@
   },
   {
     "id": "s128",
-    "code": "128",
+    "code": "DtLp",
     "officialIds": [
       128,
       295,
+      540,
       558
     ],
-    "officialToken": null,
-    "name": "Rotonda Ronda Norte (Vía de servizo)",
+    "officialToken": "DtLp",
+    "name": "N-640 (antes rtda. Rda. Norte)",
+    "aliases": [
+      "Rotonda Ronda Norte (Vía de servizo)"
+    ],
     "lat": 43.0322116,
     "lng": -7.5348068,
     "lines": [
@@ -2388,7 +2470,7 @@
     "zone": "As Gándaras",
     "shelter": false,
     "bench": null,
-    "hasScreen": false
+    "hasScreen": true
   },
   {
     "id": "s129",
@@ -2399,6 +2481,7 @@
     ],
     "officialToken": null,
     "name": "Polígono Gándaras (esq. R. Miñato)",
+    "aliases": [],
     "lat": 43.0339383,
     "lng": -7.5479137,
     "lines": [
@@ -2420,6 +2503,7 @@
     ],
     "officialToken": null,
     "name": "Polígono Gándaras Rúa D (esq. R. B)",
+    "aliases": [],
     "lat": 43.0375622,
     "lng": -7.5506943,
     "lines": [
@@ -2442,6 +2526,7 @@
     ],
     "officialToken": null,
     "name": "Polígono Gándaras (Audi)",
+    "aliases": [],
     "lat": 43.0419718,
     "lng": -7.5532848,
     "lines": [
@@ -2463,6 +2548,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Industria (Aula 9)",
+    "aliases": [],
     "lat": 43.0458049,
     "lng": -7.5658678,
     "lines": [
@@ -2483,6 +2569,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Industria (Gadis)",
+    "aliases": [],
     "lat": 43.0466951,
     "lng": -7.5677947,
     "lines": [
@@ -2505,6 +2592,7 @@
     ],
     "officialToken": "xqTs",
     "name": "Facultad Humanidades",
+    "aliases": [],
     "lat": 42.9921018,
     "lng": -7.5428741,
     "lines": [
@@ -2526,6 +2614,7 @@
     ],
     "officialToken": null,
     "name": "Prof. Carvalho Calero",
+    "aliases": [],
     "lat": 42.9946997,
     "lng": -7.5493893,
     "lines": [
@@ -2547,6 +2636,9 @@
     ],
     "officialToken": null,
     "name": "Facultade Veterinaria",
+    "aliases": [
+      "Facultad Veterinaria"
+    ],
     "lat": 42.9948045,
     "lng": -7.5463268,
     "lines": [
@@ -2568,6 +2660,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid (McDonald´s)",
+    "aliases": [],
     "lat": 42.9972404,
     "lng": -7.5454577,
     "lines": [
@@ -2590,6 +2683,7 @@
     ],
     "officialToken": "qEYJ",
     "name": "Avda. Madrid F.P.",
+    "aliases": [],
     "lat": 42.9989652,
     "lng": -7.5470795,
     "lines": [
@@ -2614,6 +2708,7 @@
     ],
     "officialToken": "GglP",
     "name": "Xosé Castiñeira (Conservatorio)",
+    "aliases": [],
     "lat": 42.9995928,
     "lng": -7.5471832,
     "lines": [
@@ -2639,6 +2734,7 @@
     ],
     "officialToken": null,
     "name": "Rda. Mercedes 50",
+    "aliases": [],
     "lat": 43.0012841,
     "lng": -7.5454388,
     "lines": [
@@ -2664,6 +2760,7 @@
     ],
     "officialToken": "IHeX",
     "name": "Fontiñas 203",
+    "aliases": [],
     "lat": 43.0025539,
     "lng": -7.5451865,
     "lines": [
@@ -2690,6 +2787,7 @@
     ],
     "officialToken": "LxsF",
     "name": "Fontiñas (Inst. San Xillao)",
+    "aliases": [],
     "lat": 43.0051291,
     "lng": -7.5470064,
     "lines": [
@@ -2716,6 +2814,7 @@
     ],
     "officialToken": "Smcn",
     "name": "Fontiñas (Parque)",
+    "aliases": [],
     "lat": 43.0068218,
     "lng": -7.548573,
     "lines": [
@@ -2742,6 +2841,7 @@
     ],
     "officialToken": null,
     "name": "Fontiñas 119",
+    "aliases": [],
     "lat": 43.0087516,
     "lng": -7.5484394,
     "lines": [
@@ -2768,6 +2868,7 @@
     ],
     "officialToken": "hHbm",
     "name": "Fontiñas 87",
+    "aliases": [],
     "lat": 43.0104807,
     "lng": -7.5485111,
     "lines": [
@@ -2795,6 +2896,7 @@
     ],
     "officialToken": "GgdY",
     "name": "Fontiñas 41",
+    "aliases": [],
     "lat": 43.0123451,
     "lng": -7.5492568,
     "lines": [
@@ -2820,6 +2922,7 @@
     ],
     "officialToken": "QEdQ",
     "name": "Pza. Conde Fontao (Estda. FFCC)",
+    "aliases": [],
     "lat": 43.0145778,
     "lng": -7.5516794,
     "lines": [
@@ -2845,6 +2948,7 @@
     ],
     "officialToken": "YSbT",
     "name": "Rúa Castelao 53",
+    "aliases": [],
     "lat": 43.0141106,
     "lng": -7.5532339,
     "lines": [
@@ -2869,6 +2973,7 @@
     ],
     "officialToken": "GsjP",
     "name": "Avda. Paulo Fabio Máximo 48",
+    "aliases": [],
     "lat": 43.0333445,
     "lng": -7.5678735,
     "lines": [
@@ -2889,6 +2994,7 @@
     ],
     "officialToken": "wurV",
     "name": "Avda. Inf. Elena (Enft. Lidl)",
+    "aliases": [],
     "lat": 43.0352098,
     "lng": -7.5648299,
     "lines": [
@@ -2909,6 +3015,7 @@
     ],
     "officialToken": null,
     "name": "As Termas",
+    "aliases": [],
     "lat": 43.0390486,
     "lng": -7.5672827,
     "lines": [
@@ -2929,6 +3036,7 @@
     ],
     "officialToken": "xOSp",
     "name": "Avda. Paulo Fabio Máximo (desp. Inf. Elena)",
+    "aliases": [],
     "lat": 43.034513,
     "lng": -7.5656504,
     "lines": [
@@ -2949,6 +3057,7 @@
     ],
     "officialToken": "AeSs",
     "name": "Avda. Paulo Fabio Máximo (enfte. Nº 48)",
+    "aliases": [],
     "lat": 43.0333405,
     "lng": -7.5683244,
     "lines": [
@@ -2969,6 +3078,7 @@
     ],
     "officialToken": "XasI",
     "name": "Avda. Coruña 493",
+    "aliases": [],
     "lat": 43.031092,
     "lng": -7.5717892,
     "lines": [
@@ -2990,6 +3100,7 @@
     ],
     "officialToken": "EthF",
     "name": "Montero Ríos 4",
+    "aliases": [],
     "lat": 43.0109186,
     "lng": -7.5524825,
     "lines": [
@@ -3013,6 +3124,7 @@
     ],
     "officialToken": "fClD",
     "name": "Fontiñas (esq. Caiños)",
+    "aliases": [],
     "lat": 43.0127483,
     "lng": -7.5495498,
     "lines": [
@@ -3039,6 +3151,7 @@
     ],
     "officialToken": null,
     "name": "Fontiñas 94",
+    "aliases": [],
     "lat": 43.0103466,
     "lng": -7.5487128,
     "lines": [
@@ -3067,6 +3180,7 @@
     ],
     "officialToken": "MJdF",
     "name": "Fontiñas 134",
+    "aliases": [],
     "lat": 43.0087497,
     "lng": -7.5486907,
     "lines": [
@@ -3095,6 +3209,7 @@
     ],
     "officialToken": null,
     "name": "Fontiñas 180",
+    "aliases": [],
     "lat": 43.0067488,
     "lng": -7.5488028,
     "lines": [
@@ -3123,6 +3238,7 @@
     ],
     "officialToken": "WQPK",
     "name": "Fontiñas (enf. San Xillao)",
+    "aliases": [],
     "lat": 43.0043901,
     "lng": -7.5461929,
     "lines": [
@@ -3151,6 +3267,7 @@
     ],
     "officialToken": "yshn",
     "name": "Fontiñas 310",
+    "aliases": [],
     "lat": 43.0022823,
     "lng": -7.5453428,
     "lines": [
@@ -3171,14 +3288,18 @@
     "code": "xxXF",
     "officialIds": [
       246,
+      414,
       420,
+      442,
       463,
+      469,
       654,
       756,
       816
     ],
     "officialToken": "xxXF",
     "name": "Rda. Mercedes 53",
+    "aliases": [],
     "lat": 43.0013302,
     "lng": -7.5457023,
     "lines": [
@@ -3199,6 +3320,7 @@
     "code": "EXzD",
     "officialIds": [
       247,
+      421,
       443,
       470,
       655,
@@ -3207,6 +3329,7 @@
     ],
     "officialToken": "EXzD",
     "name": "Rda. Mercedes 11",
+    "aliases": [],
     "lat": 43.0002017,
     "lng": -7.5473653,
     "lines": [
@@ -3233,6 +3356,7 @@
     ],
     "officialToken": "Aroa",
     "name": "Avda. Madrid 32 (Augas Férreas)",
+    "aliases": [],
     "lat": 42.99907,
     "lng": -7.5474658,
     "lines": [
@@ -3257,6 +3381,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid 46 (cr. Pardo Ouro)",
+    "aliases": [],
     "lat": 42.9970785,
     "lng": -7.5455776,
     "lines": [
@@ -3281,6 +3406,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid (enfte. Aresa)",
+    "aliases": [],
     "lat": 42.9942348,
     "lng": -7.5429035,
     "lines": [
@@ -3304,6 +3430,7 @@
     ],
     "officialToken": "HVqZ",
     "name": "Xosé Castiñeira (Froiz)",
+    "aliases": [],
     "lat": 42.9982953,
     "lng": -7.5496902,
     "lines": [
@@ -3328,6 +3455,7 @@
     ],
     "officialToken": "Uitq",
     "name": "Avda. Madrid 47-49",
+    "aliases": [],
     "lat": 43.0004932,
     "lng": -7.5485232,
     "lines": [
@@ -3352,6 +3480,7 @@
     ],
     "officialToken": "uIDG",
     "name": "San Roque 175",
+    "aliases": [],
     "lat": 43.003491,
     "lng": -7.5504519,
     "lines": [
@@ -3372,6 +3501,7 @@
     ],
     "officialToken": "bJTI",
     "name": "San Roque 72 (Rampa Claudio López)",
+    "aliases": [],
     "lat": 43.0068346,
     "lng": -7.5512888,
     "lines": [
@@ -3391,6 +3521,7 @@
     ],
     "officialToken": "MFLw",
     "name": "N-VI (Peugeot)",
+    "aliases": [],
     "lat": 43.0370893,
     "lng": -7.5763535,
     "lines": [
@@ -3409,6 +3540,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Pista Serradoiro)",
+    "aliases": [],
     "lat": 43.0403141,
     "lng": -7.578828,
     "lines": [
@@ -3427,6 +3559,7 @@
     ],
     "officialToken": "vcIE",
     "name": "N-VI (Renting. Antiga Opel)",
+    "aliases": [],
     "lat": 43.0430871,
     "lng": -7.5819475,
     "lines": [
@@ -3445,6 +3578,7 @@
     ],
     "officialToken": "gknL",
     "name": "N-VI (Restaurante Mateu)",
+    "aliases": [],
     "lat": 43.0442946,
     "lng": -7.5839018,
     "lines": [
@@ -3463,6 +3597,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Taller eléctrico)",
+    "aliases": [],
     "lat": 43.0458513,
     "lng": -7.5863631,
     "lines": [
@@ -3481,6 +3616,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Autocaravanas)",
+    "aliases": [],
     "lat": 43.0484481,
     "lng": -7.5900044,
     "lines": [
@@ -3500,6 +3636,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Piensos Flores)",
+    "aliases": [],
     "lat": 43.0562228,
     "lng": -7.597476,
     "lines": [
@@ -3518,6 +3655,7 @@
     ],
     "officialToken": "ddSU",
     "name": "N-VI (Gaima)",
+    "aliases": [],
     "lat": 43.0576214,
     "lng": -7.5982703,
     "lines": [
@@ -3536,6 +3674,7 @@
     ],
     "officialToken": "QclH",
     "name": "N-VI (Caseta Obr. Públicas)",
+    "aliases": [],
     "lat": 43.0523926,
     "lng": -7.5957341,
     "lines": [
@@ -3554,6 +3693,7 @@
     ],
     "officialToken": "HiRc",
     "name": "N-VI (Cruce est. Ombreiro)",
+    "aliases": [],
     "lat": 43.04849,
     "lng": -7.590423,
     "lines": [
@@ -3572,6 +3712,7 @@
     ],
     "officialToken": "USgG",
     "name": "N-VI (Casa da Fonte)",
+    "aliases": [],
     "lat": 43.0455606,
     "lng": -7.5861942,
     "lines": [
@@ -3590,6 +3731,7 @@
     ],
     "officialToken": "tNDa",
     "name": "N-VI (Cereijo)",
+    "aliases": [],
     "lat": 43.0439891,
     "lng": -7.5837238,
     "lines": [
@@ -3608,6 +3750,7 @@
     ],
     "officialToken": "TreP",
     "name": "N-VI (enf. Embotelladora)",
+    "aliases": [],
     "lat": 43.0425588,
     "lng": -7.5814332,
     "lines": [
@@ -3626,6 +3769,7 @@
     ],
     "officialToken": "TRjy",
     "name": "N-VI 583 (Pista Meilán)",
+    "aliases": [],
     "lat": 43.0398434,
     "lng": -7.5786988,
     "lines": [
@@ -3644,6 +3788,7 @@
     ],
     "officialToken": "soSB",
     "name": "N-VI (Rectificadora Lucense)",
+    "aliases": [],
     "lat": 43.036906,
     "lng": -7.5764709,
     "lines": [
@@ -3665,6 +3810,7 @@
     ],
     "officialToken": "WggZ",
     "name": "Ramón Ferreiro 34 (Fonte do Rei)",
+    "aliases": [],
     "lat": 43.0022859,
     "lng": -7.5509028,
     "lines": [
@@ -3689,6 +3835,7 @@
     ],
     "officialToken": "ZWPe",
     "name": "Avda. Madrid (Cruz Vermella)",
+    "aliases": [],
     "lat": 43.0006244,
     "lng": -7.5489385,
     "lines": [
@@ -3710,6 +3857,7 @@
     ],
     "officialToken": "YNhr",
     "name": "Rda. Fingoi 15",
+    "aliases": [],
     "lat": 42.9988182,
     "lng": -7.5499423,
     "lines": [
@@ -3731,6 +3879,7 @@
     ],
     "officialToken": "xCKl",
     "name": "Rúa Monforte 2-4",
+    "aliases": [],
     "lat": 43.0147891,
     "lng": -7.5570007,
     "lines": [
@@ -3755,6 +3904,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Monforte 40",
+    "aliases": [],
     "lat": 43.015707,
     "lng": -7.5556998,
     "lines": [
@@ -3777,6 +3927,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Paradai de Arriba 28-31",
+    "aliases": [],
     "lat": 43.0175144,
     "lng": -7.5569458,
     "lines": [
@@ -3797,6 +3948,7 @@
     ],
     "officialToken": "uDvR",
     "name": "Rúa Río Sil 50",
+    "aliases": [],
     "lat": 43.0184031,
     "lng": -7.557424,
     "lines": [
@@ -3817,6 +3969,7 @@
     ],
     "officialToken": "XwWd",
     "name": "Alexandre Bóveda 16",
+    "aliases": [],
     "lat": 43.0211252,
     "lng": -7.5592673,
     "lines": [
@@ -3836,6 +3989,7 @@
     ],
     "officialToken": null,
     "name": "Río Narla (Biblioteca P. Milagrosa - MIHL)",
+    "aliases": [],
     "lat": 43.0222011,
     "lng": -7.5624352,
     "lines": [
@@ -3854,6 +4008,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Irmáns Carro 10",
+    "aliases": [],
     "lat": 43.0168104,
     "lng": -7.5594528,
     "lines": [
@@ -3872,6 +4027,7 @@
     ],
     "officialToken": null,
     "name": "Río Sil 7",
+    "aliases": [],
     "lat": 43.0161758,
     "lng": -7.5561677,
     "lines": [
@@ -3892,6 +4048,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Miguel de Cervantes (escalinata)",
+    "aliases": [],
     "lat": 43.0145723,
     "lng": -7.5535339,
     "lines": [
@@ -3900,27 +4057,6 @@
       "11-Igrexa de Bóveda"
     ],
     "zone": "Centro / Muralla",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
-    "id": "s414",
-    "code": "414",
-    "officialIds": [
-      414,
-      442,
-      469
-    ],
-    "officialToken": null,
-    "name": "Rda. Mercedes 53",
-    "lat": 43.0013302,
-    "lng": -7.5457023,
-    "lines": [
-      "3.1",
-      "3.2"
-    ],
-    "zone": "Fingoi",
     "shelter": false,
     "bench": null,
     "hasScreen": false
@@ -3935,6 +4071,7 @@
     ],
     "officialToken": null,
     "name": "Paseo Estudantes (esq. Xosé Castiñeira)",
+    "aliases": [],
     "lat": 43.0005389,
     "lng": -7.5456789,
     "lines": [
@@ -3956,6 +4093,7 @@
     ],
     "officialToken": null,
     "name": "Paseo Estudantes (ant. Rúa Artes)",
+    "aliases": [],
     "lat": 42.9990137,
     "lng": -7.5442288,
     "lines": [
@@ -3973,10 +4111,12 @@
     "officialIds": [
       417,
       439,
-      466
+      466,
+      500
     ],
     "officialToken": "BZWk",
     "name": "Rúa Virxe Esperanza (enf. Nº 3)",
+    "aliases": [],
     "lat": 42.9999688,
     "lng": -7.5420777,
     "lines": [
@@ -3994,10 +4134,12 @@
     "officialIds": [
       418,
       440,
+      467,
       501
     ],
     "officialToken": "YSrP",
     "name": "Rúa Rof Codina (esq. R. Form.)",
+    "aliases": [],
     "lat": 43.0014671,
     "lng": -7.5415402,
     "lines": [
@@ -4020,6 +4162,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Rof Codina 45",
+    "aliases": [],
     "lat": 43.0018177,
     "lng": -7.5434845,
     "lines": [
@@ -4032,32 +4175,17 @@
     "hasScreen": false
   },
   {
-    "id": "s421",
-    "code": "421",
-    "officialIds": [
-      421
-    ],
-    "officialToken": null,
-    "name": "Rda. Mercedes 11",
-    "lat": 43.0002017,
-    "lng": -7.5473653,
-    "lines": [
-      "3.1"
-    ],
-    "zone": "Fingoi",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
     "id": "s424",
-    "code": "424",
+    "code": "CCGs",
     "officialIds": [
       424,
-      473
+      437,
+      473,
+      494
     ],
-    "officialToken": null,
+    "officialToken": "CCGs",
     "name": "Avda. Pablo Iglesias (Veterinaria)",
+    "aliases": [],
     "lat": 42.9948081,
     "lng": -7.5453655,
     "lines": [
@@ -4067,7 +4195,7 @@
     "zone": "Fingoi",
     "shelter": true,
     "bench": true,
-    "hasScreen": false
+    "hasScreen": true
   },
   {
     "id": "s426",
@@ -4079,6 +4207,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid (antes rtda.)",
+    "aliases": [],
     "lat": 42.9920079,
     "lng": -7.5408,
     "lines": [
@@ -4103,6 +4232,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid 306 (Casa María)",
+    "aliases": [],
     "lat": 42.9909295,
     "lng": -7.5384071,
     "lines": [
@@ -4125,6 +4255,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid 324",
+    "aliases": [],
     "lat": 42.9902002,
     "lng": -7.5366946,
     "lines": [
@@ -4148,6 +4279,9 @@
     ],
     "officialToken": null,
     "name": "A Tolda (UNED)",
+    "aliases": [
+      "A Tolda (Gasolinera)"
+    ],
     "lat": 42.9881141,
     "lng": -7.5350149,
     "lines": [
@@ -4170,6 +4304,7 @@
     ],
     "officialToken": "wfPT",
     "name": "A Tolda (Cruce pista Bosende)",
+    "aliases": [],
     "lat": 42.9887243,
     "lng": -7.5352232,
     "lines": [
@@ -4192,6 +4327,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid 317-319",
+    "aliases": [],
     "lat": 42.9902305,
     "lng": -7.536617,
     "lines": [
@@ -4214,6 +4350,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid 253 (desp. Rtda.)",
+    "aliases": [],
     "lat": 42.9921635,
     "lng": -7.5406605,
     "lines": [
@@ -4236,6 +4373,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid 169-171",
+    "aliases": [],
     "lat": 42.9943961,
     "lng": -7.542771,
     "lines": [
@@ -4249,26 +4387,6 @@
     "hasScreen": false
   },
   {
-    "id": "s437",
-    "code": "CCGs",
-    "officialIds": [
-      437,
-      494
-    ],
-    "officialToken": "CCGs",
-    "name": "Avda. Pablo Iglesias (Veterinaria)",
-    "lat": 42.9948081,
-    "lng": -7.5453655,
-    "lines": [
-      "3.1",
-      "3.2"
-    ],
-    "zone": "Fingoi",
-    "shelter": true,
-    "bench": true,
-    "hasScreen": true
-  },
-  {
     "id": "s438",
     "code": "438",
     "officialIds": [
@@ -4276,6 +4394,7 @@
     ],
     "officialToken": null,
     "name": "Rúa das Artes, (enfte. E. Ramón Falcón)",
+    "aliases": [],
     "lat": 42.9988091,
     "lng": -7.5433453,
     "lines": [
@@ -4297,6 +4416,7 @@
     ],
     "officialToken": "BfrN",
     "name": "Ramón Ferreiro 47-49 (Fonte do Rei)",
+    "aliases": [],
     "lat": 43.0026272,
     "lng": -7.5512001,
     "lines": [
@@ -4311,24 +4431,6 @@
     "hasScreen": true
   },
   {
-    "id": "s467",
-    "code": "467",
-    "officialIds": [
-      467
-    ],
-    "officialToken": null,
-    "name": "Rúa Rof Codina (esq. R. Form.)",
-    "lat": 43.0014671,
-    "lng": -7.5415402,
-    "lines": [
-      "3.2"
-    ],
-    "zone": "A Tolda / Montirón",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
     "id": "s479",
     "code": "479",
     "officialIds": [
@@ -4337,6 +4439,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (vía de servicio 6)",
+    "aliases": [],
     "lat": 42.9835443,
     "lng": -7.5294023,
     "lines": [
@@ -4357,6 +4460,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Losada y Veiga)",
+    "aliases": [],
     "lat": 42.9811212,
     "lng": -7.5261416,
     "lines": [
@@ -4377,6 +4481,7 @@
     ],
     "officialToken": "MGHS",
     "name": "N-VI (Babilonia)",
+    "aliases": [],
     "lat": 42.9786216,
     "lng": -7.5225994,
     "lines": [
@@ -4398,6 +4503,7 @@
     ],
     "officialToken": "VLLs",
     "name": "N-VI (Torre de Núñez)",
+    "aliases": [],
     "lat": 42.977513,
     "lng": -7.5170123,
     "lines": [
@@ -4417,6 +4523,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Ballestas Relámpago)",
+    "aliases": [],
     "lat": 42.9779589,
     "lng": -7.5146278,
     "lines": [
@@ -4435,6 +4542,7 @@
     ],
     "officialToken": "Cubu",
     "name": "N-VI (Ent. Fortaleza)",
+    "aliases": [],
     "lat": 42.9778388,
     "lng": -7.5169448,
     "lines": [
@@ -4453,6 +4561,7 @@
     ],
     "officialToken": "pHlf",
     "name": "N-VI (enfte. Babilonia)",
+    "aliases": [],
     "lat": 42.9789181,
     "lng": -7.5223208,
     "lines": [
@@ -4471,30 +4580,13 @@
     ],
     "officialToken": null,
     "name": "N-VI (Carretillas)",
+    "aliases": [],
     "lat": 42.9832282,
     "lng": -7.5282068,
     "lines": [
       "3.2"
     ],
     "zone": "Acea de Olga",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
-    "id": "s500",
-    "code": "500",
-    "officialIds": [
-      500
-    ],
-    "officialToken": null,
-    "name": "Rúa Virxe Esperanza (enf. Nº 3)",
-    "lat": 42.9999688,
-    "lng": -7.5420777,
-    "lines": [
-      "3.2"
-    ],
-    "zone": "A Tolda / Montirón",
     "shelter": false,
     "bench": null,
     "hasScreen": false
@@ -4508,6 +4600,7 @@
     ],
     "officialToken": "MAlq",
     "name": "Montero Ríos 86",
+    "aliases": [],
     "lat": 43.0141926,
     "lng": -7.5508916,
     "lines": [
@@ -4527,6 +4620,7 @@
     ],
     "officialToken": "Ibpr",
     "name": "Adolfo Suárez 24-26",
+    "aliases": [],
     "lat": 43.0161272,
     "lng": -7.5496544,
     "lines": [
@@ -4545,6 +4639,7 @@
     ],
     "officialToken": null,
     "name": "Adolfo Suárez 50",
+    "aliases": [],
     "lat": 43.0166336,
     "lng": -7.5483532,
     "lines": [
@@ -4563,6 +4658,7 @@
     ],
     "officialToken": null,
     "name": "Adolfo Suárez 112",
+    "aliases": [],
     "lat": 43.0187672,
     "lng": -7.5478074,
     "lines": [
@@ -4581,6 +4677,7 @@
     ],
     "officialToken": "Lqcf",
     "name": "Estda. Fervedoira 20",
+    "aliases": [],
     "lat": 43.0214274,
     "lng": -7.5469042,
     "lines": [
@@ -4599,6 +4696,7 @@
     ],
     "officialToken": "meMR",
     "name": "Estda. Fervedoira (enfte. Nº 15)",
+    "aliases": [],
     "lat": 43.0249269,
     "lng": -7.5449831,
     "lines": [
@@ -4617,6 +4715,7 @@
     ],
     "officialToken": "rPMi",
     "name": "Estda. Fervedoira 58",
+    "aliases": [],
     "lat": 43.0276586,
     "lng": -7.5434525,
     "lines": [
@@ -4635,6 +4734,7 @@
     ],
     "officialToken": "qTAO",
     "name": "N-640 (O Pazo)",
+    "aliases": [],
     "lat": 43.0303092,
     "lng": -7.5376265,
     "lines": [
@@ -4654,6 +4754,7 @@
     ],
     "officialToken": null,
     "name": "N-640 (Taller López y Vázquez)",
+    "aliases": [],
     "lat": 43.0315207,
     "lng": -7.5352216,
     "lines": [
@@ -4673,6 +4774,7 @@
     ],
     "officialToken": null,
     "name": "N-640 (Jorge I)",
+    "aliases": [],
     "lat": 43.0345524,
     "lng": -7.5310584,
     "lines": [
@@ -4687,10 +4789,12 @@
     "id": "s534",
     "code": "Uifo",
     "officialIds": [
-      534
+      534,
+      547
     ],
     "officialToken": "Uifo",
     "name": "N-640 (Grúas Castelao)",
+    "aliases": [],
     "lat": 43.0357636,
     "lng": -7.5292112,
     "lines": [
@@ -4703,12 +4807,14 @@
   },
   {
     "id": "s535",
-    "code": "535",
+    "code": "WieC",
     "officialIds": [
-      535
+      535,
+      548
     ],
-    "officialToken": null,
+    "officialToken": "WieC",
     "name": "Pista Muxa (Gasolineira BP)",
+    "aliases": [],
     "lat": 43.0372197,
     "lng": -7.5281383,
     "lines": [
@@ -4717,7 +4823,7 @@
     "zone": "As Gándaras",
     "shelter": true,
     "bench": null,
-    "hasScreen": false
+    "hasScreen": true
   },
   {
     "id": "s536",
@@ -4728,6 +4834,7 @@
     ],
     "officialToken": null,
     "name": "Pista Muxa (Cruce pista urbanización)",
+    "aliases": [],
     "lat": 43.0395245,
     "lng": -7.5284061,
     "lines": [
@@ -4742,10 +4849,12 @@
     "id": "s537",
     "code": "IiLo",
     "officialIds": [
-      537
+      537,
+      555
     ],
     "officialToken": "IiLo",
     "name": "Urbanización Campiña",
+    "aliases": [],
     "lat": 43.0389174,
     "lng": -7.5298713,
     "lines": [
@@ -4765,6 +4874,7 @@
     ],
     "officialToken": null,
     "name": "Pista Mercedes Ditram 14",
+    "aliases": [],
     "lat": 43.0364447,
     "lng": -7.5329305,
     "lines": [
@@ -4777,12 +4887,14 @@
   },
   {
     "id": "s539",
-    "code": "539",
+    "code": "Ltqu",
     "officialIds": [
-      539
+      539,
+      557
     ],
-    "officialToken": null,
+    "officialToken": "Ltqu",
     "name": "N-640 (Ditram)",
+    "aliases": [],
     "lat": 43.034584,
     "lng": -7.5318424,
     "lines": [
@@ -4790,60 +4902,6 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
-    "id": "s540",
-    "code": "DtLp",
-    "officialIds": [
-      540
-    ],
-    "officialToken": "DtLp",
-    "name": "N-640 (antes rtda. Rda. Norte)",
-    "lat": 43.0322116,
-    "lng": -7.5348068,
-    "lines": [
-      "4.1"
-    ],
-    "zone": "As Gándaras",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": true
-  },
-  {
-    "id": "s547",
-    "code": "547",
-    "officialIds": [
-      547
-    ],
-    "officialToken": null,
-    "name": "N-640 (Grúas Castelao)",
-    "lat": 43.0357636,
-    "lng": -7.5292112,
-    "lines": [
-      "4.1"
-    ],
-    "zone": "As Gándaras",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
-    "id": "s548",
-    "code": "WieC",
-    "officialIds": [
-      548
-    ],
-    "officialToken": "WieC",
-    "name": "Pista Muxa (Gasolineira BP)",
-    "lat": 43.0372197,
-    "lng": -7.5281383,
-    "lines": [
-      "4.1"
-    ],
-    "zone": "As Gándaras",
-    "shelter": true,
     "bench": null,
     "hasScreen": true
   },
@@ -4855,6 +4913,7 @@
     ],
     "officialToken": null,
     "name": "Pista Muxa (dir. Muxa)*",
+    "aliases": [],
     "lat": 43.0408402,
     "lng": -7.5292382,
     "lines": [
@@ -4873,6 +4932,7 @@
     ],
     "officialToken": null,
     "name": "Pista Muxa (enf. Serradoiro) *",
+    "aliases": [],
     "lat": 43.0447248,
     "lng": -7.5302831,
     "lines": [
@@ -4891,6 +4951,7 @@
     ],
     "officialToken": null,
     "name": "Igrexa Muxa *",
+    "aliases": [],
     "lat": 43.0478423,
     "lng": -7.5261631,
     "lines": [
@@ -4909,6 +4970,7 @@
     ],
     "officialToken": null,
     "name": "Pista Muxa 40 *",
+    "aliases": [],
     "lat": 43.0447498,
     "lng": -7.5304436,
     "lines": [
@@ -4927,6 +4989,7 @@
     ],
     "officialToken": null,
     "name": "Pista Muxa 8 *",
+    "aliases": [],
     "lat": 43.0407045,
     "lng": -7.5292274,
     "lines": [
@@ -4938,42 +5001,6 @@
     "hasScreen": false
   },
   {
-    "id": "s555",
-    "code": "555",
-    "officialIds": [
-      555
-    ],
-    "officialToken": null,
-    "name": "Urbanización Campiña",
-    "lat": 43.0389174,
-    "lng": -7.5298713,
-    "lines": [
-      "4.1"
-    ],
-    "zone": "As Gándaras",
-    "shelter": true,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
-    "id": "s557",
-    "code": "Ltqu",
-    "officialIds": [
-      557
-    ],
-    "officialToken": "Ltqu",
-    "name": "N-640 (Ditram)",
-    "lat": 43.034584,
-    "lng": -7.5318424,
-    "lines": [
-      "4.1"
-    ],
-    "zone": "As Gándaras",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": true
-  },
-  {
     "id": "s559",
     "code": "whcm",
     "officialIds": [
@@ -4981,6 +5008,7 @@
     ],
     "officialToken": "whcm",
     "name": "N-640 (pista Serradoiro)",
+    "aliases": [],
     "lat": 43.0309123,
     "lng": -7.536715,
     "lines": [
@@ -4999,6 +5027,7 @@
     ],
     "officialToken": "VqtX",
     "name": "N-640 (Fuente)",
+    "aliases": [],
     "lat": 43.0287849,
     "lng": -7.5424978,
     "lines": [
@@ -5017,6 +5046,7 @@
     ],
     "officialToken": "Emlv",
     "name": "N-640 (Taller Tractores)",
+    "aliases": [],
     "lat": 43.0268585,
     "lng": -7.5442363,
     "lines": [
@@ -5035,6 +5065,7 @@
     ],
     "officialToken": "MOjh",
     "name": "Estda. Fervedoira 15",
+    "aliases": [],
     "lat": 43.0245788,
     "lng": -7.5452671,
     "lines": [
@@ -5053,6 +5084,7 @@
     ],
     "officialToken": "wcio",
     "name": "Estda. Fervedoira (enfte. Nº 20)",
+    "aliases": [],
     "lat": 43.0219455,
     "lng": -7.5470286,
     "lines": [
@@ -5071,6 +5103,7 @@
     ],
     "officialToken": null,
     "name": "Adolfo Suárez 81",
+    "aliases": [],
     "lat": 43.0188199,
     "lng": -7.5478949,
     "lines": [
@@ -5089,6 +5122,7 @@
     ],
     "officialToken": null,
     "name": "Adolfo Suárez 33",
+    "aliases": [],
     "lat": 43.0165823,
     "lng": -7.5485593,
     "lines": [
@@ -5108,6 +5142,7 @@
     ],
     "officialToken": "NxuP",
     "name": "Adolfo Suárez (cr. Serra de Meira)",
+    "aliases": [],
     "lat": 43.0163495,
     "lng": -7.5506725,
     "lines": [
@@ -5129,6 +5164,7 @@
     ],
     "officialToken": "LEhk",
     "name": "Montero Ríos (enfte. Nº 83)",
+    "aliases": [],
     "lat": 43.0143481,
     "lng": -7.551256,
     "lines": [
@@ -5149,6 +5185,7 @@
     ],
     "officialToken": "dOol",
     "name": "Serra de Meira 16",
+    "aliases": [],
     "lat": 43.0167138,
     "lng": -7.5517375,
     "lines": [
@@ -5167,6 +5204,7 @@
     ],
     "officialToken": "fSJm",
     "name": "Serra de Meira 68",
+    "aliases": [],
     "lat": 43.0177955,
     "lng": -7.5542074,
     "lines": [
@@ -5185,6 +5223,7 @@
     ],
     "officialToken": null,
     "name": "Czda. Gándaras (enfte. Nº 53)",
+    "aliases": [],
     "lat": 43.0200277,
     "lng": -7.5534611,
     "lines": [
@@ -5203,6 +5242,7 @@
     ],
     "officialToken": null,
     "name": "Czda. Gándaras 134",
+    "aliases": [],
     "lat": 43.0227133,
     "lng": -7.5516673,
     "lines": [
@@ -5222,6 +5262,7 @@
     ],
     "officialToken": "vRRn",
     "name": "Czda. Gándaras 284",
+    "aliases": [],
     "lat": 43.0267256,
     "lng": -7.5500791,
     "lines": [
@@ -5242,6 +5283,7 @@
     ],
     "officialToken": "PcGp",
     "name": "Czda. Gándaras 366",
+    "aliases": [],
     "lat": 43.0296021,
     "lng": -7.5495738,
     "lines": [
@@ -5261,6 +5303,7 @@
     ],
     "officialToken": "dsZY",
     "name": "Czda. Gándaras (enfte. Residencia)",
+    "aliases": [],
     "lat": 43.0313257,
     "lng": -7.549635,
     "lines": [
@@ -5281,6 +5324,7 @@
     ],
     "officialToken": "lisr",
     "name": "Czda. Gándaras (Residencia)",
+    "aliases": [],
     "lat": 43.0311586,
     "lng": -7.5496931,
     "lines": [
@@ -5301,6 +5345,7 @@
     ],
     "officialToken": "MhoI",
     "name": "Czda. Gándaras 335",
+    "aliases": [],
     "lat": 43.0295046,
     "lng": -7.5496839,
     "lines": [
@@ -5321,6 +5366,7 @@
     ],
     "officialToken": "akCa",
     "name": "Czda. Gándaras (Cruce Virxe Soidade)",
+    "aliases": [],
     "lat": 43.0265229,
     "lng": -7.5501732,
     "lines": [
@@ -5341,6 +5387,7 @@
     ],
     "officialToken": "rNHd",
     "name": "Czda. Gándaras 197",
+    "aliases": [],
     "lat": 43.024333,
     "lng": -7.5511398,
     "lines": [
@@ -5360,6 +5407,7 @@
     ],
     "officialToken": "mRTI",
     "name": "Czda. Gándaras 53",
+    "aliases": [],
     "lat": 43.0200351,
     "lng": -7.5535928,
     "lines": [
@@ -5378,6 +5426,7 @@
     ],
     "officialToken": "moil",
     "name": "Serra de Meira (enfte. Nº 68)",
+    "aliases": [],
     "lat": 43.0175394,
     "lng": -7.5542639,
     "lines": [
@@ -5396,6 +5445,7 @@
     ],
     "officialToken": "bVJY",
     "name": "Serra de Meira (Parque)",
+    "aliases": [],
     "lat": 43.0166304,
     "lng": -7.5517147,
     "lines": [
@@ -5421,6 +5471,7 @@
     ],
     "officialToken": "xRiq",
     "name": "Avda. Américas 36 (Amadeus)",
+    "aliases": [],
     "lat": 43.0101741,
     "lng": -7.5686238,
     "lines": [
@@ -5447,6 +5498,7 @@
     ],
     "officialToken": "frSm",
     "name": "Avda. Américas 51",
+    "aliases": [],
     "lat": 43.0102347,
     "lng": -7.5684053,
     "lines": [
@@ -5471,6 +5523,7 @@
     ],
     "officialToken": "IjDO",
     "name": "Rda. do Carme 69 (Mercadona)",
+    "aliases": [],
     "lat": 43.0105103,
     "lng": -7.5658294,
     "lines": [
@@ -5493,6 +5546,7 @@
     ],
     "officialToken": "gjuB",
     "name": "Rda. do Carme 51",
+    "aliases": [],
     "lat": 43.008725,
     "lng": -7.5655339,
     "lines": [
@@ -5515,6 +5569,7 @@
     ],
     "officialToken": "fOwh",
     "name": "Rda. do Carme 23-25",
+    "aliases": [],
     "lat": 43.0061408,
     "lng": -7.5645762,
     "lines": [
@@ -5537,6 +5592,7 @@
     ],
     "officialToken": "QXpz",
     "name": "Avda. Magoi 12",
+    "aliases": [],
     "lat": 43.0016184,
     "lng": -7.5582711,
     "lines": [
@@ -5559,6 +5615,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Magoi 58",
+    "aliases": [],
     "lat": 42.9992024,
     "lng": -7.5583735,
     "lines": [
@@ -5581,6 +5638,7 @@
     ],
     "officialToken": "HVHn",
     "name": "Avda. Magoi 80",
+    "aliases": [],
     "lat": 42.9968225,
     "lng": -7.5571268,
     "lines": [
@@ -5604,6 +5662,7 @@
     ],
     "officialToken": "YxuP",
     "name": "Avda. Magoi 92",
+    "aliases": [],
     "lat": 42.9952859,
     "lng": -7.5560023,
     "lines": [
@@ -5627,6 +5686,7 @@
     ],
     "officialToken": "eaAp",
     "name": "San Eufrasio 38",
+    "aliases": [],
     "lat": 43.0128985,
     "lng": -7.5487552,
     "lines": [
@@ -5651,6 +5711,7 @@
     ],
     "officialToken": "POqt",
     "name": "San Eufrasio 108",
+    "aliases": [],
     "lat": 43.0103269,
     "lng": -7.5477237,
     "lines": [
@@ -5675,6 +5736,7 @@
     ],
     "officialToken": "jSgd",
     "name": "San Eufrasio 172",
+    "aliases": [],
     "lat": 43.0083803,
     "lng": -7.5440964,
     "lines": [
@@ -5699,6 +5761,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada (desp. Vía tren)",
+    "aliases": [],
     "lat": 43.010402,
     "lng": -7.5405612,
     "lines": [
@@ -5723,6 +5786,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada (enf. Pista Iglesia)",
+    "aliases": [],
     "lat": 43.0105777,
     "lng": -7.5387995,
     "lines": [
@@ -5747,6 +5811,7 @@
     ],
     "officialToken": "imEB",
     "name": "Estda. Fonsagrada (pista Castelo de abaixo)",
+    "aliases": [],
     "lat": 43.0119314,
     "lng": -7.5314489,
     "lines": [
@@ -5771,6 +5836,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada 102 (dir. HULA)",
+    "aliases": [],
     "lat": 43.0115568,
     "lng": -7.5337458,
     "lines": [
@@ -5795,6 +5861,7 @@
     ],
     "officialToken": "doPB",
     "name": "Estda. Fonsagrada (pista O Campo)",
+    "aliases": [],
     "lat": 43.0121649,
     "lng": -7.5286529,
     "lines": [
@@ -5819,6 +5886,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada (pista Militares)",
+    "aliases": [],
     "lat": 43.0122775,
     "lng": -7.5286439,
     "lines": [
@@ -5843,6 +5911,7 @@
     ],
     "officialToken": "WrSQ",
     "name": "Estda. Fonsagrada (cruce estda. Vella)",
+    "aliases": [],
     "lat": 43.0118971,
     "lng": -7.5327931,
     "lines": [
@@ -5866,6 +5935,7 @@
     ],
     "officialToken": "hMoJ",
     "name": "Estda. Fonsagrada (nueva variante)",
+    "aliases": [],
     "lat": 43.0113315,
     "lng": -7.5347603,
     "lines": [
@@ -5889,6 +5959,7 @@
     ],
     "officialToken": "QQjZ",
     "name": "Estda. Fonsagrada (pista Iglesia)",
+    "aliases": [],
     "lat": 43.0106664,
     "lng": -7.5388247,
     "lines": [
@@ -5913,6 +5984,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada (desp. Vía tren)",
+    "aliases": [],
     "lat": 43.0098255,
     "lng": -7.5415331,
     "lines": [
@@ -5937,6 +6009,7 @@
     ],
     "officialToken": "ZCkD",
     "name": "San Eufrasio 165 (Bar)",
+    "aliases": [],
     "lat": 43.0084207,
     "lng": -7.5442511,
     "lines": [
@@ -5961,6 +6034,7 @@
     ],
     "officialToken": "crQm",
     "name": "San Eufrasio (enfte. Nº 108)",
+    "aliases": [],
     "lat": 43.0103575,
     "lng": -7.5476222,
     "lines": [
@@ -5985,6 +6059,7 @@
     ],
     "officialToken": "wduu",
     "name": "San Eufrasio 7 (Abrite)",
+    "aliases": [],
     "lat": 43.012493,
     "lng": -7.5487256,
     "lines": [
@@ -6007,6 +6082,7 @@
     ],
     "officialToken": "jUcg",
     "name": "Avda. Magoi (dte. Gadis)",
+    "aliases": [],
     "lat": 42.9952579,
     "lng": -7.5556865,
     "lines": [
@@ -6028,6 +6104,7 @@
     ],
     "officialToken": "Hbev",
     "name": "Avda. Magoi 23",
+    "aliases": [],
     "lat": 42.9968248,
     "lng": -7.556909,
     "lines": [
@@ -6050,6 +6127,7 @@
     ],
     "officialToken": "KhdH",
     "name": "Avda. Magoi (dte. Auditorio)",
+    "aliases": [],
     "lat": 42.9991736,
     "lng": -7.5581891,
     "lines": [
@@ -6072,6 +6150,7 @@
     ],
     "officialToken": "FccT",
     "name": "Avda. Magoi 9-11-13",
+    "aliases": [],
     "lat": 43.0014948,
     "lng": -7.5580368,
     "lines": [
@@ -6095,6 +6174,7 @@
     ],
     "officialToken": "uMsY",
     "name": "Rda. do Carme 6",
+    "aliases": [],
     "lat": 43.0055126,
     "lng": -7.5637754,
     "lines": [
@@ -6119,6 +6199,7 @@
     ],
     "officialToken": "KWnB",
     "name": "Rda. do Carme (esq. Rúa Valuro)",
+    "aliases": [],
     "lat": 43.0090132,
     "lng": -7.5653419,
     "lines": [
@@ -6142,6 +6223,7 @@
     ],
     "officialToken": "Ukul",
     "name": "Rda. do Carme 52",
+    "aliases": [],
     "lat": 43.0105335,
     "lng": -7.5655613,
     "lines": [
@@ -6168,6 +6250,7 @@
     ],
     "officialToken": "dhHs",
     "name": "Fonte dos Ranchos 29-30",
+    "aliases": [],
     "lat": 43.0121026,
     "lng": -7.5670541,
     "lines": [
@@ -6178,7 +6261,7 @@
       "8",
       "11-Calde"
     ],
-    "zone": "Oeste / Américas",
+    "zone": "Fonte dos Ranchos",
     "shelter": false,
     "bench": null,
     "hasScreen": true
@@ -6189,14 +6272,16 @@
     "officialIds": [
       676,
       679,
+      708,
       769,
       834,
       926
     ],
     "officialToken": "tUZl",
     "name": "Rúa Saúde (dte. Antiguo Hospital Xeral)",
-    "lat": 43.0117177,
-    "lng": -7.5692557,
+    "aliases": [],
+    "lat": 43.011683,
+    "lng": -7.5692445,
     "lines": [
       "5DS",
       "5ES",
@@ -6218,6 +6303,7 @@
     ],
     "officialToken": "pgpS",
     "name": "Rúa Aquilino Iglesias 17",
+    "aliases": [],
     "lat": 43.0150403,
     "lng": -7.5721068,
     "lines": [
@@ -6238,6 +6324,7 @@
     ],
     "officialToken": "LHMI",
     "name": "Rúa Aquilino Iglesias 1 (Farmacia)",
+    "aliases": [],
     "lat": 43.0168592,
     "lng": -7.5721244,
     "lines": [
@@ -6258,6 +6345,7 @@
     ],
     "officialToken": "rNyM",
     "name": "Rúa Lamas de Prado 141",
+    "aliases": [],
     "lat": 43.0166686,
     "lng": -7.5706338,
     "lines": [
@@ -6278,6 +6366,7 @@
     ],
     "officialToken": "PQlB",
     "name": "Rúa Lamas de Prado 93",
+    "aliases": [],
     "lat": 43.0161906,
     "lng": -7.5680248,
     "lines": [
@@ -6298,6 +6387,7 @@
     ],
     "officialToken": "nPhL",
     "name": "Rúa Amizade 1 (esq. Rúa Quiroga)",
+    "aliases": [],
     "lat": 43.0151685,
     "lng": -7.5668131,
     "lines": [
@@ -6317,6 +6407,7 @@
     ],
     "officialToken": "LEoU",
     "name": "Rda. Valle Inclán 6",
+    "aliases": [],
     "lat": 43.0189616,
     "lng": -7.5665552,
     "lines": [
@@ -6336,6 +6427,7 @@
     ],
     "officialToken": "JVXE",
     "name": "Praza Agro do Rolo",
+    "aliases": [],
     "lat": 43.0208872,
     "lng": -7.5653875,
     "lines": [
@@ -6356,6 +6448,7 @@
     ],
     "officialToken": "EEzJ",
     "name": "Rda. Valle Inclán 21",
+    "aliases": [],
     "lat": 43.0191151,
     "lng": -7.5664457,
     "lines": [
@@ -6376,6 +6469,7 @@
     ],
     "officialToken": "qulH",
     "name": "Rúa dos Gardas 1-3",
+    "aliases": [],
     "lat": 43.0162426,
     "lng": -7.5669129,
     "lines": [
@@ -6396,6 +6490,7 @@
     ],
     "officialToken": "BNrX",
     "name": "Rúa Lamas de Prado 118",
+    "aliases": [],
     "lat": 43.016351,
     "lng": -7.5687459,
     "lines": [
@@ -6416,6 +6511,7 @@
     ],
     "officialToken": "ETof",
     "name": "Rúa Lamas de Prado 164-166",
+    "aliases": [],
     "lat": 43.0168807,
     "lng": -7.5712801,
     "lines": [
@@ -6436,6 +6532,7 @@
     ],
     "officialToken": "GCtl",
     "name": "Rúa Lamas de Prado 212",
+    "aliases": [],
     "lat": 43.0174085,
     "lng": -7.5735567,
     "lines": [
@@ -6456,6 +6553,7 @@
     ],
     "officialToken": "ySql",
     "name": "Rúa Oliveira 4",
+    "aliases": [],
     "lat": 43.017104,
     "lng": -7.5760497,
     "lines": [
@@ -6476,6 +6574,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Orquídea 125",
+    "aliases": [],
     "lat": 43.0161212,
     "lng": -7.5767431,
     "lines": [
@@ -6497,6 +6596,7 @@
     ],
     "officialToken": "LpVH",
     "name": "Rúa Orquídea 55 (Colexio Casás)",
+    "aliases": [],
     "lat": 43.0140557,
     "lng": -7.5741631,
     "lines": [
@@ -6509,24 +6609,6 @@
     "hasScreen": true
   },
   {
-    "id": "s708",
-    "code": "708",
-    "officialIds": [
-      708
-    ],
-    "officialToken": null,
-    "name": "Rúa Saúde (dte. Antiguo Hospital Xeral)",
-    "lat": 43.0115096,
-    "lng": -7.5691885,
-    "lines": [
-      "5ES"
-    ],
-    "zone": "Oeste / Américas",
-    "shelter": false,
-    "bench": null,
-    "hasScreen": false
-  },
-  {
     "id": "s738",
     "code": "738",
     "officialIds": [
@@ -6535,6 +6617,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada (Taller Tractores)",
+    "aliases": [],
     "lat": 43.012844,
     "lng": -7.5215621,
     "lines": [
@@ -6557,6 +6640,7 @@
     ],
     "officialToken": "cvzh",
     "name": "Fonte dos Ranchos 42-43",
+    "aliases": [],
     "lat": 43.0123869,
     "lng": -7.5656709,
     "lines": [
@@ -6581,6 +6665,7 @@
     ],
     "officialToken": "QQBy",
     "name": "Rúa Doutor Gasalla 3",
+    "aliases": [],
     "lat": 43.013067,
     "lng": -7.5631213,
     "lines": [
@@ -6604,6 +6689,7 @@
     ],
     "officialToken": "YvEK",
     "name": "Fonte dos Ranchos 8 (Cafetería Prados)",
+    "aliases": [],
     "lat": 43.012855,
     "lng": -7.5656459,
     "lines": [
@@ -6627,6 +6713,7 @@
     ],
     "officialToken": "cHqH",
     "name": "Pintor Corredoira (Politécnico)",
+    "aliases": [],
     "lat": 43.0038934,
     "lng": -7.5568929,
     "lines": [
@@ -6648,6 +6735,7 @@
     ],
     "officialToken": null,
     "name": "Rda. Fingoi (cenf. R.Illa de Man)",
+    "aliases": [],
     "lat": 43.0010185,
     "lng": -7.554303,
     "lines": [
@@ -6667,6 +6755,7 @@
     ],
     "officialToken": "bBXD",
     "name": "Rúa Sto. Graal 147",
+    "aliases": [],
     "lat": 43.0261303,
     "lng": -7.5733612,
     "lines": [
@@ -6685,6 +6774,7 @@
     ],
     "officialToken": "Onjq",
     "name": "Rúa Sto. Graal 119",
+    "aliases": [],
     "lat": 43.0252988,
     "lng": -7.5730613,
     "lines": [
@@ -6703,6 +6793,7 @@
     ],
     "officialToken": "lqog",
     "name": "Rúa Sto. Graal (enfte. Nº 58)",
+    "aliases": [],
     "lat": 43.0235397,
     "lng": -7.5722,
     "lines": [
@@ -6721,6 +6812,7 @@
     ],
     "officialToken": "pQFr",
     "name": "Rúa Sto. Graal 1 (esq. Mar Cantábrico)",
+    "aliases": [],
     "lat": 43.0219017,
     "lng": -7.5704791,
     "lines": [
@@ -6739,6 +6831,7 @@
     ],
     "officialToken": "MsKS",
     "name": "Rúa Camiño Real 197",
+    "aliases": [],
     "lat": 43.0203138,
     "lng": -7.5678988,
     "lines": [
@@ -6757,6 +6850,7 @@
     ],
     "officialToken": "qeHY",
     "name": "Rúa Camiño Real 141",
+    "aliases": [],
     "lat": 43.0189076,
     "lng": -7.5658051,
     "lines": [
@@ -6775,6 +6869,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Camiño Real 119",
+    "aliases": [],
     "lat": 43.0181852,
     "lng": -7.5648303,
     "lines": [
@@ -6793,6 +6888,7 @@
     ],
     "officialToken": "GcLN",
     "name": "Rúa Camiño Real 93",
+    "aliases": [],
     "lat": 43.0172989,
     "lng": -7.563772,
     "lines": [
@@ -6811,6 +6907,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Camiño Real 61",
+    "aliases": [],
     "lat": 43.0162564,
     "lng": -7.5624983,
     "lines": [
@@ -6829,6 +6926,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Concepción Arenal 48",
+    "aliases": [],
     "lat": 43.0148288,
     "lng": -7.5614251,
     "lines": [
@@ -6847,6 +6945,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Anduriñas 5",
+    "aliases": [],
     "lat": 43.0128143,
     "lng": -7.5628862,
     "lines": [
@@ -6865,6 +6964,7 @@
     ],
     "officialToken": "DvZR",
     "name": "Rúa da Zarra 1 (esq. Avda. Magoi)",
+    "aliases": [],
     "lat": 42.9946482,
     "lng": -7.5550198,
     "lines": [
@@ -6883,6 +6983,7 @@
     ],
     "officialToken": "yadT",
     "name": "Rúa da Zarra (esq. Rúa Torna)",
+    "aliases": [],
     "lat": 42.9933605,
     "lng": -7.5551798,
     "lines": [
@@ -6901,6 +7002,7 @@
     ],
     "officialToken": "kDMV",
     "name": "Rúa da Torna 1",
+    "aliases": [],
     "lat": 42.9945204,
     "lng": -7.5576778,
     "lines": [
@@ -6919,6 +7021,7 @@
     ],
     "officialToken": "QPlK",
     "name": "Rúa do Valiño (esq. Rúa Bouza)",
+    "aliases": [],
     "lat": 42.995268,
     "lng": -7.5567218,
     "lines": [
@@ -6937,6 +7040,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Magoi (esq. Campos novos)",
+    "aliases": [],
     "lat": 42.9947884,
     "lng": -7.5512946,
     "lines": [
@@ -6955,6 +7059,7 @@
     ],
     "officialToken": "YUmz",
     "name": "Prof. Carvalho Calero (Col. Sta. María)",
+    "aliases": [],
     "lat": 42.994994,
     "lng": -7.54668,
     "lines": [
@@ -6973,6 +7078,7 @@
     ],
     "officialToken": null,
     "name": "Prof. Carvalho Calero (esq. Estda. Granxa)",
+    "aliases": [],
     "lat": 42.994816,
     "lng": -7.5493946,
     "lines": [
@@ -6991,6 +7097,7 @@
     ],
     "officialToken": "WGCe",
     "name": "Avda. Magoi 69 (Pizzbur)",
+    "aliases": [],
     "lat": 42.9948499,
     "lng": -7.5505194,
     "lines": [
@@ -7009,6 +7116,7 @@
     ],
     "officialToken": "mgOP",
     "name": "Avda. Magoi 110 (enfte. Bodega Pedro)",
+    "aliases": [],
     "lat": 42.9948085,
     "lng": -7.5536279,
     "lines": [
@@ -7027,6 +7135,7 @@
     ],
     "officialToken": "zJCJ",
     "name": "Pintor Corredoira (Politécnico)",
+    "aliases": [],
     "lat": 43.0034192,
     "lng": -7.5571947,
     "lines": [
@@ -7045,6 +7154,7 @@
     ],
     "officialToken": "IJUk",
     "name": "Rúa Lavandeira 10",
+    "aliases": [],
     "lat": 43.0264517,
     "lng": -7.5686802,
     "lines": [
@@ -7063,6 +7173,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Lavandeira (cr. Angelo Colocci)",
+    "aliases": [],
     "lat": 43.025951,
     "lng": -7.5697037,
     "lines": [
@@ -7081,6 +7192,7 @@
     ],
     "officialToken": "Hfvz",
     "name": "Rúa Flor de Malva 14",
+    "aliases": [],
     "lat": 43.0265217,
     "lng": -7.5716821,
     "lines": [
@@ -7105,6 +7217,7 @@
     ],
     "officialToken": "OoZC",
     "name": "Bolaño Ribadeneira 1",
+    "aliases": [],
     "lat": 43.0132756,
     "lng": -7.5578354,
     "lines": [
@@ -7127,6 +7240,7 @@
     ],
     "officialToken": "GYCs",
     "name": "Rúa Santiago 110",
+    "aliases": [],
     "lat": 43.0045046,
     "lng": -7.5628671,
     "lines": [
@@ -7147,6 +7261,9 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella de Santiago (Balneario)",
+    "aliases": [
+      "Estda. Vella Santiago (Balneario)"
+    ],
     "lat": 43.002763,
     "lng": -7.5622942,
     "lines": [
@@ -7167,6 +7284,7 @@
     ],
     "officialToken": null,
     "name": "Rotonda Piugos (dir. Ponte)",
+    "aliases": [],
     "lat": 42.9938419,
     "lng": -7.5667078,
     "lines": [
@@ -7186,6 +7304,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella de Santiago 169",
+    "aliases": [],
     "lat": 42.9965412,
     "lng": -7.5668566,
     "lines": [
@@ -7204,6 +7323,7 @@
     ],
     "officialToken": "IyYu",
     "name": "Polusa",
+    "aliases": [],
     "lat": 42.9985198,
     "lng": -7.5678813,
     "lines": [
@@ -7222,6 +7342,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella de Santiago 115",
+    "aliases": [],
     "lat": 42.9981664,
     "lng": -7.5651531,
     "lines": [
@@ -7240,6 +7361,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella de Santiago 39",
+    "aliases": [],
     "lat": 43.0005031,
     "lng": -7.5633159,
     "lines": [
@@ -7259,6 +7381,7 @@
     ],
     "officialToken": null,
     "name": "A Ponte (cruce Fluvial)",
+    "aliases": [],
     "lat": 43.0013215,
     "lng": -7.5634193,
     "lines": [
@@ -7277,6 +7400,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella de Santiago 24",
+    "aliases": [],
     "lat": 43.0005874,
     "lng": -7.5633477,
     "lines": [
@@ -7295,6 +7419,7 @@
     ],
     "officialToken": "eIoX",
     "name": "Estda. Vella de Santiago 100",
+    "aliases": [],
     "lat": 42.9981936,
     "lng": -7.5652285,
     "lines": [
@@ -7314,6 +7439,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Portomarín (Restaurante Aniceto)",
+    "aliases": [],
     "lat": 42.9959166,
     "lng": -7.5671359,
     "lines": [
@@ -7334,6 +7460,7 @@
     ],
     "officialToken": null,
     "name": "Rotonda Piugos (dir. Centro)",
+    "aliases": [],
     "lat": 42.9931,
     "lng": -7.567201,
     "lines": [
@@ -7356,6 +7483,7 @@
     ],
     "officialToken": "DPEv",
     "name": "Rúa Montevideo 7 (Sanatorio NSOG)",
+    "aliases": [],
     "lat": 43.0119356,
     "lng": -7.5620234,
     "lines": [
@@ -7377,6 +7505,7 @@
     ],
     "officialToken": "sJDV",
     "name": "Rúa Ourense 6 (esq. Rda. Muralla)",
+    "aliases": [],
     "lat": 43.0132699,
     "lng": -7.5620794,
     "lines": [
@@ -7395,6 +7524,7 @@
     ],
     "officialToken": "NTlk",
     "name": "Rúa Ourense 48",
+    "aliases": [],
     "lat": 43.0146261,
     "lng": -7.5641789,
     "lines": [
@@ -7413,6 +7543,7 @@
     ],
     "officialToken": "XgVX",
     "name": "Rúa Tui 50",
+    "aliases": [],
     "lat": 43.0141235,
     "lng": -7.565413,
     "lines": [
@@ -7432,6 +7563,7 @@
     ],
     "officialToken": "HUNw",
     "name": "Avda. Américas 88",
+    "aliases": [],
     "lat": 43.0090956,
     "lng": -7.5712058,
     "lines": [
@@ -7451,6 +7583,7 @@
     ],
     "officialToken": "Tfiy",
     "name": "Carrefour (Polideportivo Palomar)",
+    "aliases": [],
     "lat": 43.004698,
     "lng": -7.5726936,
     "lines": [
@@ -7469,6 +7602,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Fábrica da Luz (Pazo de Feiras)",
+    "aliases": [],
     "lat": 43.0022283,
     "lng": -7.5722553,
     "lines": [
@@ -7487,6 +7621,7 @@
     ],
     "officialToken": "fhNU",
     "name": "Rúa Río Mandeo (esq. Río Lea)",
+    "aliases": [],
     "lat": 43.0080473,
     "lng": -7.5684508,
     "lines": [
@@ -7505,6 +7640,7 @@
     ],
     "officialToken": "ZDMg",
     "name": "Rúa Río Eume 8",
+    "aliases": [],
     "lat": 43.0068888,
     "lng": -7.5689729,
     "lines": [
@@ -7524,6 +7660,7 @@
     ],
     "officialToken": "RIVr",
     "name": "Rúa Río Pambre (A Cheda)",
+    "aliases": [],
     "lat": 43.0058828,
     "lng": -7.5689396,
     "lines": [
@@ -7542,6 +7679,7 @@
     ],
     "officialToken": "HYYf",
     "name": "Rúa Río Landro 5",
+    "aliases": [],
     "lat": 43.0069584,
     "lng": -7.568493,
     "lines": [
@@ -7560,6 +7698,7 @@
     ],
     "officialToken": "fcqx",
     "name": "Rúa Río Mandeo (esq. F.L. Cuevillas)",
+    "aliases": [],
     "lat": 43.008547,
     "lng": -7.5686838,
     "lines": [
@@ -7578,6 +7717,7 @@
     ],
     "officialToken": "Oims",
     "name": "Avda. Marqués de Ombreiro 116",
+    "aliases": [],
     "lat": 43.0077621,
     "lng": -7.5710497,
     "lines": [
@@ -7597,6 +7737,7 @@
     ],
     "officialToken": "iWOP",
     "name": "Avda. Américas 107 (esq. Músico Falla)",
+    "aliases": [],
     "lat": 43.0089961,
     "lng": -7.5715584,
     "lines": [
@@ -7617,6 +7758,7 @@
     ],
     "officialToken": "uRxj",
     "name": "Avda. Américas 83 (Parrillada Antonio)",
+    "aliases": [],
     "lat": 43.009169,
     "lng": -7.5701837,
     "lines": [
@@ -7636,6 +7778,7 @@
     ],
     "officialToken": "uzHA",
     "name": "Rúa Trapero Pardo 22",
+    "aliases": [],
     "lat": 43.010966,
     "lng": -7.5722594,
     "lines": [
@@ -7654,6 +7797,7 @@
     ],
     "officialToken": "oMAP",
     "name": "Rúa Trapero Pardo 3",
+    "aliases": [],
     "lat": 43.0110928,
     "lng": -7.5710551,
     "lines": [
@@ -7672,6 +7816,7 @@
     ],
     "officialToken": "Xqcv",
     "name": "Rúa Doutor Gasalla 28",
+    "aliases": [],
     "lat": 43.0141188,
     "lng": -7.5647512,
     "lines": [
@@ -7690,6 +7835,7 @@
     ],
     "officialToken": "MDGT",
     "name": "Estda. Vella Santiago 172 (Taller Crende)",
+    "aliases": [],
     "lat": 42.9960723,
     "lng": -7.5674158,
     "lines": [
@@ -7708,6 +7854,7 @@
     ],
     "officialToken": "WLGx",
     "name": "Estda. Vella Santiago 244",
+    "aliases": [],
     "lat": 42.994416,
     "lng": -7.5694127,
     "lines": [
@@ -7726,6 +7873,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella Santiago (Aqualive)",
+    "aliases": [],
     "lat": 42.9922221,
     "lng": -7.5737455,
     "lines": [
@@ -7744,6 +7892,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella Santiago (Cruce Louzaneta)",
+    "aliases": [],
     "lat": 42.9905551,
     "lng": -7.5777529,
     "lines": [
@@ -7763,6 +7912,7 @@
     ],
     "officialToken": "BtIg",
     "name": "Polígono Louzaneta, Rúa Mte. Torrón (Urbanización)",
+    "aliases": [],
     "lat": 42.989122,
     "lng": -7.5847522,
     "lines": [
@@ -7783,6 +7933,7 @@
     ],
     "officialToken": "UQHR",
     "name": "Rotonda Estda. Friol (Hotel Santiago)",
+    "aliases": [],
     "lat": 42.9869794,
     "lng": -7.58988,
     "lines": [
@@ -7802,6 +7953,7 @@
     ],
     "officialToken": "DMoA",
     "name": "Estda. Friol 35 (Verdilugo)",
+    "aliases": [],
     "lat": 42.9878673,
     "lng": -7.5856151,
     "lines": [
@@ -7820,6 +7972,7 @@
     ],
     "officialToken": "pmQi",
     "name": "Estda. Friol 21 (Aspnais)",
+    "aliases": [],
     "lat": 42.9883776,
     "lng": -7.5819106,
     "lines": [
@@ -7839,6 +7992,7 @@
     ],
     "officialToken": "jNQO",
     "name": "Cementerio San Froilán",
+    "aliases": [],
     "lat": 42.9855393,
     "lng": -7.5806582,
     "lines": [
@@ -7858,6 +8012,7 @@
     ],
     "officialToken": "kCBO",
     "name": "Cementerio (esq. Estda. Friol, Taberna Xesús)",
+    "aliases": [],
     "lat": 42.9858432,
     "lng": -7.5815991,
     "lines": [
@@ -7878,6 +8033,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella Santiago (desp. Cruce est. Friol)",
+    "aliases": [],
     "lat": 42.9891177,
     "lng": -7.5788453,
     "lines": [
@@ -7897,6 +8053,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella Santiago (desp. Cruce Louzaneta)",
+    "aliases": [],
     "lat": 42.9909042,
     "lng": -7.5772937,
     "lines": [
@@ -7915,6 +8072,7 @@
     ],
     "officialToken": "UBur",
     "name": "Estda. Vella Santiago 271 (enfte. Aqualive)",
+    "aliases": [],
     "lat": 42.9922407,
     "lng": -7.5734988,
     "lines": [
@@ -7933,6 +8091,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Vella Santiago 221",
+    "aliases": [],
     "lat": 42.994146,
     "lng": -7.5697877,
     "lines": [
@@ -7951,6 +8110,7 @@
     ],
     "officialToken": "xryH",
     "name": "Rúa Santiago (Pavillón Deportes)",
+    "aliases": [],
     "lat": 43.004742,
     "lng": -7.5624712,
     "lines": [
@@ -7969,6 +8129,7 @@
     ],
     "officialToken": "BZsM",
     "name": "Rúa Santiago (enfte. Czda da Ponte)",
+    "aliases": [],
     "lat": 43.0069071,
     "lng": -7.5622477,
     "lines": [
@@ -7987,6 +8148,7 @@
     ],
     "officialToken": "pTQz",
     "name": "Rúa Santiago 3",
+    "aliases": [],
     "lat": 43.0082696,
     "lng": -7.5598451,
     "lines": [
@@ -8005,6 +8167,7 @@
     ],
     "officialToken": null,
     "name": "Bagueixos",
+    "aliases": [],
     "lat": 43.0507979,
     "lng": -7.5846682,
     "lines": [
@@ -8023,6 +8186,7 @@
     ],
     "officialToken": null,
     "name": "A Brea 33",
+    "aliases": [],
     "lat": 43.0620209,
     "lng": -7.5924225,
     "lines": [
@@ -8041,6 +8205,7 @@
     ],
     "officialToken": null,
     "name": "A Brea 14",
+    "aliases": [],
     "lat": 43.0645237,
     "lng": -7.5917236,
     "lines": [
@@ -8059,6 +8224,7 @@
     ],
     "officialToken": null,
     "name": "A Brea",
+    "aliases": [],
     "lat": 43.057415,
     "lng": -7.5868592,
     "lines": [
@@ -8077,6 +8243,7 @@
     ],
     "officialToken": null,
     "name": "Tirimol",
+    "aliases": [],
     "lat": 43.0584326,
     "lng": -7.5804981,
     "lines": [
@@ -8095,6 +8262,7 @@
     ],
     "officialToken": null,
     "name": "Seivane",
+    "aliases": [],
     "lat": 43.0594814,
     "lng": -7.5752852,
     "lines": [
@@ -8113,6 +8281,7 @@
     ],
     "officialToken": null,
     "name": "Pedrouzón",
+    "aliases": [],
     "lat": 43.0573018,
     "lng": -7.5710432,
     "lines": [
@@ -8131,6 +8300,7 @@
     ],
     "officialToken": null,
     "name": "Pías 13",
+    "aliases": [],
     "lat": 43.0629971,
     "lng": -7.5639415,
     "lines": [
@@ -8149,6 +8319,7 @@
     ],
     "officialToken": null,
     "name": "Pías 2",
+    "aliases": [],
     "lat": 43.068293,
     "lng": -7.5579355,
     "lines": [
@@ -8168,6 +8339,7 @@
     ],
     "officialToken": null,
     "name": "Pías 11",
+    "aliases": [],
     "lat": 43.0618002,
     "lng": -7.5658087,
     "lines": [
@@ -8186,6 +8358,7 @@
     ],
     "officialToken": null,
     "name": "Porto (dir. Ceao)",
+    "aliases": [],
     "lat": 43.0559349,
     "lng": -7.5655734,
     "lines": [
@@ -8204,6 +8377,7 @@
     ],
     "officialToken": null,
     "name": "Barbaín (dir. Bóveda)",
+    "aliases": [],
     "lat": 43.0073441,
     "lng": -7.5175337,
     "lines": [
@@ -8222,6 +8396,7 @@
     ],
     "officialToken": null,
     "name": "Cruce Farxocos - Bóveda (dir. Bóveda)",
+    "aliases": [],
     "lat": 43.0012059,
     "lng": -7.4924215,
     "lines": [
@@ -8241,6 +8416,7 @@
     ],
     "officialToken": null,
     "name": "Igrexa de Bóveda",
+    "aliases": [],
     "lat": 42.997158,
     "lng": -7.4963791,
     "lines": [
@@ -8259,6 +8435,7 @@
     ],
     "officialToken": null,
     "name": "Cruce Farxocos - Bóveda (dir. centro)",
+    "aliases": [],
     "lat": 43.0011032,
     "lng": -7.4922973,
     "lines": [
@@ -8277,6 +8454,7 @@
     ],
     "officialToken": null,
     "name": "Barbaín (dir. centro)",
+    "aliases": [],
     "lat": 43.0073157,
     "lng": -7.5173516,
     "lines": [
@@ -8295,6 +8473,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Fonsagrada 196",
+    "aliases": [],
     "lat": 43.0128784,
     "lng": -7.522106,
     "lines": [
@@ -8314,6 +8493,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Nova Santiago (Monte Segade)",
+    "aliases": [],
     "lat": 43.0091297,
     "lng": -7.5712505,
     "lines": [
@@ -8333,6 +8513,7 @@
     ],
     "officialToken": null,
     "name": "Estda. Nova Santiago (Comp. Santiago)",
+    "aliases": [],
     "lat": 42.9978867,
     "lng": -7.5870439,
     "lines": [
@@ -8351,6 +8532,7 @@
     ],
     "officialToken": null,
     "name": "Vía Servicio (enfte. Exágono)",
+    "aliases": [],
     "lat": 42.9853036,
     "lng": -7.5882547,
     "lines": [
@@ -8370,6 +8552,7 @@
     ],
     "officialToken": null,
     "name": "Calde (Hospital)",
+    "aliases": [],
     "lat": 42.9549118,
     "lng": -7.6013503,
     "lines": [
@@ -8388,6 +8571,7 @@
     ],
     "officialToken": "iDDe",
     "name": "Polígono Louzaneta, Rúa Mte. Torrón (Monbus)",
+    "aliases": [],
     "lat": 42.9900669,
     "lng": -7.5815242,
     "lines": [
@@ -8406,6 +8590,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (Curva Cuco)",
+    "aliases": [],
     "lat": 42.9766488,
     "lng": -7.5123321,
     "lines": [
@@ -8424,6 +8609,7 @@
     ],
     "officialToken": null,
     "name": "N-VI (dte. Fábrica de Leche)",
+    "aliases": [],
     "lat": 42.9721122,
     "lng": -7.5089316,
     "lines": [
@@ -8442,6 +8628,7 @@
     ],
     "officialToken": null,
     "name": "N-VI Nadela (pista San Xoán Campo)",
+    "aliases": [],
     "lat": 42.9708161,
     "lng": -7.5060739,
     "lines": [
@@ -8460,6 +8647,7 @@
     ],
     "officialToken": null,
     "name": "Nadela (ent. Estda. Sarria)",
+    "aliases": [],
     "lat": 42.9696208,
     "lng": -7.5036067,
     "lines": [
@@ -8478,6 +8666,7 @@
     ],
     "officialToken": null,
     "name": "Nadela (enfte. Centro Saúde)",
+    "aliases": [],
     "lat": 42.9673936,
     "lng": -7.502236,
     "lines": [
@@ -8496,6 +8685,7 @@
     ],
     "officialToken": null,
     "name": "Nadela (ent. Pista Tableros Hispanos)",
+    "aliases": [],
     "lat": 42.9625537,
     "lng": -7.5001054,
     "lines": [
@@ -8515,6 +8705,7 @@
     ],
     "officialToken": null,
     "name": "Santa Comba (Calfensa)",
+    "aliases": [],
     "lat": 42.9532502,
     "lng": -7.4959409,
     "lines": [
@@ -8533,6 +8724,7 @@
     ],
     "officialToken": null,
     "name": "Nadela (Mundisofá)",
+    "aliases": [],
     "lat": 42.9667525,
     "lng": -7.5015214,
     "lines": [
@@ -8551,6 +8743,7 @@
     ],
     "officialToken": "MBbI",
     "name": "Nadela (Campo da Feira)",
+    "aliases": [],
     "lat": 42.9702118,
     "lng": -7.5045323,
     "lines": [
@@ -8569,6 +8762,7 @@
     ],
     "officialToken": null,
     "name": "Recimil",
+    "aliases": [],
     "lat": 42.9805437,
     "lng": -7.4854852,
     "lines": [
@@ -8587,6 +8781,7 @@
     ],
     "officialToken": null,
     "name": "Vilar",
+    "aliases": [],
     "lat": 42.9818817,
     "lng": -7.4945606,
     "lines": [
@@ -8605,6 +8800,7 @@
     ],
     "officialToken": null,
     "name": "San Mamede",
+    "aliases": [],
     "lat": 42.9797623,
     "lng": -7.5042617,
     "lines": [
@@ -8623,6 +8819,7 @@
     ],
     "officialToken": null,
     "name": "Conturiz (Iglesia)",
+    "aliases": [],
     "lat": 42.9796751,
     "lng": -7.5138627,
     "lines": [
@@ -8641,6 +8838,7 @@
     ],
     "officialToken": null,
     "name": "Bosende (canteira)",
+    "aliases": [],
     "lat": 42.9922357,
     "lng": -7.5155774,
     "lines": [
@@ -8659,6 +8857,7 @@
     ],
     "officialToken": null,
     "name": "Bosende",
+    "aliases": [],
     "lat": 42.9933111,
     "lng": -7.5256408,
     "lines": [
@@ -8677,6 +8876,7 @@
     ],
     "officialToken": null,
     "name": "Avda. Madrid (enfte. Casa María)",
+    "aliases": [],
     "lat": 42.9910394,
     "lng": -7.53857,
     "lines": [
@@ -8695,6 +8895,7 @@
     ],
     "officialToken": "znCf",
     "name": "Rúa Montefaro (enfte. Nº 21)",
+    "aliases": [],
     "lat": 43.0229048,
     "lng": -7.5636598,
     "lines": [
@@ -8713,6 +8914,7 @@
     ],
     "officialToken": "oePt",
     "name": "Rúa Montefaro (enfte. Nº 57)",
+    "aliases": [],
     "lat": 43.0243101,
     "lng": -7.5629686,
     "lines": [
@@ -8731,6 +8933,7 @@
     ],
     "officialToken": "xydT",
     "name": "Rúa Montefaro (Piscina Municipal)",
+    "aliases": [],
     "lat": 43.0267076,
     "lng": -7.5625534,
     "lines": [
@@ -8749,6 +8952,7 @@
     ],
     "officialToken": "Jaad",
     "name": "Avda. Padre Gómez (cruce Illas Canarias)",
+    "aliases": [],
     "lat": 43.0276097,
     "lng": -7.5628515,
     "lines": [
@@ -8767,6 +8971,7 @@
     ],
     "officialToken": "gZcW",
     "name": "Rúa Illas Canarias 204",
+    "aliases": [],
     "lat": 43.0285262,
     "lng": -7.5622923,
     "lines": [
@@ -8785,6 +8990,7 @@
     ],
     "officialToken": "tYhR",
     "name": "Rúa Fisterra (desp. Ponte Ferrocarril)",
+    "aliases": [],
     "lat": 43.0299061,
     "lng": -7.5610704,
     "lines": [
@@ -8803,6 +9009,7 @@
     ],
     "officialToken": "vePG",
     "name": "Rúa Vilisqueiras (esq. Rúa Fisterra)",
+    "aliases": [],
     "lat": 43.0309058,
     "lng": -7.560104,
     "lines": [
@@ -8821,6 +9028,7 @@
     ],
     "officialToken": "lmbJ",
     "name": "Rúa Pedáneo Xoán Diego 100",
+    "aliases": [],
     "lat": 43.0322874,
     "lng": -7.558868,
     "lines": [
@@ -8839,6 +9047,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Camiño do Souto 8",
+    "aliases": [],
     "lat": 43.0338746,
     "lng": -7.5586885,
     "lines": [
@@ -8857,6 +9066,7 @@
     ],
     "officialToken": "PQTW",
     "name": "Rúa Camiño do Souto (esq. R. Couselo)",
+    "aliases": [],
     "lat": 43.0357464,
     "lng": -7.559807,
     "lines": [
@@ -8875,6 +9085,7 @@
     ],
     "officialToken": null,
     "name": "Polígono Gándaras Rúa F (esq. R. B)",
+    "aliases": [],
     "lat": 43.0418975,
     "lng": -7.549673,
     "lines": [
@@ -8893,6 +9104,7 @@
     ],
     "officialToken": null,
     "name": "Polígono Gándaras Rúa B (esq. R. E)",
+    "aliases": [],
     "lat": 43.0397462,
     "lng": -7.5502192,
     "lines": [
@@ -8911,6 +9123,7 @@
     ],
     "officialToken": "iHiT",
     "name": "Rúa Fisterra (cr. R. Amenta)",
+    "aliases": [],
     "lat": 43.033571,
     "lng": -7.55678,
     "lines": [
@@ -8929,6 +9142,7 @@
     ],
     "officialToken": "Hxqd",
     "name": "Rúa Pedáneo Xoán Diego 81",
+    "aliases": [],
     "lat": 43.0322901,
     "lng": -7.558999,
     "lines": [
@@ -8947,6 +9161,7 @@
     ],
     "officialToken": "WDvB",
     "name": "Rúa Vilisqueiras 33",
+    "aliases": [],
     "lat": 43.0310078,
     "lng": -7.5601632,
     "lines": [
@@ -8965,6 +9180,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Fisterra 1 (ant. Ponte Ferrocarril)",
+    "aliases": [],
     "lat": 43.0297885,
     "lng": -7.561483,
     "lines": [
@@ -8983,6 +9199,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Illas Canarias 181",
+    "aliases": [],
     "lat": 43.0285867,
     "lng": -7.5623415,
     "lines": [
@@ -9001,6 +9218,7 @@
     ],
     "officialToken": "hfBZ",
     "name": "Rúa Illas Canarias 143 (esq. Rúa Illa Madeira)",
+    "aliases": [],
     "lat": 43.0277603,
     "lng": -7.563054,
     "lines": [
@@ -9019,6 +9237,7 @@
     ],
     "officialToken": "oNal",
     "name": "Rúa Illas Canarias 99 (Ambulatorio)",
+    "aliases": [],
     "lat": 43.0260838,
     "lng": -7.563244,
     "lines": [
@@ -9037,6 +9256,7 @@
     ],
     "officialToken": "kETW",
     "name": "Rúa Illas Canarias 67 (esq. Rúa do Franco)",
+    "aliases": [],
     "lat": 43.0247466,
     "lng": -7.563552,
     "lines": [
@@ -9055,6 +9275,7 @@
     ],
     "officialToken": "eXjt",
     "name": "Rúa Illas Canarias 1 (esq. Avda. Coruña)",
+    "aliases": [],
     "lat": 43.0227223,
     "lng": -7.5646642,
     "lines": [
@@ -9073,6 +9294,7 @@
     ],
     "officialToken": null,
     "name": "Alexandre Bóveda (Rtda. Avecus)",
+    "aliases": [],
     "lat": 43.0225698,
     "lng": -7.5582641,
     "lines": [
@@ -9091,6 +9313,7 @@
     ],
     "officialToken": null,
     "name": "Alexandre Bóveda (Rtda. Camiño Roca)",
+    "aliases": [],
     "lat": 43.0226738,
     "lng": -7.5558092,
     "lines": [
@@ -9109,6 +9332,7 @@
     ],
     "officialToken": "YbHt",
     "name": "Rúa Casas Vellas 2 (dir. Gándaras)",
+    "aliases": [],
     "lat": 43.0238453,
     "lng": -7.5553682,
     "lines": [
@@ -9127,6 +9351,7 @@
     ],
     "officialToken": null,
     "name": "Rúa Camiño de Romay 30 (dir. Gándaras)",
+    "aliases": [],
     "lat": 43.0249712,
     "lng": -7.5549324,
     "lines": [
@@ -9145,6 +9370,7 @@
     ],
     "officialToken": "vFms",
     "name": "Rúa Camiño de Romay (enfte. Nº 27)",
+    "aliases": [],
     "lat": 43.0259153,
     "lng": -7.5537217,
     "lines": [
@@ -9163,6 +9389,7 @@
     ],
     "officialToken": "bkPf",
     "name": "Rúa Virxe da Soidade (enfte. Col. Gándaras)",
+    "aliases": [],
     "lat": 43.0264766,
     "lng": -7.5514373,
     "lines": [

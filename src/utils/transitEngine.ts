@@ -173,7 +173,10 @@ export function resolveLocationQuery(
   // Rank all bus stops by relevance
   const stopCandidates = BUS_STOPS.map((s) => ({
     stop: s,
-    score: calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
+    score: Math.max(
+      calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
+      ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.address)),
+    ),
   })).filter((c) => c.score > 0).sort((a, b) => b.score - a.score);
 
   if (stopCandidates.length > 0 && stopCandidates[0].score >= 300) {
@@ -243,7 +246,11 @@ export function resolveLocationQuery(
     };
   }
 
-  const stopByWords = BUS_STOPS.find((stop) => matchesQuery(stop.name, q));
+  // Aliases count as the stop's own name: merging two listings into one pole must not
+  // make a label the operator still prints unfindable.
+  const stopByWords = BUS_STOPS.find(
+    (stop) => matchesQuery(stop.name, q) || (stop.aliases ?? []).some((a) => matchesQuery(a, q)),
+  );
   if (stopByWords) {
     return {
       name: stopByWords.name,
@@ -278,7 +285,10 @@ export function findStop(query: string): BusStop | undefined {
 
   const ranked = BUS_STOPS.map((s) => ({
     stop: s,
-    score: calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
+    score: Math.max(
+      calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
+      ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.address)),
+    ),
   }))
     .filter((c) => c.score > 0)
     .sort((a, b) => b.score - a.score);

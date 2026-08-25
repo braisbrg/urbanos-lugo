@@ -1266,4 +1266,33 @@ ok('the QR count on the map is the number of poles that have one', () => {
   }
 });
 
+ok('a name the operator still prints is still findable after merging', () => {
+  // One pole is listed twice by the operator, once with a live-panel token and once
+  // without, sometimes under a different label. Merging them into one stop is right —
+  // they are one pole — but it cost "Opuesto Piscina Pedreiras" its entry until the
+  // other label was kept as an alias.
+  const withAliases = BUS_STOPS.filter((s) => (s.aliases ?? []).length > 0);
+  assert(withAliases.length > 0, "no stop carries an alias, so this proves nothing");
+  for (const stop of withAliases) {
+    for (const alias of stop.aliases!) {
+      assert(alias !== stop.name, `${stop.name} lists its own name as an alias`);
+      const found = resolveLocationQuery(alias);
+      assert(found?.nearestStop.id === stop.id, `"${alias}" no longer resolves to ${stop.name}`);
+    }
+  }
+});
+
+ok('no two stops share a point', () => {
+  // Nine poles shipped as eighteen stops: identical name, identical published
+  // coordinates, two operator ids. Every stop list, zone filter and nearest-stop
+  // search counted them twice.
+  const seen = new Map<string, string>();
+  for (const s of BUS_STOPS) {
+    const key = `${s.lat.toFixed(6)},${s.lng.toFixed(6)}`;
+    const other = seen.get(key);
+    assert(!other, `${s.name} and ${other} are published at the same point`);
+    seen.set(key, s.name);
+  }
+});
+
 console.log(`\n${checks} checks passed\n`);

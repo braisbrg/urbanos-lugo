@@ -304,10 +304,15 @@ for (const s of located) {
   if (!stop) {
     // Identical coordinates mean the same pole even when the label differs: the site
     // publishes some stops in Galician and Spanish ("Facultade" / "Facultad").
+    // Two tokens that differ are two panels, so two poles. Anything else — one side
+    // tokenless, or both — can still be the same pole listed twice, and it was: nine
+    // poles shipped as eighteen stops because one entry carried a live-panel token and
+    // its twin did not, at identical published coordinates under an identical name.
+    const mergeable = (c: any) => !(c.officialToken && s.token);
     stop =
-      clusters.find((c) => !c.officialToken && !s.token && haversine(c.lat, c.lng, lat, lng) === 0) ||
+      clusters.find((c) => mergeable(c) && haversine(c.lat, c.lng, lat, lng) === 0) ||
       clusters.find(
-        (c) => !c.officialToken && !s.token && c.name === s.name && haversine(c.lat, c.lng, lat, lng) <= MERGE_RADIUS_M,
+        (c) => mergeable(c) && c.name === s.name && haversine(c.lat, c.lng, lat, lng) <= MERGE_RADIUS_M,
       );
   }
 
@@ -319,6 +324,8 @@ for (const s of located) {
       officialIds: [] as number[],
       officialToken: s.token || null,
       name: s.name,
+      /** Every other label the operator prints for this pole. */
+      aliases: [] as string[],
       lat,
       lng,
       samples: 0,
@@ -334,10 +341,23 @@ for (const s of located) {
     if (s.token) byToken.set(s.token, stop);
   }
 
+  // A pole with a live panel keeps that identity even when a tokenless twin reached the
+  // cluster first: without this, merging cost five poles their scannable code and left
+  // them under the twin's label — "As Pedreiras" became "Opuesto Piscina Pedreiras".
+  if (s.token && !stop.officialToken) {
+    stop.officialToken = s.token;
+    stop.code = s.token;
+    if (stop.name !== s.name) stop.aliases.push(stop.name);
+    stop.name = s.name;
+    stop.hasScreen = true;
+    byToken.set(s.token, stop);
+  }
+
   // Average the published coordinates instead of trusting whichever page came first.
   stop.lat = (stop.lat * stop.samples + lat) / (stop.samples + 1);
   stop.lng = (stop.lng * stop.samples + lng) / (stop.samples + 1);
   stop.samples++;
+  if (s.name !== stop.name && !stop.aliases.includes(s.name)) stop.aliases.push(s.name);
   stop.officialIds.push(s.ps);
   canonicalByPs.set(s.ps, stop.id);
 }

@@ -8,6 +8,12 @@ export interface BusStop {
   officialIds?: number[];
   officialToken?: string | null;
   name: string; // e.g. "Rda. Muralla 56 (Sindicatos)"
+  /**
+   * Other labels the operator prints for this same pole — a Galician and a Spanish
+   * spelling, or a description from the opposite side of the road. Kept so that
+   * merging two listings into one pole does not make a published name unfindable.
+   */
+  aliases?: string[];
   address?: string;
   lat: number;
   lng: number;
