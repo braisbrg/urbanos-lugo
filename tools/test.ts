@@ -1316,4 +1316,55 @@ ok('a route drawn from a car route says so', () => {
   );
 });
 
+ok('a trip never rides a bus to reach a stop it could have walked to', () => {
+  // Fonte dos Ranchos to HULA used to lead with "line 9, one stop, one minute" after
+  // three minutes waiting -- a ride whose only purpose was reaching Rda. Muralla, a
+  // seven-minute walk away. It happened because the ten nearest stops were all on one
+  // corridor, so the stop that offers nine more lines was never a candidate.
+  //
+  // Two things are pinned. That the one-bus trip exists at all, and that when two
+  // plans take the same time the simpler one leads. A fixed Wednesday midday, because
+  // both the hour and the day of the week change which services run.
+  const NOON = { now: new Date(2026, 7, 19, 12, 34, 0) };
+  const plans = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', NOON);
+  assert(plans.length > 0, 'no plan at all from Fonte dos Ranchos to HULA at midday');
+
+  const legs = (p: (typeof plans)[number]) => p.segments.filter((s) => s.type === 'bus');
+  const head = plans[0];
+  assert(
+    legs(head).length <= 1,
+    `the headline changes bus ${legs(head).length - 1} time(s): ${legs(head).map((s) => `${s.line?.number} for ${s.stopsCount} stop(s)`).join(' then ')}`,
+  );
+
+  // The general rule, across the network: nothing that ties on time may lead a plan
+  // that gets there with fewer buses.
+  const sample = BUS_STOPS.filter((_, i) => i % 47 === 0).slice(0, 8);
+  for (const from of sample) {
+    for (const to of sample) {
+      if (from.id === to.id) continue;
+      const options = planTrips(from.name, to.name, NOON);
+      const best = options[0];
+      if (!best) continue;
+      // Both sides must actually ride something. A walking plan that ties with a bus
+      // deliberately loses -- see WALK_MUST_BEAT_BUS_BY_MIN -- so it is not a counter-
+      // example to "do not change bus when you need not".
+      const simpler = options.find(
+        (p) =>
+          p.durationMinutes === best.durationMinutes &&
+          legs(p).length > 0 &&
+          legs(p).length < legs(best).length,
+      );
+      // Built inside the branch: an assert message is an argument, so it is evaluated
+      // whether or not the assertion fails, and `simpler` is usually undefined.
+      if (simpler) {
+        assert(
+          false,
+          `${from.name} -> ${to.name}: leads with ${legs(best).length} buses in ${best.durationMinutes} min, ` +
+            `when ${legs(simpler).length} would do it in the same time`,
+        );
+      }
+    }
+  }
+});
+
 console.log(`\n${checks} checks passed\n`);

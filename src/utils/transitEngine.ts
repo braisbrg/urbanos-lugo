@@ -1228,6 +1228,8 @@ const isWalkOnly = (p: RoutePlanResult) => !p.segments.some((seg) => seg.type ==
  * map app answers "walk for two hours and forty-eight minutes". The walk is still
  * offered — somebody may genuinely prefer it — it just stops being the answer.
  */
+const busLegCount = (p: RoutePlanResult) => p.segments.filter((s) => s.type === 'bus').length;
+
 function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
   if (a.isServiceActive !== b.isServiceActive) return a.isServiceActive;
   // A walk only leads when it wins clearly; a bus takes the near-ties.
@@ -1239,7 +1241,11 @@ function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
       walk.durationMinutes + WALK_MUST_BEAT_BUS_BY_MIN <= bus.durationMinutes;
     return isWalkOnly(a) ? walkWins : !walkWins;
   }
-  return a.durationMinutes < b.durationMinutes;
+  if (a.durationMinutes !== b.durationMinutes) return a.durationMinutes < b.durationMinutes;
+  // Same clock, so the tie goes to the simpler trip. Two ways of reaching HULA both
+  // took 36 minutes: one rode line 9 for a single stop to reach the wall, the other
+  // walked to the same place. A change you do not need is still a change you can miss.
+  return busLegCount(a) < busLegCount(b);
 }
 
 interface BoardingCandidate {
@@ -1261,19 +1267,44 @@ interface BoardingCandidate {
  */
 const MAX_BOARDING_WALK_M = 2000;
 const MAX_BOARDING_CANDIDATES = 10;
+/** The closest poles are the cheapest to reach, so they are tried whatever they serve. */
+const ALWAYS_NEAREST = 4;
 
-/** The nearest served stops worth walking to, cheapest walk first. */
+/**
+ * The stops worth walking to — chosen for the lines they reach, not for being close.
+ *
+ * Taking the ten nearest looked reasonable and was not. From Fonte dos Ranchos the ten
+ * nearest are all on the same corridor and between them serve eight lines; the twelfth,
+ * Rda. Muralla (Obras Públicas) at 535 m, serves nine more, including every line on the
+ * wall. So the planner could not see a one-bus trip to HULA and instead offered to ride
+ * line 9 for a single stop — one minute on the bus after three waiting — just to reach
+ * the stop a seven-minute walk would have reached anyway.
+ *
+ * The point of walking further is to reach a line you cannot reach nearer, so past the
+ * nearest few a stop earns its place only by serving a line none of the closer ones do.
+ * The candidate count is unchanged, so this costs nothing: the same ten slots, spent on
+ * ten different answers instead of ten versions of one.
+ */
 function boardingCandidates(res: LocationResolution, directWalkMinutes: number): BoardingCandidate[] {
-  return getNearbyStops(res.lat, res.lng)
-    .filter(
-      (s) =>
-        s.lines.length > 0 &&
-        s.walkMeters <= MAX_BOARDING_WALK_M &&
-        // Never walk further to reach the bus than to reach the destination.
-        s.walkMinutes < directWalkMinutes,
-    )
-    .slice(0, MAX_BOARDING_CANDIDATES)
-    .map((s) => ({ stop: s, walkMeters: s.walkMeters, walkMinutes: s.walkMinutes }));
+  const reachable = getNearbyStops(res.lat, res.lng).filter(
+    (s) =>
+      s.lines.length > 0 &&
+      s.walkMeters <= MAX_BOARDING_WALK_M &&
+      // Never walk further to reach the bus than to reach the destination.
+      s.walkMinutes < directWalkMinutes,
+  );
+
+  const chosen: typeof reachable = [];
+  const served = new Set<string>();
+  for (const stop of reachable) {
+    if (chosen.length >= MAX_BOARDING_CANDIDATES) break;
+    const addsALine = stop.lines.some((id) => !served.has(id));
+    if (chosen.length >= ALWAYS_NEAREST && !addsALine) continue;
+    chosen.push(stop);
+    stop.lines.forEach((id) => served.add(id));
+  }
+
+  return chosen.map((s) => ({ stop: s, walkMeters: s.walkMeters, walkMinutes: s.walkMinutes }));
 }
 
 /**
