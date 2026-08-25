@@ -293,7 +293,9 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
             <div className="space-y-3 relative">
               {/* Origin Input */}
               <div className="relative">
-                <div className="flex items-center justify-between mb-1">
+                {/* The label and the GPS button shared a row, and on a phone the label
+                    lost: it wrapped to two lines beside a button that did not. */}
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                   <label
                     htmlFor="input-origin-query"
                     className="text-label font-bold text-ink-2 flex items-center gap-1.5 uppercase tracking-wide"
@@ -307,7 +309,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     className="text-label font-semibold text-accent h-11 flex items-center gap-1 bg-surface px-2 py-0.5 rounded border border-edge transition-colors"
                   >
                     <LocateFixed className="w-3 h-3" />
-                    <span>{isLocating ? 'Obtendo GPS...' : t.planner.useMyLocation}</span>
+                    <span>{isLocating ? t.planner.locating : t.planner.useMyLocation}</span>
                   </button>
                 </div>
 

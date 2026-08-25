@@ -116,6 +116,7 @@ export const en: Dict = {
     origin: 'From (street, place or stop)',
     destination: 'To (street, place or stop)',
     useMyLocation: 'Use my GPS location',
+    locating: 'Getting your location…',
     calculate: 'Plan the trip',
     swap: 'Swap origin and destination',
     departureLabel: 'Depart',

@@ -119,6 +119,7 @@ export const gl = {
     origin: 'Orixe (rúa, lugar ou parada)',
     destination: 'Destino (rúa, lugar ou parada)',
     useMyLocation: 'Usar a miña localización GPS',
+    locating: 'Obtendo a localización…',
     calculate: 'Calcular ruta',
     swap: 'Inverter orixe e destino',
     departureLabel: 'Saída',
