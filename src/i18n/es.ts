@@ -239,7 +239,8 @@ export const es: Dict = {
     linesList: 'Seleccionar línea',
     geolocationUnavailable: 'La geolocalización no está disponible.',
     yourPosition: 'Tu ubicación actual',
-    stopsCount: 'paradas con QR',
+    stopsCount: (total: number, withQr: number) =>
+      `${total} paradas, ${withQr} con código QR`,
   },
 
   favourites: {

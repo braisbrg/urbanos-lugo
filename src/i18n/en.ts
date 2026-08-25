@@ -250,7 +250,8 @@ export const en: Dict = {
     linesList: 'Choose a line',
     geolocationUnavailable: 'Geolocation is not available.',
     yourPosition: 'Your current position',
-    stopsCount: 'stops with QR codes',
+    stopsCount: (total: number, withQr: number) =>
+      `${total} stops, ${withQr} with a QR code`,
   },
 
   favourites: {

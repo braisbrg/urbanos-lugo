@@ -14,6 +14,7 @@ import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { calculateRelevanceScore, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
+import { poleCode } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { walkHopsOf } from '../src/services/walkingPath';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
@@ -1247,6 +1248,22 @@ ok('a saved snapshot stops speaking for the present once it is old', () => {
   assert(isSnapshotStale(iso(7), now), 'seven hours should read as stale');
   assert(isSnapshotStale(iso(24 * 5), now), 'a five-day-old snapshot is not evidence about now');
   assert(isSnapshotStale('not a date', now), 'an unreadable date is not a fresh one');
+});
+
+ok('the QR count on the map is the number of poles that have one', () => {
+  // The map header read "429 paradas con QR" — every stop in the network — while the
+  // operator publishes a token for 271 of them. poleCode already refuses to invent one,
+  // so the app showed no code on the other 158 while still counting them.
+  const withToken = BUS_STOPS.filter((s) => poleCode(s)).length;
+  assert(withToken > 0, "no stop has a QR token at all");
+  assert(
+    withToken < BUS_STOPS.length,
+    "every stop has a token, so this test no longer proves anything",
+  );
+  for (const s of BUS_STOPS) {
+    const code = poleCode(s);
+    assert(code === null || code === s.officialToken, `${s.name}: code is not the token`);
+  }
 });
 
 console.log(`\n${checks} checks passed\n`);

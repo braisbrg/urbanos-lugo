@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Bus, MapPin, Navigation, Layers, Radio, LocateFixed, ChevronRight } from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
-import { BUS_STOPS, BUS_LINES, LUGO_CENTER } from '../../data/transitData';
+import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
 import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
 
 /** Matches the stop board: what somebody standing there could reasonably walk to. */
@@ -66,6 +66,14 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const [isLocating, setIsLocating] = useState(false);
 
   const stops = BUS_STOPS;
+  /**
+   * Only the poles the operator actually publishes a QR token for.
+   *
+   * This line read "429 paradas con QR" — the whole network — while 158 of those
+   * stops have no token at all and show no code anywhere else in the app. The count
+   * has to match the claim.
+   */
+  const stopsWithQr = useMemo(() => BUS_STOPS.filter((s) => poleCode(s)).length, []);
 
   // One line selected wins; otherwise "nearby" narrows to the walkable set; otherwise all.
   const aroundStopLineIds = useMemo(
@@ -292,7 +300,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                   {liveBuses.length} {t.map.liveBusesCount}
                 </span>
                 <span className="text-label text-ink-3 font-medium">
-                  {stops.length} {t.map.stopsCount}
+                  {t.map.stopsCount(stops.length, stopsWithQr)}
                 </span>
               </div>
             </div>
