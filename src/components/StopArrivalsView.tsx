@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, Bell, Check, Clock, Map as MapIcon, Share2, Star } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../types';
 import { BUS_LINES, poleCode } from '../data/transitData';
 import {
   getArrivalsForStop,
   getNearbyLines,
+  getNearbyStops,
   nextServiceAtStop,
   timingPointStopCount,
 } from '../utils/transitEngine';
@@ -22,11 +23,18 @@ interface StopArrivalsViewProps {
   selectedStop: BusStop;
   onSelectLine: (line: BusLine) => void;
   onViewOnMap: (stop: BusStop) => void;
+  /** Switch to another pole: on the map below, the one across the road is one tap. */
+  onSelectStop: (stop: BusStop) => void;
   onBack: () => void;
   isFavorite: boolean;
   onToggleFavorite: (stopId: string) => void;
   lang: Lang;
 }
+
+/** Leaflet only loads for readers who scroll down to ask where the pole is. */
+const NearbyMiniMap = lazy(() =>
+  import('./Map/NearbyMiniMap').then((m) => ({ default: m.NearbyMiniMap })),
+);
 
 /** How much warning is useful: enough to put your coat on and get to the door. */
 const WATCH_LEAD_MINUTES = 5;
@@ -61,6 +69,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   selectedStop,
   onSelectLine,
   onViewOnMap,
+  onSelectStop,
   onBack,
   isFavorite,
   onToggleFavorite,
@@ -91,6 +100,15 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   const [firedMessage, setFiredMessage] = useState<string | null>(null);
 
   const t = translations(lang);
+
+  /** Close enough that picking the wrong one is a real mistake, not a different trip. */
+  const polesNearby = useMemo(
+    () =>
+      getNearbyStops(selectedStop.lat, selectedStop.lng)
+        .filter((s) => s.id !== selectedStop.id && s.walkMeters <= 350)
+        .slice(0, 8),
+    [selectedStop],
+  );
   const timingPoints = timingPointStopCount();
 
   const toggleWatch = async (lineId: string, leadMinutes: number) => {
@@ -685,6 +703,29 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           {t.arrivals.watchForeground}
         </p>
       )}
+
+      {/* Drawn above the question it serves: "is this pole in the right place" cannot be
+          answered from a paragraph, and the other poles nearby are how you tell which one
+          is yours -- the same reason the stops home got a map. */}
+      <section className="mt-4 border-t border-line pt-3">
+        <h2 className="text-label font-semibold text-ink-2">{t.arrivals.stopMapTitle}</h2>
+        <div className="mt-2 overflow-hidden rounded-[10px] border border-edge">
+          <Suspense fallback={<div className="h-[240px] w-full bg-surface" />}>
+            <NearbyMiniMap
+              centre={{
+                lat: selectedStop.lat,
+                lng: selectedStop.lng,
+                label: selectedStop.name,
+                kind: 'stop',
+              }}
+              stops={polesNearby}
+              onSelectStop={onSelectStop}
+              lang={lang}
+              regionLabel={t.arrivals.stopMapRegion}
+            />
+          </Suspense>
+        </div>
+      </section>
 
       <details className="mt-4 border-t border-line pt-3">
         <summary className="flex min-h-11 cursor-pointer items-center text-label font-semibold text-ink-2">

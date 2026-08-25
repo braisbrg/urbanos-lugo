@@ -8,11 +8,17 @@ import { useMapChrome } from '../../hooks/useMapChrome';
 import { mapColors, TILE_ATTRIBUTION } from './palette';
 
 interface NearbyMiniMapProps {
-  /** Where the reader is, as the browser reported it. */
-  at: [number, number];
+  /**
+   * What the map is about. On the stops home that is the reader, as the browser
+   * reported it; on a stop's page it is the pole itself, which is a different claim
+   * and has to be drawn as a different thing.
+   */
+  centre: { lat: number; lng: number; label: string; kind: 'user' | 'stop' };
   stops: (BusStop & { walkMeters: number })[];
   onSelectStop: (stop: BusStop) => void;
   lang: Lang;
+  /** What this map is, for a reader who will never see it. */
+  regionLabel: string;
 }
 
 /**
@@ -23,7 +29,13 @@ interface NearbyMiniMapProps {
  * the map: no line filters, no vehicles, no layer switches — just where you are and
  * which poles are near, sized so the list below it stays on screen.
  */
-export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({ at, stops, onSelectStop, lang }) => {
+export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
+  centre,
+  stops,
+  onSelectStop,
+  lang,
+  regionLabel,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tilesRef = useRef<L.TileLayer | null>(null);
@@ -33,7 +45,8 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({ at, stops, onSelec
   const [built, setBuilt] = useState(false);
   const colors = mapColors(useIsDark());
   const t = translations(lang);
-  const youAreHere = t.stopHome.youAreHere;
+  const at: [number, number] = [centre.lat, centre.lng];
+  const { label, kind } = centre;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -83,11 +96,11 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({ at, stops, onSelec
     group.addLayer(
       L.circleMarker(at, {
         radius: 8,
-        color: colors.userStroke,
+        color: kind === 'user' ? colors.userStroke : colors.stopStroke,
         weight: 3,
-        fillColor: colors.userFill,
+        fillColor: kind === 'user' ? colors.userFill : colors.stopSelected,
         fillOpacity: 0.95,
-      }).bindTooltip(youAreHere, { direction: 'top', offset: [0, -8] }),
+      }).bindTooltip(label, { direction: 'top', offset: [0, -8] }),
     );
 
     const bounds = L.latLngBounds([at]);
@@ -107,10 +120,11 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({ at, stops, onSelec
       group.addLayer(marker);
     }
     if (stops.length) map.fitBounds(bounds, { padding: [28, 28], maxZoom: 17 });
-  }, [at, stops, colors, youAreHere]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centre.lat, centre.lng, label, kind, stops, colors]);
 
   useMapChrome(built ? containerRef.current : null, {
-    region: t.map.nearbyRegion,
+    region: regionLabel,
     zoomIn: t.map.zoomIn,
     zoomOut: t.map.zoomOut,
   });

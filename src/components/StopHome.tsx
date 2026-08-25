@@ -269,10 +269,16 @@ export const StopHome: React.FC<StopHomeProps> = ({
         <div className="mt-2.5 overflow-hidden rounded-[10px] border border-edge">
           <Suspense fallback={<div className="h-[240px] w-full bg-surface" />}>
             <NearbyMiniMap
-              at={locatedAt}
+              centre={{
+                lat: locatedAt[0],
+                lng: locatedAt[1],
+                label: t.stopHome.youAreHere,
+                kind: 'user',
+              }}
               stops={nearby}
               onSelectStop={onSelectStop}
               lang={lang}
+              regionLabel={t.map.nearbyRegion}
             />
           </Suspense>
         </div>

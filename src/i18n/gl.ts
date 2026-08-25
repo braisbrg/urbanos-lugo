@@ -360,6 +360,9 @@ export const gl = {
       'Estimación a partir da saída de cabeceira e do tempo de percorrido medido. Chega uns minutos antes.',
     positionChecked:
       'A posición desta parada é a que o operador publica na súa propia páxina, contrastada co levantamento independente de OpenStreetMap.',
+    stopMapRegion:
+      'Mapa desta parada e das que ten preto. As paradas próximas están na lista de liñas de arriba.',
+    stopMapTitle: 'Onde está este poste',
     reportPosition: 'Esta parada non está onde debería?',
     reportCta: 'Abrir un aviso no repositorio',
     reportNotCouncil:

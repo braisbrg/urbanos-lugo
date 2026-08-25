@@ -346,6 +346,9 @@ export const es: Dict = {
       'Estimación a partir de la salida de cabecera y del tiempo de recorrido medido. Llega unos minutos antes.',
     positionChecked:
       'La posición de esta parada es la que el operador publica en su propia página, contrastada con el levantamiento independiente de OpenStreetMap.',
+    stopMapRegion:
+      'Mapa de esta parada y de las que tiene cerca. Las paradas próximas están en la lista de líneas de arriba.',
+    stopMapTitle: 'Dónde está este poste',
     reportPosition: '¿Esta parada no está donde debería?',
     reportCta: 'Abrir un aviso en el repositorio',
     reportNotCouncil:

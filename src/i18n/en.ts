@@ -357,6 +357,9 @@ export const en: Dict = {
       'Worked out from the departure at the terminus plus the measured driving time. The bus reaches this stop a few minutes earlier.',
     positionChecked:
       'This stop sits where the operator publishes it on its own page, cross-checked against the independent survey in OpenStreetMap.',
+    stopMapRegion:
+      'Map of this stop and the ones near it. The nearby stops are in the lines list above.',
+    stopMapTitle: 'Where this pole is',
     reportPosition: 'Is this stop in the wrong place?',
     reportCta: 'Open a report on the repository',
     reportNotCouncil:

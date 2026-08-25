@@ -333,6 +333,7 @@ export default function App() {
                   setActiveTab('lines');
                 }}
                 onViewOnMap={handleViewOnMap}
+                onSelectStop={handleSelectStop}
                 onBack={() => setShowStopBoard(false)}
                 isFavorite={favoriteStopIds.includes(selectedStop.id)}
                 onToggleFavorite={handleToggleFavorite}
