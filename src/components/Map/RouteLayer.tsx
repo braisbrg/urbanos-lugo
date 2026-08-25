@@ -16,8 +16,16 @@ interface RouteLayerProps {
   onOpenLine: (line: BusLine) => void;
 }
 
-/** How close a click has to land, in screen pixels, to count as hitting a route. */
-const HIT_PX = 12;
+/**
+ * How close a click has to land, in screen pixels, to count as hitting a route.
+ *
+ * A drawn route is 3.5 px wide and nobody aims at 3.5 px. Measured on a real click
+ * that plainly looked like it was on the line, the nearest segment was 16 px away.
+ * The invisible grab area under each route is already 14 px wide, so this is the same
+ * promise made to the click that lands beside it rather than on it. Being generous
+ * only lengthens the list, and the nearest route is always first.
+ */
+const HIT_PX = 20;
 
 /**
  * The routes under a click, as a node so the buttons can carry real handlers.
@@ -120,9 +128,10 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           );
 
           // A 3px line is hard to grab; an invisible fat line underneath widens the hit area.
-          // Still here to widen the grab area for the tooltip; the click is handled
-          // once, on the map, so overlapping corridors can all answer.
+          // A 3 px line is hard to grab; an invisible fat one underneath widens it.
           const hitArea = L.polyline(dir.pathCoordinates, { color: line.color, weight: 14, opacity: 0 });
+          hitArea.on('click', (e) => openLinesHere(e as L.LeafletMouseEvent));
+          polyline.on('click', (e) => openLinesHere(e as L.LeafletMouseEvent));
 
           group.addLayer(hitArea);
           group.addLayer(polyline);
@@ -131,7 +140,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       });
     }
 
-    const onMapClick = (e: L.LeafletMouseEvent) => {
+    const openLinesHere = (e: L.LeafletMouseEvent) => {
       const click = map.latLngToContainerPoint(e.latlng);
       const hits = drawn
         .map(({ line, dir }) => {
@@ -152,10 +161,13 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
         .setContent(linesHerePopup(hits, lang, onSelectLineRef.current, onOpenLineRef.current))
         .openOn(map);
     };
-    map.on('click', onMapClick);
+    // Leaflet hands a click to the topmost interactive layer and stops there, so the
+    // map-level listener never hears about a click that lands on a route. Every route
+    // asks the same question instead, and the map catches whatever falls between them.
+    map.on('click', openLinesHere);
 
     return () => {
-      map.off('click', onMapClick);
+      map.off('click', openLinesHere);
       group.remove();
       groupRef.current = null;
     };

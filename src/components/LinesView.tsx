@@ -223,7 +223,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
           </button>
 
           <div className="bg-bg rounded-xl p-6 shadow-sm border border-edge">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-line">
+            <div className="flex flex-col justify-between gap-4 border-b border-line pb-5 xl:flex-row xl:items-center">
               <div className="flex items-center gap-4">
                 <span
                   className="w-14 h-14 rounded-lg flex items-center justify-center font-black text-white text-title shadow-sm shrink-0"
