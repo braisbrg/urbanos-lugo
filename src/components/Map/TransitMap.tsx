@@ -10,6 +10,7 @@ import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
 /** Matches the stop board: what somebody standing there could reasonably walk to. */
 const AROUND_STOP_RADIUS_M = 400;
 import { useIsDark } from '../../hooks/useIsDark';
+import { useMapChrome } from '../../hooks/useMapChrome';
 import { mapColors, TILE_ATTRIBUTION } from './palette';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { RouteLayer } from './RouteLayer';
@@ -104,6 +105,12 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const lines = BUS_LINES;
 
   const t = translations(lang);
+
+  useMapChrome(map ? mapContainerRef.current : null, {
+    region: t.map.networkRegion,
+    zoomIn: t.map.zoomIn,
+    zoomOut: t.map.zoomOut,
+  });
 
   // Initialize the Leaflet map once, then publish it to state so the layers can mount.
   useEffect(() => {

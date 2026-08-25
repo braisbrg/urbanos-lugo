@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Compass, History, QrCode, Route, Search, Star } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS } from '../data/transitData';
@@ -18,11 +18,6 @@ interface StopHomeProps {
 
 /** How many departures to show per saved stop before it becomes a wall of numbers. */
 const PER_STOP = 3;
-
-/** Leaflet is heavy and this screen opens cold: the map arrives only once you ask to be located. */
-const NearbyMiniMap = lazy(() =>
-  import('./Map/NearbyMiniMap').then((m) => ({ default: m.NearbyMiniMap })),
-);
 
 /**
  * The landing screen for the stops tab: the two or three stops a regular traveller
@@ -51,7 +46,6 @@ export const StopHome: React.FC<StopHomeProps> = ({
   }, []);
 
   const [nearby, setNearby] = useState<(BusStop & { walkMeters: number; walkMinutes: number })[]>([]);
-  const [locatedAt, setLocatedAt] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -64,7 +58,6 @@ export const StopHome: React.FC<StopHomeProps> = ({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setNearby(getNearbyStops(pos.coords.latitude, pos.coords.longitude).slice(0, 5));
-        setLocatedAt([pos.coords.latitude, pos.coords.longitude]);
         setLocating(false);
       },
       () => {
@@ -264,19 +257,6 @@ export const StopHome: React.FC<StopHomeProps> = ({
         <Compass className="h-[19px] w-[19px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
         {t.stopHome.near}
       </h2>
-
-      {locatedAt && (
-        <div className="mt-2.5 overflow-hidden rounded-[10px] border border-edge">
-          <Suspense fallback={<div className="h-[240px] w-full bg-surface" />}>
-            <NearbyMiniMap
-              at={locatedAt}
-              stops={nearby}
-              onSelectStop={onSelectStop}
-              lang={lang}
-            />
-          </Suspense>
-        </div>
-      )}
 
       {nearby.length === 0 ? (
         <>

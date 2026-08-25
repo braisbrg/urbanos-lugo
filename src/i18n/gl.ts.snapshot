@@ -61,7 +61,6 @@ export const gl = {
     clearRecent: 'Borrar',
     near: 'Preto de min',
     locate: 'Buscar preto de min',
-    youAreHere: 'Estás aquí',
     locating: 'Localizando…',
     none: 'sen saídas na próxima hora',
     emptyTitle: 'Aínda non gardaches ningunha parada.',
@@ -214,10 +213,6 @@ export const gl = {
 
   map: {
     mapTitle: 'Mapa da rede',
-    zoomIn: 'Achegar o mapa',
-    zoomOut: 'Afastar o mapa',
-    networkRegion: 'Mapa da rede. Os percorridos e as paradas tamén están na pestana de liñas.',
-    nearbyRegion: 'Mapa das paradas preto de ti. As mesmas paradas están na lista de embaixo.',
     loadingMap: 'Cargando o mapa…',
     subtitle: 'Percorridos, paradas e posición dos autobuses',
     allLines: 'Todas',

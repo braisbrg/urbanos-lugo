@@ -47,7 +47,6 @@ export const es: Dict = {
     clearRecent: 'Borrar',
     near: 'Cerca de mí',
     locate: 'Buscar cerca de mí',
-    youAreHere: 'Estás aquí',
     locating: 'Localizando…',
     none: 'sin salidas en la próxima hora',
     emptyTitle: 'Todavía no has guardado ninguna parada.',
@@ -200,10 +199,6 @@ export const es: Dict = {
 
   map: {
     mapTitle: 'Mapa de la red',
-    zoomIn: 'Acercar el mapa',
-    zoomOut: 'Alejar el mapa',
-    networkRegion: 'Mapa de la red. Los recorridos y las paradas también están en la pestaña de líneas.',
-    nearbyRegion: 'Mapa de las paradas cerca de ti. Las mismas paradas están en la lista de abajo.',
     loadingMap: 'Cargando el mapa…',
     subtitle: 'Recorridos, paradas y posición de los autobuses',
     allLines: 'Todas',
