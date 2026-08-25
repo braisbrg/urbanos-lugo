@@ -172,12 +172,17 @@
      9 apart in RGB, which is below what anyone can see; 22% puts it at 15. The
      departures board keeps the quieter 13%: there the tint sits beside the official
      and estimated chips, and it must not compete with them. */
-  /* In the lines list the tint has to answer "which line is this?", and a wash pale
-     enough to keep text at 4.5:1 cannot carry a hue you would recognise. So the two
-     jobs are split: the fill stays pale because text sits on it, and the border takes
-     the line colour at full strength, where nothing is written and 3:1 is the bar. */
+  /* In the lines list the tint has to answer "which line is this?", so it carries as
+     much of the colour as the text on it can survive. Measured over the 21 line
+     colours in both themes, 40% is that ceiling: the secondary line keeps 5.2:1 in
+     light and 4.9:1 in dark, and neighbouring rows sit about 28 apart in RGB instead
+     of the 13 a pale 22% wash gave. At 55% the separation is better still and the
+     text drops to 3.7:1, which is not a trade this app makes.
+
+     The border then takes the colour at full strength, where nothing is written and
+     the bar is 3:1 — that is what makes a line recognisable at a glance. */
   .tint-strong {
-    --tint-mix: 22%;
+    --tint-mix: 40%;
     --tint-edge-mix: 100%;
   }
   .tint-strong.tint-edge {
