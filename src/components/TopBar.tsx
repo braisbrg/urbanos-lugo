@@ -53,7 +53,15 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const q = query.trim();
   const stops = q
-    ? BUS_STOPS.map((s) => ({ s, score: calculateRelevanceScore(s.name, s.code, s.id, q, s.address) }))
+    ? BUS_STOPS.map((s) => ({
+        s,
+        // Aliases are names the operator still prints for this pole, so they have to
+        // match here too: searching one used to return only the lines that mention it.
+        score: Math.max(
+          calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
+          ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.address)),
+        ),
+      }))
         .filter((x) => x.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 6)
