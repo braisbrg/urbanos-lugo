@@ -6,6 +6,8 @@ import { Bus, MapPin, Navigation, Layers, Radio, LocateFixed, ChevronRight } fro
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER } from '../../data/transitData';
 import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
+import { useIsDark } from '../../hooks/useIsDark';
+import { mapColors, TILE_ATTRIBUTION } from './palette';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { RouteLayer } from './RouteLayer';
 import { StopLayer } from './StopLayer';
@@ -40,6 +42,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
+  const tilesRef = useRef<L.TileLayer | null>(null);
+  const isDark = useIsDark();
+  const colors = mapColors(isDark);
   const userMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const [activeLineId, setActiveLineId] = useState<string>(selectedLine?.id || 'all');
@@ -82,9 +87,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    tilesRef.current = L.tileLayer(colors.tiles, {
+      attribution: TILE_ATTRIBUTION,
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(instance);
@@ -105,6 +109,12 @@ export const TransitMap: React.FC<TransitMapProps> = ({
       setMap(null);
     };
   }, []);
+
+  // Swap the basemap when the theme changes. setUrl reuses the layer, so the view
+  // stays where the reader left it instead of snapping back to Lugo centre.
+  useEffect(() => {
+    tilesRef.current?.setUrl(colors.tiles);
+  }, [colors.tiles]);
 
   // Sync selectedLine prop into activeLineId & zoom into line
   useEffect(() => {
@@ -163,8 +173,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           } else {
             userMarkerRef.current = L.circleMarker([lat, lng], {
               radius: 8,
-              fillColor: '#1e40af',
-              color: '#ffffff',
+              fillColor: colors.userFill,
+              color: colors.userStroke,
               weight: 3,
               opacity: 1,
               fillOpacity: 0.95,

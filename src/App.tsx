@@ -75,6 +75,13 @@ export default function App() {
   const [selectedStop, setSelectedStop] = useState<BusStop>(
     () => [...BUS_STOPS].sort((a, b) => b.lines.length - a.lines.length)[0],
   );
+  /**
+   * The board needs a stop from the first render, so it starts on the busiest one.
+   * The map must not: it draws the selected stop as a big blue dot, and drawing that
+   * over a stop nobody chose put a mark on Rda. Muralla (Sindicatos) that blinked in
+   * and out as the layer rebuilt on every zoom.
+   */
+  const [stopWasChosen, setStopWasChosen] = useState(false);
   const [selectedLine, setSelectedLine] = useState<BusLine | null>(BUS_LINES[0]);
   // The stops tab opens on the saved-stops home; choosing a stop anywhere — search, QR,
   // map, a saved stop — switches it to that stop's board, and Back returns here.
@@ -188,6 +195,7 @@ export default function App() {
 
   const handleSelectStop = (stop: BusStop) => {
     setSelectedStop(stop);
+    setStopWasChosen(true);
     rememberStop(stop.id);
     setShowStopBoard(true);
     setActiveTab('stops');
@@ -199,6 +207,7 @@ export default function App() {
 
   const handleViewOnMap = (stop: BusStop) => {
     setSelectedStop(stop);
+    setStopWasChosen(true);
     setActiveTab('map');
   };
 
@@ -331,7 +340,7 @@ export default function App() {
         {activeTab === 'map' && (
           <Suspense fallback={<MapLoading lang={lang} />}>
             <InteractiveMap
-            selectedStop={selectedStop}
+            selectedStop={stopWasChosen ? selectedStop : undefined}
             selectedLine={selectedLine}
             onSelectStop={handleSelectStop}
             onSelectLine={(line) => {

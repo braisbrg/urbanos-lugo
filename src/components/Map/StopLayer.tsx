@@ -4,6 +4,8 @@ import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import { BusStop, BusLine } from '../../types';
 import { poleCode } from '../../data/transitData';
+import { useIsDark } from '../../hooks/useIsDark';
+import { mapColors } from './palette';
 
 /**
  * Stop and line names come from a scraped source and are written into innerHTML below.
@@ -48,6 +50,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   lang,
 }) => {
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
+  const colors = mapColors(useIsDark());
   const onSelectStopRef = useRef(onSelectStop);
   onSelectStopRef.current = onSelectStop;
   const onOpenLineRef = useRef(onOpenLine);
@@ -84,9 +87,9 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         // creates one DOM node per stop — 429 of them on the overview.
         const marker = L.circleMarker([stop.lat, stop.lng], {
           radius: 5,
-          color: '#ffffff',
+          color: colors.stopStroke,
           weight: 2,
-          fillColor: '#0f172a',
+          fillColor: colors.stopFill,
           fillOpacity: 1,
         });
 
@@ -150,12 +153,13 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       const isSelected = id === selectedId;
       marker.setStyle({
         radius: isSelected ? 9 : 5,
-        fillColor: isSelected ? '#2563eb' : '#0f172a',
+        color: colors.stopStroke,
+        fillColor: isSelected ? colors.stopSelected : colors.stopFill,
         weight: isSelected ? 3 : 2,
       });
       if (isSelected) marker.bringToFront();
     });
-  }, [selectedStop?.id, zoom]);
+  }, [selectedStop?.id, zoom, colors]);
 
   return null;
 };

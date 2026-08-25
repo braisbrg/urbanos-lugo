@@ -6,6 +6,8 @@ import { RoutePlanResult } from '../../types';
 import { LUGO_CENTER } from '../../data/transitData';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { WalkingPath, walkHopKey } from '../../services/walkingPath';
+import { useIsDark } from '../../hooks/useIsDark';
+import { mapColors } from './palette';
 
 interface RouteMapProps {
   plan: RoutePlanResult | null;
@@ -48,6 +50,8 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const geometryReady = useRouteGeometry();
+  const tilesRef = useRef<L.TileLayer | null>(null);
+  const colors = mapColors(useIsDark());
 
   useEffect(() => {
     const el = containerRef.current;
@@ -55,7 +59,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 
     const instance = L.map(el, { center: LUGO_CENTER, zoom: 13, zoomControl: false, attributionControl: false });
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    tilesRef.current = L.tileLayer(colors.tiles, {
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(instance);
@@ -83,17 +87,17 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     const walkLine = (a: [number, number], b: [number, number]): L.Polyline => {
       const detailed = walkPaths[walkHopKey(a, b)];
       return detailed
-        ? L.polyline(detailed.path, { color: '#334155', weight: 4, dashArray: '1 7', opacity: 0.9 }).bindTooltip(
+        ? L.polyline(detailed.path, { color: colors.walkRouted, weight: 4, dashArray: '1 7', opacity: 0.9 }).bindTooltip(
             `A pé · ${detailed.meters} m · ${detailed.minutes} min`,
           )
-        : L.polyline([a, b], { color: '#64748b', weight: 3, dashArray: '4 6', opacity: 0.8 });
+        : L.polyline([a, b], { color: colors.walkStraight, weight: 3, dashArray: '4 6', opacity: 0.8 });
     };
 
     // Walking legs have no geometry of their own, so they join the previous point to
     // the next known one: origin -> first stop, last stop -> destination.
     let previous: [number, number] | null = origin ? [origin.lat, origin.lng] : null;
     if (origin) {
-      group.addLayer(L.marker([origin.lat, origin.lng], { icon: pinIcon('#1e3a8a', 'A') }).bindTooltip(origin.name));
+      group.addLayer(L.marker([origin.lat, origin.lng], { icon: pinIcon(colors.originPin, 'A') }).bindTooltip(origin.name));
       bounds.extend([origin.lat, origin.lng]);
     }
 
@@ -143,7 +147,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
         group.addLayer(line);
         extend((line.getLatLngs() as L.LatLng[]).map((p) => [p.lat, p.lng]));
       }
-      group.addLayer(L.marker(end, { icon: pinIcon('#047857', 'B') }).bindTooltip(destination.name));
+      group.addLayer(L.marker(end, { icon: pinIcon(colors.destinationPin, 'B') }).bindTooltip(destination.name));
       bounds.extend(end);
     }
 
@@ -152,7 +156,11 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     return () => {
       group.remove();
     };
-  }, [map, geometryReady, plan, walkPaths, origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+  }, [map, geometryReady, plan, walkPaths, origin?.lat, origin?.lng, destination?.lat, destination?.lng, colors]);
+
+  useEffect(() => {
+    tilesRef.current?.setUrl(colors.tiles);
+  }, [colors.tiles]);
 
   return <div ref={containerRef} className={className} />;
 };
