@@ -370,7 +370,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         {t.arrivals.back}
       </button>
 
-      <header className="flex items-start justify-between gap-3 border-b border-line pb-4">
+      <header className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-title font-semibold tracking-[-0.012em]">{selectedStop.name}</h2>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -386,7 +386,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-1.5">
+        <div className="flex shrink-0 flex-wrap gap-1.5">
           <button
             onClick={() => onToggleFavorite(selectedStop.id)}
             aria-pressed={isFavorite}
