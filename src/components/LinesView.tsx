@@ -170,16 +170,18 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 const running = buses.filter((b) => b.lineId === line.id);
 
                 return (
-                  <div
+                  <button
                     key={line.id}
+                    type="button"
                     id={`line-card-${line.id}`}
+                    aria-current={isCurrent ? 'true' : undefined}
                     onClick={() => {
                       onSelectLine(line);
                       setDirectionIndex(0);
                       setShowDetail(true);
                     }}
                     style={{ '--line': line.color } as React.CSSProperties}
-                    className={`tint tint-strong p-3.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-3 ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
+                    className={`tint tint-strong w-full p-3.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-3 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span
@@ -215,8 +217,9 @@ export const LinesView: React.FC<LinesViewProps> = ({
                     </div>
                     <ChevronRight
                       className={`w-5 h-5 transition-transform shrink-0 ${isCurrent ? 'text-accent translate-x-0.5' : 'text-ink-3'}`}
+                      aria-hidden="true"
                     />
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -320,6 +323,36 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 </div>
                 <div className="font-bold text-body text-ink font-mono">
                   {currentLine.firstDeparture} - {currentLine.lastDeparture}
+                </div>
+              </div>
+            </div>
+
+            {/* Three things the dataset has always known and the page never said. They
+                belong to the direction, not the line, so they change with the selector. */}
+            <div className="grid grid-cols-3 gap-3 mt-3">
+              <div className="p-3 rounded-md bg-surface border border-line">
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+                  <Route className="w-3.5 h-3.5 text-accent" />
+                  <span className="truncate">{t.lines.routeLength}</span>
+                </div>
+                <div className="font-bold text-body text-ink font-mono">
+                  {t.lines.kilometres((direction.totalMeters / 1000).toFixed(1))}
+                </div>
+              </div>
+              <div className="p-3 rounded-md bg-surface border border-line">
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+                  <MapPin className="w-3.5 h-3.5 text-accent" />
+                  <span className="truncate">{t.lines.routeStops}</span>
+                </div>
+                <div className="font-bold text-body text-ink font-mono">{direction.stops.length}</div>
+              </div>
+              <div className="p-3 rounded-md bg-surface border border-line" title={t.lines.routeFreeFlowHint}>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+                  <Clock className="w-3.5 h-3.5 text-accent" />
+                  <span className="truncate">{t.lines.routeFreeFlow}</span>
+                </div>
+                <div className="font-bold text-body text-ink font-mono">
+                  {Math.round(direction.legSeconds.reduce((a, b) => a + b, 0) / 60)} {t.common.min}
                 </div>
               </div>
             </div>

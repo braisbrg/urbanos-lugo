@@ -264,6 +264,7 @@ export const gl = {
   },
 
   favourites: {
+    close: 'Pechar favoritos',
     title: 'Favoritos gardados',
     codeShort: 'Cód.',
     subtitle: 'Acceso directo de 1 toque a paradas e liñas',
@@ -323,6 +324,12 @@ export const gl = {
     days: 'Días de servizo',
     stopsInDirection: 'Paradas do percorrido',
     viewOnMap: 'Ver percorrido no Mapa',
+    routeLength: 'Lonxitude',
+    routeStops: 'Paradas',
+    routeFreeFlow: 'Sen tráfico',
+    routeFreeFlowHint:
+      'Tempo de circulación libre entre as paradas deste sentido, sen paradas nin tráfico. Non é a duración real da viaxe.',
+    kilometres: (km: string) => `${km} km`,
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:
       'O trazado deste sentido no mapa non está topografiado: constrúese coa ruta que faría un coche entre as paradas, así que pode desviarse por onde o bus non pasa. As paradas e as horas son as oficiais.',

@@ -128,6 +128,26 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   );
 
   /**
+   * The same hops for every option on offer, not just the open one.
+   *
+   * Correcting only the chosen plan put two totals for one trip on one screen -- a card
+   * reading 41 min above a detail reading 52 -- and, worse, made the four options
+   * comparable only by their estimates. Options share endpoints, so most hops are the
+   * same string and the session cache answers them without a request.
+   */
+  const shownOptions = React.useMemo(() => planOptions.slice(0, MAX_OPTIONS), [planOptions]);
+
+  const allWalkHops = React.useMemo(() => {
+    const seen = new Map<string, [number, number][]>();
+    for (const option of shownOptions) {
+      for (const hop of walkHopsOf(option, endpoints.origin, endpoints.destination)) {
+        seen.set(walkHopKey(hop[0], hop[1]), hop);
+      }
+    }
+    return [...seen.values()];
+  }, [shownOptions, endpoints]);
+
+  /**
    * Fetched whenever there is a connection, not only when the map path is asked for.
    *
    * Accurate walking times and a drawn walking path were the same switch, which meant
@@ -139,17 +159,19 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
    * Offline the estimate stands and the app keeps working, which is the point of it.
    */
   useEffect(() => {
-    if (!walkHops.length || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    if (!allWalkHops.length || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
     const controller = new AbortController();
     Promise.all(
-      walkHops.map(async ([a, b]) => [walkHopKey(a, b), await fetchWalkingPath(a, b, controller.signal)] as const),
+      allWalkHops.map(
+        async ([a, b]) => [walkHopKey(a, b), await fetchWalkingPath(a, b, controller.signal)] as const,
+      ),
     )
-      .then((entries) => setWalkPaths(Object.fromEntries(entries)))
+      .then((entries) => setWalkPaths((prev) => ({ ...prev, ...Object.fromEntries(entries) })))
       .catch(() => {
         // Aborted, or the router is unreachable. The estimate is already on screen.
       });
     return () => controller.abort();
-  }, [walkHops]);
+  }, [allWalkHops]);
 
   /** Real walking totals, once fetched: what the trip actually costs on foot. */
   const measuredWalk = React.useMemo(() => {
@@ -169,13 +191,22 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
    * the measurement is applied to the totals — the bus legs are untouched, because
    * those come from the timetable and were never estimates in the first place.
    */
-  const walkCorrection = React.useMemo(() => {
-    if (!planResult || !measuredWalk) return 0;
-    const estimated = planResult.segments
-      .filter((seg) => seg.type === 'walk')
-      .reduce((n, seg) => n + (seg.durationMinutes ?? 0), 0);
-    return measuredWalk.minutes - estimated;
-  }, [planResult, measuredWalk]);
+  const correctionFor = React.useCallback(
+    (plan: RoutePlanResult | null) => {
+      if (!plan) return 0;
+      const hops = walkHopsOf(plan, endpoints.origin, endpoints.destination);
+      const measured = hops.map(([a, b]) => walkPaths[walkHopKey(a, b)]);
+      // All or nothing: half-measured totals would be neither the estimate nor the truth.
+      if (!hops.length || measured.some((w) => !w)) return 0;
+      const estimated = plan.segments
+        .filter((seg) => seg.type === 'walk')
+        .reduce((n, seg) => n + (seg.durationMinutes ?? 0), 0);
+      return (measured as WalkingPath[]).reduce((n, w) => n + w.minutes, 0) - estimated;
+    },
+    [walkPaths, endpoints],
+  );
+
+  const walkCorrection = correctionFor(planResult);
 
   // "Now" is the common case, but the question before an appointment is the other one.
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now');
@@ -344,14 +375,15 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 {activeInput === 'origin' && originSuggestions.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
                     {originSuggestions.map((sug) => (
-                      <div
+                      <button
                         key={sug.id || sug.name}
+                        type="button"
                         onClick={() => {
                           setOriginQuery(sug.name);
                           setActiveInput(null);
                           handleCalculate(sug.name, destQuery);
                         }}
-                        className="p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors"
+                        className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left"
                       >
                         <div className="flex items-center gap-2 truncate">
                           <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
@@ -362,7 +394,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             #{sug.code}
                           </span>
                         )}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -421,14 +453,15 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 {activeInput === 'dest' && destSuggestions.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
                     {destSuggestions.map((sug) => (
-                      <div
+                      <button
                         key={sug.id || sug.name}
+                        type="button"
                         onClick={() => {
                           setDestQuery(sug.name);
                           setActiveInput(null);
                           handleCalculate(originQuery, sug.name);
                         }}
-                        className="p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors"
+                        className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left"
                       >
                         <div className="flex items-center gap-2 truncate">
                           <MapPin className="w-3.5 h-3.5 text-warn-ink shrink-0" />
@@ -439,7 +472,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             #{sug.code}
                           </span>
                         )}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -533,8 +566,11 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     {t.planner.optionsTitle(Math.min(planOptions.length, MAX_OPTIONS), planOptions.length)}
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {planOptions.slice(0, MAX_OPTIONS).map((option, idx) => {
+                    {shownOptions.map((option, idx) => {
                       const busLegs = option.segments.filter((seg) => seg.type === 'bus');
+                      // Same correction the detail applies, so the card you open agrees
+                      // with what opens, and the four are compared like for like.
+                      const fix = correctionFor(option);
                       return (
                         <button
                           key={idx}
@@ -568,7 +604,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               )}
                             </span>
                             <span className="font-mono font-black text-body shrink-0">
-                              {option.durationMinutes} min
+                              {option.durationMinutes + fix} min
                             </span>
                           </div>
                           <div
@@ -579,7 +615,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             {option.leaveAt !== option.departureTime
                               ? t.planner.leaveAtShort(option.leaveAt)
                               : option.departureTime}{' '}
-                            → ~{option.arrivalTime}
+                            → ~{shiftClock(option.arrivalTime, fix)}
                             {option.totalWaitMinutes > 0 &&
                               option.totalWaitMinutes <= LONG_WAIT_MIN &&
                               ` · ${t.planner.waitShort(option.totalWaitMinutes)}`}
@@ -772,6 +808,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               <span className="text-label text-ink-3">{t.planner.board}</span>
                               <button
                                 onClick={() => seg.fromStop && onSelectStop(seg.fromStop)}
+                                title={seg.fromStop?.name}
                                 className="flex min-h-11 min-w-0 flex-1 items-center truncate text-left text-body font-semibold underline underline-offset-2"
                               >
                                 {seg.fromStop?.name}
@@ -808,11 +845,18 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                                     {t.planner.ride(count, seg.durationMinutes)}
                                   </summary>
                                   <ol className="pb-2 pl-[21px]" aria-label={t.planner.viaStops}>
-                                    {between.map((id) => (
-                                      <li key={id} className="truncate py-1 text-label text-ink-3">
-                                        {BUS_STOPS.find((x) => x.id === id)?.name ?? id}
-                                      </li>
-                                    ))}
+                                    {between.map((id) => {
+                                      const viaName = BUS_STOPS.find((x) => x.id === id)?.name ?? id;
+                                      return (
+                                        <li
+                                          key={id}
+                                          title={viaName}
+                                          className="truncate py-1 text-label text-ink-3"
+                                        >
+                                          {viaName}
+                                        </li>
+                                      );
+                                    })}
                                   </ol>
                                 </details>
                               );
@@ -822,6 +866,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               <span className="text-label text-ink-3">{t.planner.alight}</span>
                               <button
                                 onClick={() => seg.toStop && onSelectStop(seg.toStop)}
+                                title={seg.toStop?.name}
                                 className="flex min-h-11 min-w-0 flex-1 items-center truncate text-left text-body font-semibold underline underline-offset-2"
                               >
                                 {seg.toStop?.name}

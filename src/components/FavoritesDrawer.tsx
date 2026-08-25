@@ -70,9 +70,10 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-md text-ink-3 hover:text-ink-2 hover:bg-surface transition-colors"
+                aria-label={t.favourites.close}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ink-3 transition-colors hover:bg-surface hover:text-ink-2"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -80,7 +81,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
             <div className="flex rounded-lg bg-surface/80 p-1">
               <button
                 onClick={() => setActiveSubTab('stops')}
-                className={`flex-1 py-1.5 rounded-md text-label font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-label font-bold transition-all ${
                   activeSubTab === 'stops'
                     ? 'bg-bg text-ink shadow-xs'
                     : 'text-ink-2 hover:text-ink'
@@ -92,7 +93,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
 
               <button
                 onClick={() => setActiveSubTab('lines')}
-                className={`flex-1 py-1.5 rounded-md text-label font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-label font-bold transition-all ${
                   activeSubTab === 'lines'
                     ? 'bg-bg text-ink shadow-xs'
                     : 'text-ink-2 hover:text-ink'

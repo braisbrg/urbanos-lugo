@@ -526,7 +526,9 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
                 >
                   {lineButton(line.id, line.number, line.color)}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-semibold">{nearestStop.name}</span>
+                    <span title={nearestStop.name} className="block truncate text-body font-semibold">
+                      {nearestStop.name}
+                    </span>
                     <span className="block text-label text-ink-2">~{Math.round(walkMeters)} m</span>
                   </span>
                 </li>
@@ -614,7 +616,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             >
               <div className="flex items-center gap-3">
                 {lineButton(a.lineId, a.lineNumber, a.lineColor)}
-                <span className="min-w-0 flex-1 truncate text-emph font-semibold">
+                <span title={a.destination} className="min-w-0 flex-1 truncate text-emph font-semibold">
                   {a.destination}
                 </span>
                 <Minutes arrival={a} />
@@ -641,7 +643,9 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
               <div className="flex items-center gap-3 p-3">
                 {lineButton(g.lineId, g.lineNumber, g.lineColor)}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-emph font-semibold">{g.destination}</span>
+                  <span title={g.destination} className="block truncate text-emph font-semibold">
+                    {g.destination}
+                  </span>
                   {g.headwayMinutes !== null && (
                     <span className="mt-0.5 block text-label text-ink-3">
                       {t.arrivals.every(g.headwayMinutes)}

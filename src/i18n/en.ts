@@ -261,6 +261,7 @@ export const en: Dict = {
   },
 
   favourites: {
+    close: 'Close favourites',
     title: 'Saved favourites',
     codeShort: 'Code',
     subtitle: 'One-tap access to stops and lines',
@@ -320,6 +321,12 @@ export const en: Dict = {
     days: 'Days of service',
     stopsInDirection: 'Stops along the route',
     viewOnMap: 'Show the route on the map',
+    routeLength: 'Length',
+    routeStops: 'Stops',
+    routeFreeFlow: 'Free-flow',
+    routeFreeFlowHint:
+      'Free-flow driving time between this direction\u2019s stops, with no dwells and no traffic. It is not how long the trip takes.',
+    kilometres: (km: string) => `${km} km`,
     approximatePathTitle: 'Approximate path',
     approximatePath:
       'The path drawn for this direction has not been surveyed: it is built from the route a car would take between the stops, so it may detour where the bus does not. The stops and times are the official ones.',
