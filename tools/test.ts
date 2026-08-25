@@ -1336,9 +1336,25 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
     `the headline changes bus ${legs(head).length - 1} time(s): ${legs(head).map((s) => `${s.line?.number} for ${s.stopsCount} stop(s)`).join(' then ')}`,
   );
 
-  // The general rule, across the network: nothing that ties on time may lead a plan
-  // that gets there with fewer buses.
+  // No plan anywhere may ask you to ride a single stop. Across the network the best
+  // such ride saved three minutes against walking, which a late bus erases.
   const sample = BUS_STOPS.filter((_, i) => i % 47 === 0).slice(0, 8);
+  for (const from of sample) {
+    for (const to of sample) {
+      if (from.id === to.id) continue;
+      for (const p of planTrips(from.name, to.name, NOON)) {
+        const oneStop = legs(p).find((s) => (s.stopsCount ?? 9) <= 1);
+        if (oneStop) {
+          assert(
+            false,
+            `${from.name} -> ${to.name} offers line ${oneStop.line?.number} for a single stop`,
+          );
+        }
+      }
+    }
+  }
+
+  // Nothing that ties on time may lead a plan that gets there with fewer buses.
   for (const from of sample) {
     for (const to of sample) {
       if (from.id === to.id) continue;

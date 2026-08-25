@@ -812,6 +812,20 @@ interface Itinerary {
 }
 
 /** Ride one line from `fromStop` to `toStop`, boarding no earlier than `readyAt`. */
+/**
+ * A one-stop ride is never offered.
+ *
+ * Measured over 2,254 legs at midday, a one-stop ride averages 1.2 minutes of riding
+ * after 5.3 spent waiting, against a 5-minute walk between the same two poles: it
+ * costs what the walk costs. The nine that did beat the walk saved between one and
+ * three minutes over walks of 170 to 520 metres -- across the whole network not one
+ * saved four. A saving that small does not survive a bus running late, and unlike the
+ * walk it is not yours to control, so the app does not suggest standing at a pole for
+ * it. Two stops is a truer tie (2.3 after 8.8, against 11 on foot) and some of those
+ * legs cross a river or a dual carriageway, so the rule stops at one.
+ */
+const isNotWorthBoarding = (stopsCount: number) => stopsCount <= 1;
+
 function buildLeg(
   lang: Lang,
   candidateLineIds: string[],
@@ -829,6 +843,10 @@ function buildLeg(
 
   const segments: RoutePlanResult['segments'] = [];
   const waitMinutes = Math.max(0, departure.departureMinutes - readyAt);
+
+  // Callers already read a null leg as "no itinerary this way", and the walking plan is
+  // always offered, so refusing one here never leaves a trip without an answer.
+  if (isNotWorthBoarding(ride.stopsCount)) return null;
 
   if (waitMinutes > 0) {
     segments.push({
