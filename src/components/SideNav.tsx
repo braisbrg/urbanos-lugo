@@ -77,7 +77,10 @@ export const SideNav: React.FC<SideNavProps> = ({
             night" is not an incident, and the banner already says it. */}
         <button
           onClick={onOpenInfo}
-          className="flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body font-medium text-ink-2"
+          aria-current={activeTab === 'info' ? 'page' : undefined}
+          className={`flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body ${
+            activeTab === 'info' ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
+          }`}
         >
           <AlertTriangle className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
           <span className="flex-1">{t.menu.alertsAndFares}</span>
