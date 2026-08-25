@@ -3,7 +3,7 @@ import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { RoutePlanResult } from '../../types';
-import { LUGO_CENTER } from '../../data/transitData';
+import { BUS_STOPS, LUGO_CENTER } from '../../data/transitData';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { WalkingPath, walkHopKey } from '../../services/walkingPath';
 import { useIsDark } from '../../hooks/useIsDark';
@@ -131,9 +131,25 @@ export const RouteMap: React.FC<RouteMapProps> = ({
         );
         group.addLayer(
           L.marker(slice[0], { icon: pinIcon(segment.line.color, segment.line.number.slice(0, 3)) }).bindTooltip(
-            `Sube: ${segment.fromStop.name}`,
+            `${translations(lang).planner.board} ${segment.fromStop.name}`,
           ),
         );
+
+        // Where the ride actually calls. Drawn under the boarding pin so the two ends
+        // still read as the ends, and small enough not to compete with the route.
+        for (let i = from + 1; i < to; i++) {
+          const stop = BUS_STOPS.find((s) => s.id === direction.stops[i]);
+          if (!stop) continue;
+          group.addLayer(
+            L.circleMarker([stop.lat, stop.lng], {
+              radius: 4,
+              color: colors.stopStroke,
+              weight: 2,
+              fillColor: segment.line.color,
+              fillOpacity: 1,
+            }).bindTooltip(stop.name, { direction: 'top', offset: [0, -6] }),
+          );
+        }
 
         extend(slice);
         previous = [segment.toStop.lat, segment.toStop.lng];

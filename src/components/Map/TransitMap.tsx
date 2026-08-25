@@ -400,6 +400,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 🏭 {t.map.filterCeao}
               </button>
             </div>
+            {filterPreset === 'stop' && selectedStop && (
+              <p className="mt-2 text-label leading-relaxed text-ink-2">
+                {t.map.aroundStopActive(selectedStop.name, AROUND_STOP_RADIUS_M)}
+              </p>
+            )}
           </div>
 
           {/* Which lines are actually within walking distance. This was computed and

@@ -213,7 +213,9 @@ export const en: Dict = {
     loadingMap: 'Loading the map…',
     subtitle: 'Routes, stops and where the buses should be',
     allLines: 'All',
-    aroundStopFilter: 'This stop',
+    aroundStopFilter: 'The stop',
+    aroundStopActive: (stop: string, metres: number) =>
+      `Showing the lines that call at ${stop} and those passing within ${metres} m on foot.`,
     linesHere: 'Lines through here',
     drawRoute: 'Draw this route',
     openLineInfo: 'Open the full line details',

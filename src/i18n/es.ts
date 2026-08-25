@@ -202,7 +202,9 @@ export const es: Dict = {
     loadingMap: 'Cargando el mapa…',
     subtitle: 'Recorridos, paradas y posición de los autobuses',
     allLines: 'Todas',
-    aroundStopFilter: 'Esta parada',
+    aroundStopFilter: 'La parada',
+    aroundStopActive: (stop: string, metres: number) =>
+      `Mostrando las líneas que paran en ${stop} y las que pasan a menos de ${metres} m a pie.`,
     linesHere: 'Líneas por aquí',
     drawRoute: 'Dibujar el recorrido',
     openLineInfo: 'Ver la ficha completa de la línea',
