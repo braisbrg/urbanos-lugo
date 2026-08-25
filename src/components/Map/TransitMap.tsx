@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,6 +6,9 @@ import { Bus, MapPin, Navigation, Layers, Radio, LocateFixed, ChevronRight } fro
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER } from '../../data/transitData';
 import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
+
+/** Matches the stop board: what somebody standing there could reasonably walk to. */
+const AROUND_STOP_RADIUS_M = 400;
 import { useIsDark } from '../../hooks/useIsDark';
 import { mapColors, TILE_ATTRIBUTION } from './palette';
 import { useRouteGeometry } from '../../data/routeGeometry';
@@ -51,7 +54,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const userMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const [activeLineId, setActiveLineId] = useState<string>(selectedLine?.id || 'all');
-  const [filterPreset, setFilterPreset] = useState<'all' | 'nearby' | 'hula' | 'campus' | 'ceao'>('all');
+  const [filterPreset, setFilterPreset] = useState<
+    'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao'
+  >('all');
   const [showStops, setShowStops] = useState(true);
   const [showBuses, setShowBuses] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
@@ -63,12 +68,29 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const stops = BUS_STOPS;
 
   // One line selected wins; otherwise "nearby" narrows to the walkable set; otherwise all.
+  const aroundStopLineIds = useMemo(
+    () =>
+      selectedStop
+        ? [
+            ...new Set([
+              ...selectedStop.lines,
+              ...getNearbyLines(selectedStop.lat, selectedStop.lng, AROUND_STOP_RADIUS_M).map(
+                (n) => n.line.id,
+              ),
+            ]),
+          ]
+        : [],
+    [selectedStop],
+  );
+
   const visibleLineIds =
     activeLineId !== 'all'
       ? [activeLineId]
-      : filterPreset === 'nearby' && nearbyLinesList.length
-        ? nearbyLinesList.map((n) => n.line.id)
-        : null;
+      : filterPreset === 'stop' && aroundStopLineIds.length
+        ? aroundStopLineIds
+        : filterPreset === 'nearby' && nearbyLinesList.length
+          ? nearbyLinesList.map((n) => n.line.id)
+          : null;
   // Street geometry arrives as its own chunk; until then the stop layer still works.
   const geometryReady = useRouteGeometry();
   const lines = BUS_LINES;
@@ -228,7 +250,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     }
   };
 
-  const handlePresetFilter = (preset: 'all' | 'nearby' | 'hula' | 'campus' | 'ceao') => {
+  const handlePresetFilter = (preset: 'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao') => {
     setFilterPreset(preset);
     if (preset === 'all') {
       setActiveLineId('all');
@@ -241,6 +263,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     } else if (preset === 'nearby') {
       setActiveLineId('all');
       if (!nearbyLinesList.length) handleLocateUser();
+    } else if (preset === 'stop') {
+      setActiveLineId('all');
+      if (selectedStop) map?.setView([selectedStop.lat, selectedStop.lng], 15, { animate: true });
     }
   };
 
@@ -327,6 +352,20 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               >
                 📍 {t.map.nearbyFilter}
               </button>
+              {selectedStop && (
+                <button
+                  onClick={() => handlePresetFilter('stop')}
+                  aria-pressed={filterPreset === 'stop'}
+                  title={selectedStop.name}
+                  className={`flex h-11 items-center gap-1 whitespace-nowrap rounded-[9px] px-3.5 text-label font-semibold ${
+                    filterPreset === 'stop'
+                      ? 'bg-accent text-on-accent shadow-xs'
+                      : 'bg-surface text-ink-2 border border-edge'
+                  }`}
+                >
+                  🚏 {t.map.aroundStopFilter}
+                </button>
+              )}
               <button
                 onClick={() => handlePresetFilter('hula')}
                 aria-pressed={filterPreset === 'hula'}

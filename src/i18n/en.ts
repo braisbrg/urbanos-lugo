@@ -213,6 +213,7 @@ export const en: Dict = {
     loadingMap: 'Loading the map…',
     subtitle: 'Routes, stops and where the buses should be',
     allLines: 'All',
+    aroundStopFilter: 'This stop',
     linesHere: 'Lines through here',
     drawRoute: 'Draw this route',
     openLineInfo: 'Open the full line details',

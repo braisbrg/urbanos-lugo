@@ -216,6 +216,7 @@ export const gl = {
     loadingMap: 'Cargando o mapa…',
     subtitle: 'Percorridos, paradas e posición dos autobuses',
     allLines: 'Todas',
+    aroundStopFilter: 'Esta parada',
     linesHere: 'Liñas por aquí',
     drawRoute: 'Debuxar o percorrido',
     openLineInfo: 'Ver a ficha completa da liña',
