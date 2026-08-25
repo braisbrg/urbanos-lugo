@@ -177,6 +177,24 @@
     --tint-edge-mix: 38%;
   }
 
+  /* CARTO Dark Matter is honest cartography but nearly monochrome: the ground, the
+     streets and the building footprints all land within a few values of black, so at
+     a glance you cannot tell a block from a park. Lifting the whole basemap keeps the
+     dark map dark while pulling those three apart. Only the tiles are touched — the
+     stops, routes and buses are drawn on the overlay canvas above and keep the exact
+     colours the palette chose for them.
+
+     Brightness alone, deliberately. contrast() pivots at mid grey, so on an image
+     that lives between 9 and 16 it drags the floor to pure black and narrows the very
+     range it was meant to widen — measured, not guessed. Brightness keeps the spread
+     and moves it up: 9-16 becomes 25-45, where the eye can actually separate a street
+     from a block.
+
+     If it still reads flat, the next lever is the provider rather than the filter. */
+  .dark .leaflet-tile-pane {
+    filter: brightness(2.8);
+  }
+
   /* The focus ring appears instantly — animating it hides it from anyone who
      navigates fast with a keyboard. */
   :focus-visible {
