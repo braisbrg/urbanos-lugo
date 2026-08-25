@@ -12,6 +12,7 @@ import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
+import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { calculateRelevanceScore, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
@@ -1381,6 +1382,54 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
       }
     }
   }
+});
+
+ok('the content security policy still refuses what it was written to refuse', () => {
+  // A CSP erodes one exception at a time, and each one looks reasonable on the day.
+  // Scripts are the ones that matter: the build has no inline script, no worker and no
+  // wasm, and the QR scanner uses the browser's own BarcodeDetector, so 'self' is
+  // enough and anything looser means something got added without noticing.
+  const script = CSP_HEADER.match(/script-src ([^;]+)/)?.[1] ?? '';
+  assert(script.trim() === "'self'", `script-src is "${script.trim()}", not just 'self'`);
+  assert(!/unsafe-eval/.test(CSP_HEADER), 'unsafe-eval crept into the policy');
+  assert(/object-src 'none'/.test(CSP_HEADER), "object-src is no longer 'none'");
+  assert(/frame-ancestors 'none'/.test(CSP_HEADER), 'the header lost frame-ancestors');
+  // The meta form silently ignores frame-ancestors and logs an error for every visitor.
+  assert(!/frame-ancestors/.test(CSP_META), 'frame-ancestors is back in the meta policy');
+
+  // Every remote origin the policy allows should be one the app actually talks to.
+  const allowed = [...CSP_HEADER.matchAll(/https:\/\/[^\s;]+/g)].map((m) => m[0]);
+  const expected = [
+    'https://fonts.googleapis.com',
+    'https://fonts.gstatic.com',
+    'https://*.basemaps.cartocdn.com',
+    'https://routing.openstreetmap.de',
+  ];
+  for (const origin of allowed) {
+    assert(expected.includes(origin), `${origin} is allowed by the policy but nothing uses it`);
+  }
+});
+
+ok('dark is the default, and only a choice is remembered', () => {
+  // The app is read standing at a pole, most often after dark. Two files have to agree
+  // on this: the hook, and public/theme-init.js which runs before the first paint.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const hook = readFileSync(join(root, 'src/hooks/useTheme.ts'), 'utf8');
+  const init = readFileSync(join(root, 'public/theme-init.js'), 'utf8');
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+
+  assert(/return 'dark';/.test(hook), 'useTheme no longer falls back to dark');
+  assert(
+    /if \(next === 'dark'\) localStorage.removeItem/.test(hook),
+    'the default is being written to storage, so clearing site data would not return to it',
+  );
+  assert(/class="dark"/.test(html), 'index.html no longer ships the dark class');
+  assert(/theme-init\.js/.test(html), 'the pre-paint theme script is not loaded');
+
+  // Both files read the same key, and nothing catches it if one of them changes.
+  const key = hook.match(/const KEY = '([^']+)'/)?.[1];
+  assert(key, 'useTheme has no storage key');
+  assert(init.includes(`'${key}'`), `theme-init.js does not read ${key}`);
 });
 
 console.log(`\n${checks} checks passed\n`);

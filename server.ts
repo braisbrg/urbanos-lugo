@@ -5,6 +5,8 @@ import { createServer as createViteServer } from 'vite';
 import { BUS_STOPS, BUS_LINES, FARE_INFO } from './src/data/transitData';
 import { getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
 import { syncOfficialAlerts } from './src/services/alertSyncService';
+import { CSP_HEADER } from './src/security/csp';
+import { rateLimit } from './src/security/rateLimit';
 
 /**
  * Express parses `?q[]=a&q[]=b` into an array and `?q[x]=1` into an object, so reading a
@@ -26,6 +28,7 @@ async function startServer() {
   app.use((req, res, next) => {
     // The app serves no user content and embeds no third-party frames, so a tight
     // baseline costs nothing. Tiles and fonts are the only remote origins.
+    res.setHeader('Content-Security-Policy', CSP_HEADER);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -33,6 +36,8 @@ async function startServer() {
     if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
     next();
   });
+
+  app.use('/api', rateLimit);
 
   // API Endpoints
   app.get('/api/health', (_req, res) => {

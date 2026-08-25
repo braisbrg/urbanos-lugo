@@ -1,0 +1,28 @@
+version: 2
+
+# Eighteen direct dependencies and a lockfile nobody looks at until something breaks.
+# This is what keeps a security advisory from sitting unread for six months.
+updates:
+  - package-ecosystem: npm # covers pnpm; the lockfile is pnpm-lock.yaml
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    # One PR for the routine bumps, so review effort goes to the ones that matter.
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      production-patches:
+        dependency-type: production
+        update-types: [patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # The workflow uses major-version tags (actions/checkout@v4 and friends). Pinning
+    # every action to a commit SHA is stricter and is the right move if this ever uses
+    # an action outside actions/* and pnpm/*; until then this is what keeps the tags
+    # honest and surfaces an advisory as a pull request.
+    open-pull-requests-limit: 3

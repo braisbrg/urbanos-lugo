@@ -11,10 +11,10 @@ on:
     - cron: '17 * * * *' # hourly, off the hour to avoid the busiest minute
   workflow_dispatch:
 
+# Least privilege at the top, then each job asks for what it needs. The build job
+# reads the tree and nothing more; only the deploy job may write to Pages.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -23,8 +23,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      # Without this the token stays in .git/config for every later step, where a
+      # compromised dependency's install script could read it. Nothing here pushes.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -34,6 +40,9 @@ jobs:
       # package.json, so a laptop and this workflow can never drift apart.
       - uses: pnpm/action-setup@v4
 
+      # A postinstall is where a compromised dependency runs first. package.json names
+      # the only package allowed one (esbuild, which needs it to place its binary);
+      # everything else is blocked without having to remember a flag here.
       - run: pnpm install --frozen-lockfile
 
       # Never publish a build whose data contradicts itself, or whose times claim to be
@@ -62,6 +71,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

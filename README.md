@@ -604,11 +604,43 @@ onde o código asumía un valor.
 
 ### Seguridade
 
-Sen dependencias con vulnerabilidades coñecidas. O servidor normaliza todo o que chega
-pola query string (`?q[]=a` facía caer o endpoint cun volcado de pila), devolve JSON en
-caso de erro en lugar da páxina de erro de Express, limita o corpo das peticións a 32 KB
-e envía `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e
-`Permissions-Policy`. Os nomes que se interpolan en HTML nos globos do mapa escápanse.
+`pnpm audit`: **0 vulnerabilidades** sobre 8 dependencias de produción e 10 de
+desenvolvemento. Dependabot revisa semanalmente as dependencias e mais as actions.
+
+**Content Security Policy.** `script-src 'self'`, sen `unsafe-inline` nin `unsafe-eval`:
+o build non ten ningún script en liña, nin worker, nin wasm, e o escáner QR usa o
+`BarcodeDetector` do navegador en vez dunha librería. As únicas orixes remotas
+permitidas son as catro que a app usa de verdade — CARTO polas teselas, Google Fonts
+polas dúas tipografías e o enrutador peonil de OSM. buslugo.com non está: só o servidor
+o consulta, nunca o navegador.
+
+A política escríbese unha vez en [`src/security/csp.ts`](src/security/csp.ts) e vai a
+dous sitios, porque o despregue real é GitHub Pages e un aloxamento estático non envía
+cabeceiras: **dentro da páxina**, inxectada ao construír, e **como cabeceira** para quen
+o hospede el mesmo. Inxéctase ao construír e non no HTML fonte porque en `vite dev`
+bloqueaba o websocket de recarga en quente, e ensanchar a política de produción para
+admitir un socket de desenvolvemento sería facelo ao revés. `npm test` comproba que
+`script-src` segue sendo só `'self'` e que ningunha orixe permitida sobra.
+
+**Límite de peticións.** 120 peticións por minuto e enderezo, 30 se son de planificación,
+que é a única chamada que custa decenas de milisegundos. Devolve `429` con `Retry-After`.
+Está en memoria e por proceso a propósito: dúas instancias detrás dun repartidor de
+carga permitirían o dobre, e [o comentario que o di](src/security/rateLimit.ts) é o
+sitio onde buscalo se algún día se replica.
+
+**Integración continua.** Permisos mínimos por traballo (o de construír só le a árbore;
+só o de despregar escribe en Pages), `persist-credentials: false` no checkout para que o
+token non quede en `.git/config` durante o resto do traballo, e unha lista branca en
+`package.json` que só lle permite executar script de instalación a `esbuild`, que o
+precisa para colocar o seu binario. Calquera dependencia nova que traia un `postinstall`
+—que é onde correría primeiro se estivese comprometida— queda bloqueada ata que alguén
+a engada aí a man.
+
+O servidor normaliza todo o que chega pola query string (`?q[]=a` facía caer o endpoint
+cun volcado de pila), devolve JSON en caso de erro en lugar da páxina de erro de Express,
+limita o corpo das peticións a 32 KB e envía `X-Content-Type-Options`, `X-Frame-Options`,
+`Referrer-Policy` e `Permissions-Policy`. Os nomes que se interpolan en HTML nos globos
+do mapa escápanse.
 
 ### Accesibilidade
 
@@ -640,8 +672,12 @@ excepcións que quedan son deliberadas: os pines do mapa (28–32 px, un pin de 
 a rúa), a atribución obrigatoria de Leaflet e as ligazóns dentro dunha frase, que a
 WCAG 2.5.5 exime expresamente.
 
-**Modo escuro e escala do sistema.** Hai tema claro, escuro e automático, lembrado en
-`localStorage`. A escala tipográfica está en `rem` (12·15·19·23·29·46 px sobre unha
+**Modo escuro e escala do sistema.** **O tema por defecto é o escuro**, e claro ou automático lémbranse só se se escollen:
+isto lese de pé nun poste, moitas veces xa de noite, e un móbil en claro todo o día
+non é unha opinión sobre como debe verse un cadro horario ás once. `public/theme-init.js`
+resólveo antes do primeiro pintado —un ficheiro á parte, non un script en liña, porque
+a política de seguridade é `script-src 'self'`— e `<html>` xa vén con `class="dark"`,
+así que non hai destello branco nin sequera sen JavaScript. A escala tipográfica está en `rem` (12·15·19·23·29·46 px sobre unha
 base de 16), así que o axuste de tamaño de letra do sistema operativo funciona en toda
 a aplicación en lugar de quedar conxelado en píxeles. `prefers-reduced-motion` desactiva
 transicións e animacións.

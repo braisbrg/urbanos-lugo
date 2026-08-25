@@ -5,12 +5,16 @@ export type ThemeChoice = 'auto' | 'light' | 'dark';
 const KEY = 'urbanos-lugo-theme';
 
 /**
- * Light, dark, or whatever the device says.
+ * Dark, light, or whatever the device says.
  *
- * The default is 'auto': this app gets read at a bus stop at eight in the morning
- * and at eleven at night, and the phone already knows which it is. An explicit
- * choice is remembered because some people run their phone light and still want a
- * dark screen in the street.
+ * The default is 'dark'. This is read standing at a pole, most often when it is
+ * already dark out, and a phone set to light all day is not a statement about how
+ * somebody wants a bus timetable to look at eleven at night. 'auto' and 'light' are
+ * both there, and both are remembered once chosen.
+ *
+ * Only a choice is stored, so clearing site data returns to dark rather than to
+ * whatever was last picked. `public/theme-init.js` reads the same key before the
+ * first paint; if this key changes, that changes with it.
  */
 export function useTheme(): [ThemeChoice, (choice: ThemeChoice) => void] {
   const [choice, setChoice] = useState<ThemeChoice>(() => {
@@ -19,9 +23,9 @@ export function useTheme(): [ThemeChoice, (choice: ThemeChoice) => void] {
     // preference: fall back to following the device.
     try {
       const stored = localStorage.getItem(KEY);
-      return stored === 'light' || stored === 'dark' ? stored : 'auto';
+      return stored === 'light' || stored === 'auto' ? stored : 'dark';
     } catch {
-      return 'auto';
+      return 'dark';
     }
   });
 
@@ -42,7 +46,7 @@ export function useTheme(): [ThemeChoice, (choice: ThemeChoice) => void] {
     (next: ThemeChoice) => {
       setChoice(next);
       try {
-        if (next === 'auto') localStorage.removeItem(KEY);
+        if (next === 'dark') localStorage.removeItem(KEY);
         else localStorage.setItem(KEY, next);
       } catch {
         // The choice still applies for this session; it just will not be remembered.

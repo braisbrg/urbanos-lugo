@@ -3,15 +3,37 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { CSP_META } from './src/security/csp';
 
 // GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
 // Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
 const base = process.env.BASE_PATH || '/';
 
+/**
+ * The policy goes into the built page, not the source one.
+ *
+ * In the source page it also applied to `vite dev`, where it blocked the HMR
+ * websocket -- `connect-src 'self'` does not cover ws://localhost:24678. Widening
+ * the production policy to admit a development socket would be the wrong way
+ * round, so the tag is added when building and never in dev.
+ */
+const injectCsp = {
+  name: 'inject-csp',
+  apply: 'build' as const,
+  transformIndexHtml(html: string) {
+    return html.replace(
+      '<meta name="theme-color"',
+      `<meta http-equiv="Content-Security-Policy" content="${CSP_META}" />
+    <meta name="theme-color"`,
+    );
+  },
+};
+
 export default defineConfig(() => {
   return {
     base,
     plugins: [
+      injectCsp,
       react(),
       tailwindcss(),
       // Everything the app computes — timetables, arrivals, route planning — runs from
