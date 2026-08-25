@@ -54,7 +54,7 @@ agardas por unha en concreto.
 da próxima hora") en lugar de cortarse en silencio. "Por liña" non ten horizonte, porque
 aí a pregunta xa é de planificación.
 
-Nas paradas que non son punto horario publicado —402 das 429— todas as horas son
+Nas paradas que non son punto horario publicado —392 das 417— todas as horas son
 estimadas, e o taboleiro explica por que en lugar de deixalo a interpretación.
 
 ### Avisos de bus e de baixada
@@ -79,8 +79,19 @@ se llo negas.
 
 ### Mapa da rede
 Leaflet sobre teselas de CartoDB. Os trazados **seguen a rede viaria real**: cada
-itinerario está axustado ás rúas cun motor de enrutamento (OSRM) no momento de xerar os
-datos, non interpolado entre paradas.
+itinerario está axustado ás rúas no momento de xerar os datos, non interpolado entre
+paradas. Corenta e cinco dos corenta e oito sentidos son o itinerario levantado en
+OpenStreetMap; **tres constrúense coa ruta que faría un coche** (a 3.2 nos dous sentidos
+e a 5.2 cara a Avda. Américas), que se desvía por onde o bus non pasa. Eses tres dino na
+ficha da liña, deixando claro que as paradas e as horas seguen a ser as oficiais: o que
+é inferido é a forma entre elas.
+
+Desde o globo dunha parada podes deixar no mapa **só as liñas que pasan por aí** — as
+que paran nese poste e as que pasan a menos de 400 m a pé. A pregunta é da parada, así
+que se fai desde a parada; como filtro solto nunha fila de zonas non se entendía e
+respondía pola parada equivocada. Redúcelle a lista a algo máis pequeno nas 417
+paradas: catro liñas das 24 en As Termas, unha en Nadela, dezaoito en Rda. Muralla 56,
+que é o máis concorrido que hai en Lugo.
 
 O filtro **"preto de min"** amosa todas as liñas a menos de 750 m, cun panel lateral que
 lista cada unha coa distancia á súa parada máis próxima. Antes calculaba as oito liñas
@@ -88,8 +99,8 @@ próximas e logo quedaba só coa primeira, así que dende Avda. Américas 88 ví
 ningunha máis.
 
 As paradas debúxanse en canvas (`preferCanvas`) e non todas á vez: afastado só se ven os
-46 intercambiadores, e a partir do zoom 15 —ou ao seleccionar unha liña— aparecen as 429.
-Amosalas todas sobre a vista de cidade tapaba as propias liñas e creaba 429 nodos DOM.
+46 intercambiadores, e a partir do zoom 15 —ou ao seleccionar unha liña— aparecen as 417.
+Amosalas todas sobre a vista de cidade tapaba as propias liñas e creaba 417 nodos DOM.
 
 Os vehículos que se ven proveñen do cadro horario: unha expedición que xa saíu e aínda
 non rematou sitúase sobre o trazado onde debería ir. O globo de cada un dío
@@ -165,7 +176,7 @@ Non hai datos escritos a man. `stops.json` e `lines.json` xéranse a partir de:
 
 4. **OpenStreetMap** — cartografía base do mapa e, vía Overpass, os equipamentos
    levantados en cada poste (marquesiña, banco). O operador non publica eses datos e o
-   conxunto anterior inventábaos; agora 410 das 429 paradas están emparelladas cun nodo
+   conxunto anterior inventábaos; agora 413 das 417 paradas están emparelladas cun nodo
    de OSM a menos de 45 m e o que ninguén levantou queda como `null`, non como "non".
 
 O operador **non publica ningún trazado**, só listas de paradas e cadros horarios. Non
@@ -195,7 +206,7 @@ Efecto medido: os tramos cun desvío viario superior a 4x pasaron de 14 a **2 de
 
 **O que isto non resolve.** Unha relación de OSM di por onde vai o bus; as etiquetas de
 acceso das rúas son outro levantamento distinto, e nese remate do casco histórico
-discrepan. `npm run data:osm` mide e lista os metros de cada ruta que caen sobre vías
+discrepan. `pnpm data:osm` mide e lista os metros de cada ruta que caen sobre vías
 pechadas a vehículos sen excepción para o bus:
 
 | Liñas | Metros | Onde |
@@ -248,8 +259,10 @@ para que calquera enlace QR antigo siga resolvendo.
 | :--- | ---: |
 | Liñas | 24 |
 | Sentidos | 48 |
-| Paradas (postes físicos) | 429 |
-| Sentidos con xeometría viaria | 48 / 48 |
+| Paradas (postes físicos) | 417 |
+| Paradas cun código QR no poste | 271 |
+| Sentidos co itinerario topografiado en OSM | 45 / 48 |
+| Sentidos debuxados coa ruta dun coche | 3 / 48 |
 | Liñas con horario oficial | 24 / 24 |
 | Expedicións diarias (laborable) | 777 |
 | Lonxitude da rede | 436 km |
@@ -257,7 +270,7 @@ para que calquera enlace QR antigo siga resolvendo.
 As 24 liñas inclúen a **5DS** e os **catro ramais rurais da liña 11** (Pías, Bóveda,
 Calde e Santa Comba), que se publican por separado porque son servizos distintos.
 
-`npm run audit` imprime estas cifras actualizadas xunto cos tramos sospeitosos.
+`pnpm audit` imprime estas cifras actualizadas xunto cos tramos sospeitosos.
 
 ---
 
@@ -366,7 +379,7 @@ importan en ningures da aplicación: só os len as ferramentas. Non son restos.
 Son **instantáneas do que dixeron fontes de terceiros**, e están commiteadas por tres
 razóns. Regeneralas require que buslugo.com, Overpass e OSRM estean en pé e devolvan o
 mesmo, así que sen elas o dataset non é reproducible. Volver pedilas cada vez sería
-machacar servizos alleos e gratuítos. E `npm run reconcile` compara o que a app amosa
+machacar servizos alleos e gratuítos. E `pnpm reconcile` compara o que a app amosa
 co que dixo o operador, o que precisa gardar o que dixo.
 
 Un `git diff` sobre elas amosa exactamente o que cambiou augas arriba, que é a razón
@@ -408,12 +421,12 @@ impresa no cadro. Dúas cousas facían que se sobre-anunciase:
 - Cando un cadro imprime máis pasos nun punto horario ca noutro, o tempo de tramo é
   unha mediana que para algunhas expedicións cae uns minutos fóra do impreso.
 
-Cobertura real hoxe (`npm run validate:times`): **363 paradas** teñen a súa hora suxeita
+Cobertura real hoxe (`pnpm validate:times`): **386 paradas** teñen a súa hora suxeita
 por horas oficiais a ambos os lados, e **822** quedan máis alá do último punto horario e
 dependen do modelo de estrada. Nesas, o erro fronte ao impreso ten mediana de 0,5 min e
 chega a 8,5 min no peor tramo medible. Por iso o `~` non é decorativo.
 
-`npm test` inclúe comprobacións que fallan se algunha hora volve presentarse sen dicir de
+`pnpm test` inclúe comprobacións que fallan se algunha hora volve presentarse sen dicir de
 onde vén, e se algunha parada reclama unha hora oficial que o cadro non imprime.
 
 Cando non hai saídas no horizonte —ás 03:00, ou un domingo cedo— o taboleiro xa non queda
@@ -469,13 +482,23 @@ servizo que cruzan a medianoite.
 1. **Resolución** — texto libre, código de parada, punto de interese ou coordenadas GPS.
 2. **Candidatas de embarque** — ata 10 paradas servidas a menos de 2 km de cada extremo,
    e nunca unha que obrigue a camiñar máis para coller o bus que para chegar andando.
+   **Escóllense pola cobertura de liñas, non pola distancia**: pasadas as catro máis
+   próximas, unha parada só entra se serve unha liña que ningunha máis preto ofrece. Coas
+   dez máis próximas a secas, desde Fonte dos Ranchos as dez estaban no mesmo corredor e
+   sumaban oito liñas, mentres que a décimo segunda —Rda. Muralla (Obras Públicas), a
+   535 m— serve nove máis. O plan dun só bus nin sequera existía.
 3. **Opcións** — a liña directa, os transbordos por calquera parada alcanzable desde a
-   orixe e desde a que se poida chegar ao destino (as 40 mellor conectadas), e sempre a
-   opción de ir andando.
-4. **Selección** — gaña a que chega antes, priorizando as liñas realmente en servizo.
+   orixe e desde a que se poida chegar ao destino (as 40 mellor conectadas), **os
+   transbordos entre dous postes distintos a menos de 300 m** co paseo escrito no
+   itinerario, e sempre a opción de ir andando todo o camiño.
+4. **Selección** — gaña a que chega antes, priorizando as liñas realmente en servizo. En
+   caso de empate gaña a que leva menos tramos de bus: un cambio que non precisas segue
+   sendo un cambio que podes perder.
 5. **Tempos** — cada tramo en bus lese da expedición que se colle, co que respecta todos
    os puntos horarios oficiais do percorrido; os tramos a pé aplican un factor de rodeo
-   de 1,35 sobre a distancia en liña recta a 75 m/min, ou o camiño real medido se se pide.
+   de 1,35 sobre a distancia en liña recta a 75 m/min, e substitúense polo camiño real
+   en canto o enrutador peonil de OSM responde. **Mídense todas as opcións que se amosan**,
+   non só a aberta, ou compararíaslas por estimacións e logo veríaas cambiar ao abrilas.
 
 Regras que evitan suxestións absurdas ou perigosas:
 
@@ -492,6 +515,14 @@ Regras que evitan suxestións absurdas ou perigosas:
 - **Cando saír da casa.** Cada opción amosa `sae ás HH:MM`, que é a hora de saír da
   orixe: a espera antes do primeiro bus pásase na casa, non na parada. Contala como
   tempo de viaxe facía parecer peor unha ruta que só saía máis tarde.
+- **Nunca unha soa parada en bus.** Medido sobre 2.254 tramos ao mediodía, un tramo
+  dunha parada son 1,2 min de viaxe tras 5,3 de espera, fronte a un paseo de 5 min entre
+  eses dous postes: custa o que custa andar. Os nove que si lle gañaban ao paseo aforraban
+  entre 1 e 3 minutos, e en toda a rede ningún chegaba a catro. Un aforro así non
+  sobrevive a un bus con retraso, e a diferenza do paseo non o controlas ti.
+- **O paseo enteiro só lidera se gaña claro.** Ten que sacarlle cinco minutos ao mellor
+  bus, e nunca encabeza por riba de 75 minutos: un paseo de tres horas non é unha
+  suxestión, é unha broma. Por debaixo diso ofrécese igual, ordenado como calquera outra.
 
 Se ningunha combinación funciona, dise. Antes inventábase unha "liña de enlace"
 inexistente.
@@ -585,12 +616,22 @@ e envía `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e
 de chegadas é unha rexión `aria-live` (actualízase cada 15 s) e as filas clicables son
 alcanzables co teclado.
 
+Esa última frase estivo aquí antes de ser certa. A sonda que daba por boa a aplicación
+buscaba `button`, `a[href]`, `[role=button]` e `summary` sen nome accesible, e un `div`
+cun manexador de clic non é ningún deles: **cada fila da lista de liñas era un `div`**,
+así que coa pestana Liñas enteira non se podía abrir ningunha liña sen rato, e as dúas
+listas de suxestións do planificador tiñan o mesmo problema. Tampouco vía o contedor de
+Leaflet, que é un `div` ao que a librería lle pon `tabindex="0"`: os dous mapas eran unha
+parada de tabulación sen nome e os seus controis dicían "Zoom in" en inglés baixo unha
+interface en galego. Está todo arranxado, e a sonda marca agora `cursor: pointer` sobre
+calquera cousa que non sexa interactiva.
+
 **Contraste.** A insignia dunha liña é texto branco sobre a cor da liña a 10 px, e o número
 que leva é o único que hai que ler dun golpe de vista. Cinco das vinte e catro non chegaban
 ao mínimo de WCAG AA para texto pequeno —a liña 2 quedaba en 2,94:1 fronte ao 4,5 esixido—,
 o que nunha marquesiña a pleno sol non se le. Escureceuse cada unha o mínimo que pasa a
 proba, entre un 10% e un 22%, mantendo o ton. Medido no navegador, os fallos de contraste
-pasaron de **84 de 400 elementos a 0**, e `npm test` xa non deixa entrar unha cor ilexible.
+pasaron de **84 de 400 elementos a 0**, e `pnpm test` xa non deixa entrar unha cor ilexible.
 
 **Obxectivos táctiles e tipografía.** Despois do redeseño, os catro tabs, o detalle de
 liña, o menú e a vista de avisos non teñen ningún elemento interactivo por debaixo de
@@ -637,7 +678,7 @@ o idioma como parámetro en lugar de lelo dunha variable global. E as datas fór
 `Intl` no idioma de quen le: os avisos gárdanse como instante ISO porque unha soa
 descarga serve a todo o mundo.
 
-`npm test` comproba que os tres dicionarios teñen exactamente a mesma forma, que ningún
+`pnpm test` comproba que os tres dicionarios teñen exactamente a mesma forma, que ningún
 valor está baleiro, e que planificar o mesmo traxecto en tres idiomas dá tres textos
 distintos — se non, o motor está ignorando o idioma.
 
@@ -651,6 +692,17 @@ Non é un deseño estirado: son dous caparazóns sobre o mesmo código.
 estando no poste escanear a pegatina é o camiño máis curto que hai entre "estou aquí" e
 "estes son os meus tempos"). Catro destinos abaixo, ao alcance do polgar, de 60 px de
 alto. Lista ou detalle, nunca os dous apertados.
+
+Non hai que rolar para facer o que se veu facer. O **mapa** vai primeiro e ocupa 62vh,
+coa fila de filtros asomando por debaixo: antes a barra lateral apilábase enriba e a
+pestana do mapa abría con 751 px de paneis e ningún mapa. Na **ruta**, o resumo —minutos,
+saída, chegada— vai antes das alternativas e do mapa; ao responder, o formulario prégase
+a unha liña co traxecto e os destinos rápidos retíranse, porque son para escoller, non
+para ler unha resposta. A pantalla abre cun traxecto de exemplo xa calculado, que en
+escritorio ensina o que fai a ferramenta e no móbil agarda a que preguntes.
+
+Medido a 390 px: a resposta pasou do píxel 1.493 ao 103, e a pantalla de ruta de 4,61
+a 3,18 pantallas de alto. O que queda é o itinerario paso a paso, que é unha lista.
 
 **Escritorio (`lg` en diante).** Rail esquerdo fixo con os catro destinos etiquetados e,
 ao pé, avisos, tarifas, tema e idioma. Paradas e Liñas son dous paneis con **scroll
@@ -677,29 +729,41 @@ O único que cambia sen servidor son os **avisos oficiais**: o navegador non pod
 buslugo.com por CORS, así que se usa a copia horaria que deixa a tarefa programada e
 amósase **cando se tomou**. Todo o demais é idéntico, incluído o funcionamento offline.
 
-Se despregas o servidor Express (`npm start`), os avisos pásanse a consultar en vivo.
+Se despregas o servidor Express (`pnpm start`), os avisos pásanse a consultar en vivo.
 
 ---
 
 ## Instalación
 
+Precisa **Node 20 ou superior** e **pnpm**, que é o xestor que declara `package.json` e
+o que usa a integración continua con `--frozen-lockfile`. `pnpm-lock.yaml` é o único
+ficheiro de bloqueo do repositorio; instalar con outro xestor daría unha árbore distinta
+da que se proba e se desprega.
+
 ```bash
-npm install
+corepack enable && corepack prepare --activate
 ```
 
 ```bash
-npm run dev
+pnpm install
+```
+
+```bash
+pnpm dev
 ```
 
 Dispoñible en `http://localhost:3001` (ou o primeiro porto libre).
 
 ```bash
-npm run build
+pnpm build
 ```
 
 ```bash
-npm start
+pnpm start
 ```
+
+Non fai falla ningunha chave nin conta: os datos van no repositorio e a app funciona sen
+conexión. `.env.example` só ten o porto.
 
 ---
 
@@ -708,7 +772,7 @@ npm start
 Só é necesario cando o operador cambia a rede.
 
 ```bash
-npm run data:fetch
+pnpm data:fetch
 ```
 
 Descarga as páxinas de liña e as fichas de parada (cacheadas en `.cache/`) e axusta cada
@@ -716,21 +780,21 @@ itinerario á rede viaria. A primeira execución tarda uns 15 minutos; as seguin
 reutilizan a caché e a xeometría xa calculada.
 
 ```bash
-npm run data:alerts
+pnpm data:alerts
 ```
 
 Toma unha copia dos avisos oficiais para o aloxamento estático. Execútao a tarefa
 programada; a man só fai falta para probar.
 
 ```bash
-npm run data:amenities
+pnpm data:amenities
 ```
 
 Trae de OpenStreetMap os equipamentos de cada parada. Opcional: se o ficheiro non existe,
 `data:build` simplemente deixa eses campos a `null`.
 
 ```bash
-npm run data:build
+pnpm data:build
 ```
 
 Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e escribe
@@ -741,15 +805,21 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 ## Verificación
 
 ```bash
-npm test
+pnpm test
 ```
 
-37 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+71 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
 plausibles, que ningunha hora se amose sen dicir de onde vén, e que os filtros contra
 posicións falsas rexeiten o que teñen que rexeitar.
+
+Cada unha naceu dun fallo real, e o comentario de arriba di cal. Que dous postes non
+compartan punto (nove liñas publicábanse como dezaoito paradas); que a conta de códigos
+QR da cabeceira sexa a de postes que teñen un de verdade; que un nome que o operador
+aínda imprime siga sendo buscable despois de fusionar; que un trazado feito coa ruta
+dun coche o diga; e que ningún traxecto propoña coller o bus para unha soa parada.
 
 Cinco delas percorren o planificador enteiro a catro horas distintas (punta da mañá,
 tarde, despois do último bus e domingo) e esixen que ningún itinerario retroceda no
@@ -758,8 +828,8 @@ ofrecidas se distingan entre si. Outras dúas comproban que o cadro horario se r
 tal cal se publica.
 
 ```bash
-npm run reconcile            # contra as páxinas en disco
-npm run reconcile -- --fresh # volve baixar buslugo.com (~30 s)
+pnpm reconcile            # contra as páxinas en disco
+pnpm reconcile -- --fresh # volve baixar buslugo.com (~30 s)
 ```
 
 Contrasta parada a parada o que publicamos contra **as mesmas páxinas que usa a xente**.
@@ -778,9 +848,9 @@ Estado a 20/08/2026, contra buslugo.com no mesmo día:
 | Itinerarios (que paradas) | **0 diferenzas** |
 | Itinerarios (en que orde) | **47/48** idénticos; 1 sentido con 3 paradas movidas |
 | Cadros horarios | **24/24** coinciden |
-| Liñas que anuncia cada parada | **429/429** |
-| Nomes | **429/429** usan un nome que o operador imprime |
-| Fronte ás paradas levantadas en OSM | 425/429 a menos de 120 m (mediana **7 m**) |
+| Liñas que anuncia cada parada | **417/417** |
+| Nomes | **417/417** usan un nome que o operador imprime |
+| Fronte ás paradas levantadas en OSM | 413/417 a menos de 120 m (mediana **7 m**) |
 
 As 4 restantes son postes rurais que ninguén cartografou en OSM; a peor, `A Brea`, está a
 **0 m** da coordenada que publica o propio operador. E hai 8 postes que o operador nomea
@@ -797,11 +867,11 @@ certo.
 volta de `HULA (Ent. Principal)` a `(Ent. Personal)` porque o trazado levantado pasa antes
 por esta: a relación de OSM debuxa o bucle do hospital unha soa vez, á entrada, e o bus
 volve pasar por Personal ao saír. Pero a ida remata en Principal, así que a volta empeza
-alí — calquera outra cousa fai que o bus retroceda 651 m antes de arrancar. `npm test`
+alí — calquera outra cousa fai que o bus retroceda 651 m antes de arrancar. `pnpm test`
 comproba agora que cada sentido remata onde empeza o outro, en toda a rede.
 
 ```bash
-npm run reconcile:selftest
+pnpm reconcile:selftest
 ```
 
 Estraga os datos a mala fe —move unha parada 200 m, quita unha doutro itinerario, ponlle
@@ -816,7 +886,7 @@ prefixo de sección ambiguo. **Un verificador que sempre di que todo está ben �
 indistinguible dun que non comproba nada.**
 
 ```bash
-npm run data:osm
+pnpm data:osm
 ```
 
 Volve pedir os itinerarios a OSM e, de paso, lista os metros de cada ruta que caen sobre
@@ -824,7 +894,7 @@ vías pechadas a vehículos. Se algún día unha edición de OSM manda unha liñ
 senda peonil, aparece aquí en vez de acabar calada no mapa.
 
 ```bash
-npm run validate:times
+pnpm validate:times
 ```
 
 Canto do que se amosa é hora do operador e canto modelo: paradas suxeitas por horas
@@ -832,7 +902,7 @@ oficiais a ambos os lados fronte ás que quedan fóra, e canto se desvía o temp
 dos tramos que si se poden contrastar. É a medida do risco que leva un `~`.
 
 ```bash
-npm run calibrate:walking
+pnpm calibrate:walking
 ```
 
 Mide 120 camiños peonís reais contra a liña recta para fixar o factor de rodeo. En Lugo
@@ -842,7 +912,7 @@ peor caso queda a uns 14 min escóllase o número que se escolla. Por iso se usa
 enriba da mediana, e por iso o camiño real hai que **pedilo**, non calculalo.
 
 ```bash
-npm run audit
+pnpm audit
 ```
 
 Informe lexible: cobertura, ficha por liña, **tramos sospeitosos** (desvío viario fronte
@@ -850,7 +920,7 @@ Informe lexible: cobertura, ficha por liña, **tramos sospeitosos** (desvío via
 sentido), estado en vivo e taboleiro nas paradas máis conectadas.
 
 ```bash
-npm run lint
+pnpm lint
 ```
 
 ---
@@ -864,13 +934,17 @@ npm run lint
   operador para esa parada; `ESTIMADO` (co prefixo `~`) calcúlase desde a saída de
   cabeceira máis o tempo de percorrido medido por estrada. Como o segundo pode desviarse
   uns minutos, convén chegar á parada antes da hora amosada.
-- **14 tramos de 1137 (1,2%)** teñen un desvío viario superior a 4x fronte á liña recta,
+- **2 tramos de 1135 (0,2%)** teñen un desvío viario superior a 4x fronte á liña recta,
   é dicir: o camiño por rúa entre dúas paradas consecutivas é máis de catro veces a
   distancia en liña recta. Adoita significar que o itinerario lista os dous postes
   opostos da mesma rúa dentro do mesmo sentido (o bus tería que dar a volta), ou que
-  hai sentidos únicos no casco histórico. `npm run audit` lístaos un a un.
+  hai sentidos únicos no casco histórico. `pnpm audit` lístaos un a un.
 - **12 paradas sen coordenadas** na fonte quedan fóra do conxunto de datos.
 - **Festivos locais** non se distinguen dos domingos.
+- **Tres sentidos debúxanse coa ruta dun coche**, non co itinerario levantado en OSM:
+  a 3.2 nos dous sentidos e a 5.2 cara a Avda. Américas. A liña azul do mapa pode
+  desviarse por onde o bus non pasa. As paradas e as horas seguen a ser as oficiais, e
+  a ficha da liña dío cando é o caso.
 - **Non hai liña nocturna fixa.** O operador non publica ningunha. Os reforzos de
   San Froilán, Noitevella e datas semellantes existen pero anúncianse como aviso puntual,
   sen cadro horario, así que a aplicación non inventa unha liña: cando non hai servizo,
@@ -878,11 +952,6 @@ npm run lint
 - **Zonas de parada**: asígnanse por proximidade e suavízanse por veciñanza. Aínda así,
   arredor do 18% das paradas teñen algunha veciña a menos de 200 m nunha zona distinta,
   o normal nas fronteiras entre barrios.
-- **Obxectivos táctiles**: 46 controis quedan por debaixo dos 32 px recomendados en
-  móbil. Reservado para o redeseño pendente.
-- **Sen modo escuro.** É unha aplicación que se usa de noite na rúa, así que fai falta;
-  queda para o redeseño porque toca o sistema visual enteiro e refacelo dúas veces non
-  ten sentido.
 - **Non hai historial de fiabilidade** ("este bus non pasou"). Necesita base de datos: en
   memoria perderíase en cada despregue, e rexistrar algo que se esvae sería outra forma
   de mentir.
@@ -940,7 +1009,7 @@ operativo.
 ### Liñas interurbanas no taboleiro
 
 Quen agarda en Sindicatos tamén pode coller un autocar da Xunta desde a mesma beirarrúa,
-e hoxe iso obriga a abrir a web do operador. **É factible**: comprobado que 129 das 429
+e hoxe iso obriga a abrir a web do operador. **É factible**: comprobado que 129 das 417
 paradas urbanas teñen unha interurbana a menos de 150 m, con emparellamentos claros
 (`Rda. Muralla 56 (Sindicatos)` ↔ `Ronda da Muralla 56 (sindicatos)`). Tamén aparecen
 ALSA e Renfe, nas estacións.

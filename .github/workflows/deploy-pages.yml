@@ -30,9 +30,9 @@ jobs:
         with:
           node-version: 22
 
+      # No version here on purpose: the action reads `packageManager` from
+      # package.json, so a laptop and this workflow can never drift apart.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - run: pnpm install --frozen-lockfile
 
