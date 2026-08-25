@@ -135,6 +135,30 @@
     color: var(--c-ink) !important;
   }
 
+  /* The hover labels on stops and routes never got the same treatment: the two class
+     names the layers pass — stop-hover-tooltip and transit-map-tooltip — were never
+     defined, so they fell back to Leaflet's own white card with a white arrow. On the
+     dark basemap that is a bright rectangle quoting a street name in near-black. */
+  .leaflet-tooltip {
+    background: var(--c-bg) !important;
+    color: var(--c-ink) !important;
+    border: 1px solid var(--c-border) !important;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.18) !important;
+    font-family: var(--font-sans);
+  }
+  .leaflet-tooltip-top::before {
+    border-top-color: var(--c-border) !important;
+  }
+  .leaflet-tooltip-bottom::before {
+    border-bottom-color: var(--c-border) !important;
+  }
+  .leaflet-tooltip-left::before {
+    border-left-color: var(--c-border) !important;
+  }
+  .leaflet-tooltip-right::before {
+    border-right-color: var(--c-border) !important;
+  }
+
   /* Leaflet's attribution is required, and at its default 11 px grey on a translucent
      white it fails contrast in both themes. Keep it, make it readable. */
   .leaflet-control-attribution {
