@@ -221,9 +221,10 @@ export const gl = {
     loadingMap: 'Cargando o mapa…',
     subtitle: 'Percorridos, paradas e posición dos autobuses',
     allLines: 'Todas',
-    aroundStopFilter: 'A parada',
+    onlyLinesHere: 'Só as liñas de aquí',
     aroundStopActive: (stop: string, metres: number) =>
-      `Amosando as liñas que paran en ${stop} e as que pasan a menos de ${metres} m a pé.`,
+      `Só as liñas que paran en ${stop} e as que pasan a menos de ${metres} m a pé.`,
+    aroundStopClear: 'Amosar todas as liñas outra vez',
     linesHere: 'Liñas por aquí',
     drawRoute: 'Debuxar o percorrido',
     openLineInfo: 'Ver a ficha completa da liña',

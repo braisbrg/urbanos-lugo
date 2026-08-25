@@ -77,32 +77,53 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const stopsWithQr = useMemo(() => BUS_STOPS.filter((s) => poleCode(s)).length, []);
 
   // One line selected wins; otherwise "nearby" narrows to the walkable set; otherwise all.
+  // The stop whose neighbourhood is on show. It has to be the stop whose popup asked
+  // for it: reading `selectedStop` instead meant the filter answered for a stop chosen
+  // on another screen -- or, with nothing selected, silently for no stop at all.
+  const [linesHereStop, setLinesHereStop] = useState<BusStop | null>(null);
+
   const aroundStopLineIds = useMemo(
     () =>
-      selectedStop
+      linesHereStop
         ? [
             ...new Set([
-              ...selectedStop.lines,
-              ...getNearbyLines(selectedStop.lat, selectedStop.lng, AROUND_STOP_RADIUS_M).map(
+              ...linesHereStop.lines,
+              ...getNearbyLines(linesHereStop.lat, linesHereStop.lng, AROUND_STOP_RADIUS_M).map(
                 (n) => n.line.id,
               ),
             ]),
           ]
         : [],
-    [selectedStop],
+    [linesHereStop],
   );
 
-  const visibleLineIds =
-    activeLineId !== 'all'
-      ? [activeLineId]
-      : filterPreset === 'stop' && aroundStopLineIds.length
-        ? aroundStopLineIds
-        : filterPreset === 'nearby' && nearbyLinesList.length
-          ? nearbyLinesList.map((n) => n.line.id)
-          : null;
+  /** From a stop's own popup: keep the map, drop every line that does not serve it. */
+  const showLinesHere = (stop: BusStop) => {
+    setLinesHereStop(stop);
+    setFilterPreset('stop');
+    setActiveLineId('all');
+    map?.setView([stop.lat, stop.lng], 15, { animate: true });
+  };
+
+  /**
+   * What the current scope is about: every line, or the set a preset narrowed us to.
+   * Kept apart from `visibleLineIds` because picking one line should narrow the map
+   * without emptying the list you picked it from.
+   */
+  const scopeLineIds =
+    filterPreset === 'stop' && aroundStopLineIds.length
+      ? aroundStopLineIds
+      : filterPreset === 'nearby' && nearbyLinesList.length
+        ? nearbyLinesList.map((n) => n.line.id)
+        : null;
+
+  const visibleLineIds = activeLineId !== 'all' ? [activeLineId] : scopeLineIds;
   // Street geometry arrives as its own chunk; until then the stop layer still works.
   const geometryReady = useRouteGeometry();
   const lines = BUS_LINES;
+  // The list has to agree with the banner above it. It used to offer all twenty-four
+  // while the map drew four, which read as the filter having done nothing.
+  const listedLines = scopeLineIds ? lines.filter((l) => scopeLineIds.includes(l.id)) : lines;
 
   const t = translations(lang);
 
@@ -180,6 +201,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
       if (focus === 'stop') {
         setActiveLineId('all');
         setFilterPreset('all');
+        setLinesHereStop(null);
       }
       map.setView([selectedStop.lat, selectedStop.lng], 16, { animate: true });
       map.invalidateSize();
@@ -267,6 +289,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
   const handlePresetFilter = (preset: 'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao') => {
     setFilterPreset(preset);
+    if (preset !== 'stop') setLinesHereStop(null);
     if (preset === 'all') {
       setActiveLineId('all');
     } else if (preset === 'hula' || preset === 'campus' || preset === 'ceao') {
@@ -278,9 +301,6 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     } else if (preset === 'nearby') {
       setActiveLineId('all');
       if (!nearbyLinesList.length) handleLocateUser();
-    } else if (preset === 'stop') {
-      setActiveLineId('all');
-      if (selectedStop) map?.setView([selectedStop.lat, selectedStop.lng], 15, { animate: true });
     }
   };
 
@@ -367,20 +387,6 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               >
                 📍 {t.map.nearbyFilter}
               </button>
-              {selectedStop && (
-                <button
-                  onClick={() => handlePresetFilter('stop')}
-                  aria-pressed={filterPreset === 'stop'}
-                  title={selectedStop.name}
-                  className={`flex h-11 items-center gap-1 whitespace-nowrap rounded-[9px] px-3.5 text-label font-semibold ${
-                    filterPreset === 'stop'
-                      ? 'bg-accent text-on-accent shadow-xs'
-                      : 'bg-surface text-ink-2 border border-edge'
-                  }`}
-                >
-                  🚏 {t.map.aroundStopFilter}
-                </button>
-              )}
               <button
                 onClick={() => handlePresetFilter('hula')}
                 aria-pressed={filterPreset === 'hula'}
@@ -415,10 +421,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 🏭 {t.map.filterCeao}
               </button>
             </div>
-            {filterPreset === 'stop' && selectedStop && (
-              <p className="mt-2 text-label leading-relaxed text-ink-2">
-                {t.map.aroundStopActive(selectedStop.name, AROUND_STOP_RADIUS_M)}
-              </p>
+            {filterPreset === 'stop' && linesHereStop && (
+              <div className="mt-2.5 rounded-[10px] border border-accent bg-accent/10 p-3">
+                <p className="text-label leading-relaxed text-ink">
+                  {t.map.aroundStopActive(linesHereStop.name, AROUND_STOP_RADIUS_M)}
+                </p>
+                <button
+                  onClick={() => handlePresetFilter('all')}
+                  className="mt-2 flex h-9 items-center rounded-[8px] border border-edge bg-bg px-3 text-label font-semibold text-ink-2"
+                >
+                  {t.map.aroundStopClear}
+                </button>
+              </div>
             )}
           </div>
 
@@ -514,7 +528,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             </div>
 
             <div className="space-y-1 max-h-[175px] overflow-y-auto pr-1">
-              {lines.map((line) => {
+              {listedLines.map((line) => {
                 const isSelected = activeLineId === line.id;
                 return (
                   <div
@@ -590,6 +604,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               showStops={showStops}
               onSelectStop={onSelectStop}
               onOpenLine={onOpenLine}
+              onShowLinesHere={showLinesHere}
               lang={lang}
             />
 

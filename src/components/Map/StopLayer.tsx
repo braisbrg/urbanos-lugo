@@ -24,6 +24,8 @@ interface StopLayerProps {
   onSelectStop: (stop: BusStop) => void;
   /** Open a line's own page. The badges in a stop popup are the shortest way there. */
   onOpenLine: (line: BusLine) => void;
+  /** Narrow the map to the lines that serve this stop, without leaving the map. */
+  onShowLinesHere: (stop: BusStop) => void;
   lang: Lang;
 }
 
@@ -52,6 +54,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   showStops,
   onSelectStop,
   onOpenLine,
+  onShowLinesHere,
   lang,
 }) => {
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
@@ -60,6 +63,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   onSelectStopRef.current = onSelectStop;
   const onOpenLineRef = useRef(onOpenLine);
   onOpenLineRef.current = onOpenLine;
+  const onShowLinesHereRef = useRef(onShowLinesHere);
+  onShowLinesHereRef.current = onShowLinesHere;
 
   const [zoom, setZoom] = useState<number>(() => map?.getZoom() ?? 14);
   useEffect(() => {
@@ -146,10 +151,18 @@ export const StopLayer: React.FC<StopLayerProps> = ({
           <button data-stop-times="1" style="width: 100%; min-height: 44px; background-color: var(--c-accent); color: var(--c-on-accent); border: none; border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
             ${viewText} &rarr;
           </button>
+          <button data-lines-here="1" style="width: 100%; min-height: 44px; margin-top: 6px; background: transparent; color: var(--c-ink-2); border: 1px solid var(--c-border); border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
+            ${escapeHtml(translations(lang).map.onlyLinesHere)}
+          </button>
         `;
         // Wire the button by reference. Building a querySelector from stop.id used to
         // throw for any id that is not a valid CSS identifier.
         popup.querySelector('button[data-stop-times]')?.addEventListener('click', () => onSelectStopRef.current(stop));
+        // Acts on the map behind the popup, so the popup gets out of the way first.
+        popup.querySelector('button[data-lines-here]')?.addEventListener('click', () => {
+          marker.closePopup();
+          onShowLinesHereRef.current(stop);
+        });
         popup.querySelectorAll<HTMLButtonElement>('button[data-line-id]').forEach((badge) => {
           const line = servingLines.find((l) => l.id === badge.dataset.lineId);
           if (line) badge.addEventListener('click', () => onOpenLineRef.current(line));

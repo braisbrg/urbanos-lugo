@@ -151,6 +151,9 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 
         // Where the ride actually calls. Drawn under the boarding pin so the two ends
         // still read as the ends, and small enough not to compete with the route.
+        // Neutral, not the line's colour: an 8 px dot of the same colour on top of a
+        // 6 px line of that colour is a bump in the line, not a stop. The same pair the
+        // network map uses, so a stop looks like a stop wherever it is drawn.
         for (let i = from + 1; i < to; i++) {
           const stop = BUS_STOPS.find((s) => s.id === direction.stops[i]);
           if (!stop) continue;
@@ -159,7 +162,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
               radius: 4,
               color: colors.stopStroke,
               weight: 2,
-              fillColor: segment.line.color,
+              fillColor: colors.stopFill,
               fillOpacity: 1,
             }).bindTooltip(stop.name, { direction: 'top', offset: [0, -6] }),
           );
