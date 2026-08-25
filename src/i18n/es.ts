@@ -198,6 +198,8 @@ export const es: Dict = {
     loadingMap: 'Cargando el mapa…',
     subtitle: 'Recorridos, paradas y posición de los autobuses',
     allLines: 'Todas',
+    linesHere: 'Líneas por aquí',
+    drawRoute: 'Dibujar el recorrido',
     openLineInfo: 'Ver la ficha completa de la línea',
     liveBusesCount: 'buses en servicio',
     centerLugo: 'Centrar Lugo',

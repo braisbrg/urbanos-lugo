@@ -13,6 +13,54 @@ interface RouteLayerProps {
   showRoutes: boolean;
   lang: Lang;
   onSelectLine: (line: BusLine) => void;
+  onOpenLine: (line: BusLine) => void;
+}
+
+/** How close a click has to land, in screen pixels, to count as hitting a route. */
+const HIT_PX = 12;
+
+/**
+ * The routes under a click, as a node so the buttons can carry real handlers.
+ *
+ * Built rather than templated because a corridor can carry six lines and the reader
+ * has to be able to say which one they meant — the map used to answer for them, with
+ * whichever polyline Leaflet happened to draw last.
+ */
+function linesHerePopup(
+  hits: { line: BusLine; dir: BusLine['directions'][number] }[],
+  lang: Lang,
+  onSelect: (line: BusLine) => void,
+  onOpen: (line: BusLine) => void,
+): HTMLElement {
+  const t = translations(lang);
+  const node = document.createElement('div');
+  node.className = 'font-sans';
+  node.innerHTML = `
+    <div style="min-width: 210px; padding: 2px; color: var(--c-ink);">
+      <div style="font-size: 12px; font-weight: 700; color: var(--c-ink-3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;">
+        ${escapeHtml(t.map.linesHere)}
+      </div>
+      <div data-rows="1" style="display: flex; flex-direction: column; gap: 4px;"></div>
+    </div>`;
+
+  const rows = node.querySelector('[data-rows]')!;
+  for (const { line, dir } of hits) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:stretch; gap:4px;';
+    row.innerHTML = `
+      <button type="button" data-draw="1" title="${escapeHtml(t.map.drawRoute)}"
+        style="display:flex; flex:1; align-items:center; gap:8px; min-height:44px; padding:0 8px; background:none; border:none; cursor:pointer; text-align:left; font-family:inherit;">
+        <span style="background-color:${escapeHtml(line.color)}; color:#fff; font-weight:700; font-size:12px; padding:3px 7px; border-radius:5px;">${escapeHtml(line.number)}</span>
+        <span style="font-size:13px; color:var(--c-ink-2);">${escapeHtml(dir.name)}</span>
+      </button>
+      <button type="button" data-open="1" title="${escapeHtml(t.map.openLineInfo)}"
+        aria-label="${escapeHtml(t.map.openLineInfo)}: ${escapeHtml(line.number)}"
+        style="min-height:44px; width:44px; background:none; border:none; cursor:pointer; color:var(--c-accent); font-size:16px;">&rarr;</button>`;
+    row.querySelector('button[data-draw]')?.addEventListener('click', () => onSelect(line));
+    row.querySelector('button[data-open]')?.addEventListener('click', () => onOpen(line));
+    rows.appendChild(row);
+  }
+  return node;
 }
 
 export const RouteLayer: React.FC<RouteLayerProps> = ({
@@ -22,6 +70,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   showRoutes,
   lang,
   onSelectLine,
+  onOpenLine,
 }) => {
   const groupRef = useRef<L.LayerGroup | null>(null);
 
@@ -29,12 +78,16 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   // from re-running the effect and redrawing the whole map on each live-bus tick.
   const onSelectLineRef = useRef(onSelectLine);
   onSelectLineRef.current = onSelectLine;
+  const onOpenLineRef = useRef(onOpenLine);
+  onOpenLineRef.current = onOpenLine;
 
   useEffect(() => {
     if (!map) return;
 
     const group = L.layerGroup().addTo(map);
     groupRef.current = group;
+
+    const drawn: { line: BusLine; dir: BusLine['directions'][number] }[] = [];
 
     if (showRoutes) {
       const showingAll = visibleLineIds === null;
@@ -65,23 +118,48 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
             `<div class="font-sans text-label"><b>${escapeHtml(translations(lang).lines.lineLabel(line.number))}</b><br/>${escapeHtml(dir.name)}</div>`,
             { sticky: true, className: 'transit-map-tooltip' },
           );
-          polyline.on('click', () => onSelectLineRef.current(line));
 
           // A 3px line is hard to grab; an invisible fat line underneath widens the hit area.
+          // Still here to widen the grab area for the tooltip; the click is handled
+          // once, on the map, so overlapping corridors can all answer.
           const hitArea = L.polyline(dir.pathCoordinates, { color: line.color, weight: 14, opacity: 0 });
-          hitArea.on('click', () => onSelectLineRef.current(line));
 
           group.addLayer(hitArea);
           group.addLayer(polyline);
+          drawn.push({ line, dir });
         });
       });
     }
 
+    const onMapClick = (e: L.LeafletMouseEvent) => {
+      const click = map.latLngToContainerPoint(e.latlng);
+      const hits = drawn
+        .map(({ line, dir }) => {
+          let nearest = Infinity;
+          const pts = dir.pathCoordinates.map((c) => map.latLngToContainerPoint(c as L.LatLngTuple));
+          for (let i = 1; i < pts.length; i++) {
+            const d = L.LineUtil.pointToSegmentDistance(click, pts[i - 1], pts[i]);
+            if (d < nearest) nearest = d;
+          }
+          return { line, dir, d: nearest };
+        })
+        .filter((h) => h.d <= HIT_PX)
+        .sort((a, b) => a.d - b.d);
+
+      if (!hits.length) return;
+      L.popup({ closeButton: true, className: 'transit-map-popup' })
+        .setLatLng(e.latlng)
+        .setContent(linesHerePopup(hits, lang, onSelectLineRef.current, onOpenLineRef.current))
+        .openOn(map);
+    };
+    map.on('click', onMapClick);
+
     return () => {
+      map.off('click', onMapClick);
       group.remove();
       groupRef.current = null;
     };
-  }, [map, lines, visibleLineIds, showRoutes]);
+  }, [map, lines, visibleLineIds, showRoutes, lang]);
 
   return null;
 };

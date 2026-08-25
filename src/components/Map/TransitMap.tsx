@@ -517,6 +517,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 onSelectLine(line);
                 setActiveLineId(line.id);
               }}
+              onOpenLine={onOpenLine}
             />
 
             <StopLayer

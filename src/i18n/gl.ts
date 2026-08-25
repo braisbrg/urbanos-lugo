@@ -212,6 +212,8 @@ export const gl = {
     loadingMap: 'Cargando o mapa…',
     subtitle: 'Percorridos, paradas e posición dos autobuses',
     allLines: 'Todas',
+    linesHere: 'Liñas por aquí',
+    drawRoute: 'Debuxar o percorrido',
     openLineInfo: 'Ver a ficha completa da liña',
     liveBusesCount: 'buses en servizo',
     centerLugo: 'Centrar Lugo',
