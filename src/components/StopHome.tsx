@@ -195,7 +195,10 @@ export const StopHome: React.FC<StopHomeProps> = ({
                     <span className="block truncate text-body font-semibold" title={line.name}>
                       {line.name}
                     </span>
-                    <span className="block truncate text-label text-ink-2">
+                    <span
+                      className="block truncate text-label text-ink-2"
+                      title={stop ? t.stopHome.savedLinesAt(stop.name) : undefined}
+                    >
                       {stop ? t.stopHome.savedLinesAt(stop.name) : t.stopHome.savedLinesNoStop}
                     </span>
                   </span>
@@ -205,7 +208,7 @@ export const StopHome: React.FC<StopHomeProps> = ({
                         {next.precision === 'published' ? '' : '~'}
                         {next.etaMinutes}
                       </span>
-                      <span className="block text-label text-ink-3">{t.common.min}</span>
+                      <span className="block text-label text-ink-2">{t.common.min}</span>
                     </span>
                   )}
                 </button>

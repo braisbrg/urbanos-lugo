@@ -180,7 +180,9 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       </span>
                       <div className="min-w-0">
                         <div className="font-bold text-body text-ink leading-tight flex items-center gap-1.5 truncate">
-                          <span className="truncate">{line.name}</span>
+                          <span className="truncate" title={line.name}>
+                            {line.name}
+                          </span>
                           {isFavourite && (
                             <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0" />
                           )}

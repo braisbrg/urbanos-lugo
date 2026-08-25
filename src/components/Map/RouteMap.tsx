@@ -23,13 +23,27 @@ interface RouteMapProps {
 /* Map furniture is drawn over CARTO's tiles, which do not change with the app theme, so
    these colours are fixed rather than tokenised. Reading the theme here also baked the
    value at layer-creation time: switching to dark left light-on-light pins at 2.15:1. */
+/** Rough relative luminance of a #rrggbb colour, enough to pick black or white ink. */
+function isLight(hex: string): boolean {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.35;
+}
+
 function pinIcon(color: string, label: string): L.DivIcon {
+  // White on the dark palette's pins measured 2.54:1 and 1.92:1 — the pin colours are
+  // light there so the letter has to be dark.
+  const ink = isLight(color) ? '#0f172a' : '#ffffff';
+  const ring = isLight(color) ? '#0f172a' : '#ffffff';
   return L.divIcon({
     className: 'route-map-pin',
     html: `
       <div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;
-                  border-radius:50%;background:${color};color:#fff;font:700 12px/1 sans-serif;
-                  box-shadow:0 1px 4px rgba(0,0,0,.4);border:2px solid #fff;">${label}</div>`,
+                  border-radius:50%;background:${color};color:${ink};font:700 12px/1 sans-serif;
+                  box-shadow:0 1px 4px rgba(0,0,0,.4);border:2px solid ${ring};">${label}</div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   });

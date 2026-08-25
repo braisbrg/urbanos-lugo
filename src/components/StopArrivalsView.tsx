@@ -595,7 +595,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
                 </span>
                 <Minutes arrival={a} />
                 {a.etaMinutes > 0 && (
-                  <span className="shrink-0 self-end pb-1 text-label text-ink-3">{t.common.min}</span>
+                  <span className="shrink-0 self-end pb-1 text-label text-ink-2">{t.common.min}</span>
                 )}
               </div>
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
@@ -626,7 +626,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
                 </span>
                 <Minutes arrival={g.departures[0]} />
                 {g.departures[0].etaMinutes > 0 && (
-                  <span className="shrink-0 self-end pb-1 text-label text-ink-3">{t.common.min}</span>
+                  <span className="shrink-0 self-end pb-1 text-label text-ink-2">{t.common.min}</span>
                 )}
               </div>
 

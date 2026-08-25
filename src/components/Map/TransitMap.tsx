@@ -532,7 +532,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                       >
                         {line.number}
                       </span>
-                      <span className="truncate">{line.name}</span>
+                      <span className="truncate" title={line.name}>
+                        {line.name}
+                      </span>
                     </button>
 
                     <button

@@ -355,7 +355,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       >
                         <div className="flex items-center gap-2 truncate">
                           <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
-                          <span className="font-bold text-ink truncate">{sug.name}</span>
+                          <span className="truncate font-bold text-ink" title={sug.name}>{sug.name}</span>
                         </div>
                         {sug.code && (
                           <span className="text-label font-mono font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shrink-0">
@@ -432,7 +432,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       >
                         <div className="flex items-center gap-2 truncate">
                           <MapPin className="w-3.5 h-3.5 text-warn-ink shrink-0" />
-                          <span className="font-bold text-ink truncate">{sug.name}</span>
+                          <span className="truncate font-bold text-ink" title={sug.name}>{sug.name}</span>
                         </div>
                         {sug.code && (
                           <span className="text-label font-mono font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shrink-0">
@@ -757,7 +757,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               >
                                 {seg.line.number}
                               </button>
-                              <span className="min-w-0 flex-1 truncate text-body font-semibold">
+                              <span
+                                className="min-w-0 flex-1 truncate text-body font-semibold"
+                                title={seg.line.name}
+                              >
                                 {seg.line.name}
                               </span>
                               <span className="tnum shrink-0 text-emph font-bold">
