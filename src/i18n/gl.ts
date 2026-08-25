@@ -347,6 +347,8 @@ export const gl = {
     share: 'Copiar ligazón',
     copyFailed: 'Non se puido copiar. Esta é a ligazón:',
     copied: 'Copiada',
+    nearbyLinesTitle: 'Outras liñas preto',
+    nearbyLinesHint: 'Non paran aquí, pero pasan a poucos minutos a pé.',
     seeLine: 'Ver percorrido da liña',
     dismiss: 'Pechar aviso',
     back: 'Volver ás paradas gardadas',

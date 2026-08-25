@@ -344,6 +344,8 @@ export const en: Dict = {
     share: 'Copy link',
     copyFailed: 'Could not copy. Here is the link:',
     copied: 'Copied',
+    nearbyLinesTitle: 'Other lines nearby',
+    nearbyLinesHint: 'They do not stop here, but they pass a short walk away.',
     seeLine: 'See the route of this line',
     dismiss: 'Close notice',
     back: 'Back to saved stops',

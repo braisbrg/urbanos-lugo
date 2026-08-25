@@ -333,6 +333,8 @@ export const es: Dict = {
     share: 'Copiar enlace',
     copyFailed: 'No se pudo copiar. Este es el enlace:',
     copied: 'Copiado',
+    nearbyLinesTitle: 'Otras líneas cerca',
+    nearbyLinesHint: 'No paran aquí, pero pasan a pocos minutos a pie.',
     seeLine: 'Ver recorrido de la línea',
     dismiss: 'Cerrar aviso',
     back: 'Volver a las paradas guardadas',

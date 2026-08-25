@@ -2,7 +2,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, Bell, Check, Clock, Map as MapIcon, Share2, Star } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../types';
 import { BUS_LINES, poleCode } from '../data/transitData';
-import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../utils/transitEngine';
+import {
+  getArrivalsForStop,
+  getNearbyLines,
+  nextServiceAtStop,
+  timingPointStopCount,
+} from '../utils/transitEngine';
 import { Lang, translations } from '../i18n';
 import {
   watchForStop,
@@ -25,6 +30,10 @@ interface StopArrivalsViewProps {
 
 /** How much warning is useful: enough to put your coat on and get to the door. */
 const WATCH_LEAD_MINUTES = 5;
+
+/** Far enough to be worth walking when the wait is long; near enough to still be here. */
+const NEARBY_LINE_RADIUS_M = 400;
+const NEARBY_LINE_LIMIT = 6;
 
 /**
  * How far ahead "Próximas" reaches. Standing at a pole, a bus an hour and a half out is
@@ -158,6 +167,22 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
     const interval = setInterval(read, 15000);
     return () => clearInterval(interval);
   }, [selectedStop.id, atTime]);
+
+  /**
+   * Lines that pass close by but do not call here.
+   *
+   * A pole is not the only thing within reach of it. Somebody standing at a stop with
+   * a long wait can often walk two minutes and take something else, and the board had
+   * no way of saying so — the same question the map answers for "near me", asked from
+   * a stop instead of from a position.
+   */
+  const nearbyLines = useMemo(() => {
+    const here = new Set(selectedStop.lines);
+    return getNearbyLines(selectedStop.lat, selectedStop.lng, NEARBY_LINE_RADIUS_M)
+      .filter((n) => !here.has(n.line.id))
+      .sort((a, b) => a.walkMeters - b.walkMeters)
+      .slice(0, NEARBY_LINE_LIMIT);
+  }, [selectedStop]);
 
   // Only looked up when the board is empty, which is the only time it is worth showing.
   const nextService = useMemo(
@@ -599,6 +624,30 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label leading-relaxed text-ink-2">
           {t.arrivals.watchForeground}
         </p>
+      )}
+
+      {nearbyLines.length > 0 && (
+        <section className="mt-4 border-t border-line pt-3.5">
+          <h3 className="text-label font-semibold text-ink-2">{t.arrivals.nearbyLinesTitle}</h3>
+          <p className="mt-0.5 text-label text-ink-3">{t.arrivals.nearbyLinesHint}</p>
+          <ul className="mt-2.5 flex flex-col gap-1.5">
+            {nearbyLines.map(({ line, nearestStop, walkMeters }) => (
+              <li
+                key={line.id}
+                style={{ '--line': line.color } as React.CSSProperties}
+                className="tint tint-edge flex items-center gap-3 rounded-[10px] border px-2.5 py-2"
+              >
+                {lineButton(line.id, line.number, line.color)}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body font-semibold">{nearestStop.name}</span>
+                  <span className="block text-label text-ink-2">
+                    ~{Math.round(walkMeters)} m
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {nonePublished ? (
