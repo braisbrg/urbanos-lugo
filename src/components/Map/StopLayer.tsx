@@ -4,6 +4,7 @@ import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import { BusStop, BusLine } from '../../types';
 import { poleCode } from '../../data/transitData';
+import { getNearbyLines } from '../../utils/transitEngine';
 import { useIsDark } from '../../hooks/useIsDark';
 import { mapColors } from './palette';
 
@@ -33,6 +34,10 @@ interface StopLayerProps {
  */
 const ALL_STOPS_FROM_ZOOM = 15;
 /** How many lines a stop needs to stay on screen when zoomed out. */
+/** Matches the board: near enough to walk when the wait is long. */
+const NEARBY_LINE_RADIUS_M = 400;
+const NEARBY_LINE_LIMIT = 6;
+
 const INTERCHANGE_MIN_LINES = 6;
 
 /* Canvas markers sit on CARTO's tiles, which stay light whatever theme the app is in,
@@ -116,12 +121,28 @@ export const StopLayer: React.FC<StopLayerProps> = ({
 
         const viewText = translations(lang).map.viewStopDepartures;
 
+        // Lines that pass within a short walk without calling here.
+        const nearby = getNearbyLines(stop.lat, stop.lng, NEARBY_LINE_RADIUS_M)
+          .filter((n) => !stop.lines.includes(n.line.id))
+          .sort((a, b) => a.walkMeters - b.walkMeters)
+          .slice(0, NEARBY_LINE_LIMIT);
+        const nearbyBadges = nearby
+          .map(
+            (n) =>
+              `<button type="button" data-line-id="${escapeHtml(n.line.id)}" title="${escapeHtml(n.line.name)} — ~${Math.round(n.walkMeters)} m" style="background-color: ${escapeHtml(n.line.color)}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; opacity: 0.75;">${escapeHtml(n.line.number)}</button>`,
+          )
+          .join('');
+
         const popup = document.createElement('div');
         popup.className = 'p-1 min-w-[200px] font-sans';
         popup.innerHTML = `
           <div style="font-weight: 600; font-size: 15px; color: var(--c-ink); margin-bottom: 3px;">${escapeHtml(stop.name)}</div>
           <div style="font-size: 12px; color: var(--c-ink-3); margin-bottom: 8px;">${code ? `${escapeHtml(translations(lang).map.stopCode)}: <b>${escapeHtml(code)}</b> &bull; ` : ''}${escapeHtml(stop.zone)}</div>
           <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px;">${linesBadges}</div>
+          ${nearby.length ? `<div style="margin-bottom: 10px;">
+            <div style="font-size: 12px; color: var(--c-ink-3); margin-bottom: 4px;">${escapeHtml(translations(lang).arrivals.nearbyLinesTitle)}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px;">${nearbyBadges}</div>
+          </div>` : ''}
           <button data-stop-times="1" style="width: 100%; min-height: 44px; background-color: var(--c-accent); color: var(--c-on-accent); border: none; border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
             ${viewText} &rarr;
           </button>

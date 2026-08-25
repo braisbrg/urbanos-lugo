@@ -480,6 +480,38 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         )}
       </div>
 
+      {/* Folded, and directly under the toggle rather than below the board: at a stop
+          with fourteen lines the list runs past the fold, and something you have to
+          scroll to find is something nobody finds. The count does the advertising. */}
+      {nearbyLines.length > 0 && (
+        <details className="mt-3 rounded-[10px] border border-edge bg-surface">
+          <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
+            {t.arrivals.nearbyLinesTitle}
+            <span className="tnum rounded-[9px] border border-edge px-1.5 py-0.5 text-ink-3">
+              {nearbyLines.length}
+            </span>
+          </summary>
+          <div className="px-3 pb-3">
+            <p className="text-label text-ink-3">{t.arrivals.nearbyLinesHint}</p>
+            <ul className="mt-2.5 flex flex-col gap-1.5">
+              {nearbyLines.map(({ line, nearestStop, walkMeters }) => (
+                <li
+                  key={line.id}
+                  style={{ '--line': line.color } as React.CSSProperties}
+                  className="tint tint-edge flex items-center gap-3 rounded-[10px] border px-2.5 py-2"
+                >
+                  {lineButton(line.id, line.number, line.color)}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-body font-semibold">{nearestStop.name}</span>
+                    <span className="block text-label text-ink-2">~{Math.round(walkMeters)} m</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
+      )}
+
       {/* Say it plainly. Every row below is a scheduled passing time for an hour the
           reader chose, and the countdown beside it counts from that hour, not from
           now — which would read as live if nothing said otherwise. */}
@@ -624,30 +656,6 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label leading-relaxed text-ink-2">
           {t.arrivals.watchForeground}
         </p>
-      )}
-
-      {nearbyLines.length > 0 && (
-        <section className="mt-4 border-t border-line pt-3.5">
-          <h3 className="text-label font-semibold text-ink-2">{t.arrivals.nearbyLinesTitle}</h3>
-          <p className="mt-0.5 text-label text-ink-3">{t.arrivals.nearbyLinesHint}</p>
-          <ul className="mt-2.5 flex flex-col gap-1.5">
-            {nearbyLines.map(({ line, nearestStop, walkMeters }) => (
-              <li
-                key={line.id}
-                style={{ '--line': line.color } as React.CSSProperties}
-                className="tint tint-edge flex items-center gap-3 rounded-[10px] border px-2.5 py-2"
-              >
-                {lineButton(line.id, line.number, line.color)}
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold">{nearestStop.name}</span>
-                  <span className="block text-label text-ink-2">
-                    ~{Math.round(walkMeters)} m
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
       )}
 
       {nonePublished ? (
