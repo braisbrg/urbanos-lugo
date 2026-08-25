@@ -208,6 +208,24 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
   const walkCorrection = correctionFor(planResult);
 
+  /**
+   * On a phone the form is 352 px and the quick destinations another 235, so the
+   * answer to what you just asked started below the second screenful. Once there is
+   * a plan the form folds to a one-line summary; it is still sticky and always open
+   * from `lg` up, where there is room for both.
+   */
+  const [formOpen, setFormOpen] = useState(true);
+
+  /**
+   * Whether the reader has asked for anything yet.
+   *
+   * The screen opens on a worked example -- Fonte dos Ranchos to HULA, already
+   * planned -- which shows a desktop visitor what the tool answers with. On a phone
+   * it put 2,200 px of somebody else's trip between you and the two fields you came
+   * to fill in, so there it waits until you have asked something.
+   */
+  const [asked, setAsked] = useState(false);
+
   // "Now" is the common case, but the question before an appointment is the other one.
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now');
   const [timeValue, setTimeValue] = useState(() => {
@@ -228,8 +246,13 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
   const handleCalculate = (orig = originQuery, dest = destQuery, gps = userLocation) => {
     if (!orig.trim() || !dest.trim()) return;
-    setPlanOptions(planTrips(orig, dest, { ...timeOptions(), userLocation: gps, lang }));
+    const plans = planTrips(orig, dest, { ...timeOptions(), userLocation: gps, lang });
+    setPlanOptions(plans);
     setChosenOption(0);
+    // Answering is what folds the form away. A search that found nothing leaves it
+    // open, because the next thing to do is change what you asked for.
+    setAsked(true);
+    if (plans.length) setFormOpen(false);
     setEndpoints({
       origin: toPoint(resolveLocationQuery(orig, gps)),
       destination: toPoint(resolveLocationQuery(dest, gps)),
@@ -311,7 +334,28 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
       <div className="lg:grid lg:grid-cols-12 lg:gap-6">
         {/* Left Column: Origin & Destination Inputs */}
         <div ref={formRef} className="space-y-4 lg:col-span-5 lg:sticky lg:top-4 lg:self-start">
-          <div className="bg-bg rounded-xl p-6 shadow-sm border border-edge">
+          {/* What you asked for, in one line, when the form is folded away. */}
+          {asked && !formOpen && (
+            <button
+              type="button"
+              onClick={() => setFormOpen(true)}
+              className="flex w-full items-center gap-2 rounded-xl border border-edge bg-bg p-3.5 text-left shadow-sm lg:hidden"
+            >
+              <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+              <span className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
+                {originQuery} → {destQuery}
+              </span>
+              <span className="shrink-0 text-label font-semibold text-accent underline">
+                {t.planner.editTrip}
+              </span>
+            </button>
+          )}
+
+          <div
+            className={`bg-bg rounded-xl p-6 shadow-sm border border-edge ${
+              asked && !formOpen ? 'hidden lg:block' : ''
+            }`}
+          >
             <div className="mb-4">
               <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
                 <Navigation className="w-4 h-4 text-accent" />
@@ -518,8 +562,13 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               </button>
             </div>
 
-            {/* Quick Destinations */}
-            <div className="mt-5 pt-4 border-t border-line">
+            {/* Quick Destinations. Gone from the phone once there is a plan: eight
+                chips of "where to?" under an answer to that very question. */}
+            <div
+              className={`mt-5 pt-4 border-t border-line ${
+                asked ? 'hidden lg:block' : ''
+              }`}
+            >
               <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">{t.planner.quickDestinations}</span>
               <div className="flex flex-wrap gap-1.5">
                 {quickPicks.map((qp, idx) => (
@@ -544,7 +593,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
         </div>
 
         {/* Right Column: Route Result & Step by Step Itinerary */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className={`space-y-4 lg:col-span-7 lg:block ${asked ? '' : 'hidden'}`}>
           {planResult ? (
             <div className="bg-bg rounded-xl p-6 shadow-sm border border-edge">
               {/* Out of service notice */}
@@ -558,6 +607,88 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 </div>
               )}
 
+              {/* The three numbers that answer "should I do this trip": how long it
+                  takes, when to leave, when you land. On the page ground rather than a
+                  solid slab — a coloured block here fought the provenance chips, which
+                  are the only things on this screen that should read as badges. */}
+              <div className="mb-5 border-b border-line pb-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="tnum text-num font-bold tracking-[-0.025em]">
+                    {planResult.durationMinutes + walkCorrection}
+                  </span>
+                  <span className="text-body text-ink-3">{t.common.min}</span>
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
+                  <span className="text-label text-ink-3">{t.planner.departureLabel}</span>
+                  <span className="tnum text-emph font-semibold">{planResult.departureTime}</span>
+                  <ArrowRight className="h-[15px] w-[15px] shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
+                  <span className="text-label text-ink-3">{t.planner.arrivalLabel}</span>
+                  <span className="tnum text-emph font-semibold">
+                    ~{shiftClock(planResult.arrivalTime, walkCorrection)}
+                  </span>
+                </div>
+              </div>
+
+                {/* Wait time notification badge */}
+                {/* Say plainly where these numbers come from. The departure can be a
+                    published time; everything after it is computed. */}
+                {measuredWalk && (
+                  <div className="mt-3 text-label bg-surface/60 text-ink px-3 py-2 rounded-md border border-edge flex items-center justify-between gap-3">
+                    <span className="font-bold uppercase tracking-wider text-label text-ink-2">
+                      {t.planner.measuredWalkTitle}
+                    </span>
+                    <span className="font-mono font-black">
+                      {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
+                    </span>
+                  </div>
+                )}
+
+                <details className="mt-3 rounded-md border border-edge bg-surface/40">
+                  <summary className="flex min-h-11 cursor-pointer items-center px-3 text-label font-semibold text-ink-2">
+                    {t.planner.timeProvenanceTitle}
+                  </summary>
+                  <p className="px-3 pb-2 text-label leading-relaxed text-ink-2">
+                    {measuredWalk ? t.planner.timeProvenanceMeasured : t.planner.timeProvenance}
+                  </p>
+                </details>
+
+                {planResult.fare && planResult.fare.busLegs > 0 && (
+                  <div className="mt-3 text-label bg-surface/60 text-ink px-3 py-2 rounded-md border border-edge">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-bold uppercase tracking-wider text-label text-ink-2">
+                        {t.planner.fareTitle}
+                      </span>
+                      <span className="flex items-baseline gap-3 font-mono">
+                        <span className="text-estimated font-black text-body">
+                          {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
+                        </span>
+                        <span className="text-ink-2 line-through">
+                          {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
+                        </span>
+                      </span>
+                    </div>
+                    <div className="mt-1 text-label text-ink-2">
+                      {t.planner.fareCard} &bull; {t.planner.fareSingle}:{' '}
+                      {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
+                      {planResult.fare.busLegs > 1 && (
+                        <span className="block mt-0.5 text-estimated">
+                          {planResult.fare.transfersFree ? t.planner.fareTransferFree : t.planner.fareTransferPaid}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {planResult.totalWaitMinutes > 0 && (
+                  <div className="mt-3 text-label bg-surface/60 text-ink-2 px-3 py-1.5 rounded-md border border-edge flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-estimated shrink-0" />
+                    <span>
+                      {t.planner.includesWait(planResult.totalWaitMinutes)}
+                    </span>
+                  </div>
+                )}
+
               {/* Alternatives. One answer hides the fact that there is usually more than
                   one way, and people have reasons to prefer a line they know. */}
               {planOptions.length > 1 && (
@@ -565,7 +696,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">
                     {t.planner.optionsTitle(Math.min(planOptions.length, MAX_OPTIONS), planOptions.length)}
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
                     {shownOptions.map((option, idx) => {
                       const busLegs = option.segments.filter((seg) => seg.type === 'bus');
                       // Same correction the detail applies, so the card you open agrees
@@ -576,7 +707,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           key={idx}
                           onClick={() => setChosenOption(idx)}
                           aria-pressed={idx === chosenOption}
-                          className={`p-2.5 rounded-lg border text-left transition-colors ${
+                          className={`w-[72%] shrink-0 snap-start p-2.5 rounded-lg border text-left transition-colors sm:w-auto ${
                             idx === chosenOption
                               ? 'border-ink bg-ink text-bg'
                               : 'border-edge bg-bg text-ink'
@@ -670,83 +801,6 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   </Suspense>
                 )}
               </div>
-
-              {/* The three numbers that answer "should I do this trip": how long it
-                  takes, when to leave, when you land. On the page ground rather than a
-                  solid slab — a coloured block here fought the provenance chips, which
-                  are the only things on this screen that should read as badges. */}
-              <div className="mb-5 border-b border-line pb-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="tnum text-num font-bold tracking-[-0.025em]">
-                    {planResult.durationMinutes + walkCorrection}
-                  </span>
-                  <span className="text-body text-ink-3">{t.common.min}</span>
-                </div>
-
-                <div className="mt-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-                  <span className="text-label text-ink-3">{t.planner.departureLabel}</span>
-                  <span className="tnum text-emph font-semibold">{planResult.departureTime}</span>
-                  <ArrowRight className="h-[15px] w-[15px] shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
-                  <span className="text-label text-ink-3">{t.planner.arrivalLabel}</span>
-                  <span className="tnum text-emph font-semibold">
-                    ~{shiftClock(planResult.arrivalTime, walkCorrection)}
-                  </span>
-                </div>
-              </div>
-
-                {/* Wait time notification badge */}
-                {/* Say plainly where these numbers come from. The departure can be a
-                    published time; everything after it is computed. */}
-                {measuredWalk && (
-                  <div className="mt-3 text-label bg-surface/60 text-ink px-3 py-2 rounded-md border border-edge flex items-center justify-between gap-3">
-                    <span className="font-bold uppercase tracking-wider text-label text-ink-2">
-                      {t.planner.measuredWalkTitle}
-                    </span>
-                    <span className="font-mono font-black">
-                      {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
-                    </span>
-                  </div>
-                )}
-
-                <div className="mt-3 text-label leading-relaxed text-ink-2 bg-surface/40 px-3 py-2 rounded-md border border-edge">
-                  {measuredWalk ? t.planner.timeProvenanceMeasured : t.planner.timeProvenance}
-                </div>
-
-                {planResult.fare && planResult.fare.busLegs > 0 && (
-                  <div className="mt-3 text-label bg-surface/60 text-ink px-3 py-2 rounded-md border border-edge">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-bold uppercase tracking-wider text-label text-ink-2">
-                        {t.planner.fareTitle}
-                      </span>
-                      <span className="flex items-baseline gap-3 font-mono">
-                        <span className="text-estimated font-black text-body">
-                          {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
-                        </span>
-                        <span className="text-ink-2 line-through">
-                          {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
-                        </span>
-                      </span>
-                    </div>
-                    <div className="mt-1 text-label text-ink-2">
-                      {t.planner.fareCard} &bull; {t.planner.fareSingle}:{' '}
-                      {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
-                      {planResult.fare.busLegs > 1 && (
-                        <span className="block mt-0.5 text-estimated">
-                          {planResult.fare.transfersFree ? t.planner.fareTransferFree : t.planner.fareTransferPaid}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {planResult.totalWaitMinutes > 0 && (
-                  <div className="mt-3 text-label bg-surface/60 text-ink-2 px-3 py-1.5 rounded-md border border-edge flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-estimated shrink-0" />
-                    <span>
-                      {t.planner.includesWait(planResult.totalWaitMinutes)}
-                    </span>
-                  </div>
-                )}
 
               {/* Step by Step Timeline */}
               <div className="space-y-4 relative pl-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface">

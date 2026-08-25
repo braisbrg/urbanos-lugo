@@ -133,6 +133,7 @@ export const gl = {
     ride: (stops: number, minutes: number) =>
       `${stops} ${stops === 1 ? 'parada' : 'paradas'} · ${minutes} min`,
     viaStops: 'Paradas polas que pasa',
+    editTrip: 'Cambiar orixe ou destino',
     quickDestinations: 'Destinos rápidos habituais:',
     noRouteFound: 'Non se atopou unha combinación óptima. Proba con outra rúa ou parada próxima.',
     transferFreeNotice:
@@ -171,6 +172,7 @@ export const gl = {
     includesWait: (minutes: number) =>
       `Inclúe ${minutes} min de espera en paradas e transbordos, segundo os horarios de paso.`,
     transfersShort: (count: number) => (count === 1 ? '1 transbordo' : `${count} transbordos`),
+    timeProvenanceTitle: 'De onde saen estas horas',
     timeProvenance:
       'As horas de saída veñen do cadro horario oficial; as marcadas con ~ calcúlanse sumando o tempo de percorrido medido por estrada. Non hai seguimento GPS da flota, así que convén chegar á parada uns minutos antes.',
   },

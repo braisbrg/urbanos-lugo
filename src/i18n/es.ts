@@ -119,6 +119,7 @@ export const es: Dict = {
     ride: (stops: number, minutes: number) =>
       `${stops} ${stops === 1 ? 'parada' : 'paradas'} · ${minutes} min`,
     viaStops: 'Paradas por las que pasa',
+    editTrip: 'Cambiar origen o destino',
     quickDestinations: 'Destinos rápidos habituales:',
     noRouteFound: 'No se encontró una combinación óptima. Prueba con otra calle o parada cercana.',
     transferFreeNotice:
@@ -157,6 +158,7 @@ export const es: Dict = {
     includesWait: (minutes: number) =>
       `Incluye ${minutes} min de espera en paradas y transbordos, según los horarios de paso.`,
     transfersShort: (count: number) => (count === 1 ? '1 transbordo' : `${count} transbordos`),
+    timeProvenanceTitle: 'De dónde salen estas horas',
     timeProvenance:
       'Las horas de salida vienen del cuadro horario oficial; las marcadas con ~ se calculan sumando el tiempo de recorrido medido por carretera. No hay seguimiento GPS de la flota, así que conviene llegar a la parada unos minutos antes.',
   },

@@ -130,6 +130,7 @@ export const en: Dict = {
     ride: (stops: number, minutes: number) =>
       `${stops} ${stops === 1 ? 'stop' : 'stops'} · ${minutes} min`,
     viaStops: 'Stops along the way',
+    editTrip: 'Change origin or destination',
     quickDestinations: 'Common destinations:',
     noRouteFound: 'No good combination found. Try another street or a nearby stop.',
     transferFreeNotice:
@@ -168,6 +169,7 @@ export const en: Dict = {
     includesWait: (minutes: number) =>
       `Includes ${minutes} min waiting at stops and transfers, from the published times.`,
     transfersShort: (count: number) => (count === 1 ? '1 change' : `${count} changes`),
+    timeProvenanceTitle: 'Where these times come from',
     timeProvenance:
       'Departure times come from the official timetable; those marked ~ are the departure plus the driving time measured along the road. There is no GPS tracking of the fleet, so get to the stop a few minutes early.',
   },

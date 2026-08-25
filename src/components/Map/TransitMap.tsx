@@ -308,8 +308,10 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
       {/* 2-Column Responsive Layout: Options on Left, Map on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Controls & Filters (Geometric Balance Sidebar) */}
-        <div className="lg:col-span-4 space-y-3.5">
+        {/* Left Column: Controls & Filters (Geometric Balance Sidebar).
+            Second on a phone: the map is what the tab is for, and it used to open
+            below a screenful of panels. Unchanged from `lg` up. */}
+        <div className="order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4">
           {/* Header Card with Telemetry */}
           <div className="bg-bg rounded-xl p-4 shadow-sm border border-edge">
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-line">
@@ -359,8 +361,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             )}
           </div>
 
-          {/* Filter Presets Panel */}
-          <div className="bg-bg rounded-xl p-3.5 shadow-sm border border-edge">
+          {/* Filter Presets Panel. First of the panels on a phone, so the map has its
+              own controls directly under it rather than past the telemetry card. */}
+          <div className="order-first bg-bg rounded-xl p-3.5 shadow-sm border border-edge lg:order-none">
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.quickFilters}
             </span>
@@ -577,8 +580,10 @@ export const TransitMap: React.FC<TransitMapProps> = ({
         </div>
 
         {/* Right Column: Interactive Map Canvas */}
-        <div className="lg:col-span-8">
-          <div className="relative z-0 w-full h-[540px] rounded-xl overflow-hidden shadow-sm border border-edge bg-surface">
+        <div className="order-1 lg:order-none lg:col-span-8">
+          {/* Tall enough to be the page on a phone, short enough that the filter row
+              below it peeks in and says there is more. */}
+          <div className="relative z-0 w-full h-[62vh] min-h-[380px] rounded-xl overflow-hidden shadow-sm border border-edge bg-surface lg:h-[540px]">
             <div ref={mapContainerRef} className="w-full h-full" />
 
             {/* Route, Stop, and Vehicle Layers */}
