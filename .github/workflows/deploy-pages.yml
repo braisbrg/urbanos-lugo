@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       # No version here on purpose: the action reads `packageManager` from
       # package.json, so a laptop and this workflow can never drift apart.
