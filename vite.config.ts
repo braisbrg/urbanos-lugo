@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { copyFileSync, existsSync } from 'fs';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -26,6 +27,25 @@ const base = process.env.BASE_PATH || '/';
  * it simply omits them rather than guessing from the base path.
  */
 const site = siteUrl(process.env.SITE_URL);
+
+/** Vite's default output directory, named once so the fallback copy does not guess. */
+const outDir = 'dist';
+
+/**
+ * A copy of the page at 404.html.
+ *
+ * GitHub Pages serves that file for any path it does not have on disk, which is every
+ * tab route -- /paradas, /mapa and the rest exist only in the browser. Without it a
+ * direct visit or a refresh on any of them lands on GitHub's own 404 instead of the app.
+ */
+const emitSpaFallback = {
+  name: 'emit-spa-fallback',
+  apply: 'build' as const,
+  closeBundle() {
+    const built = path.resolve(outDir, 'index.html');
+    if (existsSync(built)) copyFileSync(built, path.resolve(outDir, '404.html'));
+  },
+};
 
 /** robots.txt and sitemap.xml, written beside the built page. */
 const emitSeoFiles = {
@@ -76,6 +96,7 @@ export default defineConfig(() => {
       injectCsp,
       injectSeoTags,
       emitSeoFiles,
+      emitSpaFallback,
       react(),
       tailwindcss(),
       // Everything the app computes — timetables, arrivals, route planning — runs from

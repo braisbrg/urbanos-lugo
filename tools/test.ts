@@ -14,7 +14,7 @@ import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
-import { robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
+import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
@@ -1758,6 +1758,41 @@ ok('the structured data does not pass this off as the operator', () => {
   assert(map.includes(`<loc>${site}</loc>`), 'the sitemap is missing the site root');
   assert(map.includes(`<loc>${site}paradas</loc>`), 'a path passed to the sitemap did not come out');
   assert(!map.includes('//paradas'), 'joining the site URL to a path doubled the slash');
+});
+
+ok('every tab has a path, and the sitemap lists exactly those', () => {
+  // The tab routes exist so the back gesture moves between screens instead of leaving
+  // the site. Two things have to stay in step with the hook: the sitemap, which would
+  // otherwise advertise a path that 404s or miss one that works, and the GitHub Pages
+  // fallback, since none of these paths exist as a file on disk.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const hook = readFileSync(join(root, 'src/hooks/useTabRoute.ts'), 'utf8');
+
+  const slugs = [...hook.matchAll(/^\s{2}\w+: '([a-z]+)',$/gm)].map((m) => m[1]);
+  assert(slugs.length === 5, `the hook maps ${slugs.length} tabs, expected 5: ${slugs.join(', ')}`);
+
+  for (const slug of slugs) {
+    assert(SITE_PATHS.includes(slug), `"${slug}" is a tab route but is not in the sitemap`);
+  }
+  for (const path of SITE_PATHS) {
+    if (path === '') continue;
+    assert(slugs.includes(path), `the sitemap advertises "${path}", which no tab serves`);
+  }
+
+  // A side effect inside a state updater is not guaranteed to run once -- React calls
+  // updaters twice in development -- and doing it there pushed the history entry twice,
+  // which cost a back press that appeared to do nothing.
+  const go = hook.slice(hook.indexOf('const go ='));
+  const updater = go.slice(go.indexOf('setTab('));
+  assert(
+    !/pushState/.test(updater),
+    'history.pushState is back inside the state updater, which double-pushes in development',
+  );
+
+  // Vite is told to copy the built page to 404.html; without it a direct visit to any
+  // of these paths lands on GitHub's own 404 rather than the app.
+  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  assert(/404\.html/.test(vite), 'the SPA fallback copy is gone, so tab paths break on GitHub Pages');
 });
 
 console.log(`\n${checks} checks passed\n`);

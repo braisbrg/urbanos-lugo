@@ -17,6 +17,7 @@ import { BottomNav } from './components/BottomNav';
 import { SideNav } from './components/SideNav';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useRecentStops } from './hooks/useRecentStops';
+import { useTabRoute } from './hooks/useTabRoute';
 import { Lang, isLang, translations } from './i18n';
 import { MenuDrawer } from './components/MenuDrawer';
 import { useTheme } from './hooks/useTheme';
@@ -69,7 +70,9 @@ function MapLoading({ lang }: { lang: Lang }) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'stops' | 'lines' | 'map' | 'plan' | 'info'>('stops');
+  // The open tab lives in the address bar, so the back gesture moves between screens
+  // instead of leaving the site. See src/hooks/useTabRoute.ts.
+  const [activeTab, setActiveTab] = useTabRoute('stops');
   // Open on the busiest interchange rather than whichever stop happens to be first in
   // the file; that used to land on a campus terminus with almost no service.
   const [selectedStop, setSelectedStop] = useState<BusStop>(

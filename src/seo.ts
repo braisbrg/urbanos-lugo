@@ -59,14 +59,17 @@ export function robotsTxt(site: string): string {
   return ['User-agent: *', 'Allow: /', '', `Sitemap: ${site}sitemap.xml`, ''].join('\n');
 }
 
+/** The paths a crawler should know about: the root and one per tab. */
+export const SITE_PATHS = ['', 'paradas', 'linhas', 'mapa', 'ruta', 'avisos'];
+
 /**
  * The sitemap.
  *
- * One entry today, because every screen lives at the same address — see the note in the
- * README about routing. `paths` exists so that adding real routes means passing them
- * here rather than rewriting this.
+ * Six entries: the root and the five tabs. Individual stops and lines are deliberately
+ * absent — they have no URL of their own, and listing pages that render as an empty
+ * shell to a crawler would be worse than listing nothing.
  */
-export function sitemapXml(site: string, paths: string[] = ['']): string {
+export function sitemapXml(site: string, paths: string[] = SITE_PATHS): string {
   const urls = paths
     .map((p) => `  <url><loc>${site}${p.replace(/^\//, '')}</loc></url>`)
     .join('\n');
