@@ -333,7 +333,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
               <div className="p-3 rounded-md bg-surface border border-line">
                 <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
                   <Route className="w-3.5 h-3.5 text-accent" />
-                  <span className="truncate">{t.lines.routeLength}</span>
+                  <span>{t.lines.routeLength}</span>
                 </div>
                 <div className="font-bold text-body text-ink font-mono">
                   {t.lines.kilometres((direction.totalMeters / 1000).toFixed(1))}
@@ -342,14 +342,14 @@ export const LinesView: React.FC<LinesViewProps> = ({
               <div className="p-3 rounded-md bg-surface border border-line">
                 <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
                   <MapPin className="w-3.5 h-3.5 text-accent" />
-                  <span className="truncate">{t.lines.routeStops}</span>
+                  <span>{t.lines.routeStops}</span>
                 </div>
                 <div className="font-bold text-body text-ink font-mono">{direction.stops.length}</div>
               </div>
               <div className="p-3 rounded-md bg-surface border border-line" title={t.lines.routeFreeFlowHint}>
                 <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
                   <Clock className="w-3.5 h-3.5 text-accent" />
-                  <span className="truncate">{t.lines.routeFreeFlow}</span>
+                  <span>{t.lines.routeFreeFlow}</span>
                 </div>
                 <div className="font-bold text-body text-ink font-mono">
                   {Math.round(direction.legSeconds.reduce((a, b) => a + b, 0) / 60)} {t.common.min}
