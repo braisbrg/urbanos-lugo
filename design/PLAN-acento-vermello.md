@@ -107,3 +107,39 @@ en 255 eran o mesmo azul.
   «`src/data/*.json` é xerado, tócanse as ferramentas e rexenérase».
 - **441 páxinas de paradas e liñas**: descartado por agora. Só paga a pena
   **pre-renderizando** no build; sen iso son cascas baleiras para un buscador.
+
+---
+
+## Dúbida aberta de Brais: o «sen tráfico» da ficha de liña
+
+**Sen responder.** Apuntado o 27 de agosto para mirar na sesión seguinte.
+
+Brais observou que na liña 1.1 o cadro horario dá a primeira saída ás **6:58** e a
+última parada ás **7:36** — trinta e oito minutos — mentres a tarxeta «Sen tráfico»
+di **25 min**. Dúas preguntas, e as dúas son boas:
+
+1. **Está ben calculado?** Trece minutos de diferenza non son ruído.
+2. **Sérvelle de algo a quen le?** Se ninguén fai ese traxecto en 25 minutos, é un
+   número que non describe ningunha viaxe real.
+
+### Onde mirar
+
+- `src/components/LinesView.tsx`, na fila de tres datos que se engadiu nesta
+  sesión: `Math.round(direction.legSeconds.reduce((a, b) => a + b, 0) / 60)`.
+- `legSeconds` vén do dataset: **segundos de circulación libre entre paradas
+  consecutivas**, do enrutamento viario ao xerar os datos.
+- `rideBetween()` en `src/utils/transitEngine.ts` **si** engade parada:
+  `seconds += (legSeconds[i] ?? 90) + 20`. Ou sexa, o planificador conta 20 s por
+  parada e a ficha de liña **non**. Esa é a primeira sospeita: 29 paradas × 20 s
+  son case dez minutos, que explicaría boa parte dos trece.
+
+### Antes de tocar nada
+
+Comprobar o dato coa fonte antes de decidir: se o cadro horario publica primeira e
+última hora dese sentido, a duración real está aí e non hai que estimala. Podería
+ser que a tarxeta deba amosar **a duración publicada** e non un modelo — que sería
+coherente co resto da app, onde o publicado sempre gaña ao calculado.
+
+Se se queda un número calculado, o nome ten que seguir dicindo o que é. «Sen
+tráfico» escolleuse a propósito para non chamarlle duración; se pasa a incluír as
+paradas xa non é «sen tráfico», é outra cousa e outro nome.
