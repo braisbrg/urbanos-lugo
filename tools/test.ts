@@ -1684,4 +1684,35 @@ ok('a query with nothing left in it matches nothing', () => {
   }
 });
 
+ok('no source file mixes its line endings', () => {
+  // This repository checks out CRLF on Windows. An edit that inserts a bare "\n" leaves
+  // one LF among hundreds of CRLFs: invisible in an editor, and then a whole-file diff
+  // the next time anything touches it. It has also broken a check in this very suite,
+  // where splitting on "\n" left a carriage return in the middle of a phrase.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const mixed: string[] = [];
+
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (/node_modules|dist|\.git/.test(entry.name)) continue;
+        walk(full);
+        continue;
+      }
+      if (!/\.(ts|tsx|css|html)$/.test(entry.name)) continue;
+      const text = readFileSync(full, 'utf8');
+      const crlf = (text.match(/\r\n/g) ?? []).length;
+      const lf = (text.match(/(?<!\r)\n/g) ?? []).length;
+      if (crlf > 0 && lf > 0) {
+        mixed.push(`${full.slice(root.length + 1)} (${crlf} CRLF, ${lf} LF)`);
+      }
+    }
+  };
+  walk(join(root, 'src'));
+  walk(join(root, 'tools'));
+
+  assert(mixed.length === 0, `mixed line endings in ${mixed.join(', ')}`);
+});
+
 console.log(`\n${checks} checks passed\n`);
