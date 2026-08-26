@@ -70,9 +70,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   /**
    * Only the poles the operator actually publishes a QR token for.
    *
-   * This line read "429 paradas con QR" — the whole network — while 158 of those
-   * stops have no token at all and show no code anywhere else in the app. The count
-   * has to match the claim.
+   * This line used to quote the whole network, when most of those poles have no
+   * token at all and show no code anywhere else in the app. Counting the ones that do
+   * keeps the number and the claim the same size, whatever a rebuild does to the total.
    */
   const stopsWithQr = useMemo(() => BUS_STOPS.filter((s) => poleCode(s)).length, []);
 

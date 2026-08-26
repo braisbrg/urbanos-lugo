@@ -1534,4 +1534,56 @@ ok('the policy is not sent in development, where it serves a blank page', () => 
   assert(/apply: 'build'/.test(vite), 'the CSP injector no longer limits itself to builds');
 });
 
+ok('no comment quotes a stop count the dataset no longer has', () => {
+  // Merging nine duplicated poles moved the total from 429 to 417 and left five
+  // comments asserting the old one. Prose in a comment ages exactly like prose in a
+  // README, and nothing was watching this kind.
+  //
+  // Only counts stated about stops are checked, and only in src/: an HTTP 429 in a
+  // retry comment is not a stop count, and a sentence about what a line "used to read"
+  // is history and allowed to quote the old number.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const total = BUS_STOPS.length;
+  const wrong: string[] = [];
+
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+      // Split on either ending: this repository checks out CRLF on Windows, and a
+      // stray carriage return at the end of a line is enough to break "used to" across
+      // the join below and defeat the filter.
+      const lines = readFileSync(full, 'utf8').split(/\r?\n/);
+      lines.forEach((line, i) => {
+          if (!/^\s*(\/\/|\*|\/\*)/.test(line)) return;
+          // A sentence wraps, so the marker that makes a quotation history sits a line
+          // or two above the number it introduces — and "used to" can be split across
+          // the wrap, with a comment asterisk landing between the two words.
+          const sentence = lines
+            .slice(Math.max(0, i - 2), i + 1)
+            .map((l) => l.replace(/^\s*(\/\/|\*|\/\*\*?)\s?/, ''))
+            .join(' ');
+          if (/used to|antes|adoitaba|read "/.test(sentence)) return;
+          for (const m of line.matchAll(/\b(\d{3})\s+(stops|paradas|dots|poles|postes)\b/g)) {
+            if (Number(m[1]) !== total) {
+              wrong.push(`${full.slice(root.length + 1)}:${i + 1} says "${m[0]}", the dataset has ${total}`);
+            }
+          }
+          for (const m of line.matchAll(/\bof the (\d{3})\b/g)) {
+            if (Number(m[1]) !== total) {
+              wrong.push(`${full.slice(root.length + 1)}:${i + 1} says "of the ${m[1]}", the dataset has ${total}`);
+            }
+          }
+      });
+    }
+  };
+  walk(join(root, 'src'));
+
+  assert(wrong.length === 0, wrong.join('; '));
+});
+
 console.log(`\n${checks} checks passed\n`);

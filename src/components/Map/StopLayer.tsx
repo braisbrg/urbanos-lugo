@@ -31,7 +31,7 @@ interface StopLayerProps {
 
 /**
  * Below this zoom only interchanges are drawn. Every serious transit map declutters this
- * way: 429 dots over a city-wide view hide the very lines they belong to, and none of
+ * way: 417 dots over a city-wide view hide the very lines they belong to, and none of
  * them can carry a label at that scale anyway.
  */
 const ALL_STOPS_FROM_ZOOM = 15;
@@ -94,7 +94,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
 
       visible.forEach((stop) => {
         // circleMarker draws into the map's shared canvas. divIcon, used here before,
-        // creates one DOM node per stop — 429 of them on the overview.
+        // creates one DOM node per stop — 417 of them on the overview.
         const marker = L.circleMarker([stop.lat, stop.lng], {
           radius: 5,
           color: colors.stopStroke,

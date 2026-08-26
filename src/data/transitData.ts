@@ -21,7 +21,7 @@ export const BUS_LINES: BusLine[] = (rawLines as unknown as BusLine[]).map((line
 }));
 
 /**
- * The code actually printed on the pole, or null. Only 271 of the 429 stops have one
+ * The code actually printed on the pole, or null. Only 271 of the 417 stops have one
  * (the ones with a live panel); for the rest the app was showing an internal number
  * that appears nowhere in the street, which is worse than showing nothing.
  */
