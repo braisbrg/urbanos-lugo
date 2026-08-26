@@ -88,7 +88,7 @@ async function startServer() {
   // that stop, 'estimated' when it is computed from a departure plus measured road time.
   // Nothing here is a vehicle observation — this network publishes no position feed.
   const handleArrivals = (req: express.Request, res: express.Response) => {
-    const code = req.params.code || req.params.stopId;
+    const code = queryString(req.params.code) || queryString(req.params.stopId);
     const { stop, arrivals } = getArrivalsForStop(code);
 
     if (!stop) {
@@ -208,7 +208,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else if (existsSync(path.join(distPath, 'index.html'))) {
     app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
+    app.get('/{*splat}', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   } else {
