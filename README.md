@@ -270,7 +270,7 @@ para que calquera enlace QR antigo siga resolvendo.
 As 24 liñas inclúen a **5DS** e os **catro ramais rurais da liña 11** (Pías, Bóveda,
 Calde e Santa Comba), que se publican por separado porque son servizos distintos.
 
-`pnpm audit` imprime estas cifras actualizadas xunto cos tramos sospeitosos.
+`pnpm data:audit` imprime estas cifras actualizadas xunto cos tramos sospeitosos.
 
 ---
 
@@ -948,7 +948,7 @@ peor caso queda a uns 14 min escóllase o número que se escolla. Por iso se usa
 enriba da mediana, e por iso o camiño real hai que **pedilo**, non calculalo.
 
 ```bash
-pnpm audit
+pnpm data:audit
 ```
 
 Informe lexible: cobertura, ficha por liña, **tramos sospeitosos** (desvío viario fronte
@@ -974,7 +974,7 @@ pnpm lint
   é dicir: o camiño por rúa entre dúas paradas consecutivas é máis de catro veces a
   distancia en liña recta. Adoita significar que o itinerario lista os dous postes
   opostos da mesma rúa dentro do mesmo sentido (o bus tería que dar a volta), ou que
-  hai sentidos únicos no casco histórico. `pnpm audit` lístaos un a un.
+  hai sentidos únicos no casco histórico. `pnpm data:audit` lístaos un a un.
 - **12 paradas sen coordenadas** na fonte quedan fóra do conxunto de datos.
 - **Festivos locais** non se distinguen dos domingos.
 - **Tres sentidos debúxanse coa ruta dun coche**, non co itinerario levantado en OSM:

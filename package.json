@@ -25,7 +25,7 @@
     "data:fetch": "tsx tools/importOfficialData.ts",
     "data:osm": "tsx tools/importOsmRoutes.ts",
     "data:build": "tsx tools/buildDataset.ts",
-    "audit": "tsx tools/fullAudit.ts",
+    "data:audit": "tsx tools/fullAudit.ts",
     "reconcile": "tsx tools/reconcile.ts",
     "reconcile:selftest": "tsx tools/reconcileSelfTest.ts",
     "test": "tsx tools/test.ts",

@@ -1,7 +1,7 @@
 /**
  * Human-readable data quality report.
  *
- *   npm run audit
+ *   pnpm data:audit
  *
  * `npm test` asserts the invariants and fails the build; this prints the shape of the
  * dataset and flags the things that are suspicious rather than provably wrong.
