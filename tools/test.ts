@@ -14,6 +14,7 @@ import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
+import { robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
@@ -1109,6 +1110,10 @@ ok('no view renders Galician or Spanish text of its own', () => {
   for (const file of listSourceFiles(join(root, 'src'))) {
     // The dictionaries are supposed to be full of Galician and Spanish.
     if (!/\.tsx?$/.test(file) || file.split(sep).includes('i18n')) continue;
+    // So is seo.ts: the structured data a crawler reads is build-time metadata in one
+    // language, not an interface string, and putting it through the dictionary would
+    // imply it changes with the reader's choice. It does not.
+    if (file.endsWith(`${sep}seo.ts`)) continue;
     const source = readFileSync(file, 'utf8');
     source.split(/\r?\n/).forEach((line, i) => {
       // A trailing comment is never rendered; only what is left of the code matters.
@@ -1713,6 +1718,46 @@ ok('no source file mixes its line endings', () => {
   walk(join(root, 'tools'));
 
   assert(mixed.length === 0, `mixed line endings in ${mixed.join(', ')}`);
+});
+
+ok('the search-engine tags are omitted rather than guessed', () => {
+  // A canonical or a sitemap carrying the wrong origin is worse than having neither: it
+  // sends crawlers to pages that do not exist. So a build with no SITE_URL emits none of
+  // it, and anything that is not a plain https origin is treated as no URL at all.
+  for (const bad of [undefined, '', 'not a url', 'ftp://example.com', 'http://example.com', 'javascript:alert(1)']) {
+    assert(siteUrl(bad) === null, `"${bad}" was accepted as a site URL`);
+  }
+  assert(siteUrl('http://localhost:3001') === 'http://localhost:3001/', 'localhost is refused, so a local build cannot be checked');
+  assert(
+    siteUrl('https://braisbrg.github.io/urbanos-lugo') === 'https://braisbrg.github.io/urbanos-lugo/',
+    'the trailing slash is not added, so every generated URL would be joined wrong',
+  );
+});
+
+ok('the structured data does not pass this off as the operator', () => {
+  // A crawler reading this should not come away thinking AULUSA or the Concello
+  // publishes it. The app says so on every screen; the machine-readable copy has to
+  // as well, and it is the one nobody looks at.
+  const site = 'https://example.org/';
+  const data = JSON.parse(structuredData(site));
+
+  assert(data['@type'] === 'WebApplication', `@type is ${data['@type']}`);
+  assert(data.url === site, 'the url field does not match the site');
+  assert(
+    /non oficial/i.test(String(data.disambiguatingDescription)),
+    'the structured data no longer says the project is unofficial',
+  );
+  assert(data.isAccessibleForFree === true, 'it is free and should say so');
+
+  // robots.txt has to point at a sitemap that is actually emitted beside it.
+  const robots = robotsTxt(site);
+  assert(robots.includes(`Sitemap: ${site}sitemap.xml`), `robots.txt does not name the sitemap: ${robots}`);
+  assert(/^User-agent: \*/m.test(robots), 'robots.txt has no user-agent line');
+
+  const map = sitemapXml(site, ['', 'paradas']);
+  assert(map.includes(`<loc>${site}</loc>`), 'the sitemap is missing the site root');
+  assert(map.includes(`<loc>${site}paradas</loc>`), 'a path passed to the sitemap did not come out');
+  assert(!map.includes('//paradas'), 'joining the site URL to a path doubled the slash');
 });
 
 console.log(`\n${checks} checks passed\n`);

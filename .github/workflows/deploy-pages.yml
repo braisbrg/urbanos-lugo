@@ -57,8 +57,12 @@ jobs:
       - name: Build
         env:
           # Project sites live at https://<user>.github.io/<repo>/. For a user site or a
-          # custom domain, set this to "/" instead.
+          # custom domain, set BASE_PATH to "/" and SITE_URL to that domain.
           BASE_PATH: /${{ github.event.repository.name }}/
+          # The canonical link, robots.txt and sitemap.xml are only emitted when this
+          # is set, because pointing a crawler at the wrong origin is worse than
+          # pointing it nowhere.
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: pnpm run build
 
       # Stops GitHub Pages from running Jekyll over the output.

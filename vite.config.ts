@@ -4,6 +4,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { CSP_META } from './src/security/csp';
+import { robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
 
 // GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
 // Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
@@ -17,6 +18,45 @@ const base = process.env.BASE_PATH || '/';
  * the production policy to admit a development socket would be the wrong way
  * round, so the tag is added when building and never in dev.
  */
+/**
+ * Where this build will live, or null.
+ *
+ * Set by the workflow. A canonical or a sitemap carrying the wrong origin is worse than
+ * having neither -- it points crawlers at pages that do not exist -- so a build without
+ * it simply omits them rather than guessing from the base path.
+ */
+const site = siteUrl(process.env.SITE_URL);
+
+/** robots.txt and sitemap.xml, written beside the built page. */
+const emitSeoFiles = {
+  name: 'emit-seo-files',
+  apply: 'build' as const,
+  generateBundle() {
+    if (!site) return;
+    for (const [fileName, source] of [
+      ['robots.txt', robotsTxt(site)],
+      ['sitemap.xml', sitemapXml(site)],
+    ] as const) {
+      // @ts-expect-error -- `this` is Rollup's plugin context at build time.
+      this.emitFile({ type: 'asset', fileName, source });
+    }
+  },
+};
+
+/** The canonical link and the structured data, which both need the real address. */
+const injectSeoTags = {
+  name: 'inject-seo-tags',
+  apply: 'build' as const,
+  transformIndexHtml(html: string) {
+    if (!site) return html;
+    const tags = [
+      `<link rel="canonical" href="${site}" />`,
+      `<script type="application/ld+json">${structuredData(site)}</script>`,
+    ].join('\n    ');
+    return html.replace('<meta name="theme-color"', `${tags}\n    <meta name="theme-color"`);
+  },
+};
+
 const injectCsp = {
   name: 'inject-csp',
   apply: 'build' as const,
@@ -34,6 +74,8 @@ export default defineConfig(() => {
     base,
     plugins: [
       injectCsp,
+      injectSeoTags,
+      emitSeoFiles,
       react(),
       tailwindcss(),
       // Everything the app computes — timetables, arrivals, route planning — runs from
