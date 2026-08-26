@@ -14,6 +14,7 @@ import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
+import { clockDriftFromTimetable } from '../src/utils/clock';
 import { calculateRelevanceScore, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
@@ -1584,6 +1585,39 @@ ok('no comment quotes a stop count the dataset no longer has', () => {
   walk(join(root, 'src'));
 
   assert(wrong.length === 0, wrong.join('; '));
+});
+
+ok('a device on the wrong timezone is told, and one on the right one is not', () => {
+  // Every hour on the board comes from Date.getHours(), which is the device's, and every
+  // hour in the timetable is Lugo's. A device an hour out shifts the entire board with
+  // nothing on screen admitting it -- the one failure this app is built not to have.
+  const summer = new Date(2026, 6, 15, 12, 0, 0); // July: Lugo is on CEST
+  const winter = new Date(2026, 0, 15, 12, 0, 0); // January: CET
+  const original = process.env.TZ;
+
+  const driftIn = (zone: string, at: Date) => {
+    process.env.TZ = zone;
+    return clockDriftFromTimetable(new Date(at.getTime()));
+  };
+
+  try {
+    // Half-hour zones and the southern hemisphere are where a naive hours-only
+    // comparison falls over, so both are here.
+    const cases: [string, Date, number][] = [
+      ['Europe/Madrid', summer, 0],
+      ['Europe/Madrid', winter, 0],
+      ['Europe/London', summer, -60],
+      ['UTC', summer, -120],
+      ['Asia/Kolkata', summer, 210],
+      ['Australia/Sydney', summer, 480],
+    ];
+    for (const [zone, at, expected] of cases) {
+      const got = driftIn(zone, at);
+      assert(got === expected, `${zone} in ${at.getMonth() + 1}/2026: drift ${got} min, expected ${expected}`);
+    }
+  } finally {
+    process.env.TZ = original;
+  }
 });
 
 console.log(`\n${checks} checks passed\n`);

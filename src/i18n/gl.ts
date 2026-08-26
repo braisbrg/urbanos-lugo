@@ -346,6 +346,10 @@ export const gl = {
   },
 
   arrivals: {
+    clockDrift: (hours: string, zone: string) =>
+      `O teu dispositivo vai ${hours} respecto da hora de Lugo (está en ${zone}). Os horarios desta páxina son os de Lugo, así que o que ves aquí non coincide co reloxo do teu aparello.`,
+    clockAhead: (h: string) => `${h} por diante`,
+    clockBehind: (h: string) => `${h} por detrás`,
     viewNext: 'Próximas',
     atTimeLabel: 'Ver o paso ás',
     showingAt: (time: string) => `Paso previsto ás ${time}, non agora mesmo.`,

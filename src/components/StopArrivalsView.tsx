@@ -11,6 +11,7 @@ import {
 } from '../utils/transitEngine';
 import { Lang, translations } from '../i18n';
 import { newIssueUrl } from '../project';
+import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';
 import {
   watchForStop,
   ringAlarm,
@@ -36,6 +37,14 @@ interface StopArrivalsViewProps {
 const NearbyMiniMap = lazy(() =>
   import('./Map/NearbyMiniMap').then((m) => ({ default: m.NearbyMiniMap })),
 );
+
+/** "2 h", or "1 h 30 min" for the half-hour zones. */
+function formatDriftHours(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (!hours) return `${rest} min`;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
 
 /** How much warning is useful: enough to put your coat on and get to the door. */
 const WATCH_LEAD_MINUTES = 5;
@@ -101,6 +110,13 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   const [firedMessage, setFiredMessage] = useState<string | null>(null);
 
   const t = translations(lang);
+
+  /**
+   * Every hour on this board is the device's idea of the time, and the timetable is
+   * Lugo's. When they disagree the whole board is shifted and nothing else says so.
+   * Computed once: a timezone does not change while somebody reads a bus board.
+   */
+  const clockDrift = useMemo(() => clockDriftFromTimetable(), []);
 
   /** Close enough that picking the wrong one is a real mistake, not a different trip. */
   const polesNearby = useMemo(
@@ -588,6 +604,20 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label text-ink-2">
           {t.arrivals.copyFailed}{' '}
           <span className="tnum block break-all pt-1 text-ink select-all">{copyFailedUrl}</span>
+        </p>
+      )}
+
+      {clockDrift !== 0 && (
+        <p
+          role="alert"
+          className="mt-3 rounded-[10px] border border-warn bg-warn p-3 text-label leading-relaxed text-warn-ink"
+        >
+          {t.arrivals.clockDrift(
+            (clockDrift > 0 ? t.arrivals.clockAhead : t.arrivals.clockBehind)(
+              formatDriftHours(Math.abs(clockDrift)),
+            ),
+            deviceTimeZone(),
+          )}
         </p>
       )}
 

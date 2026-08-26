@@ -332,6 +332,10 @@ export const es: Dict = {
   },
 
   arrivals: {
+    clockDrift: (hours: string, zone: string) =>
+      `Tu dispositivo va ${hours} respecto de la hora de Lugo (está en ${zone}). Los horarios de esta página son los de Lugo, así que lo que ves aquí no coincide con el reloj de tu aparato.`,
+    clockAhead: (h: string) => `${h} por delante`,
+    clockBehind: (h: string) => `${h} por detrás`,
     viewNext: 'Próximas',
     atTimeLabel: 'Ver el paso a las',
     showingAt: (time: string) => `Paso previsto a las ${time}, no ahora mismo.`,

@@ -343,6 +343,10 @@ export const en: Dict = {
   },
 
   arrivals: {
+    clockDrift: (hours: string, zone: string) =>
+      `Your device is ${hours} Lugo time (it is set to ${zone}). The timetables on this page are Lugo's, so what you see here will not match your own clock.`,
+    clockAhead: (h: string) => `${h} ahead of`,
+    clockBehind: (h: string) => `${h} behind`,
     viewNext: 'Next',
     atTimeLabel: 'Show departures at',
     showingAt: (time: string) => `Departures due at ${time}, not right now.`,
