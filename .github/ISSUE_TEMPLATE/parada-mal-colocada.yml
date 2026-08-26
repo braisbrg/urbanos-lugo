@@ -1,0 +1,40 @@
+name: Unha parada está mal colocada
+description: O punto do mapa non coincide co poste real.
+labels: [datos, parada]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Se chegaches aquí desde a aplicación, os datos da parada xa viñan escritos e non
+        fai falla este formulario. Isto é para cando abres a incidencia por outro lado.
+
+
+        As coordenadas son as que publica o operador en buslugo.com, non estimacións
+        nosas, así que unha diferenza adoita significar unha de dúas cousas: ou o
+        operador ten ese dato mal, ou nós recollémolo mal. Saber cal é o primeiro paso.
+
+  - type: input
+    id: parada
+    attributes:
+      label: Que parada
+      description: O nome tal e como aparece na aplicación, e o código do poste se o ves.
+      placeholder: Rda. Muralla 56 (Sindicatos) — uilP
+    validations:
+      required: true
+
+  - type: input
+    id: onde
+    attributes:
+      label: Onde está de verdade
+      description: >-
+        O máis exacto que poidas. Vale unha coordenada, e vale igual de ben "no outro lado
+        da rúa, fronte ao número 56".
+      placeholder: 43.00951, -7.55742 — ou "diante do portal 58, non do 44"
+    validations:
+      required: true
+
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Algo máis
+      description: Opcional. Unha foto do poste axuda máis que calquera descrición.

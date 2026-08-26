@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
+import { REPO_URL } from '../src/project';
 import { calculateRelevanceScore, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
@@ -1430,6 +1431,34 @@ ok('dark is the default, and only a choice is remembered', () => {
   const key = hook.match(/const KEY = '([^']+)'/)?.[1];
   assert(key, 'useTheme has no storage key');
   assert(init.includes(`'${key}'`), `theme-init.js does not read ${key}`);
+});
+
+ok('the repository URL is written in one place', () => {
+  // Two things break quietly if this is renamed: the "wrong place" link a reader opens
+  // from a stop, and the User-Agent buslugo.com sees. SECURITY.md and the issue config
+  // are prose and may spell it out; shipped code may not.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+      if (full.endsWith(join('src', 'project.ts'))) continue;
+      if (/github\.com\/braisbrg/.test(readFileSync(full, 'utf8'))) {
+        offenders.push(full.slice(root.length + 1));
+      }
+    }
+  };
+  walk(join(root, 'src'));
+  assert(
+    offenders.length === 0,
+    `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`,
+  );
+  assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
 });
 
 console.log(`\n${checks} checks passed\n`);

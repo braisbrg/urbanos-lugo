@@ -1,0 +1,19 @@
+# Blank issues stay enabled on purpose. The app links straight to `issues/new` with the
+# pole code, id and coordinates already in the body; turning them off would send someone
+# standing at a bus stop to a chooser and lose the prefill.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Horarios, incidencias e reclamacións do servizo
+    url: https://buslugo.com
+    about: >-
+      Este repositorio non é do operador. Para un bus que non pasou, unha reclamación ou
+      calquera cousa sobre o servizo, a fonte e o interlocutor son AULUSA / Grupo Monbus.
+      Aquí só se arranxa o que esta aplicación le mal.
+
+  - name: O trazado dunha liña no mapa
+    url: https://www.openstreetmap.org
+    about: >-
+      Os percorridos que se debuxan veñen de OpenStreetMap. Se un itinerario está mal
+      levantado, corrixilo alí arranxa isto e mais todo o que use eses datos. Se o que
+      falla é que aquí non se recolleu o cambio, iso si é unha incidencia deste repo.

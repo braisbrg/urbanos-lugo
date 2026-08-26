@@ -10,6 +10,7 @@ import {
   timingPointStopCount,
 } from '../utils/transitEngine';
 import { Lang, translations } from '../i18n';
+import { newIssueUrl } from '../project';
 import {
   watchForStop,
   ringAlarm,
@@ -273,10 +274,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       `- ${selectedStop.lat.toFixed(5)}, ${selectedStop.lng.toFixed(5)}`,
       '',
     ].join(String.fromCharCode(10));
-    return (
-      'https://github.com/braisbrg/urbanos-lugo/issues/new?' +
-      new URLSearchParams({ title: `Parada: ${selectedStop.name}`, body }).toString()
-    );
+    return newIssueUrl(`Parada: ${selectedStop.name}`, body);
   })();
 
   const withinHour = arrivals.filter((a) => a.etaMinutes <= NEXT_VIEW_HORIZON_MIN);

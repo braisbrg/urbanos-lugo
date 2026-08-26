@@ -1008,6 +1008,11 @@ e a súa procedencia detallada en [`DATA.md`](DATA.md).
 Este proxecto **non é un servizo oficial** e non está avalado por AULUSA, Grupo Monbus
 nin o Concello de Lugo. É un lector dun cadro horario público.
 
+Por iso as incidencias do repositorio [remiten a buslugo.com](.github/ISSUE_TEMPLATE/config.yml)
+todo o que sexa do servizo — un bus que non pasou, unha reclamación — e a OpenStreetMap
+o que sexa dun trazado mal levantado. Aquí só se arranxa o que esta aplicación le mal.
+Para un fallo de seguridade, [`SECURITY.md`](SECURITY.md).
+
 Cartografía © OpenStreetMap contributors © CARTO.
 
 ---
