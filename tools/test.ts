@@ -1620,4 +1620,37 @@ ok('a device on the wrong timezone is told, and one on the right one is not', ()
   }
 });
 
+ok('a code that names no stop resolves to nothing, not to somebody else', () => {
+  // findStop used to fall back to a ranked search when the exact match failed, so a
+  // damaged sticker or a mistyped link produced a real arrival board for the wrong
+  // pole: "../" and "." both came back as As Pedreiras, "-1" as Rda. Muralla 163-164,
+  // "NaN" as Rúa Dinán. Every caller is resolving an identifier, not searching, and a
+  // board that is confidently wrong is worse than one that says it does not know.
+  const nonsense = ['../', '..', '/', '.', '', '   ', 'ZZZZ', '0', '-1', 'NaN', 'null', '%', '999999'];
+  for (const q of nonsense) {
+    const hit = findStop(q);
+    assert(!hit, `"${q}" resolves to ${hit?.name}`);
+  }
+
+  // A fragment of a real name is still a search, not an identifier.
+  const first = BUS_STOPS[0];
+  assert(!findStop(first.name.slice(0, 5)), `a partial name resolves: "${first.name.slice(0, 5)}"`);
+
+  // And nothing real may have been lost: every id, code, operator number and name.
+  for (const stop of BUS_STOPS) {
+    assert(findStop(stop.id)?.id === stop.id, `id ${stop.id} no longer resolves`);
+    if (stop.code) assert(findStop(stop.code)?.id === stop.id, `code ${stop.code} no longer resolves`);
+    // Three names belong to two poles each -- opposite sides of the same road -- so a
+    // name can only ever resolve to one of them. Any stop with that name will do; a
+    // reader who needs a specific pole has its code.
+    assert(
+      findStop(stop.name)?.name === stop.name,
+      `name "${stop.name}" no longer resolves`,
+    );
+    for (const official of stop.officialIds ?? []) {
+      assert(findStop(String(official)), `operator number ${official} no longer resolves`);
+    }
+  }
+});
+
 console.log(`\n${checks} checks passed\n`);

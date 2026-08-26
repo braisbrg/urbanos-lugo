@@ -273,27 +273,37 @@ export function resolveLocationQuery(
 }
 
 // Resolve a stop from an id, an official code/QR token, or free text.
+/**
+ * The stop a code names, or nothing.
+ *
+ * Deliberately exact. Every caller is resolving an identifier — a scanned QR, a
+ * `?parada=` link, an API path — and none of them is searching. A ranked fallback used
+ * to run when the exact match failed, which meant a damaged sticker or a mistyped link
+ * produced somebody else's arrival board rather than an error: "../" and "." both came
+ * back as As Pedreiras, "-1" as Rda. Muralla 163-164, "NaN" as Rúa Dinán. A board that
+ * is confidently wrong is worse than a board that says it does not know that code.
+ *
+ * A full name still resolves, exactly, because a shared link can carry one. What is
+ * gone is the ranking: partial and approximate matching is a search box's job, and the
+ * search field and the planner each do their own with the right shape for it.
+ */
 export function findStop(query: string): BusStop | undefined {
   const q = query.trim();
+  if (!q) return undefined;
   const lower = q.toLowerCase();
 
-  const exact =
+  return (
     BUS_STOPS.find((s) => s.id.toLowerCase() === lower) ||
     BUS_STOPS.find((s) => s.code.toLowerCase() === lower) ||
-    BUS_STOPS.find((s) => s.officialIds?.some((id) => String(id) === q));
-  if (exact) return exact;
-
-  const ranked = BUS_STOPS.map((s) => ({
-    stop: s,
-    score: Math.max(
-      calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
-      ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.address)),
-    ),
-  }))
-    .filter((c) => c.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  return ranked[0]?.stop;
+    // The operator's own stop number, which is what a `?ps=` link carries.
+    BUS_STOPS.find((s) => s.officialIds?.some((id) => String(id) === q)) ||
+    // A whole name, including one the operator still prints for a merged pole.
+    BUS_STOPS.find(
+      (s) =>
+        s.name.toLowerCase() === lower ||
+        (s.aliases ?? []).some((a) => a.toLowerCase() === lower),
+    )
+  );
 }
 
 /**
