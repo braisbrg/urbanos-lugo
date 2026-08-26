@@ -22,13 +22,21 @@ function queryString(value: unknown): string {
 const MAX_QUERY_LENGTH = 120;
 
 async function startServer() {
+  // Read once: the CSP below has to know, and so does the choice of Vite or dist.
+  const isDev = process.argv.includes('--dev');
   const app = express();
   app.use(express.json({ limit: '32kb' }));
 
   app.use((req, res, next) => {
     // The app serves no user content and embeds no third-party frames, so a tight
     // baseline costs nothing. Tiles and fonts are the only remote origins.
-    res.setHeader('Content-Security-Policy', CSP_HEADER);
+    //
+    // Not in dev. Vite serves an inline preamble and talks to an HMR websocket, both
+    // of which this policy refuses -- sending it here served a blank page and an
+    // "@vitejs/plugin-react can't detect preamble" in the console. Loosening the
+    // production policy to admit a development socket would be the wrong way round;
+    // `pnpm build && pnpm start` serves the real thing with the header on.
+    if (!isDev) res.setHeader('Content-Security-Policy', CSP_HEADER);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -192,7 +200,7 @@ async function startServer() {
   // back to the dev server in production.
   const distPath = path.join(process.cwd(), 'dist');
 
-  if (process.argv.includes('--dev')) {
+  if (isDev) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

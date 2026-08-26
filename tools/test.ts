@@ -1505,4 +1505,33 @@ ok('the install-script allowlist is where the pinned pnpm looks for it', () => {
   assert(allowed.length <= 3, `${allowed.length} packages may run install scripts; that list should stay tiny`);
 });
 
+ok('the policy is not sent in development, where it serves a blank page', () => {
+  // Sending the CSP from the dev server blocked Vite's inline React preamble and its
+  // HMR websocket: `pnpm dev` rendered nothing at all and the console said
+  // "@vitejs/plugin-react can't detect preamble". It survived a first look because the
+  // browser had the pre-fix response cached, which is worth remembering next time a fix
+  // appears not to work.
+  //
+  // The header still goes out for `pnpm start`, which is what anybody self-hosting runs.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const server = readFileSync(join(root, 'server.ts'), 'utf8');
+
+  const line = server.split('\n').find((l) => l.includes("setHeader('Content-Security-Policy'"));
+  assert(line, 'the server no longer sends a Content-Security-Policy at all');
+  assert(
+    /if \(!isDev\)/.test(line!),
+    `the CSP header is sent unconditionally, which breaks \`pnpm dev\`: ${line!.trim()}`,
+  );
+
+  // The page carries its own copy for GitHub Pages, and that one must not reach dev
+  // either -- it is injected when building, never written into the source HTML.
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  assert(
+    !/Content-Security-Policy/.test(html),
+    'index.html has a CSP meta tag again; it applies to `vite dev` and blocks HMR',
+  );
+  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  assert(/apply: 'build'/.test(vite), 'the CSP injector no longer limits itself to builds');
+});
+
 console.log(`\n${checks} checks passed\n`);
