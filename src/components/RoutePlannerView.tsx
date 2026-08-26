@@ -342,7 +342,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               className="flex w-full items-center gap-2 rounded-xl border border-edge bg-bg p-3.5 text-left shadow-sm lg:hidden"
             >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
+              <span
+                title={`${originQuery} → ${destQuery}`}
+                className="min-w-0 flex-1 truncate text-label font-semibold text-ink"
+              >
                 {originQuery} → {destQuery}
               </span>
               <span className="shrink-0 text-label font-semibold text-accent underline">

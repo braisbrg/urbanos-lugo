@@ -160,7 +160,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               <MapPin className="h-[19px] w-[19px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-emph font-semibold">{stop.name}</span>
+                <span title={stop.name} className="block truncate text-emph font-semibold">
+                  {stop.name}
+                </span>
                 <span className="block truncate text-label text-ink-3">
                   {stop.zone} · {t.common.lines(stop.lines.length)}
                 </span>
@@ -194,7 +196,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 {line.number}
               </span>
-              <span className="min-w-0 flex-1 truncate text-body font-medium">{line.name}</span>
+              <span title={line.name} className="min-w-0 flex-1 truncate text-body font-medium">
+                {line.name}
+              </span>
             </button>
           ))}
         </div>

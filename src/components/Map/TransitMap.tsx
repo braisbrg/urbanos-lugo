@@ -459,7 +459,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                     >
                       {line.number}
                     </span>
-                    <span className="truncate flex-1 text-ink-2">{nearestStop.name}</span>
+                    <span title={nearestStop.name} className="truncate flex-1 text-ink-2">
+                      {nearestStop.name}
+                    </span>
                     <span className="tnum shrink-0 font-semibold text-ink-3">~{walkMeters} m</span>
                   </button>
                 ))}

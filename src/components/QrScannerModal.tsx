@@ -236,7 +236,9 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
                 }}
                 className="w-full p-2.5 rounded-md bg-surface hover:bg-surface text-left text-label flex items-center justify-between border border-edge transition-colors group gap-2"
               >
-                <span className="font-semibold text-ink group-hover:text-accent truncate">{stop.name}</span>
+                <span title={stop.name} className="font-semibold text-ink group-hover:text-accent truncate">
+                    {stop.name}
+                  </span>
                 <span className="font-mono text-accent font-bold shrink-0">{stop.code}</span>
               </button>
             ))}

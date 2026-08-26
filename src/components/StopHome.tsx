@@ -139,7 +139,9 @@ export const StopHome: React.FC<StopHomeProps> = ({
                 className="w-full rounded-xl border border-edge bg-surface p-3.5 text-left"
               >
                 <span className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-emph font-semibold">{stop.name}</span>
+                  <span title={stop.name} className="truncate text-emph font-semibold">
+                    {stop.name}
+                  </span>
                   <span className="tnum shrink-0 text-label text-ink-3">{stop.zone}</span>
                 </span>
 
@@ -248,7 +250,9 @@ export const StopHome: React.FC<StopHomeProps> = ({
                     className="flex w-full items-center gap-3 rounded-[10px] border border-edge px-3.5 py-3 text-left"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-semibold">{stop.name}</span>
+                      <span title={stop.name} className="block truncate text-body font-semibold">
+                      {stop.name}
+                    </span>
                       <span className="block truncate text-label text-ink-3">
                         {stop.zone} · {t.common.lines(stop.lines.length)}
                       </span>
