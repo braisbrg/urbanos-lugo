@@ -7,7 +7,7 @@
  * rather than in the browser.
  */
 import assert from 'assert';
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
@@ -1459,6 +1459,50 @@ ok('the repository URL is written in one place', () => {
     `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`,
   );
   assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
+});
+
+ok('the install-script allowlist is where the pinned pnpm looks for it', () => {
+  // pnpm 10 moved its settings out of package.json into pnpm-workspace.yaml and ignores
+  // the old key -- with a warning nobody reads on a CI log. Upgrading without moving
+  // this would silently re-allow every dependency's postinstall, which is the one thing
+  // it exists to prevent, and nothing would look broken.
+  //
+  // It cannot be observed working: esbuild is currently the only dependency with an
+  // install script, so allowing exactly esbuild and allowing everything behave the same
+  // today. That is precisely why it needs a test rather than a look.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+
+  const pinned = String(pkg.packageManager ?? '');
+  assert(/^pnpm@\d/.test(pinned), `packageManager is "${pinned}", not a pinned pnpm`);
+  const major = Number(pinned.slice('pnpm@'.length).split('.')[0]);
+
+  const inPackageJson = pkg.pnpm?.onlyBuiltDependencies;
+  const workspaceFile = join(root, 'pnpm-workspace.yaml');
+  const inWorkspace = existsSync(workspaceFile)
+    ? /onlyBuiltDependencies/.test(readFileSync(workspaceFile, 'utf8'))
+    : false;
+
+  if (major >= 10) {
+    assert(
+      inWorkspace,
+      'pnpm 10 reads settings from pnpm-workspace.yaml; onlyBuiltDependencies is not there, ' +
+        'so every dependency may run an install script again',
+    );
+  } else {
+    assert(
+      Array.isArray(inPackageJson),
+      'pnpm 9 reads onlyBuiltDependencies from package.json and it is missing',
+    );
+    assert(
+      inPackageJson.includes('esbuild'),
+      'esbuild is not allowed to run its install script, so the build cannot place its binary',
+    );
+  }
+
+  // Whatever the version, the list stays short enough to read.
+  const allowed = inPackageJson ?? [];
+  assert(allowed.length <= 3, `${allowed.length} packages may run install scripts; that list should stay tiny`);
 });
 
 console.log(`\n${checks} checks passed\n`);

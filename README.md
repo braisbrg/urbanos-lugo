@@ -629,12 +629,20 @@ carga permitirían o dobre, e [o comentario que o di](src/security/rateLimit.ts)
 sitio onde buscalo se algún día se replica.
 
 **Integración continua.** Permisos mínimos por traballo (o de construír só le a árbore;
-só o de despregar escribe en Pages), `persist-credentials: false` no checkout para que o
-token non quede en `.git/config` durante o resto do traballo, e unha lista branca en
-`package.json` que só lle permite executar script de instalación a `esbuild`, que o
-precisa para colocar o seu binario. Calquera dependencia nova que traia un `postinstall`
-—que é onde correría primeiro se estivese comprometida— queda bloqueada ata que alguén
-a engada aí a man.
+só o de despregar escribe en Pages) e `persist-credentials: false` no checkout, para que
+o token non quede en `.git/config` durante o resto do traballo.
+
+**Scripts de instalación.** `package.json` só lle permite executar un a `esbuild`, que o
+precisa para colocar o seu binario; calquera dependencia nova que traia un `postinstall`
+—que é onde correría primeiro se estivese comprometida— queda bloqueada ata que alguén a
+engada aí a man.
+
+Con dúas honestidades. Hoxe **non se pode observar funcionando**, porque esbuild é o
+único paquete con script de instalación e permitir só esbuild ou permitir todo dan o
+mesmo resultado; a protección é para a próxima dependencia, non para as de agora. E pnpm
+10 moveu os seus axustes fóra de `package.json`, así que actualizar sen movelos volvería
+permitir todo sen que nada parecese roto: hai unha comprobación en `pnpm test` que falla
+dicindo exactamente iso se `packageManager` sobe a 10 e o axuste segue onde estaba.
 
 O servidor normaliza todo o que chega pola query string (`?q[]=a` facía caer o endpoint
 cun volcado de pila), devolve JSON en caso de erro en lugar da páxina de erro de Express,
