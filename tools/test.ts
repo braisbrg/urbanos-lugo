@@ -15,7 +15,7 @@ import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
 import { clockDriftFromTimetable } from '../src/utils/clock';
-import { calculateRelevanceScore, normalizeText } from '../src/utils/searchUtils';
+import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
@@ -1650,6 +1650,37 @@ ok('a code that names no stop resolves to nothing, not to somebody else', () => 
     for (const official of stop.officialIds ?? []) {
       assert(findStop(String(official)), `operator number ${official} no longer resolves`);
     }
+  }
+});
+
+ok('a query with nothing left in it matches nothing', () => {
+  // Normalising strips punctuation, so "." and "../" reached the matchers as the empty
+  // string -- and every name in Lugo contains the empty string, and prefix-matches it
+  // at 800 points. A single dot resolved to a real stop with real coordinates.
+  //
+  // The guard fires only when the normalised query is empty, so anything a person
+  // actually types is scored exactly as before. The second half of this test is what
+  // says so: partial names, accents both ways and expanded abbreviations all still find
+  // what they found.
+  // Only the ones that really do normalise to nothing. A hyphen survives, and it
+  // genuinely appears in "N-VI", so it is a substring match and not this bug.
+  const empties = ['.', '..', '../', '/', '_', '()', '   ', '...', ','];
+  for (const q of empties) {
+    assert(normalizeText(q) === '', `"${q}" does not normalise to empty; wrong test case`);
+  }
+  for (const q of empties) {
+    const scored = BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, q, s.address) > 0);
+    assert(scored.length === 0, `"${q}" scores against ${scored.length} stops, e.g. ${scored[0]?.name}`);
+    const matched = BUS_STOPS.filter((s) => matchesQuery(s.name, q));
+    assert(matched.length === 0, `"${q}" word-matches ${matched.length} stops, e.g. ${matched[0]?.name}`);
+  }
+
+  // Real searches, unchanged. Accents in both directions and the abbreviation the
+  // operator prints ("Rda.") against the word a person types ("Ronda").
+  const finds = (q: string) =>
+    BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, q, s.address) > 0).length;
+  for (const q of ['mur', 'muralla', 'Gándaras', 'gandaras', 'Ronda Muralla', 'termas', 'pedrei']) {
+    assert(finds(q) > 0, `"${q}" no longer finds anything`);
   }
 });
 

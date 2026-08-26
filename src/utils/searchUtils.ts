@@ -57,6 +57,10 @@ export function matchesQuery(target: string, query: string): boolean {
 
   const normTarget = normalizeText(target);
   const normQuery = normalizeText(query);
+  // Punctuation normalises away, so "." and "../" arrive as the empty string, and
+  // every name in Lugo contains the empty string. A query with nothing left in it
+  // matches nothing.
+  if (!normQuery) return false;
 
   if (normTarget.includes(normQuery)) {
     return true;
@@ -107,6 +111,10 @@ const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function calculateRelevanceScore(name: string, code: string, id: string, query: string, address?: string): number {
   if (!query) return 0;
   const q = normalizeText(query);
+  // Normalising strips punctuation, so "." and "../" arrive here as the empty string
+  // and then prefix-match every name in the network at 800 points. That is how a
+  // single dot resolved to a real stop with real coordinates.
+  if (!q) return 0;
   const n = normalizeText(name);
   const c = normalizeText(code);
   const i = normalizeText(id);
