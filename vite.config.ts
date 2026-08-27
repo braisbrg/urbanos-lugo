@@ -111,8 +111,10 @@ export default defineConfig(() => {
           short_name: 'Bus Lugo',
           description: 'Liñas, paradas e tempos de paso do bus urbano de Lugo',
           lang: 'gl',
-          theme_color: '#1e3a8a',
-          background_color: '#f1f5f9',
+          theme_color: '#d81f26',
+          // Dark is the default theme, so the splash has to be dark too -- this was
+          // still the light surface and flashed white on every cold start.
+          background_color: '#0d0e11',
           display: 'standalone',
           start_url: base,
           scope: base,

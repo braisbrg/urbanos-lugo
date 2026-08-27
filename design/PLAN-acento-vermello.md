@@ -1,7 +1,8 @@
 # Plan: A Mosqueira en vermello
 
-Decidido con Brais o 27 de agosto de 2026, tras tres roldas de bocetos.
-**Non empezado.** Este ficheiro é o encargo completo para a sesión seguinte.
+Decidido con Brais o 27 de agosto de 2026, tras tres roldas de bocetos, e **feito**
+ese mesmo día. O que segue era o encargo; ao final está o que realmente saíu, que
+non é exactamente isto.
 
 Artifact coas variantes e as maquetas:
 <https://claude.ai/code/artifact/ba162402-4ac7-4ec2-8062-ea4c6fcdbde5>
@@ -143,3 +144,73 @@ coherente co resto da app, onde o publicado sempre gaña ao calculado.
 Se se queda un número calculado, o nome ten que seguir dicindo o que é. «Sen
 tráfico» escolleuse a propósito para non chamarlle duración; se pasa a incluír as
 paradas xa non é «sen tráfico», é outra cousa e outro nome.
+
+---
+
+## O que se fixo de verdade
+
+Brais engadiu unha condición mentres se traballaba: **a paleta enteira ten que casar**,
+e só as cores de liña poden desentoar, porque cada unha xa ten o seu significado. Iso
+cambiou o alcance: non era cambiar o acento, era refacer o sistema.
+
+### O que o plan non vira
+
+- **Os grises estaban tinguidos de azul.** Todos os neutros estaban no ton 255, elixidos
+  para un acento azul. Con vermello, unha base fría desafina. Pasaron ao ton 40 (claro) e
+  34 (escuro), coa mesma luminosidade e case a mesma croma: o chan quenta, o contraste
+  non se move. Esa é a diferenza entre unha paleta escollida e unha herdada.
+- **O distintivo oficial NON foi a verde.** O plan dicía verde porque temía "dous cálidos
+  competindo", pero o oficial era azul, que non é cálido: o argumento estaba mal. Segue
+  azul e agora é o único azul do sistema, o que o fai máis claro, non menos. Moveuse de
+  255 a 252 e subiu de croma, que é o azul máis saturado que sRGB alcanza a esa escuridade.
+  Verde e vermello serían ademais o único par que un lector con daltonismo non separa.
+- **O `selection:bg-sky-500` do `<body>`.** A cor de selección de texto nunca pasara por
+  ningún token; era azul de Tailwind e seguiríao sendo.
+- **`background_color` do manifest seguía sendo claro** (`#f1f5f9`) despois de que o tema
+  escuro pasase a ser o predeterminado, así que a pantalla de inicio da app instalada
+  daba un fogonazo branco.
+- **A lenda do mapa mentía.** Os cadradiños de "bus" e "trazado da liña" usaban o acento,
+  cando o mapa os debuxa coa cor propia de cada liña. Antes acertaba por casualidade: o
+  acento vello era o mesmo azul que a liña 1.1. Agora colle a cor da liña activa, e
+  neutro cando se ven todas.
+- **O favicon estaba duplicado**: un `data:` en `index.html` e mais `public/favicon.svg`.
+  Dous debuxos do mesmo logo divirxen. Queda un ficheiro.
+- **A banda do adarve saíase da placa.** Vai de lado a lado e a placa ten as esquinas
+  redondeadas, así que as puntas asomaban fóra. Recórtase coa forma da placa.
+
+### As cores, medidas
+
+Tres tons levan significado e ningún outro o leva: **vermello** a app, **azul** unha hora
+publicada polo operador, **ámbar** unha hora calculada por esta app. Sepáranos 50 graos
+ou máis. Cada valor está dentro de sRGB — un oklch fóra de gama remápao o navegador en
+silencio, e entón o valor declarado é mentira — e **todos os pares que a interface pon en
+pantalla pasan de 4,5:1**, o peor sendo texto de acento sobre superficie a 5,13:1.
+
+| | claro | escuro |
+|---|---|---|
+| acento | `oklch(0.54 0.21 27)` `#cd171e` | `oklch(0.72 0.17 30)` `#fd7562` |
+| oficial | `oklch(0.42 0.125 252)` `#014e8e` | `oklch(0.72 0.15 252)` `#57a8ff` |
+| estimado | `oklch(0.45 0.09 80)` `#6f4f07` | `oklch(0.84 0.11 80)` `#f0c374` |
+| neutros | ton 40 | ton 34 |
+
+A marca en si — favicon, `theme-color`, manifest — leva o vermello de flota exacto,
+`#d81f26`, porque alí é unha forma sobre o seu propio fondo e non hai que ler nada
+enriba. O acento é un chisco máis escuro porque tamén é texto.
+
+### O que quedou fóra a propósito
+
+- **O acento non aparece no mapa.** As liñas van coa súa cor e varias son vermellas, así
+  que un marcador vermello desaparecería xusto na ruta que marca.
+- **O filete dos bordos segue en 1,37:1.** Está por baixo do que pediría a norma para o
+  contorno dun control, pero subilo cambia o peso visual de toda a app, e iso non se
+  pediu. Queda dito para decidilo aparte.
+
+### Aberto
+
+- **O icono lese como un «m» minúsculo.** A F3 son dous semicírculos tanxentes e o val
+  entre eles baixa ata a liña de arranque, o que fai a ligadura. A 16 px, que é onde se
+  decide, é un «m» vermello. Hai unha variante dun só arco sobre as dúas fiestras que
+  non ten ese problema. Sen decidir.
+- **As teselas do mapa saen marcadas «API KEY REQUIRED».** CARTO xa non serve o basemap
+  sen chave. Comprobado o 27 de agosto baixando unha tesela: a marca vai dentro do PNG.
+  Non ten que ver coa paleta pero bloquea a publicación.

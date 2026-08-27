@@ -8,6 +8,12 @@
  * the map has to choose in JavaScript, and the two versions of a colour should sit on
  * adjacent lines where anyone can compare them.
  *
+ * The greys are the app's own neutrals and the blues are the app's official blue, so
+ * the map belongs to the same palette as everything around it. The accent red is the
+ * one system colour that stays off the map: route lines carry each line's own colour
+ * and several of those are red, so a red marker would vanish on the very route it
+ * marks. Green stays on the B pin, where arrival is the whole meaning.
+ *
  * The pairs are chosen against their own basemap, not against each other — a stop dot
  * that reads on CARTO Voyager is invisible on CARTO Dark Matter and the other way round.
  */
@@ -30,27 +36,27 @@ export interface MapColors {
 
 const LIGHT: MapColors = {
   tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  stopFill: '#0f172a',
+  stopFill: '#27201d',      // the ink, warmed to match the app
   stopStroke: '#ffffff',
-  stopSelected: '#2563eb',
-  userFill: '#1e40af',
+  stopSelected: '#0c72cb',  // the official blue, lifted to carry on Voyager
+  userFill: '#08569a',      // the same blue, darker: this one is you
   userStroke: '#ffffff',
-  walkRouted: '#334155',
-  walkStraight: '#64748b',
-  originPin: '#1e3a8a',
+  walkRouted: '#534b48',
+  walkStraight: '#817875',
+  originPin: '#014e8e',     // the official blue exactly; white A on it, 8.5:1
   destinationPin: '#047857',
 };
 
 const DARK: MapColors = {
   tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  stopFill: '#e2e8f0',
-  stopStroke: '#0f172a',
-  stopSelected: '#60a5fa',
-  userFill: '#60a5fa',
-  userStroke: '#0f172a',
-  walkRouted: '#cbd5e1',
-  walkStraight: '#94a3b8',
-  originPin: '#60a5fa',
+  stopFill: '#e2dddb',
+  stopStroke: '#191514',
+  stopSelected: '#57a8ff',  // the dark theme's official blue
+  userFill: '#82bcfc',      // lighter than the selection, so the two separate
+  userStroke: '#191514',
+  walkRouted: '#d0c9c7',
+  walkStraight: '#9e9694',
+  originPin: '#3c95f0',     // dark ink on it, so it stays a shade deeper
   destinationPin: '#34d399',
 };
 

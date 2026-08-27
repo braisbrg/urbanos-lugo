@@ -8,10 +8,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Urbanos de Lugo | Liñas, horarios e paradas</title>
     <meta name="description" content="Liñas, horarios e paradas do autobús urbano de Lugo. Horarios oficiais de buslugo.com e tempos estimados a partir do percorrido medido: esta rede non publica GPS da flota." />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231e3a8a'><rect width='24' height='24' rx='6' fill='%231e3a8a'/><text x='50%25' y='68%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='900' font-size='14'>L</text></svg>" />
+    <!-- A Mosqueira: the only one of the wall's 72 surviving towers that still keeps its
+         upper storey, and its two round-arch windows are the whole of the recognition. The
+         wall walk crosses the badge with a stop sitting on it.
+
+         One file rather than an inline data URI: the same mark is already shipped for the
+         manifest and precached by the service worker, and two copies of a logo drift. -->
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <script src="%BASE_URL%theme-init.js"></script>
 
-    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="theme-color" content="#d81f26" />
 
     <!-- The app has a "copy link" button on every stop, so those links get shared. Without
          these the preview is a bare URL. No og:image: there is no hosted artwork to point
@@ -24,13 +30,13 @@
     <meta property="og:locale:alternate" content="es_ES" />
     <meta property="og:locale:alternate" content="en_GB" />
     <meta name="twitter:card" content="summary" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-bg text-ink antialiased selection:bg-sky-500 selection:text-white">
+  <body class="bg-bg text-ink antialiased selection:bg-accent selection:text-on-accent">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

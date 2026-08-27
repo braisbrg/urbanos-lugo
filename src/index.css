@@ -10,61 +10,87 @@
  * The type ramp is a 1.25 ratio in rem, NOT px: a fixed px ramp ignores the
  * reader's own font-size setting, which is the one accessibility control most
  * people with low vision actually use.
+ *
+ * The colour system, in one paragraph. Three hues carry meaning and nothing else
+ * does: red for the app itself, blue for a time the operator published, amber for a
+ * time this app worked out. They sit 50 degrees or more apart so they are never each
+ * other. The greys are not neutral greys -- they carry a trace of the red, which is
+ * what makes a warm ground read as chosen rather than left over. Line colours are the
+ * exception and always will be: each line owns its colour, they answer to the network
+ * and not to this file.
+ *
+ * Every value below was measured, not picked: each is inside sRGB (an out-of-gamut
+ * oklch is silently remapped by the browser, so the declared colour is then a lie),
+ * and every pairing the interface puts on screen clears 4.5:1, the worst being accent
+ * text on a surface at 5.13:1. The hex in the comment is what the colour resolves to.
  * ------------------------------------------------------------------------ */
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   /* surfaces */
-  --c-bg: oklch(0.995 0.0015 255);
-  --c-surface: oklch(0.968 0.003 255);
-  --c-line: oklch(0.91 0.004 255);
-  --c-line-soft: oklch(0.925 0.004 255);
-  --c-border: oklch(0.89 0.004 255);
+  --c-bg: oklch(0.995 0.0015 40);  /* #fefdfd */
+  --c-surface: oklch(0.968 0.004 40);  /* #f7f4f2 */
+  --c-line: oklch(0.91 0.005 40);  /* #e4e0df */
+  --c-line-soft: oklch(0.925 0.005 40);  /* #e9e5e4 */
+  --c-border: oklch(0.89 0.006 40);  /* #ded9d8 */
 
   /* ink */
-  --c-ink: oklch(0.22 0.008 255);
-  --c-ink-max: oklch(0.16 0.008 255);
-  --c-ink-2: oklch(0.35 0.01 255);
-  --c-ink-3: oklch(0.5 0.01 255);
+  --c-ink: oklch(0.22 0.009 40);  /* #1e1917 */
+  --c-ink-max: oklch(0.16 0.009 40);  /* #110c0a */
+  --c-ink-2: oklch(0.35 0.011 40);  /* #403936 */
+  --c-ink-3: oklch(0.5 0.011 40);  /* #69615f */
 
   /* the provenance system — the one thing a restyle must never flatten */
-  --c-official-bg: oklch(0.4 0.13 255);
-  --c-official-fg: oklch(1 0 0);
-  --c-estimated-fg: oklch(0.42 0.055 70);
-  --c-estimated-line: oklch(0.64 0.08 70);
+  --c-official-bg: oklch(0.42 0.125 252);  /* #014e8e */
+  --c-official-fg: oklch(1 0 0);  /* #ffffff */
+  --c-estimated-fg: oklch(0.45 0.09 80);  /* #6f4f07 */
+  --c-estimated-line: oklch(0.66 0.11 80);  /* #b58a3a */
 
-  --c-accent: oklch(0.45 0.13 250);
-  --c-on-accent: oklch(1 0 0);
-  --c-warn-bg: oklch(0.972 0.018 78);
-  --c-warn-fg: oklch(0.38 0.05 68);
-  --c-scrim: oklch(0.2 0.015 250 / 0.42);
+  /* The fleet is red and the buses already carry the wall on their flank, so the app
+     wears the same colour. The blue it replaces was never chosen -- it was Tailwind's
+     blue-900 -- and at hue 250 it was the same blue as the official chip at 255, so
+     the app's own accent and its provenance marker were the same colour.
+
+     Not the flat fleet red #d81f26 but a step darker. This token is also used as text
+     on the near-white surface, where #d81f26 leaves 4.6:1; this clears 5.13:1. The
+     mark itself -- favicon, theme-colour, manifest -- does use #d81f26, because there
+     it is a shape on its own ground and nothing has to be read on top of it. */
+  --c-accent: oklch(0.54 0.21 27);  /* #cd171e */
+  --c-on-accent: oklch(1 0 0);  /* #ffffff */
+  --c-warn-bg: oklch(0.965 0.024 80);  /* #fcf2e2 */
+  --c-warn-fg: oklch(0.4 0.075 80);  /* #5d420e */
+  --c-scrim: oklch(0.2 0.014 40 / 0.42);
 }
 
 .dark {
-  --c-bg: oklch(0.165 0.006 255);
-  --c-surface: oklch(0.225 0.009 255);
-  --c-line: oklch(0.28 0.01 255);
-  --c-line-soft: oklch(0.27 0.01 255);
-  --c-border: oklch(0.32 0.011 255);
+  --c-bg: oklch(0.165 0.006 34);  /* #110d0d */
+  --c-surface: oklch(0.225 0.009 34);  /* #201a19 */
+  --c-line: oklch(0.28 0.01 34);  /* #2e2726 */
+  --c-line-soft: oklch(0.27 0.01 34);  /* #2b2523 */
+  --c-border: oklch(0.32 0.011 34);  /* #38312f */
 
-  --c-ink: oklch(0.94 0.004 255);
-  --c-ink-max: oklch(0.985 0.004 255);
-  --c-ink-2: oklch(0.72 0.01 255);
-  --c-ink-3: oklch(0.67 0.01 255);
+  --c-ink: oklch(0.94 0.005 34);  /* #eeeae9 */
+  --c-ink-max: oklch(0.985 0.004 34);  /* #fdf9f8 */
+  --c-ink-2: oklch(0.72 0.011 34);  /* #aba2a0 */
+  --c-ink-3: oklch(0.67 0.011 34);  /* #9c9391 */
 
   /* The official chip inverts: a light chip on a dark ground reads as solid,
      where a dark chip would disappear into the surface. */
-  --c-official-bg: oklch(0.75 0.12 252);
-  --c-official-fg: oklch(0.16 0.02 255);
-  --c-estimated-fg: oklch(0.84 0.09 78);
-  --c-estimated-line: oklch(0.56 0.08 78);
+  --c-official-bg: oklch(0.72 0.15 252);  /* #57a8ff */
+  --c-official-fg: oklch(0.16 0.03 252);  /* #040e1a */
+  --c-estimated-fg: oklch(0.84 0.11 80);  /* #f0c374 */
+  --c-estimated-line: oklch(0.58 0.1 80);  /* #99732b */
 
-  --c-accent: oklch(0.76 0.12 252);
-  --c-on-accent: oklch(0.16 0.02 255);
-  --c-warn-bg: oklch(0.225 0.026 78);
-  --c-warn-fg: oklch(0.87 0.07 72);
-  --c-scrim: oklch(0.08 0.01 250 / 0.6);
+  /* A red dark enough to read as fleet red disappears on a near-black ground, so the
+     dark theme takes the lightest red still inside sRGB at this chroma. It reads as a
+     coral rather than a fleet red; that is what a legible red on near-black is, and
+     every dark interface that needs one lands in the same place. Worst pairing 6.42:1. */
+  --c-accent: oklch(0.72 0.17 30);  /* #fd7562 */
+  --c-on-accent: oklch(0.16 0.03 30);  /* #180806 */
+  --c-warn-bg: oklch(0.235 0.03 80);  /* #261c0d */
+  --c-warn-fg: oklch(0.87 0.09 80);  /* #f4ce90 */
+  --c-scrim: oklch(0.08 0.012 34 / 0.6);
 }
 
 @theme inline {

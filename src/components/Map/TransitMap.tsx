@@ -121,6 +121,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   // Street geometry arrives as its own chunk; until then the stop layer still works.
   const geometryReady = useRouteGeometry();
   const lines = BUS_LINES;
+  // What colour the legend's bus and route swatches should be: the colour the map is
+  // actually drawing them in, which is the line's own. With every line shown at once
+  // there is no single answer, so they go neutral and the shape carries the meaning.
+  const legendColor =
+    activeLineId !== 'all' ? lines.find((l) => l.id === activeLineId)?.color : undefined;
   // The list has to agree with the banner above it. It used to offer all twenty-four
   // while the map drew four, which read as the filter having done nothing.
   const listedLines = scopeLineIds ? lines.filter((l) => scopeLineIds.includes(l.id)) : lines;
@@ -631,7 +636,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             <div className="absolute bottom-3 left-3 z-[400] bg-bg/95 backdrop-blur-xs p-2.5 rounded-lg shadow-md border border-edge text-label space-y-1 pointer-events-auto font-medium">
               {/* 9 px and 7 px were below the floor this app sets for itself, and a legend
                   is exactly the thing someone squints at. The swatch carries the meaning;
-                  the letter inside it was never legible anyway. */}
+                  the letter inside it was never legible anyway.
+
+                  The bus and route swatches used the accent, which was only ever right by
+                  accident: the old accent happened to be line 1.1's blue. Buses and routes
+                  are drawn in each line's own colour, so the legend follows that. */}
               <div className="mb-1 text-label font-semibold uppercase tracking-[0.08em] text-ink">
                 {t.map.legend}
               </div>
@@ -640,11 +649,17 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 <span className="text-ink-2">{t.map.stop}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 rounded bg-accent ring-2 ring-official"></div>
+                <div
+                  className="w-3.5 h-3.5 rounded ring-2 ring-white"
+                  style={{ backgroundColor: legendColor ?? 'var(--c-ink-3)' }}
+                ></div>
                 <span className="text-ink-2">{t.map.busLive}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-1 bg-accent rounded-full"></div>
+                <div
+                  className="w-3.5 h-1 rounded-full"
+                  style={{ backgroundColor: legendColor ?? 'var(--c-ink-3)' }}
+                ></div>
                 <span className="text-ink-2">{t.map.route}</span>
               </div>
             </div>

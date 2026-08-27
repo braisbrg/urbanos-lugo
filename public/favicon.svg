@@ -1,4 +1,12 @@
-<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'>
-<rect width='512' height='512' rx='96' fill='#1e3a8a'/>
-<text x='50%' y='50%' dy='.36em' text-anchor='middle' fill='#fff' font-family='sans-serif' font-weight='900' font-size='300'>L</text>
+<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 24 24'>
+<clipPath id='b'><rect width='24' height='24' rx='6'/></clipPath>
+<g clip-path='url(#b)'>
+<rect width='24' height='24' fill='#d81f26'/>
+<path d='M5.4 16.6v-5.6a3.15 3.15 0 0 1 6.3 0 3.15 3.15 0 0 1 6.3 0v5.6Z' fill='#fff'/>
+<rect y='16.4' width='24' height='3.1' fill='#fff'/>
+<path d='M7.3 15.4v-4a1.55 1.55 0 0 1 3.1 0v4Z' fill='#d81f26'/>
+<path d='M12.6 15.4v-4a1.55 1.55 0 0 1 3.1 0v4Z' fill='#d81f26'/>
+<circle cx='20.6' cy='18' r='2.9' fill='#fff'/>
+<circle cx='20.6' cy='18' r='1.15' fill='#d81f26'/>
+</g>
 </svg>

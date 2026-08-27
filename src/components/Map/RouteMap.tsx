@@ -36,8 +36,8 @@ function isLight(hex: string): boolean {
 function pinIcon(color: string, label: string): L.DivIcon {
   // White on the dark palette's pins measured 2.54:1 and 1.92:1 — the pin colours are
   // light there so the letter has to be dark.
-  const ink = isLight(color) ? '#0f172a' : '#ffffff';
-  const ring = isLight(color) ? '#0f172a' : '#ffffff';
+  const ink = isLight(color) ? '#191514' : '#ffffff';
+  const ring = isLight(color) ? '#191514' : '#ffffff';
   return L.divIcon({
     className: 'route-map-pin',
     html: `

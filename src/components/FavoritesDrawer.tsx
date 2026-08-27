@@ -152,7 +152,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                               <span
                                 key={l}
                                 className="px-1.5 py-0.2 rounded text-label font-black text-white"
-                                style={{ backgroundColor: lineObj?.color || '#1e40af' }}
+                                style={{ backgroundColor: lineObj?.color || '#6b615f' }}
                               >
                                 {l}
                               </span>
