@@ -107,6 +107,69 @@ export function createBasemap(isDark: boolean): BasemapLayer {
 
   layer.getAttribution = () => OPENFREEMAP_ATTRIBUTION;
 
+  // Tell the renderer when its container changed size.
+  //
+  // Nobody else does. The app already calls Leaflet's invalidateSize from a ResizeObserver,
+  // because these containers are routinely 0 px tall on first paint, and the glue layer
+  // does resize the div it draws into — but neither calls resize() on the renderer, so it
+  // keeps painting at whatever size it was born at. Opening the Mapa tab gave a small
+  // rectangle of map adrift in Leaflet's grey. It looked self-healing if the window was
+  // resized, because that is the one event the renderer listens for on its own.
+  //
+  // Watching the container rather than Leaflet's resize event, because the glue defers its
+  // own work to the next animation frame: a handler on the event runs first and measures
+  // the size the container is about to stop having. A ResizeObserver fires after layout,
+  // whenever the box actually changed, whoever changed it and whenever they got round to
+  // it — which is the thing that has to be true, rather than a guess about ordering.
+  const baseOnAdd = layer.onAdd.bind(layer);
+  const baseOnRemove = layer.onRemove.bind(layer);
+  let observer: ResizeObserver | null = null;
+  let attached: L.Map | null = null;
+
+  /**
+   * Put the renderer back in step with Leaflet.
+   *
+   * Two separate things go wrong and both are fixed here. The renderer keeps painting at
+   * whatever size it was born at, so it needs telling; and once resized it is still
+   * looking wherever it was looking, so the basemap sits offset under the stops drawn on
+   * top of it. The glue re-aligns the two on any Leaflet movement, so announce one — on
+   * the next frame, because the glue defers its own handling by a frame and a movement
+   * announced before that lands is computed against the size the container is about to
+   * stop having.
+   */
+  const resync = () => {
+    const gl = layer.getMaplibreMap();
+    if (!gl) return;
+    gl.resize();
+    requestAnimationFrame(() => attached?.fire('move'));
+  };
+
+  layer.onAdd = (map: L.Map) => {
+    const added = baseOnAdd(map);
+    attached = map;
+
+    // The first paint is its own case. The layer is built inside a container that is still
+    // settling, and the renderer works out what to draw before the style has arrived, so
+    // it lands on an empty view and has no reason to revisit it: the Mapa tab opened to a
+    // dark rectangle that came right the moment anything was touched. Once is enough —
+    // after this the observer below covers every later change.
+    layer.getMaplibreMap()?.once('load', resync);
+
+    const container = layer.getContainer();
+    if (container && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(resync);
+      observer.observe(container);
+    }
+    return added;
+  };
+
+  layer.onRemove = (map: L.Map) => {
+    observer?.disconnect();
+    observer = null;
+    attached = null;
+    return baseOnRemove(map);
+  };
+
   layer.setBasemapTheme = (dark: boolean) => {
     // Restyling in place rather than rebuilding the layer, so the view stays where the
     // reader left it instead of snapping back to Lugo centre.
