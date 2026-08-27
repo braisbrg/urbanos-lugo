@@ -156,6 +156,7 @@ export const en: Dict = {
     walkMetres: (metres: number) => `Walk ~${metres} m`,
     walkConnection: 'Walking connection',
     measuredWalkTitle: 'On foot, measured',
+    tripInfoTitle: 'Details',
     timeProvenanceMeasured:
       'The walking legs are measured by the OpenStreetMap pedestrian router, not estimated. Bus times still come from the official timetable; those marked ~ are worked out from the driving time measured along the road.',
     showWalkingPath: 'Show the walking route',

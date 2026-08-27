@@ -310,7 +310,10 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 <button
                   id="btn-view-line-map"
                   onClick={() => onViewLineOnMap(currentLine)}
-                  className="flex h-11 items-center gap-1.5 rounded-[9px] bg-accent px-4 text-body font-semibold text-on-accent"
+                  // min-h rather than h: at a narrow column width the label wraps to two
+                  // lines, and a fixed 44 px box let the second line spill out of the
+                  // button. The floor is the touch target; the ceiling is the content.
+                  className="flex min-h-11 items-center gap-1.5 rounded-[9px] bg-accent px-4 py-2 text-body font-semibold text-on-accent"
                 >
                   <MapPin className="w-4 h-4" />
                   <span>{t.lines.viewOnMap}</span>
@@ -514,7 +517,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                     className="relative group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
                   >
                     <div
-                      className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center transition-transform group-hover:scale-125 ${busHere ? 'bg-official ring-2 ring-official animate-pulse' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'}`}
+                      className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center transition-transform group-hover:scale-125 ${busHere ? 'bg-estimated ring-2 ring-estimated animate-pulse' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'}`}
                     />
                     <div
                       className={`p-3 rounded-lg border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}

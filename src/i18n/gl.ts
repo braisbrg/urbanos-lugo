@@ -159,6 +159,7 @@ export const gl = {
     walkMetres: (metres: number) => `Camiñar ~${metres} m`,
     walkConnection: 'Conexión a pé',
     measuredWalkTitle: 'A pé, medido',
+    tripInfoTitle: 'Información',
     timeProvenanceMeasured:
       'Os tramos a pé están medidos polo enrutador peonil de OpenStreetMap, non estimados. As horas de bus seguen a vir do cadro horario oficial; as marcadas con ~ dedúcense do tempo de percorrido medido por estrada.',
     showWalkingPath: 'Ver camiño a pé',

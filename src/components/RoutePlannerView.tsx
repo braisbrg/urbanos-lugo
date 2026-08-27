@@ -378,7 +378,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     htmlFor="input-origin-query"
                     className="text-label font-bold text-ink-2 flex items-center gap-1.5 uppercase tracking-wide"
                   >
-                    <span className="w-2 h-2 rounded-full bg-official" />
+                    <span className="w-2 h-2 rounded-full bg-ink-2" aria-hidden="true" />
                     {t.planner.origin}
                   </label>
 
@@ -466,7 +466,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   htmlFor="input-dest-query"
                   className="block text-label font-bold text-ink-2 mb-1 flex items-center gap-1.5 uppercase tracking-wide"
                 >
-                  <span className="w-2 h-2 rounded-full bg-warn-ink" />
+                  <span className="w-2 h-2 rounded-full border-2 border-ink-2" aria-hidden="true" />
                   {t.planner.destination}
                 </label>
                 <div className="relative">
@@ -633,64 +633,86 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 </div>
               </div>
 
-                {/* Wait time notification badge */}
-                {/* Say plainly where these numbers come from. The departure can be a
-                    published time; everything after it is computed. */}
-                {measuredWalk && (
-                  <div className="mt-3 text-label bg-surface/60 text-ink px-3 py-2 rounded-md border border-edge flex items-center justify-between gap-3">
-                    <span className="font-bold uppercase tracking-wider text-label text-ink-2">
-                      {t.planner.measuredWalkTitle}
-                    </span>
-                    <span className="font-mono font-black">
-                      {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
-                    </span>
-                  </div>
-                )}
-
+                {/* The small print, folded.
+                    Four boxes -- the walk, where the times come from, the fare, the waiting
+                    -- used to sit between the answer and the alternatives, which on a phone
+                    pushed both the alternatives and the map off the bottom of the screen.
+                    They are worth reading once, not on the way to the thing that was asked
+                    for. The summary keeps the two figures people actually scan for, so
+                    folded is still an answer rather than a locked drawer. */}
                 <details className="mt-3 rounded-md border border-edge bg-surface/40">
-                  <summary className="flex min-h-11 cursor-pointer items-center px-3 text-label font-semibold text-ink-2">
-                    {t.planner.timeProvenanceTitle}
-                  </summary>
-                  <p className="px-3 pb-2 text-label leading-relaxed text-ink-2">
-                    {measuredWalk ? t.planner.timeProvenanceMeasured : t.planner.timeProvenance}
-                  </p>
-                </details>
-
-                {planResult.fare && planResult.fare.busLegs > 0 && (
-                  <div className="mt-3 text-label bg-surface/60 text-ink px-3 py-2 rounded-md border border-edge">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-bold uppercase tracking-wider text-label text-ink-2">
-                        {t.planner.fareTitle}
-                      </span>
-                      <span className="flex items-baseline gap-3 font-mono">
-                        <span className="text-estimated font-black text-body">
-                          {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
-                        </span>
-                        <span className="text-ink-2 line-through">
-                          {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
-                        </span>
-                      </span>
-                    </div>
-                    <div className="mt-1 text-label text-ink-2">
-                      {t.planner.fareCard} &bull; {t.planner.fareSingle}:{' '}
-                      {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
-                      {planResult.fare.busLegs > 1 && (
-                        <span className="block mt-0.5 text-estimated">
-                          {planResult.fare.transfersFree ? t.planner.fareTransferFree : t.planner.fareTransferPaid}
+                  <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-label font-semibold text-ink-2">
+                    <span className="font-bold uppercase tracking-wider">{t.planner.tripInfoTitle}</span>
+                    <span className="flex items-baseline gap-3 font-mono">
+                      {measuredWalk && (
+                        <span className="text-ink">
+                          {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
                         </span>
                       )}
-                    </div>
-                  </div>
-                )}
-
-                {planResult.totalWaitMinutes > 0 && (
-                  <div className="mt-3 text-label bg-surface/60 text-ink-2 px-3 py-1.5 rounded-md border border-edge flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-estimated shrink-0" />
-                    <span>
-                      {t.planner.includesWait(planResult.totalWaitMinutes)}
+                      {planResult.fare && planResult.fare.busLegs > 0 && (
+                        <span className="font-black text-estimated">
+                          {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
+                        </span>
+                      )}
                     </span>
+                  </summary>
+
+                  <div className="px-3 pb-3">
+                    {measuredWalk && (
+                      <div className="mt-1 flex items-center justify-between gap-3 text-label text-ink">
+                        <span className="text-label font-bold uppercase tracking-wider text-ink-2">
+                          {t.planner.measuredWalkTitle}
+                        </span>
+                        <span className="font-mono font-black">
+                          {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Say plainly where these numbers come from. The departure can be a
+                        published time; everything after it is computed. */}
+                    <p className="mt-2 text-label leading-relaxed text-ink-2">
+                      <span className="font-bold uppercase tracking-wider text-ink-2">
+                        {t.planner.timeProvenanceTitle}
+                      </span>{' '}
+                      {measuredWalk ? t.planner.timeProvenanceMeasured : t.planner.timeProvenance}
+                    </p>
+
+                    {planResult.fare && planResult.fare.busLegs > 0 && (
+                      <div className="mt-3 border-t border-line pt-2 text-label text-ink">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-label font-bold uppercase tracking-wider text-ink-2">
+                            {t.planner.fareTitle}
+                          </span>
+                          <span className="flex items-baseline gap-3 font-mono">
+                            <span className="text-body font-black text-estimated">
+                              {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
+                            </span>
+                            <span className="text-ink-2 line-through">
+                              {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
+                            </span>
+                          </span>
+                        </div>
+                        <div className="mt-1 text-label text-ink-2">
+                          {t.planner.fareCard} &bull; {t.planner.fareSingle}:{' '}
+                          {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
+                          {planResult.fare.busLegs > 1 && (
+                            <span className="mt-0.5 block text-estimated">
+                              {planResult.fare.transfersFree ? t.planner.fareTransferFree : t.planner.fareTransferPaid}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {planResult.totalWaitMinutes > 0 && (
+                      <div className="mt-2 flex items-center gap-2 text-label text-ink-2">
+                        <Clock className="h-3.5 w-3.5 shrink-0 text-estimated" />
+                        <span>{t.planner.includesWait(planResult.totalWaitMinutes)}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </details>
 
               {/* Alternatives. One answer hides the fact that there is usually more than
                   one way, and people have reasons to prefer a line they know. */}
