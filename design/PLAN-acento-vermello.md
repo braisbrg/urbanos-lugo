@@ -205,12 +205,10 @@ enriba. O acento é un chisco máis escuro porque tamén é texto.
   contorno dun control, pero subilo cambia o peso visual de toda a app, e iso non se
   pediu. Queda dito para decidilo aparte.
 
-### Aberto
+### Pechado despois
 
-- **O icono lese como un «m» minúsculo.** A F3 son dous semicírculos tanxentes e o val
-  entre eles baixa ata a liña de arranque, o que fai a ligadura. A 16 px, que é onde se
-  decide, é un «m» vermello. Hai unha variante dun só arco sobre as dúas fiestras que
-  non ten ese problema. Sen decidir.
-- **As teselas do mapa saen marcadas «API KEY REQUIRED».** CARTO xa non serve o basemap
-  sen chave. Comprobado o 27 de agosto baixando unha tesela: a marca vai dentro do PNG.
-  Non ten que ver coa paleta pero bloquea a publicación.
+- **O icono queda na A**, a F3 tal cal. Amosóuselle a 16, 20, 32, 64 e 160 px sobre
+  barra clara e escura, xunto cunha variante de arcos máis suaves e outra dun só arco;
+  Brais escolleu deixalo como está. Que a 16 px se lea coma un «m» está dito e aceptado.
+- **O basemap xa non é CARTO.** Pasou a OpenFreeMap, sen chave e sen conta. Detalle
+  completo no comentario de `src/components/Map/basemap.ts`, que é onde vive a decisión.

@@ -340,11 +340,19 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
     setAlarmOn(true);
   };
 
-  /** Minutes, with the tilde carrying "derived, not published" in the figure itself. */
+  /**
+   * Minutes, with the tilde carrying "derived, not published" in the figure itself.
+   *
+   * "Arriving" is the accent, not the official blue it used to be. Blue in this app means
+   * one thing — this time is the operator's, not ours — and a bus arriving now may well
+   * be running on an estimate, so painting the word blue claimed a provenance it had not
+   * earned. The row already states where the time came from, in the badge beside it, with
+   * a shape as well as a colour. This is only emphasis, so it uses the emphasis colour.
+   */
   const Minutes: React.FC<{ arrival: StopArrival }> = ({ arrival }) => (
     <span
       className={`tnum shrink-0 text-num font-bold tracking-[-0.025em] ${
-        arrival.etaMinutes === 0 ? 'text-official' : 'text-ink-max'
+        arrival.etaMinutes === 0 ? 'text-accent' : 'text-ink-max'
       }`}
     >
       {arrival.etaMinutes === 0 ? (

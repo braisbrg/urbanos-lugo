@@ -11,7 +11,8 @@ import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
 const AROUND_STOP_RADIUS_M = 400;
 import { useIsDark } from '../../hooks/useIsDark';
 import { useMapChrome } from '../../hooks/useMapChrome';
-import { mapColors, TILE_ATTRIBUTION } from './palette';
+import { createBasemap, type BasemapLayer } from './basemap';
+import { mapColors } from './palette';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { RouteLayer } from './RouteLayer';
 import { StopLayer } from './StopLayer';
@@ -49,7 +50,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
-  const tilesRef = useRef<L.TileLayer | null>(null);
+  const tilesRef = useRef<BasemapLayer | null>(null);
   const isDark = useIsDark();
   const colors = mapColors(isDark);
   const userMarkerRef = useRef<L.CircleMarker | null>(null);
@@ -149,15 +150,14 @@ export const TransitMap: React.FC<TransitMapProps> = ({
       zoomControl: false,
       // Stops and routes are vector layers; one canvas beats hundreds of SVG/DOM nodes.
       preferCanvas: true,
+      // This used to come from the tile layer's own maxZoom; the basemap layer has none
+      // to give, so without it here the map would zoom past where there is any data.
+      maxZoom: 19,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
 
-    tilesRef.current = L.tileLayer(colors.tiles, {
-      attribution: TILE_ATTRIBUTION,
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(instance);
+    tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
 
     setMap(instance);
 
@@ -176,11 +176,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     };
   }, []);
 
-  // Swap the basemap when the theme changes. setUrl reuses the layer, so the view
+  // Swap the basemap when the theme changes. The layer restyles in place, so the view
   // stays where the reader left it instead of snapping back to Lugo centre.
   useEffect(() => {
-    tilesRef.current?.setUrl(colors.tiles);
-  }, [colors.tiles]);
+    tilesRef.current?.setBasemapTheme(isDark);
+  }, [isDark]);
 
   // Sync selectedLine prop into activeLineId & zoom into line
   useEffect(() => {

@@ -7,6 +7,7 @@ import { BUS_STOPS, LUGO_CENTER } from '../../data/transitData';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { WalkingPath, walkHopKey } from '../../services/walkingPath';
 import { useIsDark } from '../../hooks/useIsDark';
+import { createBasemap, type BasemapLayer } from './basemap';
 import { mapColors } from './palette';
 
 interface RouteMapProps {
@@ -64,19 +65,23 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const geometryReady = useRouteGeometry();
-  const tilesRef = useRef<L.TileLayer | null>(null);
-  const colors = mapColors(useIsDark());
+  const tilesRef = useRef<BasemapLayer | null>(null);
+  const isDark = useIsDark();
+  const colors = mapColors(isDark);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const instance = L.map(el, { center: LUGO_CENTER, zoom: 13, zoomControl: false, attributionControl: false });
-    L.control.zoom({ position: 'bottomright' }).addTo(instance);
-    tilesRef.current = L.tileLayer(colors.tiles, {
-      subdomains: 'abcd',
+    // maxZoom used to come from the tile layer; the basemap layer has none to give.
+    const instance = L.map(el, {
+      center: LUGO_CENTER,
+      zoom: 13,
       maxZoom: 19,
-    }).addTo(instance);
+      zoomControl: false,
+    });
+    L.control.zoom({ position: 'bottomright' }).addTo(instance);
+    tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
     setMap(instance);
 
     const observer =
@@ -191,9 +196,11 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     };
   }, [map, geometryReady, plan, walkPaths, origin?.lat, origin?.lng, destination?.lat, destination?.lng, colors]);
 
+  // Swap the basemap when the theme changes. The layer restyles in place, so the view
+  // stays where the reader left it instead of snapping back to Lugo centre.
   useEffect(() => {
-    tilesRef.current?.setUrl(colors.tiles);
-  }, [colors.tiles]);
+    tilesRef.current?.setBasemapTheme(isDark);
+  }, [isDark]);
 
   return <div ref={containerRef} className={className} />;
 };

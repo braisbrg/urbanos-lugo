@@ -15,10 +15,10 @@
  * marks. Green stays on the B pin, where arrival is the whole meaning.
  *
  * The pairs are chosen against their own basemap, not against each other — a stop dot
- * that reads on CARTO Voyager is invisible on CARTO Dark Matter and the other way round.
+ * that reads on the light basemap is invisible on the dark one and the other way round.
+ * Which basemap that is lives in basemap.ts; this file only says what to draw on top.
  */
 export interface MapColors {
-  tiles: string;
   /** Stop circles: a dot with a ring, so both have to flip together. */
   stopFill: string;
   stopStroke: string;
@@ -35,7 +35,6 @@ export interface MapColors {
 }
 
 const LIGHT: MapColors = {
-  tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
   stopFill: '#27201d',      // the ink, warmed to match the app
   stopStroke: '#ffffff',
   stopSelected: '#0c72cb',  // the official blue, lifted to carry on Voyager
@@ -48,7 +47,6 @@ const LIGHT: MapColors = {
 };
 
 const DARK: MapColors = {
-  tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   stopFill: '#e2dddb',
   stopStroke: '#191514',
   stopSelected: '#57a8ff',  // the dark theme's official blue
@@ -64,7 +62,3 @@ export function mapColors(isDark: boolean): MapColors {
   return isDark ? DARK : LIGHT;
 }
 
-/** Both basemaps are CARTO over OpenStreetMap, so the credit does not change. */
-export const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
-  '&copy; <a href="https://carto.com/attributions">CARTO</a>';

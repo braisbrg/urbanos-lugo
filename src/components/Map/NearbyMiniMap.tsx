@@ -5,7 +5,8 @@ import { BusStop } from '../../types';
 import { Lang, translations } from '../../i18n';
 import { useIsDark } from '../../hooks/useIsDark';
 import { useMapChrome } from '../../hooks/useMapChrome';
-import { mapColors, TILE_ATTRIBUTION } from './palette';
+import { createBasemap, type BasemapLayer } from './basemap';
+import { mapColors } from './palette';
 
 interface NearbyMiniMapProps {
   /**
@@ -38,12 +39,13 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const tilesRef = useRef<L.TileLayer | null>(null);
+  const tilesRef = useRef<BasemapLayer | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const onSelectRef = useRef(onSelectStop);
   onSelectRef.current = onSelectStop;
   const [built, setBuilt] = useState(false);
-  const colors = mapColors(useIsDark());
+  const isDark = useIsDark();
+  const colors = mapColors(isDark);
   const t = translations(lang);
   const at: [number, number] = [centre.lat, centre.lng];
   const { label, kind } = centre;
@@ -59,13 +61,11 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
       // A small map inside a scrolling page: grabbing it to scroll past is the common
       // gesture, so it only pans once you mean to.
       scrollWheelZoom: false,
+      // Used to come from the tile layer; the basemap layer has no maxZoom to give.
+      maxZoom: 19,
     });
     L.control.zoom({ position: 'bottomright' }).addTo(map);
-    tilesRef.current = L.tileLayer(colors.tiles, {
-      attribution: TILE_ATTRIBUTION,
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(map);
+    tilesRef.current = createBasemap(isDark).addTo(map) as BasemapLayer;
     mapRef.current = map;
     setBuilt(true);
 
@@ -81,9 +81,11 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Swap the basemap when the theme changes. The layer restyles in place, so the view
+  // stays where the reader left it instead of snapping back to Lugo centre.
   useEffect(() => {
-    tilesRef.current?.setUrl(colors.tiles);
-  }, [colors.tiles]);
+    tilesRef.current?.setBasemapTheme(isDark);
+  }, [isDark]);
 
   useEffect(() => {
     const map = mapRef.current;

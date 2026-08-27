@@ -92,6 +92,9 @@ const injectCsp = {
 export default defineConfig(() => {
   return {
     base,
+    // The map renderer’s worker is an ES module. Vite’s default worker format is iife,
+    // which would strip the imports it needs.
+    worker: { format: 'es' as const },
     plugins: [
       injectCsp,
       injectSeoTags,
@@ -149,8 +152,10 @@ export default defineConfig(() => {
               },
             },
             {
-              // Map tiles: show what was seen before rather than grey squares offline.
-              urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
+              // Map data: show what was seen before rather than grey squares offline.
+              // Covers the vector tiles, the glyphs and the sprites, which all come from
+              // the one host, and the raster fallback for a device with no WebGL2.
+              urlPattern: /^https:\/\/(tiles\.openfreemap\.org|tile\.openstreetmap\.org)\/.*/i,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'map-tiles',

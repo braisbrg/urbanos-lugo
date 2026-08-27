@@ -1393,11 +1393,18 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
 
 ok('the content security policy still refuses what it was written to refuse', () => {
   // A CSP erodes one exception at a time, and each one looks reasonable on the day.
-  // Scripts are the ones that matter: the build has no inline script, no worker and no
-  // wasm, and the QR scanner uses the browser's own BarcodeDetector, so 'self' is
-  // enough and anything looser means something got added without noticing.
+  // Scripts are the ones that matter: the build has no inline script and no wasm, and
+  // the QR scanner uses the browser's own BarcodeDetector, so 'self' is enough and
+  // anything looser means something got added without noticing.
   const script = CSP_HEADER.match(/script-src ([^;]+)/)?.[1] ?? '';
   assert(script.trim() === "'self'", `script-src is "${script.trim()}", not just 'self'`);
+
+  // The map renderer does run a worker, and it is bundled as a same-origin module on
+  // purpose: handed a cross-origin worker URL it wraps the thing in a blob instead, and
+  // the fix for the resulting error looks like adding blob: here. It is not. The fix is
+  // to make the bundler emit the worker again -- see src/components/Map/basemap.ts.
+  const worker = CSP_HEADER.match(/worker-src ([^;]+)/)?.[1] ?? '';
+  assert(worker.trim() === "'self'", `worker-src is "${worker.trim()}", not just 'self'`);
   assert(!/unsafe-eval/.test(CSP_HEADER), 'unsafe-eval crept into the policy');
   assert(/object-src 'none'/.test(CSP_HEADER), "object-src is no longer 'none'");
   assert(/frame-ancestors 'none'/.test(CSP_HEADER), 'the header lost frame-ancestors');
@@ -1409,7 +1416,8 @@ ok('the content security policy still refuses what it was written to refuse', ()
   const expected = [
     'https://fonts.googleapis.com',
     'https://fonts.gstatic.com',
-    'https://*.basemaps.cartocdn.com',
+    'https://tiles.openfreemap.org',
+    'https://tile.openstreetmap.org',
     'https://routing.openstreetmap.de',
   ];
   for (const origin of allowed) {
