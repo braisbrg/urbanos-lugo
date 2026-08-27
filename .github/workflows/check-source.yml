@@ -1,0 +1,50 @@
+name: Check the operator's pages
+
+# The dataset is a scrape, and a scrape drifts: the operator moves a pole, renames a
+# stop, changes a departure. Nothing inside the app can notice that on its own — it goes
+# on serving last year's timetable perfectly confidently, which is the failure this
+# project cares about most.
+#
+# So once a week this re-reads the 24 line pages straight from buslugo.com and compares
+# them against what the repository ships. A disagreement fails the run, which is the one
+# thing worth interrupting somebody for: it means a route or a timetable changed and the
+# data has to be regenerated.
+#
+# Deliberately not the 1186 stop pages. Poles move rarely and that pass takes twenty
+# minutes of somebody else's bandwidth; `--fresh-stops` exists for when one is suspected
+# of having moved.
+on:
+  schedule:
+    - cron: '23 5 * * 1' # Mondays, early, off the hour to avoid the busiest minute
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-source
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      # As in the deploy workflow: without this the token stays in .git/config for every
+      # later step, where a compromised dependency's install script could read it.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # No version pinned here: the action reads `packageManager` from package.json.
+      - uses: pnpm/action-setup@v4
+
+      - run: pnpm install --frozen-lockfile
+
+      # Around 30 seconds and 24 requests, once a week, with a User-Agent that says who
+      # is asking and links back here.
+      - name: Re-read the line pages and compare
+        run: pnpm exec tsx tools/reconcile.ts --fresh

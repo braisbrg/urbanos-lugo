@@ -153,6 +153,17 @@
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
   }
+  /* Leaflet paints its container #ddd until a layer draws over it. On the dark theme
+     that is a light-grey rectangle for as long as the renderer takes to put something
+     on screen — most obvious switching to the Mapa tab, where it reads as the map
+     resizing rather than loading. Measured at rgb(221,221,221) on a dark ground. */
+  .leaflet-container {
+    /* !important because Leaflet ships its CSS unlayered, and an unlayered rule beats
+       anything in @layer base however late it comes — the same reason the popup and
+       tooltip overrides below carry it. */
+    background: var(--c-bg) !important;
+  }
+
   /* Leaflet paints its popups white from its own sheet, which strands themed text on a
      white card in dark mode. */
   .leaflet-popup-content-wrapper,

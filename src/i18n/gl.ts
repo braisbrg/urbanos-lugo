@@ -87,7 +87,7 @@ export const gl = {
     priceNotPublished: 'Prezo non publicado',
     alertsTitle: 'Avisos oficiais e incidencias en Lugo',
     alertsSubtitle:
-      'Comprobación automatizada e diaria dende o portal oficial buslugo.com e Concello de Lugo',
+      'Comprobación automatizada cada hora dende o portal do operador, buslugo.com',
     faresTitle: 'Tarifas e Tarxeta Cidadá',
     faresSubtitle: 'Prezos oficiais e títulos de transporte en Lugo (Monbus)',
     faqTitle: 'Preguntas frecuentes',
@@ -112,6 +112,9 @@ export const gl = {
     savedCopy: 'copia gardada',
     structuralTitle: 'Avisos estruturais e obras municipais vixentes',
     structuralSource: 'Escritos neste proxecto a partir de fontes municipais, non comprobados automaticamente coma os avisos de arriba. Poden quedar desactualizados.',
+    reviewedOn: (d: string) => `Revisado o ${d}`,
+    structuralStale: (months: number) =>
+      `Estes avisos levan ${months} meses sen revisar. Comproba na fonte antes de fiarte deles.`,
     phones: 'Teléfonos de atención',
     portals: 'Portais de referencia',
     lastCheck: 'Última verificación oficial:',
@@ -197,19 +200,16 @@ export const gl = {
     notices: [
       {
         title: 'Obras da Nova Estación Intermodal de Lugo (Montero Ríos)',
-        date: 'Obras actuais',
         description:
           'Por mor das obras da futura Estación Intermodal en Montero Ríos e Conde de Fontao, séguese a sinalización peonil habilitada cara ás paradas da contorna ferroviaria.',
       },
       {
         title: 'Reordenación do Casco Histórico (Cabeceira de Bolaño Ribadeneira)',
-        date: 'Vixente',
         description:
           'Tras a peonalización da Praza de Ferrol e Santo Domingo, as liñas 7, 8, 9 e 12 manteñen a súa cabeceira central en Bolaño Ribadeneira con circulación exclusiva para bus urbano.',
       },
       {
         title: 'Bonificación do 50% e Tarxeta Xente Nova (<21 anos)',
-        date: 'Activo',
         description:
           'Manteñense aplicadas as bonificacións do 50% na Tarxeta Cidadá municipal e a gratuidade (ata 60 viaxes/mes) para menores de 21 anos coa Tarxeta Xente Nova da Xunta.',
       },

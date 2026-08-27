@@ -377,6 +377,9 @@ async function main(): Promise<void> {
   console.log(`  ${reparsed.length - changed}/${reparsed.length} lines ship the timetable the page prints`);
 
   console.log(`\n${problems === 0 ? 'No disagreements found.' : `${problems} disagreements to look at.`}`);
+  // A scheduled job needs this to fail, not to print quietly into a log nobody reads:
+  // a changed itinerary or timetable is the one thing that makes the shipped data wrong.
+  if (problems > 0) process.exitCode = 1;
   if (!FRESH) console.log('(run with --fresh to re-download the line pages and catch a stale snapshot)');
   else if (!FRESH_STOPS) console.log('(stop coordinates came from disk; --fresh-stops re-reads all 1186 pages)');
   console.log('');

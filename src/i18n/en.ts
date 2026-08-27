@@ -84,7 +84,7 @@ export const en: Dict = {
     priceNotPublished: 'Price not published',
     alertsTitle: 'Official service notices for Lugo',
     alertsSubtitle:
-      'Checked automatically every day against the official buslugo.com portal and the Concello de Lugo',
+      'Checked automatically every hour against the operator’s own portal, buslugo.com',
     faresTitle: 'Fares and the Tarxeta Cidadá',
     faresSubtitle: 'Official prices and travel passes in Lugo (Monbus)',
     faqTitle: 'Frequently asked questions',
@@ -109,6 +109,9 @@ export const en: Dict = {
     savedCopy: 'saved copy',
     structuralTitle: 'Standing notices and city roadworks',
     structuralSource: 'Written into this project from municipal sources, not checked automatically the way the alerts above are. They can go out of date.',
+    reviewedOn: (d: string) => `Reviewed on ${d}`,
+    structuralStale: (months: number) =>
+      `These notices have not been reviewed for ${months} months. Check the source before relying on them.`,
     phones: 'Information lines',
     portals: 'Reference websites',
     lastCheck: 'Last official check:',
@@ -194,19 +197,16 @@ export const en: Dict = {
     notices: [
       {
         title: 'Works at the new Lugo intermodal station (Montero Ríos)',
-        date: 'Works in progress',
         description:
           'Because of the works on the future intermodal station at Montero Ríos and Conde de Fontao, follow the signed pedestrian route to the stops around the railway station.',
       },
       {
         title: 'Old town reorganisation (Bolaño Ribadeneira terminus)',
-        date: 'In force',
         description:
           'Since Praza de Ferrol and Santo Domingo were pedestrianised, lines 7, 8, 9 and 12 keep their central terminus at Bolaño Ribadeneira, which is open to city buses only.',
       },
       {
         title: '50% discount and the Xente Nova card (under 21)',
-        date: 'Active',
         description:
           'The 50% discount on the municipal Tarxeta Cidadá still applies, and travel is free (up to 60 trips a month) for under-21s holding the regional Xente Nova card.',
       },

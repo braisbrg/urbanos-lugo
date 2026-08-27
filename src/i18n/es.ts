@@ -73,7 +73,7 @@ export const es: Dict = {
     priceNotPublished: 'Precio no publicado',
     alertsTitle: 'Avisos oficiales e incidencias en Lugo',
     alertsSubtitle:
-      'Comprobación automatizada y diaria desde el portal oficial buslugo.com y Concello de Lugo',
+      'Comprobación automatizada cada hora desde el portal del operador, buslugo.com',
     faresTitle: 'Tarifas y Tarjeta Ciudadana',
     faresSubtitle: 'Precios oficiales y títulos de transporte en Lugo (Monbus)',
     faqTitle: 'Preguntas frecuentes',
@@ -98,6 +98,9 @@ export const es: Dict = {
     savedCopy: 'copia guardada',
     structuralTitle: 'Avisos estructurales y obras municipales vigentes',
     structuralSource: 'Escritos en este proyecto a partir de fuentes municipales, no comprobados automáticamente como los avisos de arriba. Pueden quedar desactualizados.',
+    reviewedOn: (d: string) => `Revisado el ${d}`,
+    structuralStale: (months: number) =>
+      `Estos avisos llevan ${months} meses sin revisar. Comprueba en la fuente antes de fiarte de ellos.`,
     phones: 'Teléfonos de atención',
     portals: 'Portales de referencia',
     lastCheck: 'Última verificación oficial:',
@@ -183,19 +186,16 @@ export const es: Dict = {
     notices: [
       {
         title: 'Obras de la Nueva Estación Intermodal de Lugo (Montero Ríos)',
-        date: 'Obras actuales',
         description:
           'Debido a las obras de la futura Estación Intermodal en Montero Ríos y Conde de Fontao, se sigue la señalización peatonal habilitada hacia las paradas del entorno ferroviario.',
       },
       {
         title: 'Reordenación del Casco Histórico (Cabecera de Bolaño Ribadeneira)',
-        date: 'Vigente',
         description:
           'Tras la peatonalización de Praza de Ferrol y Santo Domingo, las líneas 7, 8, 9 y 12 mantienen su cabecera central en Bolaño Ribadeneira con circulación exclusiva para bus urbano.',
       },
       {
         title: 'Bonificación del 50% y Tarjeta Xente Nova (<21 años)',
-        date: 'Activo',
         description:
           'Se mantienen aplicadas las bonificaciones del 50% en la Tarjeta Ciudadana municipal y la gratuidad (hasta 60 viajes/mes) para menores de 21 años con la Tarjeta Xente Nova de la Xunta.',
       },

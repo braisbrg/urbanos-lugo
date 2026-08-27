@@ -119,14 +119,40 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
    * works, the pedestrianised old town, the fare discounts. The prose lives in the
    * dictionary; the ids, severities and affected lines are facts and stay here.
    */
+  /**
+   * Where somebody can go to check any of this for themselves. buslugo.com is the
+   * operator's own; the other two are independent readers of the same timetables, like
+   * this one.
+   */
+  const PORTALS = [
+    { href: 'https://buslugo.com', label: 'buslugo.com' },
+    { href: 'https://urbanoslugo.com', label: 'urbanoslugo.com' },
+    { href: 'https://tpgalicia.github.io/urban/lugo', label: 'TP Galicia · Lugo' },
+  ];
+
   const NOTICE_META = [
     { id: 'struct-1', severity: 'warning' as const, linesAffected: ['1.3', '3.1', '3.2'] },
     { id: 'struct-2', severity: 'info' as const, linesAffected: ['7', '8', '9', '12'] },
     { id: 'struct-3', severity: 'info' as const, linesAffected: ['Todas'] },
   ];
+  /**
+   * When a person last checked these against the city, in ISO so it sorts and parses.
+   *
+   * They used to carry the words "obras actuais", "vixente" and "activo", which is a
+   * claim about today made by a file that was written months ago and cannot know. The
+   * works will finish; the app would go on saying they had not. A date cannot go out of
+   * date -- it just gets further away, and below the notices say so themselves.
+   *
+   * Move this forward only after actually re-reading the sources.
+   */
+  const NOTICES_REVIEWED_ON = '2026-08-27';
+  const monthsSinceReview = Math.floor(
+    (Date.now() - new Date(NOTICES_REVIEWED_ON).getTime()) / (1000 * 60 * 60 * 24 * 30.4),
+  );
   const structuralNotices: ServiceAlert[] = NOTICE_META.map((meta, i) => ({
     ...meta,
     ...t.faresContent.notices[i],
+    date: NOTICES_REVIEWED_ON,
     active: true,
   }));
 
@@ -329,7 +355,15 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
           <h3 className="text-label font-bold text-ink-2 uppercase tracking-wider">
             {t.fares.structuralTitle}
           </h3>
-          <p className="mb-3 mt-1 text-label leading-relaxed text-ink-3">{t.fares.structuralSource}</p>
+          <p className="mt-1 text-label leading-relaxed text-ink-3">{t.fares.structuralSource}</p>
+          {/* Six months is roughly how long a set of roadworks can outlive its own
+              description. Past that the app stops implying anybody has looked. */}
+          {monthsSinceReview >= 6 && (
+            <p className="mt-1 text-label font-semibold leading-relaxed text-estimated">
+              {t.fares.structuralStale(monthsSinceReview)}
+            </p>
+          )}
+          <div className="mb-3" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {structuralNotices.map((alert) => {
               const isWarning = alert.severity === 'warning';
@@ -341,12 +375,16 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
+                    {/* When somebody last checked, not a word claiming it is still true.
+                        These three cards used to say "obras actuais", "vixente" and
+                        "activo" -- a statement about today, made by a file written months
+                        ago, which cannot know. */}
                     <span
                       className={`text-label font-black uppercase tracking-wider px-2 py-0.5 rounded ${
                         isWarning ? 'bg-warn text-warn-ink' : 'bg-surface text-accent'
                       }`}
                     >
-                      {formatInstant(alert.date, LOCALE[lang])}
+                      {t.fares.reviewedOn(new Date(alert.date).toLocaleDateString(LOCALE[lang]))}
                     </span>
                     <div className="flex flex-wrap items-center gap-1 justify-end max-w-[65%]">
                       {(() => {
@@ -473,9 +511,23 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
               <Globe className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <div className="min-w-0">
                 <div className="font-bold text-ink">{t.fares.portals}</div>
-                <div className="mt-0.5 break-all font-mono font-bold text-accent">https://buslugo.com</div>
-                <div className="break-all font-mono font-bold text-accent">https://urbanoslugo.com</div>
-                <div className="break-all font-mono font-bold text-accent">https://tpgalicia.github.io/urban/lugo</div>
+                {/* Named links rather than three URLs printed out. A bare address is only
+                    worth the width when it cannot be clicked, and these can; spelling the
+                    whole thing out was also what pushed the longest one out of the card. */}
+                <ul className="mt-1 space-y-0.5">
+                  {PORTALS.map((portal) => (
+                    <li key={portal.href}>
+                      <a
+                        href={portal.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 items-center font-bold text-accent underline underline-offset-2"
+                      >
+                        {portal.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>

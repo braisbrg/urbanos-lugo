@@ -1803,4 +1803,30 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
   assert(/404\.html/.test(vite), 'the SPA fallback copy is gone, so tab paths break on GitHub Pages');
 });
 
+ok('the hand-written notices are dated, not declared current', () => {
+  // Three notices about the city are written into this repository rather than fetched:
+  // the intermodal works, the pedestrianised old town, the fare discounts. They used to
+  // carry the words "obras actuais", "vixente" and "activo" -- a claim about today, made
+  // by a file that cannot know, sitting directly under a block that really is checked
+  // hourly. A review date replaced them, because a date cannot go out of date.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const view = readFileSync(join(root, 'src/components/FaresAndAlertsView.tsx'), 'utf8');
+
+  const stamp = view.match(/NOTICES_REVIEWED_ON = '(\d{4}-\d{2}-\d{2})'/);
+  assert(stamp, 'the hand-written notices no longer carry a review date');
+  const reviewed = new Date(stamp![1]);
+  assert(!Number.isNaN(reviewed.getTime()), `"${stamp![1]}" is not a date`);
+  assert(reviewed.getTime() <= Date.now(), 'the notices claim to have been reviewed in the future');
+
+  // And nothing puts a claim back where the component spreads the dictionary in.
+  for (const lang of ['gl', 'es', 'en']) {
+    const dict = readFileSync(join(root, `src/i18n/${lang}.ts`), 'utf8');
+    const block = dict.slice(dict.indexOf('notices: ['), dict.indexOf('],', dict.indexOf('notices: [')));
+    assert(
+      !/\bdate:/.test(block),
+      `${lang}.ts gives the hand-written notices a date of their own again; the review date is the only one that is true`,
+    );
+  }
+});
+
 console.log(`\n${checks} checks passed\n`);
