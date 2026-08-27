@@ -111,6 +111,7 @@ export const gl = {
     checkOnBuslugo: 'Consultar en buslugo.com',
     savedCopy: 'copia gardada',
     structuralTitle: 'Avisos estruturais e obras municipais vixentes',
+    structuralSource: 'Escritos neste proxecto a partir de fontes municipais, non comprobados automaticamente coma os avisos de arriba. Poden quedar desactualizados.',
     phones: 'Teléfonos de atención',
     portals: 'Portais de referencia',
     lastCheck: 'Última verificación oficial:',

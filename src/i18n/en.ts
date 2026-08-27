@@ -108,6 +108,7 @@ export const en: Dict = {
     checkOnBuslugo: 'Check on buslugo.com',
     savedCopy: 'saved copy',
     structuralTitle: 'Standing notices and city roadworks',
+    structuralSource: 'Written into this project from municipal sources, not checked automatically the way the alerts above are. They can go out of date.',
     phones: 'Information lines',
     portals: 'Reference websites',
     lastCheck: 'Last official check:',

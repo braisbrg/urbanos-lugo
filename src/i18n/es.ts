@@ -97,6 +97,7 @@ export const es: Dict = {
     checkOnBuslugo: 'Consultar en buslugo.com',
     savedCopy: 'copia guardada',
     structuralTitle: 'Avisos estructurales y obras municipales vigentes',
+    structuralSource: 'Escritos en este proyecto a partir de fuentes municipales, no comprobados automáticamente como los avisos de arriba. Pueden quedar desactualizados.',
     phones: 'Teléfonos de atención',
     portals: 'Portales de referencia',
     lastCheck: 'Última verificación oficial:',

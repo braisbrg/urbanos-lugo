@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Bus, MapPin, Navigation, Layers, Radio, LocateFixed, ChevronRight } from 'lucide-react';
+import { Bus, MapPin, Navigation, Layers, LocateFixed, ChevronRight } from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
 import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
@@ -125,6 +125,19 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   // What colour the legend's bus and route swatches should be: the colour the map is
   // actually drawing them in, which is the line's own. With every line shown at once
   // there is no single answer, so they go neutral and the shape carries the meaning.
+  /**
+   * One shape for the five quick filters.
+   *
+   * They had grown five different treatments — an amber HULA, a red-lettered Campus, an
+   * inked O Ceao — and an emoji each, which is what made the block read as assembled
+   * rather than designed and what stopped the labels fitting: the widest of them wrapped
+   * to two lines inside a fixed 44 px box and spilled out of it. The label says which
+   * place; the colour only has to say which one is on.
+   */
+  const presetButtonClass = (active: boolean) =>
+    `flex min-h-11 items-center justify-center rounded-[9px] px-2.5 py-1.5 text-center text-label font-semibold ${
+      active ? 'bg-accent text-on-accent shadow-xs' : 'border border-edge bg-surface text-ink-2'
+    }`;
   const legendColor =
     activeLineId !== 'all' ? lines.find((l) => l.id === activeLineId)?.color : undefined;
   // The list has to agree with the banner above it. It used to offer all twenty-four
@@ -329,8 +342,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               </div>
 
               <div className="text-right">
-                <span className="flex items-center gap-1 text-label font-black text-official">
-                  <Radio className="w-3.5 h-3.5 animate-pulse text-official" />
+                <span className="flex items-center gap-1 text-label font-black text-estimated">
+                  <Bus className="w-3.5 h-3.5 text-estimated" aria-hidden="true" />
                   {liveBuses.length} {t.map.liveBusesCount}
                 </span>
                 <span className="text-label text-ink-3 font-medium">
@@ -372,61 +385,45 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.quickFilters}
             </span>
-            <div className="grid grid-cols-3 gap-1.5">
+            {/* Two columns, and "all" across the top: five buttons in three columns left
+                one row short and one of them stretched to fill the gap, which is the
+                lopsidedness you see before you can name it. Across the top also puts the
+                way back to everything above the four places rather than among them. */}
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => handlePresetFilter('all')}
                 aria-pressed={filterPreset === 'all'}
-                className={`flex h-11 items-center rounded-[9px] px-3.5 text-label font-semibold ${
-                  filterPreset === 'all'
-                    ? 'bg-accent text-on-accent shadow-xs'
-                    : 'bg-surface text-ink-2 border border-edge hover:bg-surface'
-                }`}
+                className={`col-span-2 ${presetButtonClass(filterPreset === 'all')}`}
               >
                 {t.map.allLines}
               </button>
               <button
                 onClick={() => handlePresetFilter('nearby')}
                 aria-pressed={filterPreset === 'nearby'}
-                className={`flex h-11 items-center rounded-[9px] px-3.5 text-label font-semibold ${
-                  filterPreset === 'nearby'
-                    ? 'bg-accent text-on-accent shadow-xs'
-                    : 'bg-surface text-ink-2 border border-edge hover:bg-surface'
-                }`}
+                className={presetButtonClass(filterPreset === 'nearby')}
               >
-                📍 {t.map.nearbyFilter}
+                {t.map.nearbyFilter}
               </button>
               <button
                 onClick={() => handlePresetFilter('hula')}
                 aria-pressed={filterPreset === 'hula'}
-                className={`flex h-11 items-center rounded-[9px] px-3.5 text-label font-semibold ${
-                  filterPreset === 'hula'
-                    ? 'bg-warn-ink text-bg shadow-xs'
-                    : 'bg-warn text-warn-ink border border-warn hover:bg-warn'
-                }`}
+                className={presetButtonClass(filterPreset === 'hula')}
               >
-                🏥 {t.map.filterHula}
+                {t.map.filterHula}
               </button>
               <button
                 onClick={() => handlePresetFilter('campus')}
                 aria-pressed={filterPreset === 'campus'}
-                className={`flex h-11 items-center rounded-[9px] px-3.5 text-label font-semibold ${
-                  filterPreset === 'campus'
-                    ? 'bg-accent text-on-accent shadow-xs'
-                    : 'bg-surface text-accent border border-edge hover:bg-surface'
-                }`}
+                className={presetButtonClass(filterPreset === 'campus')}
               >
-                🎓 {t.map.filterCampus}
+                {t.map.filterCampus}
               </button>
               <button
                 onClick={() => handlePresetFilter('ceao')}
                 aria-pressed={filterPreset === 'ceao'}
-                className={`flex h-11 items-center rounded-[9px] px-3.5 text-label font-semibold col-span-2 ${
-                  filterPreset === 'ceao'
-                    ? 'bg-ink text-bg'
-                    : 'border border-edge text-ink-2'
-                }`}
+                className={presetButtonClass(filterPreset === 'ceao')}
               >
-                🏭 {t.map.filterCeao}
+                {t.map.filterCeao}
               </button>
             </div>
             {filterPreset === 'stop' && linesHereStop && (
@@ -498,7 +495,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                   showBuses ? 'bg-bg text-ink shadow-xs' : 'text-ink-3'
                 }`}
               >
-                <Bus className="w-3 h-3 text-official" />
+                <Bus className="w-3 h-3 text-estimated" />
                 <span>{t.map.layerBuses}</span>
               </button>
 

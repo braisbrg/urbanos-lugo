@@ -326,9 +326,10 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
 
         {/* Real Structural Municipal Notices */}
         <div className="pt-2">
-          <h3 className="text-label font-bold text-ink-2 uppercase tracking-wider mb-3">
+          <h3 className="text-label font-bold text-ink-2 uppercase tracking-wider">
             {t.fares.structuralTitle}
           </h3>
+          <p className="mb-3 mt-1 text-label leading-relaxed text-ink-3">{t.fares.structuralSource}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {structuralNotices.map((alert) => {
               const isWarning = alert.severity === 'warning';
@@ -470,11 +471,11 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
 
             <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-line">
               <Globe className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-              <div>
+              <div className="min-w-0">
                 <div className="font-bold text-ink">{t.fares.portals}</div>
-                <div className="mt-0.5 font-mono text-accent font-bold">https://buslugo.com</div>
-                <div className="font-mono text-accent font-bold">https://urbanoslugo.com</div>
-                <div className="font-mono text-accent font-bold">https://tpgalicia.github.io/urban/lugo</div>
+                <div className="mt-0.5 break-all font-mono font-bold text-accent">https://buslugo.com</div>
+                <div className="break-all font-mono font-bold text-accent">https://urbanoslugo.com</div>
+                <div className="break-all font-mono font-bold text-accent">https://tpgalicia.github.io/urban/lugo</div>
               </div>
             </div>
           </div>
