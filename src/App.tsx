@@ -94,6 +94,28 @@ export default function App() {
    */
   const [mapFocus, setMapFocus] = useState<'stop' | 'line'>('line');
   const [selectedLine, setSelectedLine] = useState<BusLine | null>(BUS_LINES[0]);
+  /**
+   * Asking for a line, rather than for the list of lines.
+   *
+   * Seven places offer a line — a stop's arrival row, the search bar, the map, the
+   * planner, saved lines, a shared ?linea= link — and all of them used to select it and
+   * switch tab. Below lg that arrives at the full list with the chosen line ticked in
+   * state and usually below the fold: somebody who asked for one line got twenty.
+   *
+   * A counter rather than a flag, so asking for the same line twice is still two asks.
+   * Zero means nobody asked and the list is what should show.
+   */
+  const [lineRequest, setLineRequest] = useState(0);
+  const openLine = (line: BusLine) => {
+    setSelectedLine(line);
+    setLineRequest((n) => n + 1);
+    setActiveTab('lines');
+  };
+  /** The nav asks for a tab, not for a line, so Líneas opens on its list. */
+  const goToTab = (tab: typeof activeTab) => {
+    if (tab === 'lines') setLineRequest(0);
+    setActiveTab(tab);
+  };
   // The stops tab opens on the saved-stops home; choosing a stop anywhere — search, QR,
   // map, a saved stop — switches it to that stop's board, and Back returns here.
   const [showStopBoard, setShowStopBoard] = useState(false);
@@ -187,10 +209,7 @@ export default function App() {
       const line = BUS_LINES.find(
         (l) => l.id.toLowerCase() === lineParam.toLowerCase() || l.number.toLowerCase() === lineParam.toLowerCase()
       );
-      if (line) {
-        setSelectedLine(line);
-        setActiveTab('lines');
-      }
+      if (line) openLine(line);
     }
   }, []);
 
@@ -233,7 +252,7 @@ export default function App() {
     <div className="flex h-[100dvh] bg-bg text-ink lg:flex-row">
       <SideNav
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={goToTab}
         onOpenInfo={() => setActiveTab('info')}
         alertCount={announcedIncidents}
         lang={lang}
@@ -253,8 +272,7 @@ export default function App() {
         savedCount={favoriteStopIds.length + favoriteLineIds.length}
         onSelectStop={handleSelectStop}
         onSelectLine={(line) => {
-          setSelectedLine(line);
-          setActiveTab('lines');
+          openLine(line);
         }}
         onOpenQrScanner={() => setIsQrModalOpen(true)}
         onOpenMenu={() => setIsMenuOpen(true)}
@@ -318,8 +336,7 @@ export default function App() {
                 favoriteStopIds={favoriteStopIds}
                 favoriteLineIds={favoriteLineIds}
                 onSelectLine={(line) => {
-                  setSelectedLine(line);
-                  setActiveTab('lines');
+                  openLine(line);
                 }}
                 recentStopIds={recentStopIds}
                 onClearRecent={clearRecentStops}
@@ -332,8 +349,7 @@ export default function App() {
               <StopArrivalsView
                 selectedStop={selectedStop}
                 onSelectLine={(line) => {
-                  setSelectedLine(line);
-                  setActiveTab('lines');
+                  openLine(line);
                 }}
                 onViewOnMap={handleViewOnMap}
                 onSelectStop={handleSelectStop}
@@ -349,6 +365,7 @@ export default function App() {
         {activeTab === 'lines' && (
           <LinesView
             selectedLine={selectedLine}
+            lineRequest={lineRequest}
             onSelectLine={handleSelectLine}
             onSelectStop={handleSelectStop}
             onViewLineOnMap={handleViewLineOnMap}
@@ -369,8 +386,7 @@ export default function App() {
               setSelectedLine(line);
             }}
               onOpenLine={(line) => {
-                setSelectedLine(line);
-                setActiveTab('lines');
+                openLine(line);
               }}
               lang={lang}
             />
@@ -381,8 +397,7 @@ export default function App() {
           <RoutePlannerView
             onSelectStop={handleSelectStop}
             onSelectLine={(line) => {
-              setSelectedLine(line);
-              setActiveTab('lines');
+              openLine(line);
             }}
             lang={lang}
           />
@@ -392,7 +407,7 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} lang={lang} />
+      <BottomNav activeTab={activeTab} setActiveTab={goToTab} lang={lang} />
       </div>
 
       <MenuDrawer
@@ -414,8 +429,7 @@ export default function App() {
         favoriteLineIds={favoriteLineIds}
         onSelectStop={handleSelectStop}
         onSelectLine={(line) => {
-          setSelectedLine(line);
-          setActiveTab('lines');
+          openLine(line);
         }}
         onRemoveFavoriteStop={handleToggleFavorite}
         onRemoveFavoriteLine={handleToggleFavoriteLine}

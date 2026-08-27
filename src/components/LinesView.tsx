@@ -29,6 +29,8 @@ const TICK_MS = 3000;
 
 interface LinesViewProps {
   selectedLine: BusLine | null;
+  /** Bumped whenever somebody asked for a line, as opposed to for this tab. */
+  lineRequest?: number;
   onSelectLine: (line: BusLine) => void;
   onSelectStop: (stop: BusStop) => void;
   onViewLineOnMap: (line: BusLine) => void;
@@ -39,6 +41,7 @@ interface LinesViewProps {
 
 export const LinesView: React.FC<LinesViewProps> = ({
   selectedLine,
+  lineRequest = 0,
   onSelectLine,
   onSelectStop,
   onViewLineOnMap,
@@ -59,6 +62,20 @@ export const LinesView: React.FC<LinesViewProps> = ({
   const [tick, setTick] = useState(0);
 
   const currentLine = selectedLine || BUS_LINES[0];
+
+  /**
+   * A line picked somewhere else opens here.
+   *
+   * Only below lg, where the two columns are one screen at a time; above it the detail
+   * already sits beside the list and this changes nothing. The count is what carries the
+   * intent — this view is mounted when the tab opens, so by its first render the line is
+   * already selected whether anybody asked for it or just tapped Líneas.
+   */
+  useEffect(() => {
+    if (!lineRequest) return;
+    setDirectionIndex(0);
+    setShowDetail(true);
+  }, [lineRequest]);
 
   useEffect(() => {
     const update = () => {
