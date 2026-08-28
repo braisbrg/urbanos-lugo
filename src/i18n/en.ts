@@ -356,9 +356,10 @@ export const en: Dict = {
     viewOnMap: 'Show the route on the map',
     routeLength: 'Length',
     routeStops: 'Stops',
-    routeFreeFlow: 'Free-flow',
-    routeFreeFlowHint:
-      'Free-flow driving time between this direction\u2019s stops, with no dwells and no traffic. It is not how long the trip takes.',
+    routeDuration: 'Trip time',
+    routeDurationHint:
+      'How long a whole trip in this direction takes according to the operator\u2019s timetable, first stop to last. It does not allow for delays.',
+    routeDurationUnknown: 'No timetable',
     kilometres: (km: string) => `${km} km`,
     approximatePathTitle: 'Approximate path',
     approximatePath:

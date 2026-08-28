@@ -326,3 +326,37 @@ export function buildRuns(
   runCache.set(key, result);
   return result;
 }
+
+/**
+ * How long one whole trip takes, read off the operator's timetable.
+ *
+ * The line card used to sum `legSeconds` -- free-flow driving between consecutive stops --
+ * and a reader took it for the length of the journey. It is not: it leaves out every
+ * dwell. Measured on the eight directions whose printed table runs end to end, that came
+ * out a median of five minutes short, and on the 4.2 fourteen.
+ *
+ * A built run already carries a minute for every stop index, anchored on the printed times
+ * at each timing point and interpolated between them -- the same numbers the stop board
+ * shows. First index to last is the answer, with no model of our own on top.
+ *
+ * Weekdays first because that is the timetable most lines publish; a line that only runs
+ * at the weekend still gets one. `undefined` when no run can be built at all, so the
+ * caller can say "no timetable" rather than print a zero.
+ */
+export function scheduledDuration(
+  line: BusLine,
+  directionIndex: number,
+  stops: BusStop[],
+): number | undefined {
+  const direction = line.directions[directionIndex];
+  if (!direction) return undefined;
+  const lastIndex = direction.stops.length - 1;
+  for (const kind of ['laborable', 'sabado', 'domingo'] as const) {
+    for (const run of buildRuns(line, directionIndex, stops, kind)) {
+      const first = run.minutesByStopIndex[0];
+      const last = run.minutesByStopIndex[lastIndex];
+      if (first !== undefined && last !== undefined && last > first) return Math.round(last - first);
+    }
+  }
+  return undefined;
+}

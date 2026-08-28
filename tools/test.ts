@@ -11,6 +11,7 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
+import { scheduledDuration } from '../src/utils/schedule';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
@@ -2006,6 +2007,44 @@ ok('a bus whose time has passed stays on the board, marked', () => {
   wayLate.setHours(hh, mm + 20, 0, 0);
   const gone = getArrivalsForStop(stop!.id, wayLate).arrivals.find((a) => a.etaTime === first.etaTime);
   assert(!gone, `the ${first.lineNumber} due at ${first.etaTime} was still listed twenty minutes on`);
+});
+
+ok('a line\u2019s trip time comes from the timetable, not from a road model', () => {
+  // The card showed the sum of `legSeconds` -- free-flow driving between consecutive
+  // stops -- under a heading a reader took for the length of the journey. Brais spotted
+  // it: the 1.1 stop list ran 06:58 to 07:36 and the card beside it said 25 min.
+  //
+  // The property that was broken is simple and does not depend on any particular number:
+  // a bus that stops 39 times cannot do the route faster than a car that never stops.
+  // Measured across all 48 directions the schedule runs 2 to 15 minutes longer, median 7.
+  for (const line of BUS_LINES) {
+    for (const [i, direction] of line.directions.entries()) {
+      const scheduled = scheduledDuration(line, i, BUS_STOPS);
+      assert(
+        scheduled !== undefined,
+        `${line.id} direction ${i} has a timetable this app cannot build a run from`,
+      );
+      const freeFlow = direction.legSeconds.reduce((a, b) => a + b, 0) / 60;
+      assert(
+        scheduled! > freeFlow,
+        `${line.id}/${i}: the trip time (${scheduled} min) is not longer than free-flow ` +
+          `driving (${freeFlow.toFixed(0)} min), so it is a road model rather than the timetable`,
+      );
+    }
+  }
+
+  // And the card has to be the thing asking. The property above held perfectly well while
+  // the view went on summing legSeconds on its own, which is exactly the state Brais found.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const view = readFileSync(join(root, 'src/components/LinesView.tsx'), 'utf8');
+  assert(
+    /scheduledDuration\(/.test(view),
+    'the line card no longer asks the timetable how long the trip takes',
+  );
+  assert(
+    !/legSeconds\.reduce/.test(view),
+    'the line card is summing legSeconds again, which is driving time with no stops in it',
+  );
 });
 
 console.log(`\n${checks} checks passed\n`);

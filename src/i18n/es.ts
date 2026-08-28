@@ -345,9 +345,10 @@ export const es: Dict = {
     viewOnMap: 'Ver recorrido en el Mapa',
     routeLength: 'Longitud',
     routeStops: 'Paradas',
-    routeFreeFlow: 'Sin tráfico',
-    routeFreeFlowHint:
-      'Tiempo de circulación libre entre las paradas de este sentido, sin paradas ni tráfico. No es la duración real del viaje.',
+    routeDuration: 'Recorrido',
+    routeDurationHint:
+      'Cuánto tarda un viaje entero de este sentido según el cuadro horario del operador, de la primera parada a la última. No contempla retrasos.',
+    routeDurationUnknown: 'Sin horario',
     kilometres: (km: string) => `${km} km`,
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:

@@ -14,7 +14,7 @@ import { Lang, translations } from '../i18n';
 import { BusLine, BusStop, ScheduledBus } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
 import { getScheduledBuses } from '../utils/transitEngine';
-import { buildRuns, dayKind, formatMinutes, minutesNow } from '../utils/schedule';
+import { buildRuns, dayKind, formatMinutes, minutesNow, scheduledDuration } from '../utils/schedule';
 import { daysLabel, frequencyLabel } from '../utils/serviceLabels';
 import { MAX_QUERY_LENGTH, matchesQuery } from '../utils/searchUtils';
 
@@ -100,7 +100,10 @@ export const LinesView: React.FC<LinesViewProps> = ({
     return inCategory && matches;
   });
 
-  const direction = currentLine.directions[directionIndex] || currentLine.directions[0];
+  // The index actually being shown: the selector can point past the end after a line
+  // with fewer directions is chosen, and the card falls back to the first.
+  const directionIdx = currentLine.directions[directionIndex] ? directionIndex : 0;
+  const direction = currentLine.directions[directionIdx];
 
   const runs = useMemo(
     () =>
@@ -366,13 +369,18 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 </div>
                 <div className="font-bold text-body text-ink font-mono">{direction.stops.length}</div>
               </div>
-              <div className="p-3 rounded-md bg-surface border border-line" title={t.lines.routeFreeFlowHint}>
+              <div className="p-3 rounded-md bg-surface border border-line" title={t.lines.routeDurationHint}>
                 <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
                   <Clock className="w-3.5 h-3.5 text-accent" />
-                  <span>{t.lines.routeFreeFlow}</span>
+                  <span>{t.lines.routeDuration}</span>
                 </div>
                 <div className="font-bold text-body text-ink font-mono">
-                  {Math.round(direction.legSeconds.reduce((a, b) => a + b, 0) / 60)} {t.common.min}
+                  {(() => {
+                    const minutes = scheduledDuration(currentLine, directionIdx, BUS_STOPS);
+                    return minutes === undefined
+                      ? t.lines.routeDurationUnknown
+                      : `${minutes} ${t.common.min}`;
+                  })()}
                 </div>
               </div>
             </div>

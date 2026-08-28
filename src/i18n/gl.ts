@@ -359,9 +359,10 @@ export const gl = {
     viewOnMap: 'Ver percorrido no Mapa',
     routeLength: 'Lonxitude',
     routeStops: 'Paradas',
-    routeFreeFlow: 'Sen tráfico',
-    routeFreeFlowHint:
-      'Tempo de circulación libre entre as paradas deste sentido, sen paradas nin tráfico. Non é a duración real da viaxe.',
+    routeDuration: 'Percorrido',
+    routeDurationHint:
+      'Canto tarda unha viaxe enteira deste sentido segundo o cadro horario do operador, da primeira parada á última. Non contempla atrasos.',
+    routeDurationUnknown: 'Sen horario',
     kilometres: (km: string) => `${km} km`,
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:
