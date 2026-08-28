@@ -30,30 +30,41 @@ const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000; // 60 seconds minimum cooldown betwe
 
 
 /**
- * The Concello's press feed.
+ * The city's news, by subject.
  *
- * The city publishes nothing an app can read about roadworks — the open-data portal
- * answers 503 on its API and 404 on its catalogues, the news page paints itself with
- * JavaScript, and the 010 account lives on a platform that wants a paid key. What does
- * exist is `concellodelugo.gal/rss.xml`: valid RSS, and ten press releases across fifteen
- * months, which is not an incident feed by any stretch.
+ * The site-wide feed at `/rss.xml` is ten press releases across fifteen months and mostly
+ * about other things. What is actually published is a feed per subject tag, which the tag
+ * pages link to as `/all/feed` — a path that answers with HTML. `/es/taxonomy/term/N/feed`
+ * is the one that answers with RSS, and it is current: the works feed was carrying the
+ * Conde Fontao closure fifteen days after it was written.
  *
- * It is still worth reading, because occasionally one of those ten is exactly what a
- * passenger needs — "AUTOBUSES GRATUÍTOS PARA O ACTO DE INICIO DO ARDE LUCUS" was in it.
- * So: read it, keep only what mentions the buses or the streets, and label every one of
- * them as a press release from the Concello with its own date. Never as roadworks checked
- * automatically, which is the thing this cannot do and must not imply.
+ * Three tags, because three are what a passenger is affected by. The rest of the taxonomy
+ * is the ordinary business of a council.
  */
-const CONCELLO_FEED = 'https://concellodelugo.gal/rss.xml';
+const CONCELLO_FEEDS = [
+  // Buses urbanos. The tag is precise enough to be its own filter.
+  { term: 701, tag: 'buses' as const, alwaysRelevant: true },
+  // Obras en ejecución, and Tráfico. Both are broad — the works tag carries expropriations
+  // and a dog shelter refurbishment — so these need the headline to be about moving around.
+  { term: 600, tag: 'obras' as const, alwaysRelevant: false },
+  { term: 707, tag: 'trafico' as const, alwaysRelevant: false },
+];
+
+const concelloFeedUrl = (term: number) => `https://concellodelugo.gal/es/taxonomy/term/${term}/feed`;
 
 /** Sixty days. Past that a press release is history, not news. */
 const CONCELLO_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 
-/** Words that make a press release about getting around the city rather than about a plaque. */
+/**
+ * Whether a headline from the broad tags is about getting around the city.
+ *
+ * Only the headline: matching the body as well let through a police communiqué and a
+ * speech about sustainable architecture, both of which mention the streets in passing.
+ */
 const ABOUT_GETTING_AROUND =
-  /\b(bus|buses|autobús|autobuses|autobus|transporte|urbano|parada|obras?|tráfico|trafico|corte|cortes|desv[íi]o|circulaci[óo]n|peonaliza|peatonaliza)\b/i;
+  /\b(bus|buses|autobús|autobuses|autobus|transporte|parada|paradas|tráfico|trafico|corte|cortes|desv[íi]o|desvi[oó]|circulaci[óo]n|calle|rúa|rua|avenida|peonaliza|peatonaliza|apertura)\b/i;
 
-export function extractConcelloNotices(xml: string): ServiceAlert[] {
+export function extractConcelloNotices(xml: string, alwaysRelevant = false): ServiceAlert[] {
   const field = (block: string, name: string): string => {
     const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
     return m ? m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
@@ -62,29 +73,25 @@ export function extractConcelloNotices(xml: string): ServiceAlert[] {
   const notices: ServiceAlert[] = [];
   for (const block of xml.match(/<item>[\s\S]*?<\/item>/gi) ?? []) {
     const title = field(block, 'title');
-    const description = field(block, 'description');
-    // The headline only. Matching the body as well let through a police communiqué and
-    // a speech about sustainable architecture, both of which mention the streets in
-    // passing. If getting around the city is not what the headline is about, it is not
-    // what the press release is about.
-    if (!title || !ABOUT_GETTING_AROUND.test(title)) continue;
+    if (!title) continue;
+    // The bus tag is its own filter; the broad ones are not.
+    if (!alwaysRelevant && !ABOUT_GETTING_AROUND.test(title)) continue;
 
-    // Their pubDate is RFC 822 and occasionally missing a timezone; an unparseable one
-    // becomes no date rather than today's, which would be this app inventing recency.
-    // Their pubDate is RFC 822 and occasionally missing a timezone. An unparseable or
-    // ancient one is dropped rather than shown: this feed runs at about one item every
-    // two months, so without a cutoff the app would present a press release from last
-    // spring beside an incident happening now.
+    // Their pubDate is RFC 822 and occasionally missing a timezone. An unparseable or an
+    // old one is dropped rather than shown: these feeds hold ten items each going back
+    // more than a year, and a press release from last spring beside an incident happening
+    // now would read as if both were current.
     const published = new Date(field(block, 'pubDate'));
     if (Number.isNaN(published.getTime())) continue;
     if (Date.now() - published.getTime() > CONCELLO_MAX_AGE_MS) continue;
+
     notices.push({
       id: `concello-${notices.length + 1}`,
       title: title.length > 110 ? `${title.slice(0, 107)}...` : title,
       severity: 'info',
       linesAffected: ['Todas'],
       date: published.toISOString(),
-      description,
+      description: field(block, 'description'),
       active: true,
       source: 'concello',
       link: field(block, 'link') || undefined,
@@ -93,18 +100,34 @@ export function extractConcelloNotices(xml: string): ServiceAlert[] {
   return notices;
 }
 
-/** Best effort: the operator's notices are the ones that matter, and this must never break them. */
+/**
+ * Best effort, and deliberately so: the operator's notices are the ones that matter, and
+ * nothing here may take them down with it. Three requests an hour against a council's
+ * news feeds, with a User-Agent that says who is asking.
+ */
 async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
-  try {
-    const res = await fetch(CONCELLO_FEED, {
-      headers: { 'User-Agent': `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)` },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) return [];
-    return extractConcelloNotices(await res.text());
-  } catch {
-    return [];
+  const headers = { 'User-Agent': `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)` };
+  const perFeed = await Promise.all(
+    CONCELLO_FEEDS.map(async ({ term, alwaysRelevant }) => {
+      try {
+        const res = await fetch(concelloFeedUrl(term), { headers, signal: AbortSignal.timeout(15_000) });
+        if (!res.ok) return [];
+        return extractConcelloNotices(await res.text(), alwaysRelevant);
+      } catch {
+        return [];
+      }
+    }),
+  );
+
+  // One story can carry two of these tags, and the council does tag generously.
+  const seen = new Set<string>();
+  const merged: ServiceAlert[] = [];
+  for (const notice of perFeed.flat()) {
+    if (seen.has(notice.title)) continue;
+    seen.add(notice.title);
+    merged.push({ ...notice, id: `concello-${merged.length + 1}` });
   }
+  return merged.sort((a, b) => b.date.localeCompare(a.date));
 }
 
 /** Warnings rather than notes: something is being held up, cut or withdrawn. */
