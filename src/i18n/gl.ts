@@ -282,6 +282,7 @@ export const gl = {
   },
 
   qr: {
+    close: 'Pechar o lector de códigos',
     title: 'Consultar código QR / parada',
     subtitle: 'Escanea o código da marquesiña ou introduce o código do poste',
     placeholder: 'Exemplo: TPlG, 19 ou a URL completa...',

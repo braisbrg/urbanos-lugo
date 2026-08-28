@@ -268,6 +268,7 @@ export const es: Dict = {
   },
 
   qr: {
+    close: 'Cerrar el lector de códigos',
     title: 'Consultar código QR / parada',
     subtitle: 'Escanea el código de la marquesina o introduce el código del poste',
     placeholder: 'Ejemplo: TPlG, 19 o la URL completa...',

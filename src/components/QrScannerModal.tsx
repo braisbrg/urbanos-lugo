@@ -154,7 +154,8 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
             stopCamera();
             onClose();
           }}
-          className="absolute top-5 right-5 p-1.5 rounded-md text-ink-3 hover:text-ink-2 hover:bg-surface transition-colors"
+          aria-label={t.qr.close}
+          className="absolute top-3.5 right-3.5 flex h-11 w-11 items-center justify-center rounded-md text-ink-3 transition-colors hover:bg-surface hover:text-ink-2"
         >
           <X className="w-5 h-5" />
         </button>
@@ -186,7 +187,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
             isScanning ? stopCamera() : setIsScanning(true);
           }}
           disabled={!hasBarcodeDetector}
-          className="w-full py-2.5 mb-3 rounded-md font-bold text-label uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-surface hover:bg-surface text-ink border border-edge"
+          className="mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-edge bg-surface py-2.5 text-label font-bold uppercase tracking-wider text-ink transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
         >
           {hasBarcodeDetector ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
           <span>{hasBarcodeDetector ? (isScanning ? t.qr.stopScan : t.qr.scanBtn) : t.qr.noCamera}</span>
@@ -207,14 +208,14 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
             onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
             maxLength={MAX_QUERY_LENGTH}
             placeholder={t.qr.placeholder}
-            className="w-full px-3.5 py-2.5 bg-surface border border-edge rounded-md text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:bg-bg"
+            className="min-h-11 w-full rounded-md border border-edge bg-surface px-3.5 py-2.5 text-body font-semibold text-ink placeholder:text-ink-3 focus:bg-bg focus:outline-none focus:ring-2 focus:ring-accent"
           />
 
           {errorMsg && <p className="text-label font-bold text-warn-ink px-1">{errorMsg}</p>}
 
           <button
             onClick={() => handleLookup()}
-            className="w-full py-2.5 bg-accent hover:bg-accent text-on-accent rounded-md font-bold text-label uppercase tracking-wider shadow-xs transition-all flex items-center justify-center gap-2"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-accent py-2.5 text-label font-bold uppercase tracking-wider text-on-accent shadow-xs transition-all hover:bg-accent"
           >
             <span>{t.qr.searchBtn}</span>
             <ArrowRight className="w-4 h-4" />
@@ -234,7 +235,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
                   setInputCode(stop.code);
                   handleLookup(stop.code);
                 }}
-                className="w-full p-2.5 rounded-md bg-surface hover:bg-surface text-left text-label flex items-center justify-between border border-edge transition-colors group gap-2"
+                className="group flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-edge bg-surface p-2.5 text-left text-label transition-colors hover:bg-surface"
               >
                 <span title={stop.name} className="font-semibold text-ink group-hover:text-accent truncate">
                     {stop.name}

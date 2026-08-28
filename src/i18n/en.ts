@@ -279,6 +279,7 @@ export const en: Dict = {
   },
 
   qr: {
+    close: 'Close the code reader',
     title: 'Look up a stop code',
     subtitle: 'Scan the code in the shelter, or type the code printed on the pole',
     placeholder: 'For example: TPlG, 19, or the full URL...',
