@@ -54,8 +54,14 @@ jobs:
       - name: Re-read the line pages and compare
         run: pnpm exec tsx tools/reconcile.ts --fresh
 
-      # Runs even when the timetables disagree: two independent things are being watched
-      # and finding one broken is no reason to stop looking at the other.
+      # Every check runs even when an earlier one fails: they watch independent things,
+      # and finding one broken is no reason to stop looking at the others.
       - name: Re-read the mapped routes and compare
         if: always()
         run: pnpm exec tsx tools/checkOsmGeometry.ts
+
+      # One request. The fares are the only figure here somebody might act on with money
+      # in their hand, and a rise is announced once and then never again.
+      - name: Re-read the fares and compare
+        if: always()
+        run: pnpm exec tsx tools/checkFares.ts

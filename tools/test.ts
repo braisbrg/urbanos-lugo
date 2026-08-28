@@ -1976,21 +1976,23 @@ ok('a bus whose time has passed stays on the board, marked', () => {
   // 1.3, ninety minutes out -- so while the bus was three, two and one minute away, the
   // screen said 88, 87, 86. Whoever was waiting had been told to go home.
   //
-  // Take a real departure and ask the board about it four minutes late.
-  const stop = BUS_STOPS.find((s) => getArrivalsForStop(s.id, new Date()).arrivals.length > 0);
-  assert(stop, 'no stop has any arrivals at all right now');
+  // A fixed weekday morning, not the wall clock. The first version of this check asked
+  // for a stop with arrivals "right now", which is true while the buses run and false
+  // after the last one -- and this suite's own weekly job starts at 05:23, before the
+  // first departure, so it would have failed every Monday from the day it was written.
+  const probe = new Date(2026, 7, 19, 9, 0, 0); // a Wednesday, as the rest of this suite uses
 
-  const probe = new Date();
-  probe.setHours(9, 0, 0, 0);
-  const board = getArrivalsForStop(stop!.id, probe).arrivals;
-  if (board.length === 0) return; // nothing runs at nine on the day this is run
+  const subject = BUS_STOPS.map((s) => ({ stop: s, board: getArrivalsForStop(s.id, probe).arrivals }))
+    .find((s) => s.board.length > 0);
+  assert(subject, 'no stop anywhere has a departure at nine on a weekday');
+  const stop = subject!.stop;
 
-  const [first] = board;
+  const [first] = subject!.board;
   const [hh, mm] = first.etaTime.split(':').map(Number);
   const fourLate = new Date(probe);
   fourLate.setHours(hh, mm + 4, 0, 0);
 
-  const after = getArrivalsForStop(stop!.id, fourLate).arrivals;
+  const after = getArrivalsForStop(stop.id, fourLate).arrivals;
   const kept = after.find((a) => a.etaTime === first.etaTime);
   assert(kept, `the ${first.lineNumber} due at ${first.etaTime} was dropped four minutes later`);
   assert(
@@ -2005,7 +2007,7 @@ ok('a bus whose time has passed stays on the board, marked', () => {
   // Past the window it does go, rather than lingering all day.
   const wayLate = new Date(probe);
   wayLate.setHours(hh, mm + 20, 0, 0);
-  const gone = getArrivalsForStop(stop!.id, wayLate).arrivals.find((a) => a.etaTime === first.etaTime);
+  const gone = getArrivalsForStop(stop.id, wayLate).arrivals.find((a) => a.etaTime === first.etaTime);
   assert(!gone, `the ${first.lineNumber} due at ${first.etaTime} was still listed twenty minutes on`);
 });
 

@@ -47,7 +47,7 @@ tocar nada; e o día que cambien, salta.
 | Fonte | Que serve | Automatizable? |
 |---|---|---|
 | **buslugo.com** | avisos (na barra de navegación) e as páxinas de liña | **Si**, e xa se usa |
-| **buslugo.com/tarifas/** | a táboa de prezos vixente | **Si.** Pendente de atar |
+| **buslugo.com/tarifas/** | a táboa de prezos vixente | **Si.** Semanal, `checkFares.ts` |
 | **buslugo.com/normativa/** | dereitos e obrigas das persoas usuarias | Si, pero non fai falta: cambia moi de raro |
 | **info.urbanoslugo.com/qr-demo-paradas/<código>** | **tempos de paso por parada** | **Si**, e é o achado gordo. Ver abaixo |
 | **urbanoslugo.com** | a web da propia operadora, Monbus Urbanos S.A. | RSS abandonado; sen HTTPS |
@@ -218,7 +218,12 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    especialmente: **Safari en iOS**, que é o outro medio Lugo, e onde `100dvh`, os
    `<details>`, `oklch()` e o `ResizeObserver` do mapa son os candidatos a romper. Tamén
    Firefox e Chrome en Android. Hai que decidir cal é o chan que se soporta e escribilo.
-3. **Atar as tarifas** ao traballo semanal, para que fallen cando cambien.
+3. **Probas de esforzo en todo o proxecto**, despois do paso de navegadores. Non se
+   probou nunca nada fóra do camiño feliz: unha sesión longa co taboleiro recalculando cada
+   15 s, o planificador contra pares de paradas afastadas, o mapa con todas as capas, a
+   sincronización de avisos contra un servidor lento ou caído, o endpoint do QR chamado
+   unha e outra vez, consultas enormes na busca, e o comportamento con rede mala. Hai que
+   decidir que se rompe aceptablemente e que non debe romper nunca.
 
 ## Feito dende que se escribiu isto
 
@@ -229,3 +234,12 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
   poste. É a páxina á que apunta a pegatina; en calquera outro sitio serían dúas listas de
   horas que se contradín sen que ninguén poida dicir cal manda.
 - **O trazado** compárase cada semana contra Overpass, como se describe arriba.
+- **As tarifas** compróbanse no mesmo traballo. `buslugo.com/tarifas` publícaas nunha
+  táboa de dúas columnas, e `tools/checkFares.ts` empareja por etiqueta e non por posición
+  —unha fila engadida movería unha lectura por posición ao prezo equivocado, que é o tipo
+  de fallo que parece un acerto. Comprobado: os cinco prezos cadran, e cunha suba falsa de
+  0,64 a 0,70 falla e sae con 1.
+
+  **O que non cobre, e dise:** a ventá de transbordo de 75 minutos e a tarxeta TMG da
+  Xunta non están nesa páxina. Afirmar que se vixía a táboa enteira cando dous terzos
+  dunha tarxeta quedan fóra sería peor que non vixiar nada.
