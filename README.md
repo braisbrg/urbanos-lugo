@@ -387,8 +387,13 @@ pola que un scrape se garda en lugar de repetirse.
 
 ## Nunca mentir coas horas
 
-É a regra do proxecto. A rede non ten seguimento GPS, así que **nada se presenta como
-medido se non o é**, e cada hora que aparece en pantalla di de onde sae:
+É a regra do proxecto. Esta app non recibe posicións de vehículos, así que **nada se
+presenta como medido se non o é**, e cada hora que aparece en pantalla di de onde sae.
+
+O operador si publica os seus propios minutos por parada, na páxina que hai detrás do QR
+dos postes. A ficha de parada amósaos cando hai servidor que os poida pedir, nun bloque
+aparte e atribuídos a eles — «segundo o operador», nunca «en directo», porque o que son
+eses minutos non está confirmado por escrito. As horas propias desta app seguen sendo:
 
 | Etiqueta | Significado |
 | :--- | :--- |
@@ -700,8 +705,8 @@ navegación usa `aria-current="page"`.
 
 Galego, castelán e inglés. O inglés non é decorativo: por Lugo pasa o Camiño de
 Santiago e boa parte de quen le en inglés está de paso dous días e non viu nunca a
-rede, así que a redacción asume iso — "o código do poste" antes que "o QR", e "sen
-seguimento GPS" dito de fronte.
+rede, así que a redacción asume iso — "o código do poste" antes que "o QR", e "as horas
+están calculadas" dito de fronte.
 
 Os **nomes propios non se traducen**. "Rda. Muralla 56" é un enderezo de Lugo léase
 no idioma que se lea, e quen vén de fóra ten que casar o que pon a pantalla co que pon

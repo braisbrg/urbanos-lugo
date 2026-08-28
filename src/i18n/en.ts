@@ -36,8 +36,8 @@ export const en: Dict = {
     open: 'Menu',
     sourceTimetables: 'Official timetables from buslugo.com',
     sourceGeometry: 'Routes surveyed in OpenStreetMap',
-    sourceNoGps: 'No fleet GPS',
-    sourceShort: 'Official timetables from buslugo.com. No fleet GPS.',
+    sourceNoGps: 'Times computed, not measured',
+    sourceShort: "Official timetables from buslugo.com. This app's times are computed.",
   },
 
   search: {
@@ -108,6 +108,9 @@ export const en: Dict = {
     savedCopy: 'saved copy',
     structuralTitle: 'Standing notices and city roadworks',
     structuralSource: 'Written into this project from municipal sources, not checked automatically the way the alerts above are. They can go out of date.',
+    sourceOperator: 'Notice from the operator',
+    sourceConcello: 'Press release from the council',
+    readInFull: 'Read the whole thing',
     reviewedOn: (d: string) => `Reviewed on ${d}`,
     structuralStale: (months: number) =>
       `These notices have not been reviewed for ${months} months. Check the source before relying on them.`,
@@ -175,7 +178,7 @@ export const en: Dict = {
     transfersShort: (count: number) => (count === 1 ? '1 change' : `${count} changes`),
     timeProvenanceTitle: 'Where these times come from',
     timeProvenance:
-      'Departure times come from the official timetable; those marked ~ are the departure plus the driving time measured along the road. There is no GPS tracking of the fleet, so get to the stop a few minutes early.',
+      'Departure times come from the official timetable; those marked ~ are the departure plus the driving time measured along the road. This app receives no vehicle positions, so get to the stop a few minutes early.',
   },
 
   faresContent: {
@@ -333,7 +336,7 @@ export const en: Dict = {
     searchLines: 'Search a line by number or name...',
     enRoute: (count: number) => (count === 1 ? '1 running' : `${count} running`),
     enRouteHint:
-      'Runs that should be on the road now according to the timetable. There is no GPS tracking of the fleet.',
+      'Runs that should be on the road now according to the timetable. This app receives no vehicle positions.',
     lineLabel: (number: string) => `Line ${number}`,
     origin: 'Start',
     destination: 'End',
@@ -397,10 +400,13 @@ export const en: Dict = {
     reportNotCouncil:
       'The report reaches whoever maintains this app, which has no connection to the Concello de Lugo or to the operator. Anything official has to go to them.',
     precisionNote:
-      'Times marked as estimated are worked out from the departure at the terminus. There is no public GPS for this fleet, so get to the stop a few minutes early.',
+      'Times marked as estimated are worked out from the departure at the terminus. This app receives no vehicle positions, so get to the stop a few minutes early.',
+    operatorSaysTitle: 'According to the operator',
+    operatorSaysNote: (at: string) =>
+      `As the operator publishes it on their own stop page, read at ${at}. Not this app's own figure.`,
     whyEstimatedTitle: 'Why are there no official times at this stop?',
     whyEstimated: (published: number, total: number) =>
-      `The operator only publishes times at the termini and at a handful of major stops: ${published} of the ${total} in the network. Everywhere else, including here, the time is the published departure plus the driving time measured along the real route. There is no fleet GPS, so no time in this app is a measured position of a bus.`,
+      `The operator only publishes times at the termini and at a handful of major stops: ${published} of the ${total} in the network. Everywhere else, including here, the time is the published departure plus the driving time measured along the real route. No time in this app is a measured position of a bus.`,
     every: (minutes: number) => `about every ${minutes} min`,
     beyond: (count: number) =>
       `${count} more ${count === 1 ? 'departure' : 'departures'} after the next hour. You can see them under "By line".`,

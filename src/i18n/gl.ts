@@ -39,8 +39,8 @@ export const gl = {
     open: 'Menú',
     sourceTimetables: 'Horarios oficiais de buslugo.com',
     sourceGeometry: 'Trazado levantado en OpenStreetMap',
-    sourceNoGps: 'Sen GPS de flota',
-    sourceShort: 'Horarios oficiais de buslugo.com. Sen GPS de flota.',
+    sourceNoGps: 'Horas calculadas, non medidas',
+    sourceShort: 'Horarios oficiais de buslugo.com. As horas desta app son calculadas.',
   },
 
   search: {
@@ -111,6 +111,9 @@ export const gl = {
     savedCopy: 'copia gardada',
     structuralTitle: 'Avisos estruturais e obras municipais vixentes',
     structuralSource: 'Escritos neste proxecto a partir de fontes municipais, non comprobados automaticamente coma os avisos de arriba. Poden quedar desactualizados.',
+    sourceOperator: 'Aviso do operador',
+    sourceConcello: 'Nota de prensa do Concello',
+    readInFull: 'Ler a nova completa',
     reviewedOn: (d: string) => `Revisado o ${d}`,
     structuralStale: (months: number) =>
       `Estes avisos levan ${months} meses sen revisar. Comproba na fonte antes de fiarte deles.`,
@@ -178,7 +181,7 @@ export const gl = {
     transfersShort: (count: number) => (count === 1 ? '1 transbordo' : `${count} transbordos`),
     timeProvenanceTitle: 'De onde saen estas horas',
     timeProvenance:
-      'As horas de saída veñen do cadro horario oficial; as marcadas con ~ calcúlanse sumando o tempo de percorrido medido por estrada. Non hai seguimento GPS da flota, así que convén chegar á parada uns minutos antes.',
+      'As horas de saída veñen do cadro horario oficial; as marcadas con ~ calcúlanse sumando o tempo de percorrido medido por estrada. Esta app non recibe posicións dos vehículos, así que convén chegar á parada uns minutos antes.',
   },
 
   faresContent: {
@@ -336,7 +339,7 @@ export const gl = {
     searchLines: 'Buscar liña por número ou nome...',
     enRoute: (count: number) => (count === 1 ? '1 en ruta' : `${count} en ruta`),
     enRouteHint:
-      'Expedicións que segundo o cadro horario deberían estar circulando agora. Non hai seguimento GPS da flota.',
+      'Expedicións que segundo o cadro horario deberían estar circulando agora. Esta app non recibe posicións dos vehículos.',
     lineLabel: (number: string) => `Liña ${number}`,
     origin: 'Orixe',
     destination: 'Destino',
@@ -400,10 +403,13 @@ export const gl = {
     reportNotCouncil:
       'O aviso chega a quen mantén esta aplicación, que non ten relación co Concello de Lugo nin co operador. Calquera trámite oficial hai que facelo con eles.',
     precisionNote:
-      'As horas marcadas como estimadas calcúlanse desde a saída de cabeceira. Non hai GPS público da flota: para non perder o bus, chega á parada uns minutos antes.',
+      'As horas marcadas como estimadas calcúlanse desde a saída de cabeceira. Esta app non recibe posicións dos vehículos: para non perder o bus, chega á parada uns minutos antes.',
+    operatorSaysTitle: 'Segundo o operador',
+    operatorSaysNote: (at: string) =>
+      `Tal como o publica o operador na súa páxina da parada, lido ás ${at}. Non é un dato desta app.`,
     whyEstimatedTitle: 'Por que non hai horas oficiais nesta parada?',
     whyEstimated: (published: number, total: number) =>
-      `O operador publica horas só nas cabeceiras e nunhas poucas paradas principais: ${published} das ${total} da rede. Nas demais, coma esta, calculamos a hora sumando á saída de cabeceira o tempo de percorrido medido sobre o trazado real. Non hai GPS da flota, así que ningunha hora desta app é unha posición medida do bus.`,
+      `O operador publica horas só nas cabeceiras e nunhas poucas paradas principais: ${published} das ${total} da rede. Nas demais, coma esta, calculamos a hora sumando á saída de cabeceira o tempo de percorrido medido sobre o trazado real. Ningunha hora desta app é unha posición medida do bus.`,
     every: (minutes: number) => `cada ${minutes} min aprox.`,
     beyond: (count: number) =>
       `${count} ${count === 1 ? 'saída máis' : 'saídas máis'} despois da próxima hora. Vainas ver en «Por liña».`,

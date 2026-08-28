@@ -84,7 +84,9 @@ export interface StopArrival {
   /**
    * 'published' = the operator prints this time for this stop.
    * 'estimated'  = derived from the departure plus measured road time.
-   * There is no GPS feed for this network, so nothing here is ever a live position.
+   * Nothing here is ever a live position: this app receives none. The operator does
+   * publish its own minutes per stop, which the stop board shows separately and
+   * attributes to them rather than folding into these.
    */
   precision: 'published' | 'estimated';
 }

@@ -9,9 +9,10 @@ import {
   nextServiceAtStop,
   timingPointStopCount,
 } from '../utils/transitEngine';
-import { Lang, translations } from '../i18n';
+import { Lang, LOCALE, translations } from '../i18n';
 import { newIssueUrl } from '../project';
 import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';
+import { useOperatorTimes } from '../hooks/useOperatorTimes';
 import {
   watchForStop,
   ringAlarm,
@@ -270,6 +271,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   // is exactly what someone standing at the pole needs to see.
   // Every row estimated is not a failure, it is what the operator publishes — but left
   // unexplained it reads as the app being vague. Say why, and only where it applies.
+  const operatorTimes = useOperatorTimes(poleCode(selectedStop) ?? undefined);
   const nonePublished = arrivals.length > 0 && arrivals.every((a) => a.precision === 'estimated');
 
   /**
@@ -643,6 +645,39 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             ✕
           </button>
         </div>
+      )}
+
+      {/* What the operator says, kept apart from what this app worked out.
+          Its own block rather than a column beside our rows, because their line labels do
+          not always map onto ours -- they call one service AVENIDA where we call it 5.1 --
+          and forcing a match would invent one. It appears only where there is a server to
+          ask: the operator sends no CORS header, so the static build never sees this and
+          shows its own estimates, as it always has.
+
+          "Segundo o operador" and not "en directo". What these minutes are made of is not
+          settled in writing, and this app does not describe a number it cannot vouch for. */}
+      {operatorTimes && operatorTimes.departures.length > 0 && (
+        <section className="mt-4 rounded-xl border border-edge bg-surface/60 p-3.5">
+          <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">
+            {t.arrivals.operatorSaysTitle}
+          </h3>
+          <ul className="mt-2 space-y-1.5">
+            {operatorTimes.departures.map((departure, i) => (
+              <li key={`${departure.line}-${i}`} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 flex-1 truncate text-label text-ink">
+                  <span className="font-bold">{departure.line}</span>
+                  <span className="text-ink-3"> · {departure.towards.toLowerCase()}</span>
+                </span>
+                <span className="tnum shrink-0 font-mono font-black text-ink">
+                  {departure.minutes} {t.common.min}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-label leading-relaxed text-ink-3">
+            {t.arrivals.operatorSaysNote(new Date(operatorTimes.fetchedAt).toLocaleTimeString(LOCALE[lang]))}
+          </p>
+        </section>
       )}
 
       {/* The board recomputes every 15 s; without a live region a screen reader user

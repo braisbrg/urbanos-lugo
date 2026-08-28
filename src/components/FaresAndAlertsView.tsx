@@ -182,7 +182,14 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, al
                     isWarning ? 'bg-warn/60 border-warn' : 'bg-surface/60 border-edge'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2 mb-2">
+                  {/* Two very different claims share this list. The operator is talking
+                      about its own buses; the council is a press release that happens to
+                      be about the streets. Saying which is which costs one line and is the
+                      difference between a notice and a rumour. */}
+                  <span className="text-label font-bold uppercase tracking-wider text-ink-3">
+                    {alert.source === 'concello' ? t.fares.sourceConcello : t.fares.sourceOperator}
+                  </span>
+                  <div className="mb-2 mt-1 flex items-center justify-between gap-2">
                     <span
                       className={`text-label font-black uppercase tracking-wider px-2 py-0.5 rounded ${
                         isWarning ? 'bg-warn text-warn-ink' : 'bg-surface text-accent'
@@ -231,6 +238,16 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, al
                       description are the same words. Printing them twice reads as a bug. */}
                   {alert.description !== alert.title && (
                     <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{alert.description}</p>
+                  )}
+                  {alert.link && (
+                    <a
+                      href={alert.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex min-h-11 items-center text-label font-bold text-accent underline underline-offset-2"
+                    >
+                      {t.fares.readInFull}
+                    </a>
                   )}
                 </div>
               );

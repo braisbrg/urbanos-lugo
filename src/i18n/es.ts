@@ -25,8 +25,8 @@ export const es: Dict = {
     open: 'Menú',
     sourceTimetables: 'Horarios oficiales de buslugo.com',
     sourceGeometry: 'Trazado levantado en OpenStreetMap',
-    sourceNoGps: 'Sin GPS de flota',
-    sourceShort: 'Horarios oficiales de buslugo.com. Sin GPS de flota.',
+    sourceNoGps: 'Horas calculadas, no medidas',
+    sourceShort: 'Horarios oficiales de buslugo.com. Las horas de esta app son calculadas.',
   },
 
   search: {
@@ -97,6 +97,9 @@ export const es: Dict = {
     savedCopy: 'copia guardada',
     structuralTitle: 'Avisos estructurales y obras municipales vigentes',
     structuralSource: 'Escritos en este proyecto a partir de fuentes municipales, no comprobados automáticamente como los avisos de arriba. Pueden quedar desactualizados.',
+    sourceOperator: 'Aviso del operador',
+    sourceConcello: 'Nota de prensa del Concello',
+    readInFull: 'Leer la noticia completa',
     reviewedOn: (d: string) => `Revisado el ${d}`,
     structuralStale: (months: number) =>
       `Estos avisos llevan ${months} meses sin revisar. Comprueba en la fuente antes de fiarte de ellos.`,
@@ -164,7 +167,7 @@ export const es: Dict = {
     transfersShort: (count: number) => (count === 1 ? '1 transbordo' : `${count} transbordos`),
     timeProvenanceTitle: 'De dónde salen estas horas',
     timeProvenance:
-      'Las horas de salida vienen del cuadro horario oficial; las marcadas con ~ se calculan sumando el tiempo de recorrido medido por carretera. No hay seguimiento GPS de la flota, así que conviene llegar a la parada unos minutos antes.',
+      'Las horas de salida vienen del cuadro horario oficial; las marcadas con ~ se calculan sumando el tiempo de recorrido medido por carretera. Esta app no recibe posiciones de los vehículos, así que conviene llegar a la parada unos minutos antes.',
   },
 
   faresContent: {
@@ -322,7 +325,7 @@ export const es: Dict = {
     searchLines: 'Buscar línea por número o nombre...',
     enRoute: (count: number) => (count === 1 ? '1 en ruta' : `${count} en ruta`),
     enRouteHint:
-      'Expediciones que según el cuadro horario deberían estar circulando ahora. No hay seguimiento GPS de la flota.',
+      'Expediciones que según el cuadro horario deberían estar circulando ahora. Esta app no recibe posiciones de los vehículos.',
     lineLabel: (number: string) => `Línea ${number}`,
     origin: 'Origen',
     destination: 'Destino',
@@ -386,10 +389,13 @@ export const es: Dict = {
     reportNotCouncil:
       'El aviso llega a quien mantiene esta aplicación, que no tiene relación con el Concello de Lugo ni con el operador. Cualquier trámite oficial hay que hacerlo con ellos.',
     precisionNote:
-      'Las horas marcadas como estimadas se calculan desde la salida de cabecera. No hay GPS público de la flota: para no perder el bus, llega a la parada unos minutos antes.',
+      'Las horas marcadas como estimadas se calculan desde la salida de cabecera. Esta app no recibe posiciones de los vehículos: para no perder el bus, llega a la parada unos minutos antes.',
+    operatorSaysTitle: 'Según el operador',
+    operatorSaysNote: (at: string) =>
+      `Tal como lo publica el operador en su página de la parada, leído a las ${at}. No es un dato de esta app.`,
     whyEstimatedTitle: '¿Por qué no hay horas oficiales en esta parada?',
     whyEstimated: (published: number, total: number) =>
-      `El operador publica horas solo en las cabeceras y en unas pocas paradas principales: ${published} de las ${total} de la red. En las demás, como esta, calculamos la hora sumando a la salida de cabecera el tiempo de recorrido medido sobre el trazado real. No hay GPS de la flota, así que ninguna hora de esta app es una posición medida del bus.`,
+      `El operador publica horas solo en las cabeceras y en unas pocas paradas principales: ${published} de las ${total} de la red. En las demás, como esta, calculamos la hora sumando a la salida de cabecera el tiempo de recorrido medido sobre el trazado real. Ninguna hora de esta app es una posición medida del bus.`,
     every: (minutes: number) => `cada ${minutes} min aprox.`,
     beyond: (count: number) =>
       `${count} ${count === 1 ? 'salida más' : 'salidas más'} pasada la próxima hora. Las tienes en «Por línea».`,
