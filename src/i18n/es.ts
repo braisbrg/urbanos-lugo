@@ -266,6 +266,30 @@ export const es: Dict = {
     remove: 'Eliminar de favoritos',
   },
 
+  rules: {
+    title: 'Normas a bordo',
+    subtitle:
+      'Resumen de lo que publica el operador, con nuestras palabras. El texto completo, y el que manda, está en su página.',
+    mustTitle: 'Hay que',
+    must: [
+      'Llevar suelto: no se aceptan billetes de más de 5 €.',
+      'Pagar a partir de los 4 años cumplidos.',
+      'Guardar el billete o la tarjeta hasta el final del viaje, por si hay inspección.',
+      'Pedir la parada con suficiente antelación.',
+      'Ceder el asiento a quien tenga movilidad reducida.',
+      'Bajar por las puertas centrales o traseras.',
+    ],
+    mustNotTitle: 'No se puede',
+    mustNot: [
+      'Viajar sin billete, o con un bono que no te corresponde: multa de 60 €.',
+      'Fumar dentro del vehículo.',
+      'Distraer a quien conduce con el vehículo en marcha.',
+      'Forzar las puertas, ni usar sin motivo los mecanismos de emergencia.',
+      'Ensuciar o dañar el vehículo, ni hacer ruido innecesario.',
+      'Llevar sustancias peligrosas, explosivas o que desprendan mal olor.',
+    ],
+    sourceLink: 'Leer la normativa completa en buslugo.com',
+  },
   qr: {
     close: 'Cerrar el lector de códigos',
     title: 'Consultar código QR / parada',

@@ -413,6 +413,53 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, al
         </div>
       </div>
 
+      {/* What the operator asks of the people on board.
+          Summarised rather than copied: their page is the one that counts and is linked,
+          and a wholesale reproduction would go stale the day they change a line. The two
+          worth knowing before you get on are the €5 note and the €60 fine, so those keep
+          their numbers. */}
+      <div className="rounded-xl border border-edge bg-bg p-5 shadow-sm">
+        <h2 className="flex items-center gap-2 text-emph font-bold uppercase tracking-wider text-ink">
+          <Info className="h-5 w-5 text-accent" aria-hidden="true" />
+          {t.rules.title}
+        </h2>
+        <p className="mt-0.5 text-label text-ink-3">{t.rules.subtitle}</p>
+
+        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">{t.rules.mustTitle}</h3>
+            <ul className="mt-2 space-y-1.5 text-label leading-relaxed text-ink">
+              {t.rules.must.map((line) => (
+                <li key={line} className="flex gap-2">
+                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-ink-3" aria-hidden="true" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">{t.rules.mustNotTitle}</h3>
+            <ul className="mt-2 space-y-1.5 text-label leading-relaxed text-ink">
+              {t.rules.mustNot.map((line) => (
+                <li key={line} className="flex gap-2">
+                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full border border-ink-3" aria-hidden="true" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <a
+          href="https://buslugo.com/normativa/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex min-h-11 items-center font-bold text-label text-accent underline underline-offset-2"
+        >
+          {t.rules.sourceLink}
+        </a>
+      </div>
+
       {/* FAQs & Contact */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* FAQs */}

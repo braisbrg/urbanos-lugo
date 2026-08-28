@@ -277,6 +277,30 @@ export const en: Dict = {
     remove: 'Remove from favourites',
   },
 
+  rules: {
+    title: 'On board',
+    subtitle:
+      "A summary of the operator's rules, in our words. The full text, and the one that counts, is on their page.",
+    mustTitle: 'You must',
+    must: [
+      'Carry change: notes above €5 are not accepted.',
+      'Pay from the age of 4.',
+      'Keep your ticket or card until the end of the trip, in case of an inspection.',
+      'Ring for your stop in good time.',
+      'Give up your seat to anyone with reduced mobility.',
+      'Get off through the centre or rear doors.',
+    ],
+    mustNotTitle: 'You must not',
+    mustNot: [
+      "Travel without a ticket, or on a pass that is not yours: a €60 fine.",
+      'Smoke on board.',
+      'Distract the driver while the bus is moving.',
+      'Force the doors, or use the emergency mechanisms without cause.',
+      'Dirty or damage the bus, or make unnecessary noise.',
+      'Carry dangerous, explosive or foul-smelling substances.',
+    ],
+    sourceLink: "Read the operator's full rules on buslugo.com",
+  },
   qr: {
     close: 'Close the code reader',
     title: 'Look up a stop code',
