@@ -24,8 +24,7 @@ export const en: Dict = {
 
   menu: {
     alerts: 'Service notices',
-    alertsAndFares: 'Notices and fares',
-    fares: 'Fares and tickets',
+    fares: 'Fares and information',
     language: 'Language',
     theme: 'Appearance',
     themeAuto: 'Automatic',
@@ -108,6 +107,9 @@ export const en: Dict = {
     savedCopy: 'saved copy',
     structuralTitle: 'Standing notices and city roadworks',
     structuralSource: 'Written into this project from municipal sources, not checked automatically the way the alerts above are. They can go out of date.',
+    newsTitle: 'Council news about the city',
+    newsSubtitle:
+      'Municipal press releases about roadworks and traffic. Not service notices: they may reach the buses, or they may not.',
     sourceOperator: 'Notice from the operator',
     sourceConcello: 'Press release from the council',
     readInFull: 'Read the whole thing',
@@ -203,9 +205,9 @@ export const en: Dict = {
           'Because of the works on the future intermodal station at Montero Ríos and Conde de Fontao, follow the signed pedestrian route to the stops around the railway station.',
       },
       {
-        title: 'Old town reorganisation (Bolaño Ribadeneira terminus)',
+        title: 'Central terminus at Bolaño Ribadeneira',
         description:
-          'Since Praza de Ferrol and Santo Domingo were pedestrianised, lines 7, 8, 9 and 12 keep their central terminus at Bolaño Ribadeneira, which is open to city buses only.',
+          'Lines 7, 8, 9 and 12 all set out from the Bolaño Ribadeneira 1 stop: that is how the operator names them in its own timetables, which are what this site reads. Whether the streets around it are pedestrianised is not something checked here.',
       },
       {
         title: '50% discount and the Xente Nova card (under 21)',
@@ -372,6 +374,9 @@ export const en: Dict = {
   },
 
   arrivals: {
+    operatorSaysTitle: 'What this stop’s QR shows',
+    operatorSaysNote: (at: string) =>
+      `This is what you would see if you scanned the code on the pole: the operator’s own page for this stop, read at ${at}. Not this app’s figure, and it may not agree with the times above.`,
     clockDrift: (hours: string, zone: string) =>
       `Your device is ${hours} Lugo time (it is set to ${zone}). The timetables on this page are Lugo's, so what you see here will not match your own clock.`,
     clockAhead: (h: string) => `${h} ahead of`,
@@ -401,9 +406,6 @@ export const en: Dict = {
       'The report reaches whoever maintains this app, which has no connection to the Concello de Lugo or to the operator. Anything official has to go to them.',
     precisionNote:
       'Times marked as estimated are worked out from the departure at the terminus. This app receives no vehicle positions, so get to the stop a few minutes early.',
-    operatorSaysTitle: 'According to the operator',
-    operatorSaysNote: (at: string) =>
-      `As the operator publishes it on their own stop page, read at ${at}. Not this app's own figure.`,
     whyEstimatedTitle: 'Why are there no official times at this stop?',
     whyEstimated: (published: number, total: number) =>
       `The operator only publishes times at the termini and at a handful of major stops: ${published} of the ${total} in the network. Everywhere else, including here, the time is the published departure plus the driving time measured along the real route. No time in this app is a measured position of a bus.`,

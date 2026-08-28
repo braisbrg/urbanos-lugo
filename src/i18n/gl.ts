@@ -27,8 +27,7 @@ export const gl = {
 
   menu: {
     alerts: 'Avisos do servizo',
-    alertsAndFares: 'Avisos e tarifas',
-    fares: 'Tarifas e billetes',
+    fares: 'Tarifas e info',
     language: 'Idioma',
     theme: 'Aparencia',
     themeAuto: 'Automática',
@@ -109,8 +108,11 @@ export const gl = {
     allLines: 'Todas as liñas',
     checkOnBuslugo: 'Consultar en buslugo.com',
     savedCopy: 'copia gardada',
-    structuralTitle: 'Avisos estruturais e obras municipais vixentes',
+    structuralTitle: 'Avisos estruturais e obras municipais',
     structuralSource: 'Escritos neste proxecto a partir de fontes municipais, non comprobados automaticamente coma os avisos de arriba. Poden quedar desactualizados.',
+    newsTitle: 'Novas do Concello sobre a cidade',
+    newsSubtitle:
+      'Notas de prensa municipais sobre obras e tráfico. Non son avisos do servizo: poden afectar aos buses, ou non.',
     sourceOperator: 'Aviso do operador',
     sourceConcello: 'Nota de prensa do Concello',
     readInFull: 'Ler a nova completa',
@@ -206,9 +208,9 @@ export const gl = {
           'Por mor das obras da futura Estación Intermodal en Montero Ríos e Conde de Fontao, séguese a sinalización peonil habilitada cara ás paradas da contorna ferroviaria.',
       },
       {
-        title: 'Reordenación do Casco Histórico (Cabeceira de Bolaño Ribadeneira)',
+        title: 'Cabeceira central en Bolaño Ribadeneira',
         description:
-          'Tras a peonalización da Praza de Ferrol e Santo Domingo, as liñas 7, 8, 9 e 12 manteñen a súa cabeceira central en Bolaño Ribadeneira con circulación exclusiva para bus urbano.',
+          'As liñas 7, 8, 9 e 12 parten todas da parada Bolaño Ribadeneira 1: así as nomea o operador nos seus propios horarios, que son os que le esta web. Que o contorno estea peonalizado non o comprobamos aquí.',
       },
       {
         title: 'Bonificación do 50% e Tarxeta Xente Nova (<21 anos)',
@@ -375,6 +377,9 @@ export const gl = {
   },
 
   arrivals: {
+    operatorSaysTitle: 'O que amosa o QR desta parada',
+    operatorSaysNote: (at: string) =>
+      `Isto é o que verías se escaneases o código do poste: a páxina do operador para esta parada, lida ás ${at}. Non é un dato desta app, e pode non coincidir cos horarios de arriba.`,
     clockDrift: (hours: string, zone: string) =>
       `O teu dispositivo vai ${hours} respecto da hora de Lugo (está en ${zone}). Os horarios desta páxina son os de Lugo, así que o que ves aquí non coincide co reloxo do teu aparello.`,
     clockAhead: (h: string) => `${h} por diante`,
@@ -404,9 +409,6 @@ export const gl = {
       'O aviso chega a quen mantén esta aplicación, que non ten relación co Concello de Lugo nin co operador. Calquera trámite oficial hai que facelo con eles.',
     precisionNote:
       'As horas marcadas como estimadas calcúlanse desde a saída de cabeceira. Esta app non recibe posicións dos vehículos: para non perder o bus, chega á parada uns minutos antes.',
-    operatorSaysTitle: 'Segundo o operador',
-    operatorSaysNote: (at: string) =>
-      `Tal como o publica o operador na súa páxina da parada, lido ás ${at}. Non é un dato desta app.`,
     whyEstimatedTitle: 'Por que non hai horas oficiais nesta parada?',
     whyEstimated: (published: number, total: number) =>
       `O operador publica horas só nas cabeceiras e nunhas poucas paradas principais: ${published} das ${total} da rede. Nas demais, coma esta, calculamos a hora sumando á saída de cabeceira o tempo de percorrido medido sobre o trazado real. Ningunha hora desta app é unha posición medida do bus.`,

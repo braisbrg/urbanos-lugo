@@ -1778,7 +1778,7 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
   const hook = readFileSync(join(root, 'src/hooks/useTabRoute.ts'), 'utf8');
 
   const slugs = [...hook.matchAll(/^\s{2}\w+: '([a-z]+)',$/gm)].map((m) => m[1]);
-  assert(slugs.length === 5, `the hook maps ${slugs.length} tabs, expected 5: ${slugs.join(', ')}`);
+  assert(slugs.length === 6, `the hook maps ${slugs.length} tabs, expected 6: ${slugs.join(', ')}`);
 
   for (const slug of slugs) {
     assert(SITE_PATHS.includes(slug), `"${slug}" is a tab route but is not in the sitemap`);
@@ -1811,7 +1811,7 @@ ok('the hand-written notices are dated, not declared current', () => {
   // by a file that cannot know, sitting directly under a block that really is checked
   // hourly. A review date replaced them, because a date cannot go out of date.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const view = readFileSync(join(root, 'src/components/FaresAndAlertsView.tsx'), 'utf8');
+  const view = readFileSync(join(root, 'src/components/AlertsView.tsx'), 'utf8');
 
   const stamp = view.match(/NOTICES_REVIEWED_ON = '(\d{4}-\d{2}-\d{2})'/);
   assert(stamp, 'the hand-written notices no longer carry a review date');
@@ -1919,6 +1919,27 @@ ok("the city's press feed is read for buses and not for everything else", () => 
   assert(
     encoded[0].description === 'A rúa estará cortada',
     `expected the prose alone, got "${encoded[0].description}"`,
+  );
+});
+
+ok('the Bolaño notice still describes the lines it names', () => {
+  // This is the one hand-written notice that makes a checkable claim: that lines 7, 8, 9
+  // and 12 have their head at Bolaño Ribadeneira. It used to make an unfalsifiable one
+  // beside it -- why the old town was reordered -- with no source recorded anywhere, and
+  // both halves read as equally solid. The half that survived is the half the pipeline
+  // can prove, so prove it: reroute any of the four and this notice becomes a lie that
+  // nothing else in the suite would notice.
+  for (const id of ['7', '8', '9', '12']) {
+    const line = BUS_LINES.find((l) => l.id === id);
+    assert(line, `line ${id} is named in the Bolaño notice but is not in the data`);
+    assert(
+      /^Bolaño Ribadeneira/.test(line!.name),
+      `the notice says line ${id} starts at Bolaño Ribadeneira; the operator calls it "${line!.name}"`,
+    );
+  }
+  assert(
+    BUS_STOPS.some((s) => s.name === 'Bolaño Ribadeneira 1'),
+    'the stop the notice names is gone from the dataset',
   );
 });
 

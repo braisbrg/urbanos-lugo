@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Globe, Moon } from 'lucide-react';
+import { AlertTriangle, CreditCard, Globe, Moon } from 'lucide-react';
 import { navSections, type Tab } from './navSections';
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
@@ -7,7 +7,6 @@ import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
 interface SideNavProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
-  onOpenInfo: () => void;
   alertCount: number;
   lang: Lang;
   setLang: (lang: Lang) => void;
@@ -29,7 +28,6 @@ interface SideNavProps {
 export const SideNav: React.FC<SideNavProps> = ({
   activeTab,
   setActiveTab,
-  onOpenInfo,
   alertCount,
   lang,
   setLang,
@@ -39,6 +37,12 @@ export const SideNav: React.FC<SideNavProps> = ({
   const t = translations(lang);
 
   const sections = navSections(t);
+
+  /** The two screens below the rule: read now and then, not on every trip. */
+  const asides = [
+    { id: 'info' as const, Icon: AlertTriangle, label: t.menu.alerts, badge: alertCount },
+    { id: 'fares' as const, Icon: CreditCard, label: t.menu.fares, badge: 0 },
+  ];
 
   const themes: { id: ThemeChoice; label: string }[] = [
     { id: 'auto', label: t.menu.themeAutoShort },
@@ -72,24 +76,27 @@ export const SideNav: React.FC<SideNavProps> = ({
       </nav>
 
       <div className="mt-5 flex flex-col gap-0.5 border-t border-line px-2.5 pt-4">
-        {/* Notices and fares are one screen, so they were two rows going to the same
-            place. The badge counts announced incidents; "the network is closed for the
-            night" is not an incident, and the banner already says it. */}
-        <button
-          onClick={onOpenInfo}
-          aria-current={activeTab === 'info' ? 'page' : undefined}
-          className={`flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body ${
-            activeTab === 'info' ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
-          }`}
-        >
-          <AlertTriangle className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
-          <span className="flex-1">{t.menu.alertsAndFares}</span>
-          {alertCount > 0 && (
-            <span className="tnum rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
-              {alertCount}
-            </span>
-          )}
-        </button>
+        {/* Two rows again, because they are two screens again. The badge counts announced
+            incidents; "the network is closed for the night" is not one, and the night
+            banner already says so. */}
+        {asides.map(({ id, Icon, label, badge }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            aria-current={activeTab === id ? 'page' : undefined}
+            className={`flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body ${
+              activeTab === id ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
+            }`}
+          >
+            <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            <span className="flex-1">{label}</span>
+            {badge > 0 && (
+              <span className="tnum rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
+                {badge}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="mt-auto flex flex-col gap-3 border-t border-line p-3.5">

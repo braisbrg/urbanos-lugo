@@ -13,8 +13,7 @@ export const es: Dict = {
 
   menu: {
     alerts: 'Avisos del servicio',
-    alertsAndFares: 'Avisos y tarifas',
-    fares: 'Tarifas y billetes',
+    fares: 'Tarifas e info',
     language: 'Idioma',
     theme: 'Apariencia',
     themeAuto: 'Automática',
@@ -95,8 +94,11 @@ export const es: Dict = {
     allLines: 'Todas las líneas',
     checkOnBuslugo: 'Consultar en buslugo.com',
     savedCopy: 'copia guardada',
-    structuralTitle: 'Avisos estructurales y obras municipales vigentes',
+    structuralTitle: 'Avisos estructurales y obras municipales',
     structuralSource: 'Escritos en este proyecto a partir de fuentes municipales, no comprobados automáticamente como los avisos de arriba. Pueden quedar desactualizados.',
+    newsTitle: 'Noticias del Concello sobre la ciudad',
+    newsSubtitle:
+      'Notas de prensa municipales sobre obras y tráfico. No son avisos del servicio: pueden afectar a los buses, o no.',
     sourceOperator: 'Aviso del operador',
     sourceConcello: 'Nota de prensa del Concello',
     readInFull: 'Leer la noticia completa',
@@ -192,9 +194,9 @@ export const es: Dict = {
           'Debido a las obras de la futura Estación Intermodal en Montero Ríos y Conde de Fontao, se sigue la señalización peatonal habilitada hacia las paradas del entorno ferroviario.',
       },
       {
-        title: 'Reordenación del Casco Histórico (Cabecera de Bolaño Ribadeneira)',
+        title: 'Cabecera central en Bolaño Ribadeneira',
         description:
-          'Tras la peatonalización de Praza de Ferrol y Santo Domingo, las líneas 7, 8, 9 y 12 mantienen su cabecera central en Bolaño Ribadeneira con circulación exclusiva para bus urbano.',
+          'Las líneas 7, 8, 9 y 12 salen todas de la parada Bolaño Ribadeneira 1: así las nombra el operador en sus propios horarios, que son los que lee esta web. Que el entorno esté peatonalizado no lo comprobamos aquí.',
       },
       {
         title: 'Bonificación del 50% y Tarjeta Xente Nova (<21 años)',
@@ -361,6 +363,9 @@ export const es: Dict = {
   },
 
   arrivals: {
+    operatorSaysTitle: 'Lo que muestra el QR de esta parada',
+    operatorSaysNote: (at: string) =>
+      `Esto es lo que verías si escanearas el código del poste: la página del operador para esta parada, leída a las ${at}. No es un dato de esta app, y puede no coincidir con los horarios de arriba.`,
     clockDrift: (hours: string, zone: string) =>
       `Tu dispositivo va ${hours} respecto de la hora de Lugo (está en ${zone}). Los horarios de esta página son los de Lugo, así que lo que ves aquí no coincide con el reloj de tu aparato.`,
     clockAhead: (h: string) => `${h} por delante`,
@@ -390,9 +395,6 @@ export const es: Dict = {
       'El aviso llega a quien mantiene esta aplicación, que no tiene relación con el Concello de Lugo ni con el operador. Cualquier trámite oficial hay que hacerlo con ellos.',
     precisionNote:
       'Las horas marcadas como estimadas se calculan desde la salida de cabecera. Esta app no recibe posiciones de los vehículos: para no perder el bus, llega a la parada unos minutos antes.',
-    operatorSaysTitle: 'Según el operador',
-    operatorSaysNote: (at: string) =>
-      `Tal como lo publica el operador en su página de la parada, leído a las ${at}. No es un dato de esta app.`,
     whyEstimatedTitle: '¿Por qué no hay horas oficiales en esta parada?',
     whyEstimated: (published: number, total: number) =>
       `El operador publica horas solo en las cabeceras y en unas pocas paradas principales: ${published} de las ${total} de la red. En las demás, como esta, calculamos la hora sumando a la salida de cabecera el tiempo de recorrido medido sobre el trazado real. Ninguna hora de esta app es una posición medida del bus.`,

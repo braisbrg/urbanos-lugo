@@ -31,6 +31,14 @@ interface StopArrivalsViewProps {
   onBack: () => void;
   isFavorite: boolean;
   onToggleFavorite: (stopId: string) => void;
+  /**
+   * True only when this stop was opened by scanning the QR on its own pole.
+   *
+   * It gates one block: what the operator's page says is coming. Anywhere else in the app
+   * that would be a competing set of minutes with no way to tell which to believe. At the
+   * pole it is the page the sticker points at, so a reader gets what they scanned for.
+   */
+  viaQr: boolean;
   lang: Lang;
 }
 
@@ -85,6 +93,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   isFavorite,
   onToggleFavorite,
   lang,
+  viaQr,
 }) => {
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
   const [view, setView] = useState<'next' | 'byLine'>('next');
@@ -271,7 +280,9 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   // is exactly what someone standing at the pole needs to see.
   // Every row estimated is not a failure, it is what the operator publishes — but left
   // unexplained it reads as the app being vague. Say why, and only where it applies.
-  const operatorTimes = useOperatorTimes(poleCode(selectedStop) ?? undefined);
+  // Asked for only on a QR arrival; `undefined` on every other visit, so the hook does
+  // not fetch at all.
+  const operatorTimes = useOperatorTimes(viaQr ? (poleCode(selectedStop) ?? undefined) : undefined);
   const nonePublished = arrivals.length > 0 && arrivals.every((a) => a.precision === 'estimated');
 
   /**
@@ -647,15 +658,17 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         </div>
       )}
 
-      {/* What the operator says, kept apart from what this app worked out.
-          Its own block rather than a column beside our rows, because their line labels do
-          not always map onto ours -- they call one service AVENIDA where we call it 5.1 --
-          and forcing a match would invent one. It appears only where there is a server to
-          ask: the operator sends no CORS header, so the static build never sees this and
-          shows its own estimates, as it always has.
+      {/* What the operator says, shown only to somebody who arrived by scanning the pole.
 
-          "Segundo o operador" and not "en directo". What these minutes are made of is not
-          settled in writing, and this app does not describe a number it cannot vouch for. */}
+          It came off the board for everyone else and stays off. Two lists of minutes side
+          by side, disagreeing, leaves a reader with a question this app cannot answer:
+          their labels do not always map onto ours -- they call one service AVENIDA where
+          we call it 5.1 -- and neither of us can show our working. But the QR on the pole
+          points at exactly this page, so for the person who scanned it this is not a
+          second opinion, it is the thing they were reaching for.
+
+          It appears only where there is a server to ask: the operator sends no CORS
+          header, so the static build never sees this. */}
       {operatorTimes && operatorTimes.departures.length > 0 && (
         <section className="mt-4 rounded-xl border border-edge bg-surface/60 p-3.5">
           <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">

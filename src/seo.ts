@@ -60,12 +60,12 @@ export function robotsTxt(site: string): string {
 }
 
 /** The paths a crawler should know about: the root and one per tab. */
-export const SITE_PATHS = ['', 'paradas', 'linhas', 'mapa', 'ruta', 'avisos'];
+export const SITE_PATHS = ['', 'paradas', 'linhas', 'mapa', 'ruta', 'avisos', 'tarifas'];
 
 /**
  * The sitemap.
  *
- * Six entries: the root and the five tabs. Individual stops and lines are deliberately
+ * Seven entries: the root and the six tabs. Individual stops and lines are deliberately
  * absent — they have no URL of their own, and listing pages that render as an empty
  * shell to a crawler would be worse than listing nothing.
  */

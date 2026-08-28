@@ -1,8 +1,8 @@
 import { Bus, Clock, Map, Route } from 'lucide-react';
 import type { Dict } from '../i18n';
 
-/** The tabs the shell can show. `info` has no destination of its own; the menu opens it. */
-export type Tab = 'stops' | 'lines' | 'map' | 'plan' | 'info';
+/** The tabs the shell can show. `info` and `fares` are reached from the menu, not the bar. */
+export type Tab = 'stops' | 'lines' | 'map' | 'plan' | 'info' | 'fares';
 
 /**
  * The four places worth going, in order.

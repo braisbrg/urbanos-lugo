@@ -99,8 +99,14 @@ export function useServiceAlerts(): ServiceAlerts {
   // Before the first response there is nothing to count, and the compiled-in snapshot is
   // not an answer yet: claiming zero incidents at that moment would be a claim, not a
   // silence.
+  //
+  // Only the operator's own notices count. The council's feeds are press releases about
+  // the city that sometimes mention the buses; a badge on the navigation says "something
+  // is wrong with your journey", and a story about resurfacing works does not say that.
   const announcedIncidents =
-    data && !isSnapshotStale(snapshotAt) ? data.alerts.length : 0;
+    data && !isSnapshotStale(snapshotAt)
+      ? data.alerts.filter((a) => a.source !== 'concello').length
+      : 0;
 
   return { data, snapshotAt, isSyncing, cooldown, announcedIncidents, refresh };
 }

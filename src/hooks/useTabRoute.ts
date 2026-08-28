@@ -21,6 +21,7 @@ const PATHS: Record<Tab, string> = {
   map: 'mapa',
   plan: 'ruta',
   info: 'avisos',
+  fares: 'tarifas',
 };
 
 const TABS = Object.entries(PATHS) as [Tab, string][];

@@ -1,13 +1,14 @@
 import React from 'react';
 import { useDialog } from '../hooks/useDialog';
-import { AlertTriangle, ChevronRight, Globe, Moon, X } from 'lucide-react';
+import { AlertTriangle, ChevronRight, CreditCard, Globe, Moon, X } from 'lucide-react';
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
+import type { Tab } from './navSections';
 
 interface MenuDrawerProps {
   open: boolean;
   onClose: () => void;
-  onOpenInfo: () => void;
+  onOpenTab: (tab: Tab) => void;
   alertCount: number;
   lang: Lang;
   setLang: (lang: Lang) => void;
@@ -26,7 +27,7 @@ interface MenuDrawerProps {
 export const MenuDrawer: React.FC<MenuDrawerProps> = ({
   open,
   onClose,
-  onOpenInfo,
+  onOpenTab,
   alertCount,
   lang,
   setLang,
@@ -38,6 +39,12 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
   if (!open) return null;
 
   const t = translations(lang);
+
+  /** The two screens the bottom bar does not carry. */
+  const asides = [
+    { id: 'info' as const, Icon: AlertTriangle, tint: 'text-estimated', label: t.menu.alerts, badge: alertCount },
+    { id: 'fares' as const, Icon: CreditCard, tint: 'text-ink-2', label: t.menu.fares, badge: 0 },
+  ];
 
   const themes: { id: ThemeChoice; label: string }[] = [
     { id: 'auto', label: t.menu.themeAuto },
@@ -71,23 +78,26 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
         </div>
 
         <div className="flex flex-col gap-0.5 px-2.5 py-3">
-          {/* Both rows opened the same screen. One row, one destination. */}
-          <button
-            onClick={() => {
-              onOpenInfo();
-              onClose();
-            }}
-            className="flex h-14 items-center gap-4 rounded-xl px-3 text-left"
-          >
-            <AlertTriangle className="h-[21px] w-[21px] shrink-0 text-estimated" strokeWidth={2} aria-hidden="true" />
-            <span className="flex-1 text-emph font-semibold">{t.menu.alertsAndFares}</span>
-            {alertCount > 0 && (
-              <span className="tnum shrink-0 rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
-                {alertCount}
-              </span>
-            )}
-            <ChevronRight className="h-[17px] w-[17px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
-          </button>
+          {/* One row per screen. What is happening, and how the thing works. */}
+          {asides.map(({ id, Icon, tint, label, badge }) => (
+            <button
+              key={id}
+              onClick={() => {
+                onOpenTab(id);
+                onClose();
+              }}
+              className="flex h-14 items-center gap-4 rounded-xl px-3 text-left"
+            >
+              <Icon className={`h-[21px] w-[21px] shrink-0 ${tint}`} strokeWidth={2} aria-hidden="true" />
+              <span className="flex-1 text-emph font-semibold">{label}</span>
+              {badge > 0 && (
+                <span className="tnum shrink-0 rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
+                  {badge}
+                </span>
+              )}
+              <ChevronRight className="h-[17px] w-[17px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+            </button>
+          ))}
 
           <div className="flex min-h-14 items-center gap-4 px-3 py-2">
             <Globe className="h-[21px] w-[21px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />

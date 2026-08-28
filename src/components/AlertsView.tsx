@@ -1,12 +1,11 @@
 import React from 'react';
 import { Lang, LOCALE, translations } from '../i18n';
-import { CreditCard, AlertTriangle, Info, Phone, Globe, HelpCircle, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
-import { FARES_LIST } from '../data/transitData';
+import { AlertTriangle, Info, HelpCircle, Newspaper, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
 import { ServiceAlert } from '../types';
 import { isSnapshotStale } from '../utils/snapshotAge';
 import type { ServiceAlerts } from '../hooks/useServiceAlerts';
 
-interface FaresAndAlertsViewProps {
+interface AlertsViewProps {
   lang: Lang;
   /** Fetched once in App, so this screen and the navigation badge cannot disagree. */
   alerts: ServiceAlerts;
@@ -28,15 +27,17 @@ function formatInstant(value: string | undefined, locale: string): string {
 }
 
 
-export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, alerts }) => {
+export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
   const { data: alertData, snapshotAt, isSyncing, cooldown, refresh } = alerts;
 
   const t = translations(lang);
 
-  const faqs = t.faresContent.faqs;
-
-  const currentFares = FARES_LIST[lang];
-  const liveAlerts = alertData?.alerts || [];
+  // Split by who is speaking. The operator is talking about its own buses, which is
+  // what somebody opening this screen came to read; the council is publishing news about
+  // the city, which is worth having but is not an answer to "is my bus affected".
+  const published = alertData?.alerts || [];
+  const liveAlerts = published.filter((a) => a.source !== 'concello');
+  const councilNews = published.filter((a) => a.source === 'concello');
   /** "Could not read the page" is not the same claim as "nothing is wrong". */
   const unreachable = alertData?.status === 'unreachable';
   /** A snapshot past its refresh window cannot speak for the present. */
@@ -50,19 +51,6 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, al
    * works, the pedestrianised old town, the fare discounts. The prose lives in the
    * dictionary; the ids, severities and affected lines are facts and stay here.
    */
-  /**
-   * Where somebody can go to check any of this for themselves. buslugo.com is the
-   * operator's own; the other two are independent readers of the same timetables, like
-   * this one.
-   */
-  const PORTALS = [
-    { href: 'https://buslugo.com', label: 'buslugo.com' },
-    // urbanoslugo.com is gone: it answers, then redirects off HTTPS to plain http://,
-    // which browsers now refuse to follow from a secure page. A dead link on a page
-    // whose whole point is 'go and check for yourself' is worse than one fewer link.
-    { href: 'https://tpgalicia.github.io/urban/lugo', label: 'TP Galicia (GitHub)' },
-  ];
-
   const NOTICE_META = [
     { id: 'struct-1', severity: 'warning' as const, linesAffected: ['1.3', '3.1', '3.2'] },
     { id: 'struct-2', severity: 'info' as const, linesAffected: ['7', '8', '9', '12'] },
@@ -290,7 +278,8 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, al
             {t.fares.structuralTitle}
           </h3>
           <p className="mt-1 text-label leading-relaxed text-ink-3">{t.fares.structuralSource}</p>
-          {/* Six months is roughly how long a set of roadworks can outlive its own
+
+      {/* Six months is roughly how long a set of roadworks can outlive its own
               description. Past that the app stops implying anybody has looked. */}
           {monthsSinceReview >= 6 && (
             <p className="mt-1 text-label font-semibold leading-relaxed text-estimated">
@@ -365,155 +354,46 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, al
         </div>
       </div>
 
-      {/* Fares & Cards (Geometric Balance Style) */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-emph font-bold text-ink uppercase tracking-wider flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-accent" />
-            {t.fares.faresTitle}
-          </h2>
-          <p className="text-label text-ink-3 mt-0.5">{t.fares.faresSubtitle}</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {currentFares.map((fare, idx) => (
-            <div
-              key={idx}
-              className="p-5 rounded-xl bg-bg border border-edge shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-label font-bold text-accent bg-surface border border-edge px-2 py-0.5 rounded uppercase tracking-wider">
-                  {fare.badge}
+      {/* News from the council.
+      Kept because roadworks and street closures do reach the buses eventually, and
+      nobody else puts them in one place. Kept *here*, below the incidents and without
+      a badge, because it is a newspaper column and not a service notice: reading it
+      is optional in a way that "your line is diverted" is not. */}
+      {councilNews.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-emph font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+              <Newspaper className="w-5 h-5 text-ink-2" />
+              {t.fares.newsTitle}
+            </h2>
+            <p className="text-label text-ink-3 mt-0.5">{t.fares.newsSubtitle}</p>
+          </div>
+          <ul className="divide-y divide-line rounded-xl border border-edge bg-surface/60">
+            {councilNews.map((item) => (
+              <li key={item.id} className="p-4 sm:p-5">
+                <span className="text-label font-bold uppercase tracking-wider text-ink-3">
+                  {formatInstant(item.date, LOCALE[lang])}
                 </span>
-                <h3 className="font-bold text-body text-ink mt-2.5">{fare.title}</h3>
-                {/* No invented number when the operator publishes none. */}
-                <div className="text-title font-black text-ink mt-1 font-mono">
-                  {fare.price || <span className="text-body text-ink-3">{t.fares.priceNotPublished}</span>}
-                </div>
-                <p className="text-label font-bold text-ink-2 mt-1">{fare.subtitle}</p>
-                <p className="text-label text-ink-3 mt-2 leading-relaxed">{fare.details}</p>
-              </div>
-              <a
-                href={fare.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-label font-bold text-accent hover:text-accent underline mt-3 self-start inline-flex min-h-11 items-center"
-              >
-                {fare.source}
-              </a>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* What the operator asks of the people on board.
-          Summarised rather than copied: their page is the one that counts and is linked,
-          and a wholesale reproduction would go stale the day they change a line. The two
-          worth knowing before you get on are the €5 note and the €60 fine, so those keep
-          their numbers. */}
-      <div className="rounded-xl border border-edge bg-bg p-5 shadow-sm">
-        <h2 className="flex items-center gap-2 text-emph font-bold uppercase tracking-wider text-ink">
-          <Info className="h-5 w-5 text-accent" aria-hidden="true" />
-          {t.rules.title}
-        </h2>
-        <p className="mt-0.5 text-label text-ink-3">{t.rules.subtitle}</p>
-
-        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
-          <div>
-            <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">{t.rules.mustTitle}</h3>
-            <ul className="mt-2 space-y-1.5 text-label leading-relaxed text-ink">
-              {t.rules.must.map((line) => (
-                <li key={line} className="flex gap-2">
-                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-ink-3" aria-hidden="true" />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">{t.rules.mustNotTitle}</h3>
-            <ul className="mt-2 space-y-1.5 text-label leading-relaxed text-ink">
-              {t.rules.mustNot.map((line) => (
-                <li key={line} className="flex gap-2">
-                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full border border-ink-3" aria-hidden="true" />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <a
-          href="https://buslugo.com/normativa/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex min-h-11 items-center font-bold text-label text-accent underline underline-offset-2"
-        >
-          {t.rules.sourceLink}
-        </a>
-      </div>
-
-      {/* FAQs & Contact */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* FAQs */}
-        <div className="bg-bg rounded-xl p-5 border border-edge shadow-sm space-y-3">
-          <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-accent" />
-            {t.fares.faqTitle}
-          </h3>
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <div key={i} className="p-3 bg-surface rounded-lg border border-line">
-                <div className="text-label font-bold text-ink">{faq.q}</div>
-                <div className="text-label text-ink-2 mt-1">{faq.a}</div>
-              </div>
+                <h3 className="mt-1 font-bold text-ink text-body">{item.title}</h3>
+                {item.description !== item.title && (
+                  <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{item.description}</p>
+                )}
+                {item.link && (
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex min-h-11 items-center text-label font-bold text-accent underline underline-offset-2"
+                  >
+                    {t.fares.readInFull}
+                  </a>
+                )}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
+      )}
 
-        {/* Customer Care & Official Links */}
-        <div className="bg-bg rounded-xl p-5 border border-edge shadow-sm space-y-4">
-          <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
-            <Info className="w-4 h-4 text-accent" />
-            {t.fares.contactTitle}
-          </h3>
-
-          <div className="space-y-3 text-label text-ink-2">
-            <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-line">
-              <Phone className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-ink">{t.fares.phones}</div>
-                <div className="mt-0.5">Concello de Lugo - Mobilidade: 982 29 74 00</div>
-                <div>Monbus Lugo: 982 24 16 00</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-line">
-              <Globe className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-              <div className="min-w-0">
-                <div className="font-bold text-ink">{t.fares.portals}</div>
-                {/* Named links rather than three URLs printed out. A bare address is only
-                    worth the width when it cannot be clicked, and these can; spelling the
-                    whole thing out was also what pushed the longest one out of the card. */}
-                <ul className="mt-1 space-y-0.5">
-                  {PORTALS.map((portal) => (
-                    <li key={portal.href}>
-                      <a
-                        href={portal.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center font-bold text-accent underline underline-offset-2"
-                      >
-                        {portal.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

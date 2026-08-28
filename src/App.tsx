@@ -9,7 +9,8 @@ import { RoutePlannerView } from './components/RoutePlannerView';
 const InteractiveMap = lazy(() =>
   import('./components/Map/TransitMap').then((m) => ({ default: m.TransitMap })),
 );
-import { FaresAndAlertsView } from './components/FaresAndAlertsView';
+import { AlertsView } from './components/AlertsView';
+import { FaresView } from './components/FaresView';
 import { FavoritesDrawer } from './components/FavoritesDrawer';
 import { QrScannerModal } from './components/QrScannerModal';
 import { TopBar } from './components/TopBar';
@@ -136,6 +137,8 @@ export default function App() {
   // The stops tab opens on the saved-stops home; choosing a stop anywhere — search, QR,
   // map, a saved stop — switches it to that stop's board, and Back returns here.
   const [showStopBoard, setShowStopBoard] = useState(false);
+  /** Set when a `?parada=` link opened the board, i.e. somebody scanned that pole. */
+  const [qrStopId, setQrStopId] = useState<string | null>(null);
   const [recentStopIds, rememberStop, clearRecentStops] = useRecentStops();
   const [isNightBannerDismissed, setIsNightBannerDismissed] = useState(false);
 
@@ -219,6 +222,9 @@ export default function App() {
         setSelectedStop(stop);
         setShowStopBoard(true);
         setActiveTab('stops');
+        // Which stop, not just that one arrived this way: tapping through to the pole
+        // across the road is an ordinary visit and must not inherit the QR's extras.
+        setQrStopId(stop.id);
       }
     }
 
@@ -240,12 +246,16 @@ export default function App() {
       prev.includes(lineId) ? prev.filter((id) => id !== lineId) : [...prev, lineId],
     );
 
-  const handleSelectStop = (stop: BusStop) => {
+  // `viaQr` says the reader got here off the sticker on that pole -- the app's own
+  // scanner, or a camera that opened `?parada=`. It is cleared on every other route in,
+  // so walking to the next stop inside the app does not carry the last scan's extras.
+  const handleSelectStop = (stop: BusStop, viaQr = false) => {
     setSelectedStop(stop);
     setStopWasChosen(true);
     rememberStop(stop.id);
     setShowStopBoard(true);
     setActiveTab('stops');
+    setQrStopId(viaQr ? stop.id : null);
   };
 
   const handleSelectLine = (line: BusLine) => {
@@ -270,7 +280,6 @@ export default function App() {
       <SideNav
         activeTab={activeTab}
         setActiveTab={goToTab}
-        onOpenInfo={() => setActiveTab('info')}
         alertCount={alerts.announcedIncidents}
         lang={lang}
         setLang={setLang}
@@ -373,6 +382,7 @@ export default function App() {
                 onBack={() => setShowStopBoard(false)}
                 isFavorite={favoriteStopIds.includes(selectedStop.id)}
                 onToggleFavorite={handleToggleFavorite}
+                viaQr={qrStopId === selectedStop.id}
                 lang={lang}
               />
             </div>
@@ -422,7 +432,8 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'info' && <FaresAndAlertsView lang={lang} alerts={alerts} />}
+        {activeTab === 'info' && <AlertsView lang={lang} alerts={alerts} />}
+        {activeTab === 'fares' && <FaresView lang={lang} />}
         </ErrorBoundary>
       </main>
 
@@ -432,7 +443,7 @@ export default function App() {
       <MenuDrawer
         open={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
-        onOpenInfo={() => setActiveTab('info')}
+        onOpenTab={setActiveTab}
         alertCount={alerts.announcedIncidents}
         lang={lang}
         setLang={setLang}
@@ -458,7 +469,7 @@ export default function App() {
       <QrScannerModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
-        onSelectStop={handleSelectStop}
+        onSelectStop={(stop) => handleSelectStop(stop, true)}
         lang={lang}
       />
 
