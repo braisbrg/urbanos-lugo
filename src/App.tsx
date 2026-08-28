@@ -105,6 +105,24 @@ export default function App() {
    * A counter rather than a flag, so asking for the same line twice is still two asks.
    * Zero means nobody asked and the list is what should show.
    */
+  /**
+   * Whether the map has ever been opened.
+   *
+   * The map used to be mounted and unmounted with the tab, which meant a fresh Leaflet
+   * container, a fresh WebGL context, a fresh style download and a fresh first paint
+   * every single time somebody came back to it — measured at four distinct map elements
+   * across three visits. That rebuild is what reads as the map resizing itself on the
+   * way in. It stays mounted now, hidden between visits, so the second visit shows the
+   * map already drawn and looking at wherever it was left.
+   *
+   * Still nothing before the first visit: the map is a lazy chunk and somebody who only
+   * ever checks a departure time should not pay to download a renderer.
+   */
+  const [mapEverOpened, setMapEverOpened] = useState(false);
+  useEffect(() => {
+    if (activeTab === 'map') setMapEverOpened(true);
+  }, [activeTab]);
+
   const [lineRequest, setLineRequest] = useState(0);
   const openLine = (line: BusLine) => {
     setSelectedLine(line);
@@ -318,7 +336,7 @@ export default function App() {
             two of them on the stops tab and an H2 > H1 outline on lines. A single
             shell-level heading is correct in both layouts, and a reader jumping by
             heading hears which section they are in before anything else. */}
-        <ErrorBoundary t={t} key={activeTab}>
+        <ErrorBoundary t={t} resetKey={activeTab}>
         <h1 className="sr-only">
           {activeTab === 'stops' ? t.nav.stops
             : activeTab === 'lines' ? t.nav.lines
@@ -375,7 +393,8 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'map' && (
+        {mapEverOpened && (
+          <div className={activeTab === 'map' ? 'contents' : 'hidden'}>
           <Suspense fallback={<MapLoading lang={lang} />}>
             <InteractiveMap
             selectedStop={stopWasChosen ? selectedStop : undefined}
@@ -391,6 +410,7 @@ export default function App() {
               lang={lang}
             />
           </Suspense>
+          </div>
         )}
 
         {activeTab === 'plan' && (

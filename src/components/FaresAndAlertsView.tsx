@@ -126,8 +126,10 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
    */
   const PORTALS = [
     { href: 'https://buslugo.com', label: 'buslugo.com' },
-    { href: 'https://urbanoslugo.com', label: 'urbanoslugo.com' },
-    { href: 'https://tpgalicia.github.io/urban/lugo', label: 'TP Galicia · Lugo' },
+    // urbanoslugo.com is gone: it answers, then redirects off HTTPS to plain http://,
+    // which browsers now refuse to follow from a secure page. A dead link on a page
+    // whose whole point is 'go and check for yourself' is worse than one fewer link.
+    { href: 'https://tpgalicia.github.io/urban/lugo', label: 'TP Galicia (GitHub)' },
   ];
 
   const NOTICE_META = [

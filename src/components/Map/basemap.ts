@@ -140,6 +140,11 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   const resync = () => {
     const gl = layer.getMaplibreMap();
     if (!gl) return;
+    // The map stays mounted between tab visits, so its container spends time at 0x0
+    // behind display:none. Resizing to nothing and back is work with a visible cost and
+    // no benefit: wait until there is something to draw into.
+    const box = layer.getContainer();
+    if (box && (box.clientWidth === 0 || box.clientHeight === 0)) return;
     gl.resize();
     requestAnimationFrame(() => attached?.fire('move'));
   };

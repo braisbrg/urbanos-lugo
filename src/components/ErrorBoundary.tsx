@@ -3,6 +3,11 @@ import type { Dict } from '../i18n';
 
 interface ErrorBoundaryProps {
   t: Dict;
+  /**
+   * Changing this clears a caught error. A prop rather than a `key`, because a key
+   * rebuilds everything the boundary wraps — see the note below.
+   */
+  resetKey?: string;
   children: React.ReactNode;
 }
 
@@ -17,9 +22,15 @@ interface ErrorBoundaryProps {
  *
  * It has to be a class: `componentDidCatch` has no hook equivalent.
  *
- * Reset on navigation is deliberate. The boundary is placed around the content area, so
- * changing section remounts it with a fresh `key` and the reader is not stuck on the
- * error screen after moving somewhere that works.
+ * Reset on navigation is deliberate: the boundary wraps the content area, so somebody
+ * who hits an error and moves somewhere that works should not stay on the error screen.
+ *
+ * That reset used to be a changing `key`, which does clear the error — by unmounting and
+ * rebuilding everything inside. The map paid for that every single time: a new Leaflet
+ * container, a new WebGL context, a new style download and a new first paint on each
+ * visit to the tab, which is what looked like the map resizing itself on the way in.
+ * Measured at four map elements across three visits. The boundary resets its own state
+ * instead, and its children keep their identity.
  */
 interface ErrorBoundaryState {
   failed: boolean;
@@ -30,6 +41,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   static getDerivedStateFromError(): ErrorBoundaryState {
     return { failed: true };
+  }
+
+  componentDidUpdate(previous: ErrorBoundaryProps) {
+    if (this.state.failed && previous.resetKey !== this.props.resetKey) {
+      this.setState({ failed: false });
+    }
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
