@@ -140,8 +140,7 @@ comprobadas automaticamente», que é o que non é. As obras seguen sen fonte au
    `<details>`, `oklch()` e o `ResizeObserver` do mapa son os candidatos a romper. Tamén
    Firefox e Chrome en Android. Hai que decidir cal é o chan que se soporta e escribilo.
 3. **Atar as tarifas** ao traballo semanal, para que fallen cando cambien.
-4. **Normativa**: paga a pena engadila, pero resumida con palabras propias e ligando á
-   fonte, non copiada. O útil de verdade son catro feitos que cambian o que fai alguén na
-   porta do bus: **máximo 5 € en billete**, os nenos pagan **desde os 4 anos**, hai que
-   **conservar o ticket** ata o final, e **pedir a parada con antelación**.
+4. **Consultar o RSS do Concello** no mesmo traballo horario, filtrando só o que fale de
+   transporte e etiquetándoo como nota de prensa coa súa data. É a única fonte municipal
+   lexible por máquina que existe.
 5. **Decidir que facer cos minutos de `info.urbanoslugo.com`**, coas cautelas de arriba.
