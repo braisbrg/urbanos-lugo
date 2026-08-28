@@ -6,11 +6,11 @@
  *   npx tsx tools/compareOperatorTimes.ts --stops uilP,gJRz
  *
  * The whole project is built on separating a time the operator published from one this
- * app worked out, and until now there was nothing to check the second kind against: the
- * network publishes no GPS, so an estimate could be twelve minutes wrong and nobody would
- * find out. Then `info.urbanoslugo.com/qr-demo-paradas/<code>` turned up — the page behind
- * the QR stickers on the poles — and it answers with the next departures for a stop, keyed
- * by the very codes this app already uses.
+ * app worked out, and there was nothing to check the second kind against: an estimate
+ * could be twelve minutes wrong and nobody would ever find out. Then
+ * `info.urbanoslugo.com/qr-demo-paradas/<code>` turned up — the page behind the QR
+ * stickers on the poles — and it answers with the next departures for a stop, keyed by
+ * the very codes this app already uses.
  *
  * Two things come out of running this. Whether their numbers move like a countdown or like
  * something being tracked: a countdown computed from a fixed departure falls exactly one
@@ -26,6 +26,7 @@
  * User-Agent that says who is asking and links back.
  */
 import { getArrivalsForStop } from '../src/utils/transitEngine';
+import { parseOperatorTimes, type OperatorDeparture } from '../src/services/operatorTimes';
 import { REPO_URL } from '../src/project';
 
 const OPERATOR = 'https://info.urbanoslugo.com/qr-demo-paradas';
@@ -39,44 +40,6 @@ const arg = (name: string): string | undefined => {
   return i >= 0 ? process.argv[i + 1] : undefined;
 };
 
-interface OperatorDeparture {
-  line: string;
-  towards: string;
-  minutes: number;
-}
-
-/**
- * Their page is HTML meant for a phone, not an API, but it is honestly marked up: each
- * departure is a `sae-content-info` block holding a line, an itinerary and a time, each in
- * its own classed div. Reading those classes beats counting cells, which mistook a line
- * called AVENIDA for a stray fragment of itinerary.
- *
- * `sae` is worth noticing. In this industry it stands for *sistema de ayuda a la
- * explotación* — the fleet-management system that knows where the buses are. It is not
- * proof of anything on its own, but it is what an operator calls the thing that tracks
- * vehicles, not the thing that prints timetables.
- */
-function parseOperatorPage(html: string): OperatorDeparture[] {
-  const text = (block: string, cls: string): string => {
-    const m = new RegExp(`class="${cls}"[\\s\\S]*?<p>([\\s\\S]*?)</p>`, 'i').exec(block);
-    return m ? m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
-  };
-
-  const departures: OperatorDeparture[] = [];
-  for (const block of html.match(/<div class="sae-content-info">[\s\S]*?<\/div>\s*<\/div>/g) ?? []) {
-    const minutes = /^(\d+)/.exec(text(block, 'sae-content-info-time'));
-    if (!minutes) continue;
-    departures.push({
-      // "L3.1" on their side, "3.1" on ours — and sometimes a word rather than a number,
-      // which is a real difference between the two networks' labels and not a parse error.
-      line: text(block, 'sae-content-info-line').replace(/^L(?=[\d])/i, '').trim(),
-      towards: text(block, 'sae-content-info-itinerary'),
-      minutes: Number(minutes[1]),
-    });
-  }
-  return departures;
-}
-
 async function operatorTimes(code: string): Promise<OperatorDeparture[] | null> {
   try {
     const res = await fetch(`${OPERATOR}/${encodeURIComponent(code)}`, {
@@ -84,7 +47,7 @@ async function operatorTimes(code: string): Promise<OperatorDeparture[] | null> 
       signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) return null;
-    return parseOperatorPage(await res.text());
+    return parseOperatorTimes(await res.text());
   } catch {
     return null;
   }

@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Lang, LOCALE, translations } from '../i18n';
 import { CreditCard, AlertTriangle, Info, Phone, Globe, HelpCircle, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
 import { FARES_LIST } from '../data/transitData';
 import { ServiceAlert } from '../types';
-import type { AlertSyncResult } from '../services/alertSyncService';
-import alertSnapshot from '../data/alerts.json';
 import { isSnapshotStale } from '../utils/snapshotAge';
 import type { ServiceAlerts } from '../hooks/useServiceAlerts';
 
@@ -13,8 +11,6 @@ interface FaresAndAlertsViewProps {
   /** Fetched once in App, so this screen and the navigation badge cannot disagree. */
   alerts: ServiceAlerts;
 }
-
-const COOLDOWN_SECONDS = 30;
 
 
 /**
@@ -31,26 +27,6 @@ function formatInstant(value: string | undefined, locale: string): string {
   return Number.isNaN(at.getTime()) ? value : at.toLocaleString(locale);
 }
 
-
-/**
- * The committed snapshot, narrowed rather than asserted.
- *
- * A JSON import widens `status` to `string`, which is why this used to be cast through
- * `unknown` — and a cast would have swallowed a genuinely malformed file just as
- * happily. One check at the one boundary costs less than that risk.
- */
-function readSnapshot(raw: typeof alertSnapshot): AlertSyncResult {
-  return {
-    ...raw,
-    status:
-      raw.status === 'active_incidents'
-        ? 'active_incidents'
-        : raw.status === 'unreachable'
-          ? 'unreachable'
-          : 'operational_normal',
-    alerts: (raw.alerts ?? []) as AlertSyncResult['alerts'],
-  };
-}
 
 export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, alerts }) => {
   const { data: alertData, snapshotAt, isSyncing, cooldown, refresh } = alerts;

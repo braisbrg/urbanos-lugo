@@ -64,10 +64,40 @@ const CONCELLO_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const ABOUT_GETTING_AROUND =
   /\b(bus|buses|autobús|autobuses|autobus|transporte|parada|paradas|tráfico|trafico|corte|cortes|desv[íi]o|desvi[oó]|circulaci[óo]n|calle|rúa|rua|avenida|peonaliza|peatonaliza|apertura)\b/i;
 
+/**
+ * Plain prose out of an RSS field.
+ *
+ * The council's feed carries its body as entity-encoded markup — `&lt;div class=&quot;field
+ * field-name-field-entradilla&quot;&gt;` and onwards. Stripping tags is not enough, because
+ * at that point there are no tags: there is text that looks like tags. Decode first, then
+ * strip, then collapse. Otherwise the reader is shown Drupal's internals, which is what
+ * happened, in a line long enough to push the card off the side of the screen.
+ *
+ * Rendered as text by React, never as HTML, so decoding introduces nothing.
+ */
+function plainText(raw: string): string {
+  const decoded = raw
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    // Last, so an escaped `&amp;lt;` does not become a tag on the way through.
+    .replace(/&amp;/g, '&');
+  return decoded
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** A press release runs for pages; a card wants the first thought. */
+const CONCELLO_EXCERPT = 220;
+
 export function extractConcelloNotices(xml: string, alwaysRelevant = false): ServiceAlert[] {
   const field = (block: string, name: string): string => {
     const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
-    return m ? m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+    return m ? plainText(m[1]) : '';
   };
 
   const notices: ServiceAlert[] = [];
@@ -91,7 +121,10 @@ export function extractConcelloNotices(xml: string, alwaysRelevant = false): Ser
       severity: 'info',
       linesAffected: ['Todas'],
       date: published.toISOString(),
-      description: field(block, 'description'),
+      description: (() => {
+        const body = field(block, 'description');
+        return body.length > CONCELLO_EXCERPT ? `${body.slice(0, CONCELLO_EXCERPT - 1)}…` : body;
+      })(),
       active: true,
       source: 'concello',
       link: field(block, 'link') || undefined,

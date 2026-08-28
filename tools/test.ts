@@ -1897,6 +1897,29 @@ ok("the city's press feed is read for buses and not for everything else", () => 
   // last spring beside an incident happening now.
   const stale = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', ancient)));
   assert(stale.length === 0, 'a press release from months ago is history, not news');
+
+  // Their body arrives as entity-encoded markup. Stripping tags does nothing to it,
+  // because at that point there are no tags — there is text that looks like tags, and the
+  // reader was shown `&lt;div class=&quot;field field-name-field-entradilla&quot;&gt;` in
+  // a line long enough to push the card off the side of the screen.
+  const encoded = extractConcelloNotices(
+    feed(
+      item(
+        'Corte de tráfico na rúa Nova',
+        recent,
+        '&lt;div class=&quot;field&quot;&gt;&lt;p&gt;A rúa estará cortada&lt;/p&gt;&lt;/div&gt;',
+      ),
+    ),
+  );
+  assert(encoded.length === 1, 'the encoded item did not come through at all');
+  assert(
+    !/[<>]|&[a-z]+;/i.test(encoded[0].description),
+    `markup survived into the description: "${encoded[0].description}"`,
+  );
+  assert(
+    encoded[0].description === 'A rúa estará cortada',
+    `expected the prose alone, got "${encoded[0].description}"`,
+  );
 });
 
 console.log(`\n${checks} checks passed\n`);
