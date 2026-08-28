@@ -28,11 +28,66 @@ let lastFetchTimestamp = 0;
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes cache
 const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000; // 60 seconds minimum cooldown between external requests to buslugo.com
 
+/** Warnings rather than notes: something is being held up, cut or withdrawn. */
+const SERIOUS = /retenc|corte|peche|suprim|desv[ií]o|cancel/i;
+
+/** "Liña 1.2", "L5", "L-4.1" — whatever the notice happens to call them. */
+function linesNamedIn(text: string): string[] {
+  return Array.from(
+    new Set(
+      (text.match(/(?:liña|l[ií]nea|L-?)\s*([0-9]+(?:\.[0-9]+)?(?:ES|DS)?)/gi) || []).map((s) =>
+        s.replace(/(?:liña|l[ií]nea|L-?)\s*/i, '').trim(),
+      ),
+    ),
+  );
+}
+
+/**
+ * The notices the operator puts in its own navigation bar.
+ *
+ * buslugo.com does not publish incidents as articles or as a feed. It publishes them as a
+ * bell in the top navigation: a red badge carrying the count, and a `msg_list` dropdown
+ * holding one list item per notice. Nothing in that markup says "alert" to a general
+ * scraper, which is exactly how this went wrong — the page was read, no <article> was
+ * found, and the app told people the network was running normally on a day the operator's
+ * own header read "Retenciones en zona Estación Tren".
+ *
+ * That is the worst direction for this to fail in. An alert we cannot parse is a missing
+ * warning; silence reported as "everything normal" is a wrong one.
+ */
+function extractNavNotices(html: string): ServiceAlert[] {
+  const list = html.match(/<ul[^>]*class="[^"]*msg_list[^"]*"[^>]*>([\s\S]*?)<\/ul>/i);
+  if (!list) return [];
+
+  const notices: ServiceAlert[] = [];
+  for (const item of list[1].match(/<li[\s\S]*?<\/li>/gi) || []) {
+    const text = item
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    // The dropdown holds a bare "no notices" item on a quiet day in some templates, and
+    // an empty <li> in others. Neither is an incident.
+    if (text.length < 6) continue;
+
+    notices.push({
+      id: `nav-notice-${notices.length + 1}`,
+      title: text.length > 90 ? `${text.slice(0, 87)}...` : text,
+      severity: SERIOUS.test(text) ? 'warning' : 'info',
+      linesAffected: linesNamedIn(text).length > 0 ? linesNamedIn(text) : ['Todas'],
+      // An ISO instant, not a formatted date: one scrape serves every language.
+      date: new Date().toISOString(),
+      description: text,
+      active: true,
+    });
+  }
+  return notices;
+}
+
 /**
  * Parses raw HTML or text from buslugo.com to detect any active service notices or traffic alerts.
  */
-function extractAlertsFromHtml(html: string): ServiceAlert[] {
-  const alerts: ServiceAlert[] = [];
+export function extractAlertsFromHtml(html: string): ServiceAlert[] {
+  const alerts: ServiceAlert[] = extractNavNotices(html);
   
   // Look for alert containers or notices in buslugo HTML
   const articleRegex = /<article[\s\S]*?<\/article>/gi;
@@ -48,16 +103,12 @@ function extractAlertsFromHtml(html: string): ServiceAlert[] {
       const titleMatch = block.match(/<h[234][^>]*>(.*?)<\/h[234]>/i);
       const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : `Aviso de servizo en Lugo`;
       
-      // Extract affected lines (e.g. Liña 1.2, L5, L-4.1, etc.)
-      const linesFound = Array.from(new Set(
-        (cleanText.match(/(?:liña|l[ií]nea|L-?)\s*([0-9]+(?:\.[0-9]+)?(?:ES)?)/gi) || [])
-          .map((s) => s.replace(/(?:liña|l[ií]nea|L-?)\s*/i, '').trim())
-      ));
+      const linesFound = linesNamedIn(cleanText);
 
       alerts.push({
-        id: `live-alert-${i + 1}`,
+        id: `article-alert-${i + 1}`,
         title,
-        severity: /corte|peche|suprim/i.test(cleanText) ? 'warning' : 'info',
+        severity: SERIOUS.test(cleanText) ? 'warning' : 'info',
         linesAffected: linesFound.length > 0 ? linesFound : ['Todas'],
         // An ISO instant, not a formatted date. This payload is scraped once on the
         // server and served to every reader, so it cannot carry one language's format;

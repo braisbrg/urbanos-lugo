@@ -1,8 +1,20 @@
 {
-  "alerts": [],
-  "lastSyncTime": "15:00",
+  "alerts": [
+    {
+      "id": "nav-notice-1",
+      "title": "Retenciones en zona Estación Tren",
+      "severity": "warning",
+      "linesAffected": [
+        "Todas"
+      ],
+      "date": "2026-08-28T10:23:16.782Z",
+      "description": "Retenciones en zona Estación Tren",
+      "active": true
+    }
+  ],
+  "lastSyncTime": "2026-08-28T10:23:16.783Z",
   "sourceUrl": "https://buslugo.com",
-  "status": "operational_normal",
-  "message": "Rede de transporte operando con total normalidade en todas as liñas e paradas.",
-  "fetchedAt": "2026-08-20T13:00:47.972Z"
+  "status": "active_incidents",
+  "message": "1 aviso(s) oficial(is) activo(s) detectado(s) en buslugo.com",
+  "fetchedAt": "2026-08-28T10:23:16.784Z"
 }

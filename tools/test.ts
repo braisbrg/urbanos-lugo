@@ -15,6 +15,7 @@ import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
 import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
+import { extractAlertsFromHtml } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
@@ -1827,6 +1828,45 @@ ok('the hand-written notices are dated, not declared current', () => {
       `${lang}.ts gives the hand-written notices a date of their own again; the review date is the only one that is true`,
     );
   }
+});
+
+ok("a notice in the operator’s navigation bar is still a notice", () => {
+  // buslugo.com does not publish incidents as articles or as a feed. It publishes them as
+  // a bell in its top navigation: a red badge with the count, and a msg_list dropdown with
+  // one item each. This is the real markup, taken from the page on 28 Aug 2026, the day it
+  // was carrying "Retenciones en zona Estación Tren" while this app was telling everybody
+  // the network was running normally.
+  //
+  // That is the worst direction for this to fail in. A notice we cannot parse is a missing
+  // warning; silence reported as "todo normal" is a wrong one.
+  const navMarkup = `
+    <li role="presentation" class="dropdown">
+      <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown">
+        <i class="fa fa-bell-o"></i><span class="badge bg-red">1</span>
+      </a>
+      <ul class="dropdown-menu list-unstyled msg_list">
+        <li id="menu-item-913" class="menu-item menu-item-type-custom">
+          <a href="#"><i class="fa fa-exclamation-triangle"></i> Retenciones en zona Estación Tren</a>
+        </li>
+      </ul>
+    </li>`;
+
+  const found = extractAlertsFromHtml(navMarkup);
+  assert(found.length === 1, `the bell dropdown yielded ${found.length} notices, expected 1`);
+  assert(
+    /Retenciones/.test(found[0].title),
+    `the notice came back as "${found[0].title}" rather than what the page said`,
+  );
+  assert(
+    found[0].severity === 'warning',
+    'traffic being held up is a warning, not a note',
+  );
+
+  // A page with no notices at all must stay empty rather than inventing one.
+  assert(
+    extractAlertsFromHtml('<html><body><p>Nada que declarar</p></body></html>').length === 0,
+    'a page with no notice list produced a notice anyway',
+  );
 });
 
 console.log(`\n${checks} checks passed\n`);
