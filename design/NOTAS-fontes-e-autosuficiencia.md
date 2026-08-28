@@ -2,86 +2,111 @@
 
 Brais o 28 de agosto de 2026: «quiero que cuando lo tengamos acabado, a menos que cambie
 alguna ruta o algún bus, la web se mantenga sola». Isto é o inventario do que hai, do que
-falta, e do que xa non cadra entre unhas fontes e outras.
+falta, e —o máis importante— **onde está a raia** entre o que se pode deixar só e o que
+non.
 
-## O que xa se comproba só
+---
 
-- **Avisos do operador, cada hora.** `deploy-pages.yml` corre `tools/fetchAlerts.ts` antes
-  de cada despregue e volve despregar cada hora. Le só buslugo.com.
-- **A rede, cada semana.** `check-source.yml` corre `tools/reconcile.ts --fresh`, que volve
-  ler as 24 páxinas de liña do operador e compara co que se publica aquí. Falla se algo
-  discrepa, que é o único sinal que merece interromper a alguén: se cambia un itinerario ou
-  un horario, os datos que servimos quedan mal e nada dentro da app pode darse conta.
+## A raia: que pode ir só e que non
 
-## O que non se comproba
+### Pode ir só, e xa vai
 
-- **As obras e avisos municipais.** Os tres avisos estruturais están escritos a man. Levan
-  data de revisión e din en voz alta cando esa data envellece, pero ninguén os vai buscar.
+| | Cada canto | Como |
+|---|---|---|
+| **Avisos do operador** | cada hora | `deploy-pages.yml` corre `tools/fetchAlerts.ts` e volve despregar |
+| **Itinerarios e horarios** | cada semana | `check-source.yml` corre `reconcile --fresh` e **falla** se a páxina do operador xa non di o que publicamos |
+
+Iso cobre o que Brais pediu: mentres non cambie unha ruta nin un bus, ninguén ten que
+tocar nada; e o día que cambien, salta.
+
+### Pode ir só, e aínda non vai
+
+- **As tarifas.** `buslugo.com/tarifas/` é unha táboa HTML estable e é a fonte que manda.
+  Hoxe os prezos están escritos en `transitData.ts`. Deberían comprobarse no mesmo traballo
+  semanal: non para cambialos sós —un prezo que muda só é un prezo no que non se pode
+  confiar— senón para **fallar** cando deixen de coincidir.
+- **Os avisos do operador nunha segunda fonte.** O RSS de `urbanoslugo.com/es/rss.xml` está
+  abandonado hoxe, pero é XML e custa nada consultalo. O día que o usen, chega de balde.
+
+### **Non pode ir só**
+
+- **As obras e avisos municipais.** Non hai fonte lexible por máquina. `datosabertos.lugo.gal`
+  devolve 503 nos endpoints CKAN e 404 nos catálogos; a web do Concello é HTML pensado para
+  ler, e raspala é un proxecto propio que ademais obriga a ler os seus termos. Quedan
+  escritos a man, **con data de revisión e cun aviso que salta aos seis meses**. Iso é o
+  máximo que se pode automatizar: que a app admita soa que ninguén mirou.
+- **Os nomes das paradas e das liñas.** Veñen do scrape. Cambialos é unha decisión, non un
+  refresco.
+- **Calquera cousa que a app afirme sobre cartos.** Detéctase soa que cambiou; cámbiase a
+  man.
+
+---
 
 ## As fontes, unha por unha
 
-| Fonte | Que serve | Serve para automatizar? |
+| Fonte | Que serve | Automatizable? |
 |---|---|---|
-| **buslugo.com** | portal do operador; avisos e as páxinas de liña | **Si**, e xa se usa: avisos cada hora, reconciliación semanal |
-| **urbanoslugo.com** | a web da propia operadora, Monbus Urbanos S.A. | **Non hoxe.** Ver abaixo |
-| **datosabertos.lugo.gal** | portal de datos abertos do Concello | **Non.** 503 nos endpoints CKAN, 404 nos catálogos estándar; só HTML |
-| **Folleto impreso do Concello** | tarifas, nomes de liña, planos | **Non**, é papel; pero vale como contraste |
+| **buslugo.com** | avisos (na barra de navegación) e as páxinas de liña | **Si**, e xa se usa |
+| **buslugo.com/tarifas/** | a táboa de prezos vixente | **Si.** Pendente de atar |
+| **buslugo.com/normativa/** | dereitos e obrigas das persoas usuarias | Si, pero non fai falta: cambia moi de raro |
+| **info.urbanoslugo.com/qr-demo-paradas/<código>** | **tempos de paso por parada** | **Si**, e é o achado gordo. Ver abaixo |
+| **urbanoslugo.com** | a web da propia operadora, Monbus Urbanos S.A. | RSS abandonado; sen HTTPS |
+| **datosabertos.lugo.gal** | portal de datos abertos | **Non.** 503 e 404 |
+| **Folleto impreso do Concello** | tarifas, nomes de liña, planos | **Non**, é papel; vale para contrastar |
 
-### urbanoslugo.com, en detalle
+### O achado: o operador si publica tempos por parada
 
-Comprobado o 28 de agosto:
+`https://info.urbanoslugo.com/qr-demo-paradas/uilP` devolve HTML cos minutos que faltan
+(`<p>9 min</p>`) e refréscase só cada 30 segundos. **Usa os mesmos códigos de parada que
+esta app** — `uilP` é Rda. Muralla 56 (Sindicatos) aquí tamén.
 
-- **Non ten HTTPS.** `https://` devolve 301 cara a `http://`. Por iso non se pode ligar
-  desde a app e por iso saíu da tarxeta de portais.
-- **Ten RSS**: `http://urbanoslugo.com/es/rss.xml`, 200, XML válido. Pero está abandonado:
-  dúas entradas de recheo — «Inauguracion del nuevo servicio de transporte» e «Muy pronto
-  info en tiempo real» — sen datas e todas apuntando á portada. **Non serve hoxe**, pero é
-  un punto que xa é lexible por máquina: se algún día o operador o usa, os avisos chegarían
-  de balde. Custa case nada consultalo de cando en vez.
-- Esa segunda entrada, «muy pronto info en tiempo real», confirma o que a app leva dicindo:
-  esta rede non publica GPS da flota.
-- Tamén serve `/files/plano_rede.pdf`, que semella ser o mesmo plano que Brais pasou.
+Iso abre dúas cousas, e a segunda importa máis:
+
+1. Poderíanse amosar os minutos do operador no canto —ou ao lado— das estimacións propias.
+2. **Poderíase comprobar canto se afastan as nosas estimacións das súas.** Este proxecto
+   enteiro está construído arredor de distinguir o publicado do calculado; ter unha fonte
+   contra a que medir o erro real das estimacións é exactamente o que faltaba.
+
+Antes de tocar nada hai que resolver: se eses minutos son GPS ou horario (o propio RSS do
+operador aínda di «muy pronto info en tiempo real», o que apunta a horario), se `qr-demo-`
+significa que é provisional, e se os seus termos permiten lelo. **Non presentar eses
+minutos como medidos ata sabelo.**
+
+---
 
 ## O contraste co folleto do Concello
 
-Brais pasou o folleto oficial (24 páxinas: tarifas, nomes de liña e planos). Primeiro
-cotexo, e sae unha discrepancia que hai que resolver.
+### Resolto: o transbordo
 
-### Cadra exactamente
+O folleto imprimía **transbordo ordinario 0,19 €** e **social 0,10 €**; a app di que son de
+balde. Gaña a app: `buslugo.com/tarifas/`, consultada o 28 de agosto, di **0,00 €** nos
+dous. O folleto está desactualizado nesa liña e certo nas outras tres (0,64 / 0,45 / 0,31).
 
-Billete ordinario **0,64 €**, bono ordinario **0,45 €**, bono social **0,31 €**. Son os
-tres prezos que a app amosa e os tres que o folleto imprime.
+### Sen resolver: os nomes de liña
 
-### **Non cadra: o transbordo**
-
-O folleto imprime **transbordo ordinario 0,19 €** e **transbordo social 0,10 €**. A app ten
-`transfer: 0` e di «transbordo gratuíto (75 min)».
-
-Isto é unha afirmación sobre cartos, así que non se toca ningunha das dúas ata sabelo. As
-posibilidades son que o folleto sexa anterior a un cambio de política, ou que a app estea
-mal. Nunha sesión anterior verificouse que os transbordos eran de balde e deuse por boa;
-esa verificación agora ten unha fonte que a contradí. **Volver á fonte antes de cambiar
-nada**, e deixar dito de onde saíu a resposta.
-
-### Os nomes de liña do Concello son mellores
-
-O folleto nomea as liñas polo corredor; buslugo nómeas polas cabeceiras. Compárense:
+O Concello nomea as liñas polo corredor, buslugo polas cabeceiras:
 
 | | Concello | O que amosa a app |
 |---|---|---|
 | 1.1 | Campus Universitario – Fingoi – O Ceao | Opuesto Piscina Pedreiras – Rúa Mercadorías (Terminal) |
-| 3.1 | Rda. Muralla (Sindicatos) – Av. Coruña – Montirón – UNED | Rda. Muralla 56 (Sindicatos) – A Tolda (UNED) |
 | 7 | Casco Histórico (Bolaño) – Barrio da Ponte | Bolaño Ribadeneira 1 – A Ponte (cruce Fl…) |
 
-O do Concello dille a alguén por onde vai a liña; o do operador dille onde remata. Paga a
-pena consideralo, pero é un cambio de datos, non de interface: os nomes veñen do scrape e
-habería que decidir cal manda e como se reconcilia iso.
+O do Concello dille a alguén por onde vai; o do operador, onde remata. Paga a pena, pero é
+un cambio de datos e habería que decidir cal manda.
 
-## Que faría a continuación
+---
 
-1. **Resolver o transbordo.** É o único punto onde a app afirma algo que outra fonte nega.
-2. **Consultar o RSS do operador** no mesmo traballo horario que xa le buslugo.com. Hoxe non
-   devolve nada útil, pero é barato e xa é XML; o día que o usen, chega só.
-3. **Deixar as obras municipais como están** —escritas a man, con data e con aviso de
-   caducidade— ata que apareza unha fonte que se poida ler sen adiviñar. Raspar a web do
-   Concello é un proxecto propio, e habería que ler os seus termos antes.
+## Pendente
+
+1. **Outra rolda de auditoría e de comprobacións**, coa mesma disciplina: medir antes de
+   afirmar, e correr cada aviso ata a súa causa antes de descartalo.
+2. **Comprobar navegadores e sistemas.** Non se probou máis que nun Chromium. Importa
+   especialmente: **Safari en iOS**, que é o outro medio Lugo, e onde `100dvh`, os
+   `<details>`, `oklch()` e o `ResizeObserver` do mapa son os candidatos a romper. Tamén
+   Firefox e Chrome en Android. Hai que decidir cal é o chan que se soporta e escribilo.
+3. **Atar as tarifas** ao traballo semanal, para que fallen cando cambien.
+4. **Normativa**: paga a pena engadila, pero resumida con palabras propias e ligando á
+   fonte, non copiada. O útil de verdade son catro feitos que cambian o que fai alguén na
+   porta do bus: **máximo 5 € en billete**, os nenos pagan **desde os 4 anos**, hai que
+   **conservar o ticket** ata o final, e **pedir a parada con antelación**.
+5. **Decidir que facer cos minutos de `info.urbanoslugo.com`**, coas cautelas de arriba.
