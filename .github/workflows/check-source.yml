@@ -1,4 +1,4 @@
-name: Check the operator's pages
+name: Check the sources
 
 # The dataset is a scrape, and a scrape drifts: the operator moves a pole, renames a
 # stop, changes a departure. Nothing inside the app can notice that on its own — it goes
@@ -13,6 +13,11 @@ name: Check the operator's pages
 # Deliberately not the 1186 stop pages. Poles move rarely and that pass takes twenty
 # minutes of somebody else's bandwidth; `--fresh-stops` exists for when one is suspected
 # of having moved.
+#
+# The same run also re-reads the map. The trazado was lifted from OpenStreetMap once and
+# then never looked at again, which made it the one part of this dataset that could go
+# stale in silence: a new roundabout, a street turned one-way, a corner redrawn, and the
+# app goes on drawing last year's line over the new city. Two Overpass requests answer it.
 on:
   schedule:
     - cron: '23 5 * * 1' # Mondays, early, off the hour to avoid the busiest minute
@@ -48,3 +53,9 @@ jobs:
       # is asking and links back here.
       - name: Re-read the line pages and compare
         run: pnpm exec tsx tools/reconcile.ts --fresh
+
+      # Runs even when the timetables disagree: two independent things are being watched
+      # and finding one broken is no reason to stop looking at the other.
+      - name: Re-read the mapped routes and compare
+        if: always()
+        run: pnpm exec tsx tools/checkOsmGeometry.ts

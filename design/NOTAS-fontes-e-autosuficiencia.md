@@ -189,14 +189,26 @@ Detéctase só, cada semana, en `reconcile --fresh`:
 
 Se a rotonda fai que a liña deixe de pasar por unha parada ou que cambien as horas, salta.
 
-**Non se detecta**: o **trazado debuxado no mapa**. Vén das relacións de ruta de
-OpenStreetMap e impórtase a man con `pnpm data:osm`. Se a rúa cambia, OSM actualízase e as
-paradas seguen sendo as mesmas, a liña do mapa seguiría co percorrido vello ata que alguén
-volva importar. Ninguén se enteraría.
+**Detéctase dende agora**: o **trazado debuxado no mapa**. Era o único que podía
+envellecer en silencio — vén das relacións de ruta de OpenStreetMap, importábase a man con
+`pnpm data:osm`, e se a rúa cambiaba a liña do mapa seguía co percorrido vello ata que
+alguén volvese importar. Ninguén se enteraría.
 
-**Como pechalo**, e é barato: no mesmo traballo semanal, volver consultar Overpass e
-comparar o `totalMeters` de cada sentido co que se publica. Unha rotonda nova cambia a
-lonxitude; unha diferenza de máis dun 1 % falla e alguén mira. Pendente.
+`tools/checkOsmGeometry.ts` corre no mesmo traballo semanal: pregunta a Overpass o mesmo
+que `data:osm`, cose as relacións coa mesma función —non unha copia— e compara a lonxitude
+de cada sentido coa do trazado publicado. Tamén compara `restrictedMeters`, que é a proba
+na que se apoia o aviso da cabeceira do casco histórico: se alguén etiqueta o `bus=yes` que
+falta, o número cae e hai que reescribir o aviso.
+
+**O limiar é do 0,5 %**, e non é unha suposición sobre ruído: a mesma relación sen editar
+cose exactamente á mesma polilínea, así que o chan é cero e calquera cousa é unha edición
+real. A marxe existe para que un mapeador movendo un bordo tres metros non faga saltar a
+alarma cada luns — porque unha alarma que salta cada luns acaba ignorada o luns que
+importa. Comprobado: 48 rutas de 48, deriva cero; e cunha rotonda de 300 m simulada nunha
+liña, falla e sae con 1.
+
+Se Overpass non responde non falla: que un servizo compartido estea caído non é que os
+datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignorar a semana.
 
 ## Pendente
 
@@ -207,7 +219,13 @@ lonxitude; unha diferenza de máis dun 1 % falla e alguén mira. Pendente.
    `<details>`, `oklch()` e o `ResizeObserver` do mapa son os candidatos a romper. Tamén
    Firefox e Chrome en Android. Hai que decidir cal é o chan que se soporta e escribilo.
 3. **Atar as tarifas** ao traballo semanal, para que fallen cando cambien.
-4. **Consultar o RSS do Concello** no mesmo traballo horario, filtrando só o que fale de
-   transporte e etiquetándoo como nota de prensa coa súa data. É a única fonte municipal
-   lexible por máquina que existe.
-5. **Decidir que facer cos minutos de `info.urbanoslugo.com`**, coas cautelas de arriba.
+
+## Feito dende que se escribiu isto
+
+- **O RSS do Concello** lese en cada sincronización, filtrado por sucesos e non por temas
+  —«tráfico» é o nome dun organismo tanto como unha condición da rúa— e as notas de prensa
+  amósanse á parte dos avisos do servizo, sen contar para o distintivo.
+- **Os minutos de `info.urbanoslugo.com`** amósanse só a quen chega escaneando o QR dese
+  poste. É a páxina á que apunta a pegatina; en calquera outro sitio serían dúas listas de
+  horas que se contradín sen que ninguén poida dicir cal manda.
+- **O trazado** compárase cada semana contra Overpass, como se describe arriba.
