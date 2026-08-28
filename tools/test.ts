@@ -1969,4 +1969,43 @@ ok('the Bolaño notice still describes the lines it names', () => {
   );
 });
 
+ok('a bus whose time has passed stays on the board, marked', () => {
+  // Measured against the operator's tracker at Rda. Muralla 118: a line 1.3 due at 19:18
+  // arrived at 19:23. The board kept it for sixty seconds and then advertised the next
+  // 1.3, ninety minutes out -- so while the bus was three, two and one minute away, the
+  // screen said 88, 87, 86. Whoever was waiting had been told to go home.
+  //
+  // Take a real departure and ask the board about it four minutes late.
+  const stop = BUS_STOPS.find((s) => getArrivalsForStop(s.id, new Date()).arrivals.length > 0);
+  assert(stop, 'no stop has any arrivals at all right now');
+
+  const probe = new Date();
+  probe.setHours(9, 0, 0, 0);
+  const board = getArrivalsForStop(stop!.id, probe).arrivals;
+  if (board.length === 0) return; // nothing runs at nine on the day this is run
+
+  const [first] = board;
+  const [hh, mm] = first.etaTime.split(':').map(Number);
+  const fourLate = new Date(probe);
+  fourLate.setHours(hh, mm + 4, 0, 0);
+
+  const after = getArrivalsForStop(stop!.id, fourLate).arrivals;
+  const kept = after.find((a) => a.etaTime === first.etaTime);
+  assert(kept, `the ${first.lineNumber} due at ${first.etaTime} was dropped four minutes later`);
+  assert(
+    kept!.overdueMinutes === 4,
+    `it is on the board but says overdueMinutes ${kept!.overdueMinutes}, expected 4`,
+  );
+
+  // And it is not still being called "arriving": that is the most confident label on the
+  // screen and this is the least certain row on it.
+  assert(kept!.etaMinutes === 0, 'an overdue departure should sit at zero minutes');
+
+  // Past the window it does go, rather than lingering all day.
+  const wayLate = new Date(probe);
+  wayLate.setHours(hh, mm + 20, 0, 0);
+  const gone = getArrivalsForStop(stop!.id, wayLate).arrivals.find((a) => a.etaTime === first.etaTime);
+  assert(!gone, `the ${first.lineNumber} due at ${first.etaTime} was still listed twenty minutes on`);
+});
+
 console.log(`\n${checks} checks passed\n`);

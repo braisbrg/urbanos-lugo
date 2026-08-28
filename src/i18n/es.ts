@@ -467,6 +467,9 @@ export const es: Dict = {
   common: {
     min: 'min',
     arrivingNow: 'Llegando',
+    overdue: (minutes: number) => `hace ${minutes} min`,
+    overdueNote:
+      'Ya pasó la hora a la que estaba previsto y esta web no sabe dónde está el bus. Se sigue mostrando cinco minutos porque la mayoría de los retrasos son más cortos que eso.',
     lines: (count: number) => `${count} ${count === 1 ? 'línea' : 'líneas'}`,
     officialBadge: 'HORARIO OFICIAL',
     estimatedBadge: '~ ESTIMADO',

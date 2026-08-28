@@ -89,6 +89,15 @@ export interface StopArrival {
    * attributes to them rather than folding into these.
    */
   precision: 'published' | 'estimated';
+  /**
+   * Minutes since this departure was due, when it is past due and has not been dropped.
+   *
+   * Not a delay: this app has no idea where the bus is, and the timetable cannot tell a
+   * late bus from one that has already gone. It is the plain fact that the printed time
+   * has passed. The board says so and leaves the reader to look up the street, which is
+   * more use than removing the row and quoting the next service an hour later.
+   */
+  overdueMinutes?: number;
 }
 
 // Deliberately absent from an arrival: vehicleId, delayMinutes, occupancy and

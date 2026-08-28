@@ -297,6 +297,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   // not fetch at all.
   const operatorTimes = useOperatorTimes(viaQr ? (poleCode(selectedStop) ?? undefined) : undefined);
   const nonePublished = arrivals.length > 0 && arrivals.every((a) => a.precision === 'estimated');
+  const anyOverdue = arrivals.some((a) => a.overdueMinutes);
 
   /**
    * A report nobody has to assemble by hand.
@@ -378,10 +379,18 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   const Minutes: React.FC<{ arrival: StopArrival }> = ({ arrival }) => (
     <span
       className={`tnum shrink-0 text-num font-bold tracking-[-0.025em] ${
-        arrival.etaMinutes === 0 ? 'text-accent' : 'text-ink-max'
+        arrival.overdueMinutes ? 'text-ink-3' : arrival.etaMinutes === 0 ? 'text-accent' : 'text-ink-max'
       }`}
     >
-      {arrival.etaMinutes === 0 ? (
+      {/* Three states, and only one of them is a claim about a bus.
+          Overdue: the printed time has gone by. Nothing here knows whether the bus is
+          late or already past, so the board says how long ago it was due and stops
+          short of guessing -- quieter than the others, because it is the least certain
+          thing on the screen rather than the most.
+          Zero: due about now. Anything else: minutes to go. */}
+      {arrival.overdueMinutes ? (
+        <span className="text-emph">{t.common.overdue(arrival.overdueMinutes)}</span>
+      ) : arrival.etaMinutes === 0 ? (
         <span className="text-emph">{t.common.arrivingNow}</span>
       ) : (
         <>
@@ -848,6 +857,12 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           {t.arrivals.reportCta}
         </a>
       </details>
+
+      {anyOverdue && (
+        <p className="mt-4 border-t border-line pt-3.5 text-label leading-relaxed text-ink-3">
+          {t.common.overdueNote}
+        </p>
+      )}
 
       {nonePublished ? (
         <details className="mt-4 border-t border-line pt-3">

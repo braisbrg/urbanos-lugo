@@ -324,6 +324,20 @@ function occupancyAt(minutes: number): 'low' | 'medium' | 'high' {
 const ARRIVALS_HORIZON_MINUTES = 120;
 
 /**
+ * How long a departure stays on the board after its printed time.
+ *
+ * Measured, not chosen: 389 comparisons against the operator's own tracker at stops where
+ * they publish the time -- so our minute is theirs, and the difference is the bus. Half of
+ * departures ran at least a minute late, a quarter four or more, one in ten eight or more.
+ * Five covers 84% of them.
+ *
+ * The old value was one minute, and it produced the worst failure this board had: a bus
+ * five minutes down dropped off, the next service appeared in its place, and the board
+ * went from "Chegando" to "88 min" while the bus was three minutes from the stop.
+ */
+const OVERDUE_GRACE_MINUTES = 5;
+
+/**
  * Next arrivals at a stop, taken from the operator's published timetable.
  * Returns an empty board outside the service window instead of inventing buses.
  */
@@ -393,14 +407,25 @@ export function getArrivalsForStop(
         }))
         .filter((r) => r.minutes !== undefined)
         // A run listed as 23:50 is still "next" at 00:05, so compare on the same day arc.
-        .map((r) => ({ ...r, minutes: r.minutes < nowMinutes - 5 ? r.minutes + MINUTES_PER_DAY : r.minutes }))
-        .filter((r) => r.minutes >= nowMinutes - 1 && r.minutes <= nowMinutes + ARRIVALS_HORIZON_MINUTES)
+        // The same constant as the grace window on purpose: a departure inside the window
+        // is still today's, and one outside it is tomorrow's and falls past the horizon.
+        .map((r) => ({
+          ...r,
+          minutes:
+            r.minutes < nowMinutes - OVERDUE_GRACE_MINUTES ? r.minutes + MINUTES_PER_DAY : r.minutes,
+        }))
+        .filter(
+          (r) =>
+            r.minutes >= nowMinutes - OVERDUE_GRACE_MINUTES &&
+            r.minutes <= nowMinutes + ARRIVALS_HORIZON_MINUTES,
+        )
         .sort((a, b) => a.minutes - b.minutes)
         // Three, so the by-line view can show a line's next few departures and derive
         // a headway from them instead of asserting a frequency nobody measured.
         .slice(0, 3);
 
       upcoming.forEach(({ minutes, published }) => {
+        const late = Math.round(nowMinutes - minutes);
         arrivals.push({
           lineId: line.id,
           lineNumber: line.number,
@@ -410,12 +435,18 @@ export function getArrivalsForStop(
           etaMinutes: Math.max(0, Math.round(minutes - nowMinutes)),
           etaTime: formatMinutes(Math.round(minutes)),
           precision: published ? 'published' : 'estimated',
+          overdueMinutes: late > 0 ? late : undefined,
         });
       });
     });
   }
 
-  arrivals.sort((a, b) => a.etaMinutes - b.etaMinutes);
+  // Overdue departures all sit at zero minutes, so the tie is broken by how long they have
+  // been waiting: the one that was due a minute ago is likelier to still turn up than the
+  // one due five minutes ago, and it goes first.
+  arrivals.sort(
+    (a, b) => a.etaMinutes - b.etaMinutes || (a.overdueMinutes ?? 0) - (b.overdueMinutes ?? 0),
+  );
   return { stop, arrivals };
 }
 

@@ -481,6 +481,9 @@ export const gl = {
   common: {
     min: 'min',
     arrivingNow: 'Chegando',
+    overdue: (minutes: number) => `hai ${minutes} min`,
+    overdueNote:
+      'Xa pasou a hora á que estaba previsto e esta web non sabe onde está o bus. Séguese amosando cinco minutos porque a maioría dos atrasos son máis curtos ca iso.',
     lines: (count: number) => `${count} ${count === 1 ? 'liña' : 'liñas'}`,
     officialBadge: 'HORARIO OFICIAL',
     estimatedBadge: '~ ESTIMADO',
