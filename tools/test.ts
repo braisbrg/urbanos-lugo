@@ -1893,6 +1893,32 @@ ok("the city's press feed is read for buses and not for everything else", () => 
   );
   assert(aside.length === 0, `a headline that is not about getting around yielded ${aside.length} notices`);
 
+  // Real, and it reached the screen: the traffic tag carries the council signing an
+  // agreement with the *Jefatura Provincial de Tráfico* about road-safety courses for
+  // schoolchildren. "Tráfico" was in the vocabulary, so a body with the word in its name
+  // read as a condition on the street. Topic words match any council story; only an event
+  // word means something changed for somebody trying to get around.
+  const institution = extractConcelloNotices(
+    feed(
+      item(
+        'El Ayuntamiento y la Jefatura Provincial de Tráfico de Lugo firmarán un acuerdo ' +
+          'para impulsar los cursos de educación vial',
+        recent,
+      ),
+    ),
+  );
+  assert(
+    institution.length === 0,
+    `an agreement about road-safety courses yielded ${institution.length} notices`,
+  );
+
+  // And the one from the same feed that genuinely matters still comes through: a street
+  // the buses use, shut by someone else's works, being demanded back.
+  const reopening = extractConcelloNotices(
+    feed(item('El Ayuntamiento exige a Adif la apertura inmediata al tráfico de la calle Conde Fontao', recent)),
+  );
+  assert(reopening.length === 1, `the Conde Fontao reopening yielded ${reopening.length} notices, expected 1`);
+
   // The feed runs at one item every couple of months, so with no cutoff the app would put
   // last spring beside an incident happening now.
   const stale = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', ancient)));

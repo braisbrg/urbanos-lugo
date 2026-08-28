@@ -194,9 +194,9 @@ export const es: Dict = {
           'Debido a las obras de la futura Estación Intermodal en Montero Ríos y Conde de Fontao, se sigue la señalización peatonal habilitada hacia las paradas del entorno ferroviario.',
       },
       {
-        title: 'Cabecera central en Bolaño Ribadeneira',
+        title: 'Cabecera en el casco histórico (líneas 7, 8, 9 y 12)',
         description:
-          'Las líneas 7, 8, 9 y 12 salen todas de la parada Bolaño Ribadeneira 1: así las nombra el operador en sus propios horarios, que son los que lee esta web. Que el entorno esté peatonalizado no lo comprobamos aquí.',
+          'Las cuatro líneas terminan en Bolaño Ribadeneira. Entre 230 y 385 metros del final de cada recorrido caen sobre calles que OpenStreetMap tiene cerradas al tráfico — Montevideo, San Fernando y la propia Bolaño Ribadeneira — y aun así el operador publica paradas en ellas. Si el bus entra hasta la cabecera o se queda en la entrada, los datos abiertos no lo dicen.',
       },
       {
         title: 'Bonificación del 50% y Tarjeta Xente Nova (<21 años)',
@@ -365,7 +365,7 @@ export const es: Dict = {
   arrivals: {
     operatorSaysTitle: 'Lo que muestra el QR de esta parada',
     operatorSaysNote: (at: string) =>
-      `Esto es lo que verías si escanearas el código del poste: la página del operador para esta parada, leída a las ${at}. No es un dato de esta app, y puede no coincidir con los horarios de arriba.`,
+      `Esto es lo que muestra ahora el código de este poste, leído a las ${at}. Es el dato del operador, no el de esta app.`,
     clockDrift: (hours: string, zone: string) =>
       `Tu dispositivo va ${hours} respecto de la hora de Lugo (está en ${zone}). Los horarios de esta página son los de Lugo, así que lo que ves aquí no coincide con el reloj de tu aparato.`,
     clockAhead: (h: string) => `${h} por delante`,

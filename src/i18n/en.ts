@@ -205,9 +205,9 @@ export const en: Dict = {
           'Because of the works on the future intermodal station at Montero Ríos and Conde de Fontao, follow the signed pedestrian route to the stops around the railway station.',
       },
       {
-        title: 'Central terminus at Bolaño Ribadeneira',
+        title: 'Old town terminus (lines 7, 8, 9 and 12)',
         description:
-          'Lines 7, 8, 9 and 12 all set out from the Bolaño Ribadeneira 1 stop: that is how the operator names them in its own timetables, which are what this site reads. Whether the streets around it are pedestrianised is not something checked here.',
+          'All four lines end at Bolaño Ribadeneira. Between 230 and 385 metres of the tail of each route fall on streets OpenStreetMap has closed to vehicles — Montevideo, San Fernando and Bolaño Ribadeneira itself — and the operator publishes stops on them all the same. Whether the bus reaches the terminus or stops at the entrance is not something open data says.',
       },
       {
         title: '50% discount and the Xente Nova card (under 21)',
@@ -376,7 +376,7 @@ export const en: Dict = {
   arrivals: {
     operatorSaysTitle: 'What this stop’s QR shows',
     operatorSaysNote: (at: string) =>
-      `This is what you would see if you scanned the code on the pole: the operator’s own page for this stop, read at ${at}. Not this app’s figure, and it may not agree with the times above.`,
+      `This is what the code on this pole shows right now, read at ${at}. The operator’s figure, not this app’s.`,
     clockDrift: (hours: string, zone: string) =>
       `Your device is ${hours} Lugo time (it is set to ${zone}). The timetables on this page are Lugo's, so what you see here will not match your own clock.`,
     clockAhead: (h: string) => `${h} ahead of`,

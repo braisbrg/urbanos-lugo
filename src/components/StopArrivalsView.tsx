@@ -47,6 +47,19 @@ const NearbyMiniMap = lazy(() =>
   import('./Map/NearbyMiniMap').then((m) => ({ default: m.NearbyMiniMap })),
 );
 
+/**
+ * The operator's own label for a service, set so it does not shout.
+ *
+ * Most are numbers; one or two are words -- they call one service AVENIDA where we would
+ * say 5.1. In capitals, beside our own numbers, that reads as a fault. It is deliberately
+ * not translated into one of our line numbers: the mapping is not published anywhere, and
+ * guessing it would put a number on a bus nobody has identified.
+ */
+function operatorLineLabel(raw: string): string {
+  if (/^[\d.]+$/.test(raw)) return raw;
+  return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+}
+
 /** "2 h", or "1 h 30 min" for the half-hour zones. */
 function formatDriftHours(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -667,6 +680,11 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           points at exactly this page, so for the person who scanned it this is not a
           second opinion, it is the thing they were reaching for.
 
+          A label and a number, nothing else. Their `towards` field is a route description
+          rather than a destination -- "TOLDA-MONTIRON-FONTINAS-SINDICATOS-MURALLA", their
+          own spelling -- and six words of it per row turned a glance into a reading task.
+          Anyone who wants the direction has this app's own board directly above.
+
           It appears only where there is a server to ask: the operator sends no CORS
           header, so the static build never sees this. */}
       {operatorTimes && operatorTimes.departures.length > 0 && (
@@ -677,9 +695,8 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           <ul className="mt-2 space-y-1.5">
             {operatorTimes.departures.map((departure, i) => (
               <li key={`${departure.line}-${i}`} className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 flex-1 truncate text-label text-ink">
-                  <span className="font-bold">{departure.line}</span>
-                  <span className="text-ink-3"> · {departure.towards.toLowerCase()}</span>
+                <span className="min-w-0 flex-1 truncate text-body font-bold text-ink">
+                  {operatorLineLabel(departure.line)}
                 </span>
                 <span className="tnum shrink-0 font-mono font-black text-ink">
                   {departure.minutes} {t.common.min}
@@ -688,7 +705,12 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             ))}
           </ul>
           <p className="mt-2 text-label leading-relaxed text-ink-3">
-            {t.arrivals.operatorSaysNote(new Date(operatorTimes.fetchedAt).toLocaleTimeString(LOCALE[lang]))}
+            {t.arrivals.operatorSaysNote(
+              new Date(operatorTimes.fetchedAt).toLocaleTimeString(LOCALE[lang], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+            )}
           </p>
         </section>
       )}

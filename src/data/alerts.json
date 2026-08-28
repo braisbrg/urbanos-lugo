@@ -7,23 +7,10 @@
       "linesAffected": [
         "Todas"
       ],
-      "date": "2026-08-28T15:11:48.709Z",
+      "date": "2026-08-28T17:09:46.583Z",
       "description": "Retenciones en zona Estación Tren",
       "active": true,
       "source": "operator"
-    },
-    {
-      "id": "concello-3",
-      "title": "El Ayuntamiento y la Jefatura Provincial de Tráfico de Lugo firmarán un acuerdo para impulsar los cursos de...",
-      "severity": "info",
-      "linesAffected": [
-        "Todas"
-      ],
-      "date": "2026-08-28T10:08:09.000Z",
-      "description": "Las instalaciones volverán a acoger una programación dirigida a los escolares y en los próximos días se abrirá el plazo para que los centros presenten sus solicitudes. Tema Seguridad , Tráfico Viernes, 28 de agosto de 2…",
-      "active": true,
-      "source": "concello",
-      "link": "https://concellodelugo.gal/es/noticias/el-ayuntamiento-y-la-jefatura-provincial-de-trafico-de-lugo-firmaran-un-acuerdo-para"
     },
     {
       "id": "concello-1",
@@ -37,37 +24,11 @@
       "active": true,
       "source": "concello",
       "link": "https://concellodelugo.gal/es/noticias/el-ayuntamiento-de-lugo-ecige-adif-la-apertura-inmediata-al-trafico-de-la-calle-conde"
-    },
-    {
-      "id": "concello-4",
-      "title": "El ayuntamiento habilitará un paso de peatones semaforizado en la Avenida de A Coruña para mejorar la segur...",
-      "severity": "info",
-      "linesAffected": [
-        "Todas"
-      ],
-      "date": "2026-07-25T07:51:36.000Z",
-      "description": "La actuación, con una inversión de 29.597 euros, dará respuesta a una demanda de los vecinos y permitirá crear un nuevo punto de cruce seguro entre Curros Enríquez y Montefaro Tema Seguridad , Tráfico Sábado, 25 de juli…",
-      "active": true,
-      "source": "concello",
-      "link": "https://concellodelugo.gal/es/noticias/el-ayuntamiento-habilitara-un-paso-de-peatones-semaforizado-en-la-avenida-de-coruna-para"
-    },
-    {
-      "id": "concello-2",
-      "title": "La alcaldesa informa al vecindario de O Castiñeiro de los avances para desbloquear el entorno de Dona Urrac...",
-      "severity": "info",
-      "linesAffected": [
-        "Todas"
-      ],
-      "date": "2026-07-23T17:52:56.000Z",
-      "description": "El Ayuntamiento avanza en la tramitación de una actuación que permitirá abrir una nueva vía que va a mejorar la movilidad del barrio y recuperar un entorno degradado Tema Alcaldía , Infraestructuras , Obras en ejecución…",
-      "active": true,
-      "source": "concello",
-      "link": "https://concellodelugo.gal/es/noticias/alcaldesa-informa-vecinanza-do-castineiro-dos-avances-para-desbloquear-contorna-de-dona"
     }
   ],
-  "lastSyncTime": "2026-08-28T15:11:48.980Z",
+  "lastSyncTime": "2026-08-28T17:09:46.634Z",
   "sourceUrl": "https://buslugo.com",
   "status": "active_incidents",
   "message": "1 aviso(s) oficial(is) activo(s) detectado(s) en buslugo.com",
-  "fetchedAt": "2026-08-28T15:11:48.980Z"
+  "fetchedAt": "2026-08-28T17:09:46.634Z"
 }

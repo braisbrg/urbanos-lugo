@@ -60,9 +60,16 @@ const CONCELLO_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
  *
  * Only the headline: matching the body as well let through a police communiqué and a
  * speech about sustainable architecture, both of which mention the streets in passing.
+ *
+ * And only events, never topics. "Tráfico", "calle" and "avenida" were in this list, and
+ * they matched the council signing an agreement with the Jefatura Provincial de Tráfico
+ * about road-safety courses for schoolchildren -- a body with the word in its name, not a
+ * condition on the street. The tag already says the story is about traffic; the headline
+ * has to say something changed. Nothing genuine is lost: a real closure says corte, a
+ * real diversion says desvío, and Conde Fontao reopening says apertura.
  */
 const ABOUT_GETTING_AROUND =
-  /\b(bus|buses|autobús|autobuses|autobus|transporte|parada|paradas|tráfico|trafico|corte|cortes|desv[íi]o|desvi[oó]|circulaci[óo]n|calle|rúa|rua|avenida|peonaliza|peatonaliza|apertura)\b/i;
+  /\b(bus|buses|autobús|autobuses|autobus|transporte|parada|paradas|marquesina|corte|cortes|cortad[oa]s?|desv[íi]os?|desvi[oó]s?|circulaci[óo]n|peonaliza\w*|peatonaliza\w*|reapertura|apertura)\b/i;
 
 /**
  * Plain prose out of an RSS field.

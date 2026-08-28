@@ -208,9 +208,9 @@ export const gl = {
           'Por mor das obras da futura Estación Intermodal en Montero Ríos e Conde de Fontao, séguese a sinalización peonil habilitada cara ás paradas da contorna ferroviaria.',
       },
       {
-        title: 'Cabeceira central en Bolaño Ribadeneira',
+        title: 'Cabeceira no casco histórico (liñas 7, 8, 9 e 12)',
         description:
-          'As liñas 7, 8, 9 e 12 parten todas da parada Bolaño Ribadeneira 1: así as nomea o operador nos seus propios horarios, que son os que le esta web. Que o contorno estea peonalizado non o comprobamos aquí.',
+          'As catro liñas rematan en Bolaño Ribadeneira. Entre 230 e 385 metros do final de cada percorrido caen sobre rúas que OpenStreetMap ten pechadas ao tráfico — Montevideo, San Fernando e a propia Bolaño Ribadeneira — e aínda así o operador publica paradas nelas. Se o bus entra ata a cabeceira ou queda na entrada, os datos abertos non o din.',
       },
       {
         title: 'Bonificación do 50% e Tarxeta Xente Nova (<21 anos)',
@@ -379,7 +379,7 @@ export const gl = {
   arrivals: {
     operatorSaysTitle: 'O que amosa o QR desta parada',
     operatorSaysNote: (at: string) =>
-      `Isto é o que verías se escaneases o código do poste: a páxina do operador para esta parada, lida ás ${at}. Non é un dato desta app, e pode non coincidir cos horarios de arriba.`,
+      `Isto é o que amosa agora o código deste poste, lido ás ${at}. É o dato do operador, non o desta app.`,
     clockDrift: (hours: string, zone: string) =>
       `O teu dispositivo vai ${hours} respecto da hora de Lugo (está en ${zone}). Os horarios desta páxina son os de Lugo, así que o que ves aquí non coincide co reloxo do teu aparello.`,
     clockAhead: (h: string) => `${h} por diante`,
