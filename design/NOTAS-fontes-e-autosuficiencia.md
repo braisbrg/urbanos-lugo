@@ -174,6 +174,30 @@ O que de verdade importa xa chega: «Retenciones en zona Estación Tren» entrou
 operador. **É un aviso de tráfico, publicado por quen sabe a que liñas afecta.** Esa é a
 canle correcta para unha app de bus, e xa se le cada hora.
 
+
+## Se cambia o mapa: que se detecta e que non
+
+Pregunta de Brais: se aparece unha rotonda nova e a ruta cambia, actualízase soa?
+**En parte, e convén saber en cal.**
+
+Detéctase só, cada semana, en `reconcile --fresh`:
+
+- a posición de cada poste contra a súa páxina de buslugo **e contra o levantamento de
+  OpenStreetMap**;
+- a secuencia de paradas de cada itinerario contra as páxinas do operador;
+- os nomes, a orde, as liñas que serven cada parada e **os cadros horarios**.
+
+Se a rotonda fai que a liña deixe de pasar por unha parada ou que cambien as horas, salta.
+
+**Non se detecta**: o **trazado debuxado no mapa**. Vén das relacións de ruta de
+OpenStreetMap e impórtase a man con `pnpm data:osm`. Se a rúa cambia, OSM actualízase e as
+paradas seguen sendo as mesmas, a liña do mapa seguiría co percorrido vello ata que alguén
+volva importar. Ninguén se enteraría.
+
+**Como pechalo**, e é barato: no mesmo traballo semanal, volver consultar Overpass e
+comparar o `totalMeters` de cada sentido co que se publica. Unha rotonda nova cambia a
+lonxitude; unha diferenza de máis dun 1 % falla e alguén mira. Pendente.
+
 ## Pendente
 
 1. **Outra rolda de auditoría e de comprobacións**, coa mesma disciplina: medir antes de
