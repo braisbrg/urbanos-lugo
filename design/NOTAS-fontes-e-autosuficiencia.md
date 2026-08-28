@@ -54,23 +54,38 @@ tocar nada; e o día que cambien, salta.
 | **datosabertos.lugo.gal** | portal de datos abertos | **Non.** 503 e 404 |
 | **Folleto impreso do Concello** | tarifas, nomes de liña, planos | **Non**, é papel; vale para contrastar |
 
-### O achado: o operador si publica tempos por parada
+### O achado: o operador si publica tempos por parada, e **non son do horario**
 
-`https://info.urbanoslugo.com/qr-demo-paradas/uilP` devolve HTML cos minutos que faltan
-(`<p>9 min</p>`) e refréscase só cada 30 segundos. **Usa os mesmos códigos de parada que
-esta app** — `uilP` é Rda. Muralla 56 (Sindicatos) aquí tamén.
+`https://info.urbanoslugo.com/qr-demo-paradas/<codigo>` devolve, por parada, as vindeiras
+saídas con **liña, corredor e minutos**, e refréscase soa cada 30 segundos. **Usa os mesmos
+códigos de parada ca esta app**: comprobado con `uilP`, `qFuw`, `RnND`, `XpKC` e `gJRz`,
+todos 200 e con datos coherentes entre paradas seguidas — a L4.2 sae a 0 min en `qFuw`,
+1 min en `RnND` e 1 min en `XpKC`, que están unha detrás doutra na Ronda da Muralla.
 
-Iso abre dúas cousas, e a segunda importa máis:
+**Son medidos, non calculados dun horario.** Seis mostras, unha por minuto, na parada
+`uilP` o 28 de agosto:
 
-1. Poderíanse amosar os minutos do operador no canto —ou ao lado— das estimacións propias.
-2. **Poderíase comprobar canto se afastan as nosas estimacións das súas.** Este proxecto
-   enteiro está construído arredor de distinguir o publicado do calculado; ter unha fonte
-   contra a que medir o erro real das estimacións é exactamente o que faltaba.
+```
+12:46:59   L6  7 min      outra saída 14 min
+12:48:25   L6  5 min      13 min
+12:49:25   L6  5 min      13 min      <- párase
+12:50:26   L6  4 min      11 min      <- baixa 2 min en 61 s
+12:51:26   L6  4 min      10 min      <- párase
+12:52:27   L6  3 min       9 min
+```
 
-Antes de tocar nada hai que resolver: se eses minutos son GPS ou horario (o propio RSS do
-operador aínda di «muy pronto info en tiempo real», o que apunta a horario), se `qr-demo-`
-significa que é provisional, e se os seus termos permiten lelo. **Non presentar eses
-minutos como medidos ata sabelo.**
+Unha conta atrás feita sobre unha hora fixa baixa exactamente un minuto por minuto e non
+fai outra cousa. Esta **párase e dá saltos**, o que só pode significar que o número se
+recalcula contra algo que se move. Iso pese a que o propio RSS do operador aínda diga
+«muy pronto info en tiempo real».
+
+Que abre isto, por orde de importancia:
+
+1. **Unha vara de medir.** Este proxecto enteiro distingue o publicado do calculado, e ata
+   agora non había contra que comparar o erro real das nosas estimacións. Agora si.
+2. Poderíanse amosar eses minutos, mais **só despois** de saber que son exactamente, que
+   significa o `qr-demo-` da ruta, e se os seus termos o permiten. **Non presentalos como
+   medidos ata telo por escrito**, que é a regra desta casa.
 
 ---
 
@@ -95,6 +110,26 @@ O do Concello dille a alguén por onde vai; o do operador, onde remata. Paga a p
 un cambio de datos e habería que decidir cal manda.
 
 ---
+
+
+## Redes sociais e outras webs (comprobado o 28 de agosto)
+
+Brais preguntou por elas. A resposta curta é **non hai por onde**, e convén que quede
+escrito para non volver mirar:
+
+- **`@010lugo` en X** — é a conta de información do Concello e é a que interesa; enlázaa a
+  propia web da operadora. Pero X pide API de pago, e Nitter morreu (410). Non é lexible.
+- **`concellodelugo.gal/es/actualidad`** — 200, pero a lista de novas píntaa JavaScript: o
+  HTML estático só trae o formulario de busca. Raspalo obrigaría a meter un navegador
+  completo nun traballo programado.
+- **`concellodelugo.gal/rss.xml`** — **si funciona**: RSS válido, 55 KB. Pero son notas de
+  prensa, dez entradas entre marzo de 2025 e xuño de 2026, unha cada dous meses. Non dará
+  obras. Si trouxo unha cousa directamente útil: «AUTOBUSES GRATUÍTOS PARA O ACTO DE INICIO
+  DO ARDE LUCUS».
+
+Conclusión: **paga a pena consultar o RSS do Concello** e amosar só o que fale de
+transporte, etiquetado como nota de prensa do Concello e coa súa data — nunca como «obras
+comprobadas automaticamente», que é o que non é. As obras seguen sen fonte automática.
 
 ## Pendente
 
