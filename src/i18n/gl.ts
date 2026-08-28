@@ -286,7 +286,7 @@ export const gl = {
       'Resumo do que publica o operador, coas nosas palabras. O texto completo, e o que manda, está na súa páxina.',
     mustTitle: 'Hai que',
     must: [
-      'Levar solto: non se aceptan billetes de máis de 5 €.',
+      'Non se aceptan billetes de máis de 5 €.',
       'Pagar a partir dos 4 anos cumpridos.',
       'Gardar o billete ou a tarxeta ata o final da viaxe, por se hai inspección.',
       'Pedir a parada con antelación abondo.',

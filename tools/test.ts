@@ -15,7 +15,7 @@ import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
 import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
-import { extractAlertsFromHtml } from '../src/services/alertSyncService';
+import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
@@ -1867,6 +1867,36 @@ ok("a notice in the operator’s navigation bar is still a notice", () => {
     extractAlertsFromHtml('<html><body><p>Nada que declarar</p></body></html>').length === 0,
     'a page with no notice list produced a notice anyway',
   );
+});
+
+ok("the city's press feed is read for buses and not for everything else", () => {
+  // The Concello publishes nothing an app can read about roadworks. What it has is a press
+  // feed running at about one item every two months, and now and then one of them is
+  // exactly what a passenger needs — free buses for the start of Arde Lucus was in it. So
+  // it is read, and filtered hard, because the alternative is a bus app announcing a
+  // speech about sustainable architecture.
+  const recent = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toUTCString();
+  const ancient = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toUTCString();
+  const feed = (items: string) => `<rss><channel>${items}</channel></rss>`;
+  const item = (title: string, when: string, description = 'corpo da nova') =>
+    `<item><title>${title}</title><description>${description}</description>` +
+    `<pubDate>${when}</pubDate><link>https://concellodelugo.gal/x</link></item>`;
+
+  const wanted = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', recent)));
+  assert(wanted.length === 1, `a headline about buses yielded ${wanted.length} notices, expected 1`);
+  assert(wanted[0].source === 'concello', 'a city notice has to say it came from the city');
+
+  // Matching the body as well as the headline let two of these through when it was first
+  // written: a police communiqué and a speech, both of which mention the streets.
+  const aside = extractConcelloNotices(
+    feed(item('Comunicado de prensa da Policía Local', recent, 'houbo cortes de tráfico e obras na rúa')),
+  );
+  assert(aside.length === 0, `a headline that is not about getting around yielded ${aside.length} notices`);
+
+  // The feed runs at one item every couple of months, so with no cutoff the app would put
+  // last spring beside an incident happening now.
+  const stale = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', ancient)));
+  assert(stale.length === 0, 'a press release from months ago is history, not news');
 });
 
 console.log(`\n${checks} checks passed\n`);

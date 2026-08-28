@@ -283,7 +283,7 @@ export const en: Dict = {
       "A summary of the operator's rules, in our words. The full text, and the one that counts, is on their page.",
     mustTitle: 'You must',
     must: [
-      'Carry change: notes above €5 are not accepted.',
+      'Notes above €5 are not accepted.',
       'Pay from the age of 4.',
       'Keep your ticket or card until the end of the trip, in case of an inspection.',
       'Ring for your stop in good time.',

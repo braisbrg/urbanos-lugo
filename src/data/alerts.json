@@ -7,14 +7,15 @@
       "linesAffected": [
         "Todas"
       ],
-      "date": "2026-08-28T10:23:16.782Z",
+      "date": "2026-08-28T11:09:56.442Z",
       "description": "Retenciones en zona Estación Tren",
-      "active": true
+      "active": true,
+      "source": "operator"
     }
   ],
-  "lastSyncTime": "2026-08-28T10:23:16.783Z",
+  "lastSyncTime": "2026-08-28T11:09:56.634Z",
   "sourceUrl": "https://buslugo.com",
   "status": "active_incidents",
   "message": "1 aviso(s) oficial(is) activo(s) detectado(s) en buslugo.com",
-  "fetchedAt": "2026-08-28T10:23:16.784Z"
+  "fetchedAt": "2026-08-28T11:09:56.634Z"
 }

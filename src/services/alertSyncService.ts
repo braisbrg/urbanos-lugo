@@ -28,6 +28,85 @@ let lastFetchTimestamp = 0;
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes cache
 const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000; // 60 seconds minimum cooldown between external requests to buslugo.com
 
+
+/**
+ * The Concello's press feed.
+ *
+ * The city publishes nothing an app can read about roadworks — the open-data portal
+ * answers 503 on its API and 404 on its catalogues, the news page paints itself with
+ * JavaScript, and the 010 account lives on a platform that wants a paid key. What does
+ * exist is `concellodelugo.gal/rss.xml`: valid RSS, and ten press releases across fifteen
+ * months, which is not an incident feed by any stretch.
+ *
+ * It is still worth reading, because occasionally one of those ten is exactly what a
+ * passenger needs — "AUTOBUSES GRATUÍTOS PARA O ACTO DE INICIO DO ARDE LUCUS" was in it.
+ * So: read it, keep only what mentions the buses or the streets, and label every one of
+ * them as a press release from the Concello with its own date. Never as roadworks checked
+ * automatically, which is the thing this cannot do and must not imply.
+ */
+const CONCELLO_FEED = 'https://concellodelugo.gal/rss.xml';
+
+/** Sixty days. Past that a press release is history, not news. */
+const CONCELLO_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+
+/** Words that make a press release about getting around the city rather than about a plaque. */
+const ABOUT_GETTING_AROUND =
+  /\b(bus|buses|autobús|autobuses|autobus|transporte|urbano|parada|obras?|tráfico|trafico|corte|cortes|desv[íi]o|circulaci[óo]n|peonaliza|peatonaliza)\b/i;
+
+export function extractConcelloNotices(xml: string): ServiceAlert[] {
+  const field = (block: string, name: string): string => {
+    const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
+    return m ? m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+  };
+
+  const notices: ServiceAlert[] = [];
+  for (const block of xml.match(/<item>[\s\S]*?<\/item>/gi) ?? []) {
+    const title = field(block, 'title');
+    const description = field(block, 'description');
+    // The headline only. Matching the body as well let through a police communiqué and
+    // a speech about sustainable architecture, both of which mention the streets in
+    // passing. If getting around the city is not what the headline is about, it is not
+    // what the press release is about.
+    if (!title || !ABOUT_GETTING_AROUND.test(title)) continue;
+
+    // Their pubDate is RFC 822 and occasionally missing a timezone; an unparseable one
+    // becomes no date rather than today's, which would be this app inventing recency.
+    // Their pubDate is RFC 822 and occasionally missing a timezone. An unparseable or
+    // ancient one is dropped rather than shown: this feed runs at about one item every
+    // two months, so without a cutoff the app would present a press release from last
+    // spring beside an incident happening now.
+    const published = new Date(field(block, 'pubDate'));
+    if (Number.isNaN(published.getTime())) continue;
+    if (Date.now() - published.getTime() > CONCELLO_MAX_AGE_MS) continue;
+    notices.push({
+      id: `concello-${notices.length + 1}`,
+      title: title.length > 110 ? `${title.slice(0, 107)}...` : title,
+      severity: 'info',
+      linesAffected: ['Todas'],
+      date: published.toISOString(),
+      description,
+      active: true,
+      source: 'concello',
+      link: field(block, 'link') || undefined,
+    });
+  }
+  return notices;
+}
+
+/** Best effort: the operator's notices are the ones that matter, and this must never break them. */
+async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
+  try {
+    const res = await fetch(CONCELLO_FEED, {
+      headers: { 'User-Agent': `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return [];
+    return extractConcelloNotices(await res.text());
+  } catch {
+    return [];
+  }
+}
+
 /** Warnings rather than notes: something is being held up, cut or withdrawn. */
 const SERIOUS = /retenc|corte|peche|suprim|desv[ií]o|cancel/i;
 
@@ -178,15 +257,23 @@ async function fetchAlerts(now: number): Promise<AlertSyncResult> {
 
     if (response.ok) {
       const html = await response.text();
-      const liveAlerts = extractAlertsFromHtml(html);
+      const operatorAlerts = extractAlertsFromHtml(html).map((a) => ({ ...a, source: 'operator' as const }));
+      // The city's feed second, and only ever after the operator's: what the company
+      // says about its own service outranks a press release that happens to mention a
+      // bus. A failure there returns nothing and changes none of this.
+      const cityNotices = await fetchConcelloNotices();
+      const liveAlerts = [...operatorAlerts, ...cityNotices];
 
       const result: AlertSyncResult = {
         alerts: liveAlerts,
         lastSyncTime: new Date().toISOString(),
         sourceUrl: 'https://buslugo.com',
-        status: liveAlerts.length > 0 ? 'active_incidents' : 'operational_normal',
-        message: liveAlerts.length > 0
-          ? `${liveAlerts.length} aviso(s) oficial(is) activo(s) detectado(s) en buslugo.com`
+        // The state of the network is the operator's to declare. A press release from
+        // the Concello about free buses for Arde Lucus is worth reading and is not an
+        // incident, and counting it as one would put a warning on a normal day.
+        status: operatorAlerts.length > 0 ? 'active_incidents' : 'operational_normal',
+        message: operatorAlerts.length > 0
+          ? `${operatorAlerts.length} aviso(s) oficial(is) activo(s) detectado(s) en buslugo.com`
           : 'Rede de transporte operando con total normalidade en todas as liñas e paradas.',
       };
 

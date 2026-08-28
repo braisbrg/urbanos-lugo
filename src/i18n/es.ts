@@ -272,7 +272,7 @@ export const es: Dict = {
       'Resumen de lo que publica el operador, con nuestras palabras. El texto completo, y el que manda, está en su página.',
     mustTitle: 'Hay que',
     must: [
-      'Llevar suelto: no se aceptan billetes de más de 5 €.',
+      'No se aceptan billetes de más de 5 €.',
       'Pagar a partir de los 4 años cumplidos.',
       'Guardar el billete o la tarjeta hasta el final del viaje, por si hay inspección.',
       'Pedir la parada con suficiente antelación.',

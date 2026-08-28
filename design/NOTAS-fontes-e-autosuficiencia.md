@@ -131,6 +131,49 @@ Conclusión: **paga a pena consultar o RSS do Concello** e amosar só o que fale
 transporte, etiquetado como nota de prensa do Concello e coa súa data — nunca como «obras
 comprobadas automaticamente», que é o que non é. As obras seguen sen fonte automática.
 
+
+## Canto nos equivocamos: a primeira medida
+
+`tools/compareOperatorTimes.ts` pon os nosos minutos ao lado dos do operador para a mesma
+parada e o mesmo instante. Oito pasadas por cinco paradas o 28 de agosto, arredor das
+13:10, **82 comparacións**:
+
+- **mediana +1 min** (positivo = esta app di máis tarde ca eles)
+- **38 de 82 dentro de 2 minutos** — menos da metade
+- rango de −24 a +107 min
+
+As colas non son erro noso: o emparellamento é inxenuo, colle a primeira saída dunha liña
+en cada lado e as dúas poden ser sentidos distintos. **O seguinte paso é emparellar por
+sentido**, e ata facelo os extremos non se poden ler como erro de estimación.
+
+O que si se pode ler: **a mediana é practicamente cero**, así que non hai nesgo — non
+chegamos nin tarde nin cedo de forma sistemática. O que hai é ruído, e agora sábese canto.
+
+Un exemplo que amosa por que os seus números son medidos: a liña 2 en `uilP`, ás 13:05,
+eles 8 min e nós 1; ás 13:07, eles 7 e nós 0. **A diferenza mantívose en −7 exactos**
+mentres os dous baixaban: un bus con sete minutos de retraso, que eles saben e nós non.
+
+Outra confirmación, independente: as clases do seu HTML chámanse `sae-content-info-line`,
+`-itinerary`, `-time`. **SAE** é, neste sector, *sistema de axuda á explotación* — o nome
+que se lle dá ao sistema que sabe onde están os autobuses, non ao que imprime horarios.
+E o seu `robots.txt` é `Disallow:` baleiro: permiso explícito para ler.
+
+## A DGT: comprobada, e non serve
+
+Miroulle a proposta. O feed DATEX II aberto de `infocar.dgt.es` **é de Cataluña, non de
+España**: 280 coordenadas, todas entre as lonxitudes +0,49 e +3,21 —ao leste de Greenwich—
+e o propio XML identifícase como `sct`, o Servei Català de Trànsit. **Cero incidencias en
+Galicia.** O punto de acceso nacional (`nap.dgt.es`) responde, pero é un portal de rexistro,
+non un endpoint.
+
+E aínda tendo acceso: a DGT leva **estradas**. Un bus urbano párao o casco vello, a Ronda
+da Muralla, unha avaría de auga ou unha procesión. Das nosas 20 liñas só un par tocan
+estrada da DGT (a N-VI nas liñas 2 e 3.2).
+
+O que de verdade importa xa chega: «Retenciones en zona Estación Tren» entrou pola campá do
+operador. **É un aviso de tráfico, publicado por quen sabe a que liñas afecta.** Esa é a
+canle correcta para unha app de bus, e xa se le cada hora.
+
 ## Pendente
 
 1. **Outra rolda de auditoría e de comprobacións**, coa mesma disciplina: medir antes de

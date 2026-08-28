@@ -127,6 +127,15 @@ export interface ServiceAlert {
   date: string;
   description: string;
   active: boolean;
+  /**
+   * Who said it. The operator speaks about its own service; the Concello's press feed
+   * occasionally mentions the buses and is a different kind of claim, so a reader gets
+   * to know which they are looking at. Absent on the notices written into this app,
+   * which carry their own provenance line.
+   */
+  source?: 'operator' | 'concello';
+  /** Where to read the whole thing, when the source publishes one. */
+  link?: string;
 }
 
 export interface TripFare {
