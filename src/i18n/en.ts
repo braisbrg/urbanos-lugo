@@ -104,7 +104,6 @@ export const en: Dict = {
     nightWindowBody:
       'Most Lugo city lines finish their last run between 22:00 and 22:30. The first morning departures start again from 07:00.',
     allLines: 'All lines',
-    alertsUnavailable: 'Notices unavailable',
     checkOnBuslugo: 'Check on buslugo.com',
     savedCopy: 'saved copy',
     structuralTitle: 'Standing notices and city roadworks',

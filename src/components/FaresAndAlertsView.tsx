@@ -6,9 +6,12 @@ import { ServiceAlert } from '../types';
 import type { AlertSyncResult } from '../services/alertSyncService';
 import alertSnapshot from '../data/alerts.json';
 import { isSnapshotStale } from '../utils/snapshotAge';
+import type { ServiceAlerts } from '../hooks/useServiceAlerts';
 
 interface FaresAndAlertsViewProps {
   lang: Lang;
+  /** Fetched once in App, so this screen and the navigation badge cannot disagree. */
+  alerts: ServiceAlerts;
 }
 
 const COOLDOWN_SECONDS = 30;
@@ -49,56 +52,8 @@ function readSnapshot(raw: typeof alertSnapshot): AlertSyncResult {
   };
 }
 
-export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) => {
-  const [alertData, setAlertData] = useState<AlertSyncResult | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [cooldown, setCooldown] = useState<number>(0);
-  const [error, setError] = useState<string | null>(null);
-  /** Set when the notices came from the committed snapshot rather than live. */
-  const [snapshotAt, setSnapshotAt] = useState<string | null>(null);
-
-  // Only the server can reach buslugo.com; the browser is blocked by CORS, so the old
-  // client-side fallback silently reported "todo normal" whenever the API was down.
-  const fetchAlerts = async (force = false) => {
-    if (force && (cooldown > 0 || isSyncing)) return;
-
-    setIsSyncing(true);
-    try {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/alerts${force ? '?refresh=true' : ''}`);
-      if (!res.ok) throw new Error(String(res.status));
-      setAlertData(await res.json());
-      setSnapshotAt(null);
-      setError(null);
-    } catch {
-      // No server (static hosting) or it is down: use the snapshot a scheduled job
-      // committed, and say when it was taken instead of passing it off as live.
-      setAlertData(readSnapshot(alertSnapshot));
-      setSnapshotAt(alertSnapshot.fetchedAt ?? null);
-      setError(null);
-    } finally {
-      if (force) setCooldown(COOLDOWN_SECONDS);
-      setIsSyncing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAlerts(false);
-  }, []);
-
-  // Cooldown countdown timer
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [cooldown]);
+export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang, alerts }) => {
+  const { data: alertData, snapshotAt, isSyncing, cooldown, refresh } = alerts;
 
   const t = translations(lang);
 
@@ -188,7 +143,7 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
 
           <button
             id="sync-alerts-btn"
-            onClick={() => fetchAlerts(true)}
+            onClick={() => refresh(true)}
             disabled={isSyncing || cooldown > 0}
             className={`flex h-11 shrink-0 items-center gap-1.5 self-start rounded-[9px] px-4 text-body font-semibold sm:self-auto ${
               cooldown > 0
@@ -272,30 +227,14 @@ export const FaresAndAlertsView: React.FC<FaresAndAlertsViewProps> = ({ lang }) 
                     </div>
                   </div>
                   <h3 className="font-bold text-ink text-body">{alert.title}</h3>
-                  <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{alert.description}</p>
+                  {/* The operator posts a notice as one line of text, so the title and the
+                      description are the same words. Printing them twice reads as a bug. */}
+                  {alert.description !== alert.title && (
+                    <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{alert.description}</p>
+                  )}
                 </div>
               );
             })}
-          </div>
-        ) : error ? (
-          <div className="p-5 rounded-xl bg-warn border border-warn flex items-start gap-3.5">
-            <div className="p-2 rounded-lg bg-warn-ink text-bg shrink-0 mt-0.5">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-body font-bold text-warn-ink">
-                {t.fares.alertsUnavailable}
-              </h3>
-              <p className="text-label text-estimated mt-0.5 leading-relaxed">{error}</p>
-              <a
-                href="https://buslugo.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-label font-bold text-warn-ink underline mt-1.5 inline-flex min-h-11 items-center"
-              >
-                {t.fares.checkOnBuslugo}
-              </a>
-            </div>
           </div>
         ) : (
           <div className="p-5 rounded-xl bg-surface border border-edge flex flex-col sm:flex-row sm:items-center justify-between gap-4">

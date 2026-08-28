@@ -107,7 +107,6 @@ export const gl = {
     nightWindowBody:
       'A maioría das liñas do servizo urbano de Lugo rematan os seus percorridos entre as 22:00 e as 22:30. As primeiras saídas da mañá reactívanse a partir das 07:00.',
     allLines: 'Todas as liñas',
-    alertsUnavailable: 'Avisos non dispoñibles',
     checkOnBuslugo: 'Consultar en buslugo.com',
     savedCopy: 'copia gardada',
     structuralTitle: 'Avisos estruturais e obras municipais vixentes',

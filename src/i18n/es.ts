@@ -93,7 +93,6 @@ export const es: Dict = {
     nightWindowBody:
       'La mayoría de las líneas del servicio urbano de Lugo finalizan sus recorridos entre las 22:00 y las 22:30. Las primeras salidas de la mañana se reactivan a partir de las 07:00.',
     allLines: 'Todas las líneas',
-    alertsUnavailable: 'Avisos no disponibles',
     checkOnBuslugo: 'Consultar en buslugo.com',
     savedCopy: 'copia guardada',
     structuralTitle: 'Avisos estructurales y obras municipales vigentes',

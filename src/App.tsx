@@ -18,13 +18,12 @@ import { SideNav } from './components/SideNav';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useRecentStops } from './hooks/useRecentStops';
 import { useTabRoute } from './hooks/useTabRoute';
+import { useServiceAlerts } from './hooks/useServiceAlerts';
 import { Lang, isLang, translations } from './i18n';
 import { MenuDrawer } from './components/MenuDrawer';
 import { useTheme } from './hooks/useTheme';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
 import { isLineInService } from './utils/schedule';
-import { isSnapshotStale } from './utils/snapshotAge';
-import alertSnapshot from './data/alerts.json';
 import { findStop } from './utils/transitEngine';
 import { BusStop, BusLine } from './types';
 import { Moon, X } from 'lucide-react';
@@ -151,14 +150,14 @@ export default function App() {
   const linesInService = BUS_LINES.filter((l) => isLineInService(l, now));
   const isOutOfService = linesInService.length === 0;
   /**
-   * Incidents the operator has announced. The badge used to show 1 whenever the
-   * network was closed for the night, which is not an incident — and the banner
-   * already says that in a sentence. A snapshot too old to speak for the present
-   * does not get to claim there are none either, so it shows nothing at all.
+   * The operator's notices, fetched once here for everybody who shows them.
+   *
+   * The badge used to count the snapshot compiled into the bundle while the Avisos
+   * screen fetched the server. Two answers to one question, and on any deployment with
+   * a server running they disagreed: the bar said one incident and the page underneath
+   * said the network was running normally.
    */
-  const announcedIncidents = isSnapshotStale(alertSnapshot.fetchedAt)
-    ? 0
-    : alertSnapshot.alerts.length;
+  const alerts = useServiceAlerts();
   const firstDepartureTomorrow = [...BUS_LINES]
     .map((l) => l.firstDeparture)
     .sort()[0];
@@ -272,7 +271,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={goToTab}
         onOpenInfo={() => setActiveTab('info')}
-        alertCount={announcedIncidents}
+        alertCount={alerts.announcedIncidents}
         lang={lang}
         setLang={setLang}
         theme={theme}
@@ -423,7 +422,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'info' && <FaresAndAlertsView lang={lang} />}
+        {activeTab === 'info' && <FaresAndAlertsView lang={lang} alerts={alerts} />}
         </ErrorBoundary>
       </main>
 
@@ -434,7 +433,7 @@ export default function App() {
         open={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onOpenInfo={() => setActiveTab('info')}
-        alertCount={announcedIncidents}
+        alertCount={alerts.announcedIncidents}
         lang={lang}
         setLang={setLang}
         theme={theme}
