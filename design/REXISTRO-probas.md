@@ -107,3 +107,52 @@ arrastre, e sinalalos cada rolda tapa un desborde de verdade.
   texto segue a lerse.
 - **Atribución do mapa**, 14 px de alto. É a barra de créditos estándar; inflala taparía o
   mapa. Exclúese da sonda por convención, non por descoido.
+
+---
+
+## Paso de navegadores — rolda 3 (limpa)
+
+Terceira lente: teclado, semántica, movemento reducido, cambio de tema e de idioma, e a
+promesa de funcionar sen conexión.
+
+**Semántica.** Un só `h1`, ningún salto na xerarquía de encabezados, un `main`, un
+`header`, dúas navegacións, unha rexión `aria-live="polite"`, ningunha imaxe sen `alt` e
+ningún botón sen nome accesible.
+
+**Teclado.** Coas teclas de verdade (non `element.focus()`), `:focus-visible` aplícase e
+o contorno é sólido de 1,6 px na cor de acento. O diálogo do QR ten `role="dialog"` e
+`aria-modal="true"`, o foco queda dentro despois de seis tabulacións, `Escape` péchao e o
+foco volve ao botón que o abriu.
+
+**Movemento reducido.** Hai un bloque `@media (prefers-reduced-motion: reduce)` que anula
+animacións, transicións e `scroll-behavior` en todo.
+
+**Tema e idioma.** Cámbianse sen recargar; `document.documentElement.lang` e o título da
+páxina seguen ao idioma.
+
+### Segundo falso positivo da mesma familia
+
+A sonda dixo que **14 de 14 controis non tiñan anel de foco**. Non é certo: enfocar por
+script despois dun clic non activa `:focus-visible`, que é o que leva o anel. Con
+tabulacións reais, aparece.
+
+> **Regra:** o mesmo aviso ca na rolda 2, ampliado. Nada de `element.focus()` para medir
+> estilos de foco. Teclas de verdade, e clic dentro da páxina antes.
+
+### Non verificable aquí (dito, non dado por bo)
+
+**O rexistro do service worker falla neste panel**, e non se pode atribuír á aplicación:
+a páxina descarga `/sw.js` con 200 e `text/javascript`, non hai ningunha violación de CSP
+na consola, e aínda así `navigator.serviceWorker.register()` devolve «unknown error
+occurred when fetching the script». Iso é o navegador incrustado, que non permite
+rexistrar traballadores de servizo.
+
+O que si se puido medir é a build: **20 entradas no manifesto de precaché, 2,86 MB, e
+todas existen no disco** — o armazón, os anacos de datos e o mapa. A promesa de funcionar
+sen conexión está ben construída; falta executala nun navegador real.
+
+Tamén aparece un aviso de MapLibre, `Image "wood-pattern" could not be loaded`. É do
+estilo de OpenFreeMap, non noso, e é un aviso: as zonas de arboredo debúxanse sen a súa
+trama. Anotado para non volver investigalo.
+
+**Estado: dúas roldas limpas seguidas (2 e 3). Paso de navegadores pechado.**
