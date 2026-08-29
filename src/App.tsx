@@ -276,7 +276,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-[100dvh] bg-bg text-ink lg:flex-row">
+    <div className="flex h-viewport bg-bg text-ink lg:flex-row">
       <SideNav
         activeTab={activeTab}
         setActiveTab={goToTab}

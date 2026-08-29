@@ -93,6 +93,65 @@
   --c-scrim: oklch(0.08 0.012 34 / 0.6);
 }
 
+/**
+ * The same palette in sRGB, for a browser that cannot parse oklch().
+ *
+ * Safari before 15.4, Chrome before 111, Firefox before 113, and the older Android
+ * WebViews. It has to be an @supports block rather than a second declaration: a
+ * custom property accepts any token stream, so `--c-bg: #fefdfd; --c-bg: oklch(...)`
+ * leaves the oklch line winning even where oklch means nothing, and every var() using
+ * it then becomes invalid at computed-value time -- backgrounds transparent, text
+ * black on whatever is behind. Half the point of this app is being readable at a pole
+ * in the rain on whatever phone somebody owns.
+ *
+ * The condition is negative and the block additive, so a browser that does support
+ * oklch never reads any of it and nothing about the measured palette changes. The
+ * values are the ones already recorded beside each token; these are the same colours
+ * clipped to sRGB, not a second palette to keep in step.
+ */
+@supports not (color: oklch(0 0 0)) {
+  :root {
+    --c-bg: #fefdfd;
+    --c-surface: #f7f4f2;
+    --c-line: #e4e0df;
+    --c-line-soft: #e9e5e4;
+    --c-border: #ded9d8;
+    --c-ink: #1e1917;
+    --c-ink-max: #110c0a;
+    --c-ink-2: #403936;
+    --c-ink-3: #69615f;
+    --c-official-bg: #014e8e;
+    --c-official-fg: #ffffff;
+    --c-estimated-fg: #6f4f07;
+    --c-estimated-line: #b58a3a;
+    --c-accent: #cd171e;
+    --c-on-accent: #ffffff;
+    --c-warn-bg: #fcf2e2;
+    --c-warn-fg: #5d420e;
+    --c-scrim: rgba(28, 20, 17, 0.42);
+  }
+  .dark {
+    --c-bg: #110d0d;
+    --c-surface: #201a19;
+    --c-line: #2e2726;
+    --c-line-soft: #2b2523;
+    --c-border: #38312f;
+    --c-ink: #eeeae9;
+    --c-ink-max: #fdf9f8;
+    --c-ink-2: #aba2a0;
+    --c-ink-3: #9c9391;
+    --c-official-bg: #57a8ff;
+    --c-official-fg: #040e1a;
+    --c-estimated-fg: #f0c374;
+    --c-estimated-line: #99732b;
+    --c-accent: #fd7562;
+    --c-on-accent: #180806;
+    --c-warn-bg: #261c0d;
+    --c-warn-fg: #f4ce90;
+    --c-scrim: rgba(3, 1, 1, 0.6);
+  }
+}
+
 @theme inline {
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
@@ -157,6 +216,27 @@
      that is a light-grey rectangle for as long as the renderer takes to put something
      on screen — most obvious switching to the Mapa tab, where it reads as the map
      resizing rather than loading. Measured at rgb(221,221,221) on a dark ground. */
+  /**
+   * The app shell fills the screen, on a phone too.
+   *
+   * `dvh` is the small-viewport unit that accounts for the browser chrome sliding in and
+   * out; `vh` is the old one that does not. Both are declared, in that order, so a
+   * browser that does not know dvh keeps a full-height shell instead of dropping the
+   * declaration and collapsing to auto height, which unpins the bottom bar.
+   *
+   * A rule rather than `h-screen h-[100dvh]`: two height utilities on one element are
+   * ordered by the framework's output and not by the order they are written, and this
+   * only works if vh comes first.
+   */
+  .h-viewport {
+    height: 100vh;
+  }
+  @supports (height: 100dvh) {
+    .h-viewport {
+      height: 100dvh;
+    }
+  }
+
   .leaflet-container {
     /* !important because Leaflet ships its CSS unlayered, and an unlayered rule beats
        anything in @layer base however late it comes — the same reason the popup and

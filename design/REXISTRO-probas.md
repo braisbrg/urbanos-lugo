@@ -1,0 +1,109 @@
+# Rexistro de probas e auditorías
+
+Un sitio por rolda, co que se atopou **e co que se descartou**. O segundo importa tanto
+como o primeiro: sen el, cada rolda volve mirar o mesmo e volve asustarse do mesmo.
+
+Regras que nos impuxemos, e que xa nos aforraron erros:
+
+1. **Medir antes de afirmar.** Dúas veces nesta sesión un valor «obvio» era falso.
+2. **Comprobar o ficheiro construído, non a fonte.** Un arranxo pode ser correcto en
+   `src/` e desaparecer no `dist/`.
+3. **Verificar que a proba morde.** Reintroducir o fallo e ver fallar o check. Un check
+   que nunca falla non é un check.
+4. **Un falso positivo custa máis ca un fallo pequeno.** Cuantificar antes de alarmar.
+
+---
+
+## Paso de navegadores — rolda 1
+
+### Atopado e arranxado
+
+**N1. Toda a paleta era `oklch()` sen respaldo, e un token non pode ter respaldo por
+cascada.** `--c-bg: #fefdfd; --c-bg: oklch(...)` non funciona: unha declaración de
+propiedade personalizada é válida conteña o que conteña, así que a liña `oklch` gaña
+mesmo onde `oklch` non significa nada. A rotura chega ao usala: `background: var(--c-bg)`
+substitúese por algo que non se pode analizar, a propiedade queda *invalid at
+computed-value time*, e a páxina perde as cores enteiras — fondos transparentes e texto
+herdado en negro. Afecta a Safari anterior a 15.4, Chrome anterior a 111, Firefox
+anterior a 113 e as WebViews vellas de Android.
+
+Arranxo: un bloque `@supports not (color: oklch(0 0 0))` **aditivo**, coa mesma paleta en
+sRGB. Un navegador que entende oklch nin sequera o le, así que a paleta medida non cambia.
+
+Verificación: fórzase a condición a positiva, recárgase, e mídense as 36 cores pintándoas
+nun canvas. **Idénticas ás 36**, nos dous temas, incluídos os scrims.
+
+**N2. `height: 100dvh` sen respaldo** deixaba o armazón sen altura nos mesmos navegadores:
+a declaración descártase, a columna flex pasa a altura automática e a barra inferior deixa
+de estar fixada abaixo.
+
+### Erros nosos durante esta rolda
+
+- **Convertín dous scrims «a ollo» e os dous estaban mal** (#2b211d e #150f0e; os reais
+  son #1c1411 e #030101). Collidos porque se converteron os 36 tokens de verdade en vez de
+  fiarse dos comentarios. De paso, os 34 comentarios hex existentes son correctos.
+- **O minificador comeu o respaldo `height: 100vh`.** En `src/` a regra tiña as dúas
+  declaracións e no `dist/` só quedaba `height:100dvh`: esbuild elimina unha propiedade
+  duplicada. Colleuse porque se mirou o ficheiro construído. Reescribiuse como
+  `@supports (height: 100dvh)`, que non se pode colapsar, e comprobouse outra vez no dist.
+- **Probouse `build.cssTarget: ['safari15', ...]`** pensando que preservaría os respaldos.
+  Non o fai: esbuild deduplica igual. Config revertida en vez de deixala aí sen efecto.
+
+### Mirado e descartado (non volver mirar sen motivo)
+
+- **`AbortSignal.timeout`** só está en `alertSyncService.ts` e `operatorTimes.ts`, que son
+  código de servidor. Os hooks do navegador impórtanos só como `type`, que se borra ao
+  compilar. Confirmado: a cadea non aparece no *bundle* do navegador.
+- **`BarcodeDetector`** non existe en Safari nin Firefox, pero xa degrada: o botón queda
+  desactivado con etiqueta propia e a entrada manual segue sendo a función completa.
+  Ademais, nun iPhone a cámara nativa abre `?parada=` directamente, que é o camiño real.
+- **`Notification`** está protexida por `typeof Notification === 'undefined'` e o
+  construtor vai dentro dun `try`, cun comentario que nomea exactamente o caso de iOS.
+- **`--c-official-bg` do tema escuro sae do gamut**, pero por 0,00055 en lineal: 0,14 dun
+  paso de 8 bits. Redondea ao mesmo #57a8ff. Non é un fallo.
+
+### Aínda sen probar de verdade
+
+Non hai aquí ningún Safari real. O anterior é unha auditoría de compatibilidade contra o
+código, non unha execución. Iso hai que dicilo en vez de dar por bo o que non se probou.
+
+---
+
+## Paso de navegadores — rolda 2
+
+Lente distinta a propósito: nada de buscar as mesmas APIs outra vez, senón medir o que se
+debuxa. Sonda no navegador que percorre cada pantalla e mide desbordes reais, elementos
+fóra do viewport e alturas de destino táctil.
+
+**Pantallas medidas a 375 px e a 320 px** (iPhone SE, o ancho máis hostil que se usa):
+paradas, liñas, mapa, ruta, avisos, tarifas, unha ficha de parada con QR e unha ficha de
+liña. `scrollWidth - clientWidth` = **0 en todas**. Ningún elemento fóra do viewport,
+ningún destino por debaixo de 44 px, **cero erros de consola**.
+
+### Falso positivo, e a lección que deixa
+
+**A sonda dixo que o enlace «Ir ao contido» quedaba en 1×1 ao enfocalo**, o que sería un
+skip link roto. Non o é: `document.hasFocus()` era `false` porque o panel do navegador non
+tiña o foco, e sen foco no documento as regras `:focus` non se aplican aínda que
+`document.activeElement` estea posto. Facendo clic dentro da páxina primeiro, o enlace
+pasa a **127×38 en (8,8)**, que é o correcto.
+
+> **Regra para as vindeiras roldas:** calquera medida que dependa de `:focus` require
+> facer clic dentro da páxina antes. Se non, mídese o panel e non a aplicación.
+
+Tamén se afinou a sonda para ignorar os elementos dentro dun antepasado que recorta: os
+paneis e o lenzo do mapa sobresaen do viewport **a propósito**, porque así funciona o
+arrastre, e sinalalos cada rolda tapa un desborde de verdade.
+
+### Mirado e descartado
+
+- **Área segura do iPhone.** Non hai `env(safe-area-inset-*)` nin `viewport-fit=cover`, e
+  está ben así: sen `viewport-fit=cover`, iOS xa mantén a páxina dentro da área segura, así
+  que a barra inferior nunca queda baixo o indicador de inicio. Poñer `cover` sen engadir
+  recheos `env()` en todas partes é o que **rompería**. Cambio cosmético e arriscado; non
+  se toca.
+- **Google Fonts.** A CSP xa permite `fonts.googleapis.com` en `style-src` e
+  `fonts.gstatic.com` en `font-src`. Con `display=swap` e `system-ui` na cadea, sen rede o
+  texto segue a lerse.
+- **Atribución do mapa**, 14 px de alto. É a barra de créditos estándar; inflala taparía o
+  mapa. Exclúese da sonda por convención, non por descoido.
