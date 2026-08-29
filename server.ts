@@ -6,6 +6,9 @@ import { BUS_STOPS, BUS_LINES, FARE_INFO, poleCode } from './src/data/transitDat
 import { findStop, getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
 import { syncOfficialAlerts } from './src/services/alertSyncService';
 import { operatorTimesForStop } from './src/services/operatorTimes';
+// The same cap the search inputs enforce, imported rather than repeated: two numbers
+// that must agree are one number.
+import { MAX_QUERY_LENGTH } from './src/utils/searchUtils';
 import { CSP_HEADER } from './src/security/csp';
 import { rateLimit } from './src/security/rateLimit';
 
@@ -19,8 +22,6 @@ function queryString(value: unknown): string {
   if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
   return '';
 }
-
-const MAX_QUERY_LENGTH = 120;
 
 async function startServer() {
   // Read once: the CSP below has to know, and so does the choice of Vite or dist.

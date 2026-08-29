@@ -74,7 +74,3 @@ export function rateLimit(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-/** Exported for the tests, which would otherwise depend on whatever ran before them. */
-export function resetRateLimits() {
-  buckets.clear();
-}

@@ -156,3 +156,64 @@ estilo de OpenFreeMap, non noso, e é un aviso: as zonas de arboredo debúxanse 
 trama. Anotado para non volver investigalo.
 
 **Estado: dúas roldas limpas seguidas (2 e 3). Paso de navegadores pechado.**
+
+---
+
+## Auditoría de sobreenxeñaría — verificación dun informe externo
+
+Chegou un informe de auditoría de todo o repositorio propoñendo cortar ~4.100 liñas.
+Comprobouse afirmación por afirmación antes de tocar nada. **Dúas eran falsas e unha
+terceira estaba mal enmarcada**, e as tres eran das grandes.
+
+### Falso: «tres ferramentas que ningún script executa»
+
+`tools/checkFares.ts` e `tools/checkOsmGeometry.ts` están **no traballo semanal**
+(`.github/workflows/check-source.yml`, liñas 61 e 67), que é exactamente o mecanismo de
+automantemento construído nesta sesión. Borralas quitaría en silencio a vixilancia das
+tarifas e da xeometría do mapa. `compareOperatorTimes.ts` é a ferramenta de medida
+documentada nas notas.
+
+Como se produciu o erro: mirouse `package.json` e non os fluxos de traballo.
+
+### Falso: «`hasScreen`, false nas 417 paradas»
+
+É **`true` en 271 das 417**. É un dato levantado, non un campo morto. Borralo destruiría
+información real.
+
+### Mal enmarcado: «once endpoints de Express que a app nunca chama»
+
+Certo que o navegador só chama dous (`/api/alerts` e `/api/paradas/:code/agora`). Pero o
+`README.md` documenta **a táboa enteira de endpoints** como oferta pública, así que non son
+superficie accidental: son unha función. O propio informe pedía «dígase en DATA.md, porque
+non o di ningures» — dío o README. Non se tocan; `rateLimit.ts` queda con eles.
+
+### Aplicado, tras comprobar unha por unha
+
+- `resolve.alias '@'` en vite.config.ts: ningún ficheiro importa `@/`.
+- A configuración `DISABLE_HMR`: só aparece nese ficheiro.
+- `MAX_QUERY_LENGTH` declarado dúas veces; o servidor impórtao agora de `searchUtils`,
+  porque dous números que teñen que coincidir son un número.
+- `resetRateLimits`, cun comentario que dicía «exportada para as probas» e ningunha proba
+  que a importase. Borrouse a función en vez de manter unha afirmación falsa.
+- `export type { Tab }` en BottomNav: todos importan `Tab` de `navSections`.
+- `STALE_AFTER_MS` deixa de exportarse; lese só no seu propio ficheiro.
+- `@tailwindcss/vite`, `@vitejs/plugin-react` e `@types/leaflet` pasan a devDependencies.
+
+**E aquí case rompemos o despregamento.** Mover tres paquetes entre seccións deixa o
+`pnpm-lock.yaml` desincronizado, e CI instala con `--frozen-lockfile`. Colleuse ao executar
+`pnpm install --frozen-lockfile` a posta, que fallou con `ERR_PNPM_OUTDATED_LOCKFILE`.
+Rexenerouse o bloqueo e volveuse comprobar que xa pasa.
+
+> **Regra:** calquera cambio en `package.json` remata en `pnpm install --frozen-lockfile`
+> para ver o que verá CI. Un cambio cosmético de dúas liñas pode tirar o despregamento.
+
+### Deixado como decisión de Brais, non como corte
+
+- **Os 13 `.dc.html`** de deseño (2.648 liñas). Son o traballo de deseño orixinal, non
+  código morto. Bórranse se el quere.
+- **Reescribir o mapa** de Leaflet a MapLibre puro. É unha simplificación real —seis
+  ficheiros, ~600 liñas, tres dependencias menos— pero é obra, non limpeza.
+- **Os 1,4 MB de intermedios** baixo `src/data/` non chegan ao paquete: ningún ficheiro da
+  aplicación os importa, confirmado. Movelos é orde, non peso.
+- **`line.days` / `line.frequency`** e `hasScreen` son datos xerados. Quitar campos
+  esixiría tocar `buildDataset.ts` e rexerar; risco medio, valor baixo.

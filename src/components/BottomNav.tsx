@@ -2,7 +2,6 @@ import React from 'react';
 import { Lang, translations } from '../i18n';
 import { navSections, type Tab } from './navSections';
 
-export type { Tab };
 
 interface BottomNavProps {
   activeTab: Tab;
