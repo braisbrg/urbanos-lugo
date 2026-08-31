@@ -12,6 +12,7 @@ import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { scheduledDuration } from '../src/utils/schedule';
+import { parseOperatorTimes } from '../src/services/operatorTimes';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META } from '../src/security/csp';
 import { REPO_URL } from '../src/project';
@@ -2076,6 +2077,49 @@ ok('the API is matched case-sensitively, so the rate limiter cannot be walked ro
       `the limiter compares req.path against "${literal}", which routing will never produce`,
     );
   }
+});
+
+ok('the operator’s own stop page is read by class, not by position', () => {
+  // Real markup, taken from info.urbanoslugo.com/qr-demo-paradas/jELq (HULA) at 22:50 on
+  // 30 Aug 2026, with the decorative <svg> paths collapsed and nothing else touched. This
+  // parser had no test at all, and it is the whole of the QR block on the stop board.
+  //
+  // Three things about the real page that a hand-written fixture would not have taught:
+  // an <svg> sits between the classed div and its <p>, so the field cannot be read as the
+  // first child; the line arrives as "L4.2" with a prefix that has to come off; and the
+  // time arrives as "20 min" rather than a bare number.
+  const block = (line: string, itinerary: string, time: string) => `
+    <div class="sae-content-info">
+      <div class="sae-content-info-line"> <svg/> <p>${line}</p> </div>
+      <div class="sae-content-info-itinerary"> <svg/> <p>${itinerary}</p> </div>
+      <div class="sae-content-info-time"> <svg/> <p>${time}</p> </div>
+    </div>`;
+
+  const page =
+    block('L4.2', 'R. MURALLA-HULA (POR GANDARAS)', '20 min') +
+    block('L1.2', 'CAMPUS-FINGOI-O CEAO-HULA', '31 min') +
+    block('5DS', 'AVENIDA AMERICAS-MAGOI-FONTIÑAS-HULA', '50 min');
+
+  const read = parseOperatorTimes(page);
+  assert(read.length === 3, `expected 3 departures, got ${read.length}`);
+  assert(read[0].line === '4.2', `the L prefix survived: "${read[0].line}"`);
+  assert(read[0].towards === 'R. MURALLA-HULA (POR GANDARAS)', `itinerary: "${read[0].towards}"`);
+  assert(read[0].minutes === 20, `minutes: ${read[0].minutes}`);
+
+  // 5DS is a line number that is not a number, and the L-stripping must not touch it.
+  assert(read[2].line === '5DS', `a lettered line was mangled: "${read[2].line}"`);
+
+  // A page with no departures is not an error and not an empty guess: it is no departures.
+  assert(parseOperatorTimes('<html><body>Sen saídas</body></html>').length === 0,
+    'a page with no blocks produced departures out of nothing');
+
+  // Malformed markup must not hang. The scan was measured at 1.6 s for a megabyte of
+  // unclosed blocks, which is why readCapped exists; this only pins that a quarter of the
+  // ceiling stays well inside a second.
+  const started = Date.now();
+  parseOperatorTimes('<div class="sae-content-info">'.repeat(4000));
+  const spent = Date.now() - started;
+  assert(spent < 1000, `unclosed blocks took ${spent} ms, which is heading for a stall`);
 });
 
 console.log(`\n${checks} checks passed\n`);

@@ -28,6 +28,8 @@ import { REPO_URL } from '../project';
 const ENDPOINT = 'https://info.urbanoslugo.com/qr-demo-paradas';
 const UA = `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)`;
 
+import { readCapped } from './readCapped';
+
 /** Their own page refreshes every 30 s, so nothing is gained by asking more often. */
 const CACHE_TTL_MS = 20_000;
 
@@ -57,6 +59,11 @@ export function parseOperatorTimes(html: string): OperatorDeparture[] {
     return m ? m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
   };
 
+  // ponytail: this scan is quadratic on markup whose blocks never close -- 101 ms for
+  // 256 KB, 1.6 s for a megabyte. The ceiling is readCapped's 512 KB, so the worst case is
+  // about 400 ms, once per stop per 20 s cache window, on a self-hosted server only. Left
+  // as it is because the bound is real and the linear rewrite is fiddlier than the regex;
+  // walk it with indexOf the way the RSS scan is if that ever stops being true.
   const departures: OperatorDeparture[] = [];
   for (const block of html.match(/<div class="sae-content-info">[\s\S]*?<\/div>\s*<\/div>/g) ?? []) {
     const minutes = /^(\d+)/.exec(text(block, 'sae-content-info-time'));
@@ -90,7 +97,7 @@ export async function operatorTimesForStop(code: string): Promise<OperatorTimes 
     if (!res.ok) return null;
     const result: OperatorTimes = {
       code,
-      departures: parseOperatorTimes(await res.text()),
+      departures: parseOperatorTimes(await readCapped(res)),
       fetchedAt: new Date().toISOString(),
     };
     cache.set(code, result);

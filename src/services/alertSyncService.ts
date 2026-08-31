@@ -1,4 +1,5 @@
 /** Server-side only: the browser cannot fetch buslugo.com because of CORS. */
+import { readCapped } from './readCapped';
 import { ServiceAlert } from '../types';
 import { REPO_URL } from '../project';
 
@@ -101,6 +102,19 @@ function plainText(raw: string): string {
 /** A press release runs for pages; a card wants the first thought. */
 const CONCELLO_EXCERPT = 220;
 
+/** Each `<item>...</item>` body, in one pass. Unclosed items end the walk rather than
+ *  costing a scan each. */
+function* items(xml: string, lower: string): Generator<string> {
+  for (let from = 0; ; ) {
+    const start = lower.indexOf('<item>', from);
+    if (start === -1) return;
+    const end = lower.indexOf('</item>', start);
+    if (end === -1) return;
+    yield xml.slice(start, end + '</item>'.length);
+    from = end + '</item>'.length;
+  }
+}
+
 export function extractConcelloNotices(xml: string, alwaysRelevant = false): ServiceAlert[] {
   const field = (block: string, name: string): string => {
     const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
@@ -108,7 +122,13 @@ export function extractConcelloNotices(xml: string, alwaysRelevant = false): Ser
   };
 
   const notices: ServiceAlert[] = [];
-  for (const block of xml.match(/<item>[\s\S]*?<\/item>/gi) ?? []) {
+  // Walked with indexOf rather than matched with /<item>[\s\S]*?<\/item>/g. The lazy run
+  // in that pattern restarts from every `<item>` and scans to the end when the closing tag
+  // is missing, which is quadratic: measured at 55 ms for 64 KB of unclosed items, 808 ms
+  // for 256 KB and 13.2 seconds for a megabyte. A truncated feed is enough to cause it.
+  // The lower-cased copy keeps the old pattern's case-insensitivity without a second scan.
+  const haystack = xml.toLowerCase();
+  for (const block of items(xml, haystack)) {
     const title = field(block, 'title');
     if (!title) continue;
     // The bus tag is its own filter; the broad ones are not.
@@ -152,7 +172,7 @@ async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
       try {
         const res = await fetch(concelloFeedUrl(term), { headers, signal: AbortSignal.timeout(15_000) });
         if (!res.ok) return [];
-        return extractConcelloNotices(await res.text(), alwaysRelevant);
+        return extractConcelloNotices(await readCapped(res), alwaysRelevant);
       } catch {
         return [];
       }

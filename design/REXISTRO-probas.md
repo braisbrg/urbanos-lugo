@@ -267,3 +267,56 @@ que a aplicación usa de verdade seguen a responder 200.
 
 O check garda **o axuste**, non a comparación, porque quitalo trae de volta o desacordo en
 todos os sitios á vez. Comprobado que morde.
+
+---
+
+## Probas de esforzo — os dous candidatos que a auditoría de seguridade non puido adxudicar
+
+Quedaban sen resolver o *buffering* sen tope e a regex cuadrática en `alertSyncService.ts`
+e `operatorTimes.ts`. **Os dous eran reais**, e resólvense medindo.
+
+### O que se midiu
+
+`tools/stressParsers.ts` alimenta os dous parsers con marcado hostil. Catro veces a entrada
+daba dezaseis veces o tempo, que é a sinatura do cuadrático:
+
+| entrada malformada | 64 KB | 256 KB | 1 MB |
+|---|---:|---:|---:|
+| `parseOperatorTimes`, bloques sen pechar | 6 ms | 107 ms | **1.673 ms** |
+| `extractConcelloNotices`, `<item>` sen pechar | 55 ms | 808 ms | **13.196 ms** |
+
+Trece segundos de Node parado cun megabyte. Catro megabytes serían uns tres minutos e
+medio. **Ninguén ten que atacar**: unha páxina truncada, unha interstitial de CDN ou unha
+páxina de erro son exactamente «etiquetas que non pechan».
+
+As páxinas reais miden 35–73 KB, medidas: 35.417 a do operador, 72.568 a maior do Concello.
+
+### O arranxo
+
+- **`readCapped`**, tope de 512 KB — sete veces a maior páxina real. Un corpo de terceiros
+  non debería lerse sen teito de todos os xeitos.
+- **O percorrido de `<item>` faise lineal**, con `indexOf` en vez dunha regex perezosa.
+  **13.196 ms → 1 ms** cun megabyte.
+- **O do operador queda como está, co teito facendo de límite**, e dise no código cun
+  comentario `ponytail:` que nomea o teito (~400 ms no peor caso, unha vez por parada cada
+  20 s, e só nun servidor propio) e o camiño de mellora.
+
+### O erro que atopou a miña propia comprobación
+
+**O tope non topaba.** `readCapped` sumaba o trozo enteiro e despois miraba o total, así que
+limitaba *cantos trozos* se len e non canto texto se garda: un corpo que chega nun só trozo
+pasaba enteiro. `tools/checkParsersUnchanged.ts` colleuno — 1,5 MB devoltos contra un teito
+de 512 KB. Coas respostas reais, que chegan en anacos pequenos, **parecía que funcionaba**.
+Agora recórtase o trozo, e o check di 524.288 de 1.572.864.
+
+E ese mesmo check comparaba **0 contra 0** nas dúas páxinas, porque ás 22:50 non había nin
+saídas nin novas recentes. Iso non é un aprobado, é unha comparación baleira; agora dío en
+voz alta en vez de imprimir un visto.
+
+### O oco que apareceu de camiño
+
+**`parseOperatorTimes` non tiña ningunha proba**, e é todo o bloque do QR. Capturouse
+marcado real do HULA ás 22:50 e escribiuse unha. Tres cousas que unha maqueta inventada non
+ensinaría: hai un `<svg>` entre o div con clase e o seu `<p>`, a liña chega como `L4.2` cun
+prefixo que hai que quitar, e o tempo chega como `20 min` e non como un número. Comprobado
+que morde: quitando o recorte do `L`, falla con `the L prefix survived: "L4.2"`.
