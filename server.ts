@@ -27,6 +27,18 @@ async function startServer() {
   // Read once: the CSP below has to know, and so does the choice of Vite or dist.
   const isDev = process.argv.includes('--dev');
   const app = express();
+  // Express matches routes case-insensitively by default, so /api/PLAN reached the
+  // planner while every path comparison in this file and in rateLimit.ts is written in
+  // lower case. The rate limiter asked `req.path.startsWith('/plan')`, got false for
+  // /api/PLAN, and let 120 plans a minute through instead of 30 -- four times the CPU a
+  // client can take on the one endpoint measured at ~24 ms a call. The Cache-Control
+  // no-store check below had the same shape.
+  //
+  // Fixed here rather than at each comparison: the bug is two layers disagreeing about
+  // what the path is, so there is now one rule. A URL path is case-sensitive per RFC
+  // 3986 anyway, and every documented endpoint is lower case.
+  app.set('case sensitive routing', true);
+
   app.use(express.json({ limit: '32kb' }));
 
   app.use((req, res, next) => {

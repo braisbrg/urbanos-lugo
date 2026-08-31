@@ -217,3 +217,53 @@ Rexenerouse o bloqueo e volveuse comprobar que xa pasa.
   aplicación os importa, confirmado. Movelos é orde, non peso.
 - **`line.days` / `line.frequency`** e `hasScreen` son datos xerados. Quitar campos
   esixiría tocar `buildDataset.ts` e rexerar; risco medio, valor baixo.
+
+---
+
+## Auditoría de seguridade — un achado, verificado a man
+
+Informe externo cun só achado confirmado (`F1`, LOW), e desta vez **era certo**. Aínda así
+comprobouse antes de tocar, e a comprobación cambiou o arranxo.
+
+### O achado
+
+`src/security/rateLimit.ts` preguntaba `req.path.startsWith('/plan')`. Express enruta sen
+distinguir maiúsculas, así que `/api/PLAN` chegaba ao planificador enteiro mentres o
+limitador vía `/PLAN`, daba `false`, e nunca consultaba `MAX_PLANS_PER_WINDOW`.
+
+**Medido contra o servidor de produción local**, non deducido:
+
+| petición | 429 recibidos |
+|---|---|
+| 35 × `/api/plan` | **6** — corta na 30, como debe |
+| 35 × `/api/PLAN` | **0** — pasan todas |
+
+Catro veces a CPU que un cliente anónimo pode consumir no único endpoint medido en ~24 ms
+por chamada.
+
+### O que a comprobación engadiu ao informe
+
+- **A codificación por cento non abre outra porta**: `/api/%70lan` dá 404. Só maiúsculas.
+  Iso importa, porque significa que un `toLowerCase()` pecharía o burato de verdade.
+- **O segundo sitio que sinalaba o informe non era un burato.** Dicía que
+  `req.path.startsWith('/api/')` en `server.ts:46` tiña a mesma forma e deixaría sen
+  `no-store` a `/API/alerts`. Comprobado: `/API/alerts` devolve **o armazón da aplicación**
+  (`text/html`, `<!doctype html>`), sen cabeceira `RateLimit-Limit`, porque o montaxe
+  `/api` tampouco casa. Non é unha resposta de API, así que `public, max-age=0` é correcto
+  para ela.
+
+### O arranxo, e por que non foi o que propoñía o informe
+
+O informe propoñía montar o limitador estrito na ruta, ou `req.path.toLowerCase()`. As dúas
+funcionan, pero as dúas arranxan **unha comparación**. O fallo era que dúas capas decidían
+«¿isto é /plan?» con regras distintas, e hai máis dunha comparación con esa forma.
+
+`app.set('case sensitive routing', true)` — unha liña, na orixe. Agora hai unha soa regra.
+Un camiño de URL é sensible ás maiúsculas na RFC 3986 de todos os xeitos, e todos os
+endpoints documentados están en minúsculas.
+
+Verificado despois: `/api/plan` 200, `/api/PLAN` 404, `/api/Plan` 404, e os dous endpoints
+que a aplicación usa de verdade seguen a responder 200.
+
+O check garda **o axuste**, non a comparación, porque quitalo trae de volta o desacordo en
+todos os sitios á vez. Comprobado que morde.

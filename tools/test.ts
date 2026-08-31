@@ -2049,4 +2049,33 @@ ok('a line\u2019s trip time comes from the timetable, not from a road model', ()
   );
 });
 
+ok('the API is matched case-sensitively, so the rate limiter cannot be walked round', () => {
+  // Express matches routes case-insensitively unless told otherwise, and every path
+  // comparison in the server is written in lower case. That let /api/PLAN reach the
+  // planner while `req.path.startsWith('/plan')` in the limiter saw '/PLAN' and returned
+  // false: measured at 35 of 35 requests served with no 429, against a cut-off at 30 for
+  // the same endpoint spelled in lower case. Four times the CPU an anonymous client can
+  // take on the one endpoint measured at ~24 ms a call.
+  //
+  // The fix is one setting rather than a .toLowerCase() at each comparison, because the
+  // bug was two layers disagreeing about what the path is. Remove the setting and the
+  // disagreement comes back everywhere at once, so this is what is guarded.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const server = readFileSync(join(root, 'server.ts'), 'utf8');
+  assert(
+    /app\.set\(\s*'case sensitive routing'\s*,\s*true\s*\)/.test(server),
+    'case-sensitive routing is off again, so /api/PLAN reaches the planner unlimited',
+  );
+
+  // And the setting only helps while the comparisons stay lower case; a mixed-case
+  // literal would miss the very requests routing now lets through.
+  const limiter = readFileSync(join(root, 'src/security/rateLimit.ts'), 'utf8');
+  for (const [, literal] of limiter.matchAll(/req\.path\.startsWith\('([^']+)'\)/g)) {
+    assert(
+      literal === literal.toLowerCase(),
+      `the limiter compares req.path against "${literal}", which routing will never produce`,
+    );
+  }
+});
+
 console.log(`\n${checks} checks passed\n`);
