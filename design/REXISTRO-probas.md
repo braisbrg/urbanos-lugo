@@ -379,3 +379,58 @@ antes desa liña.
 
 > **Regra:** antes de engadir unha API do navegador, mirar o suelo que este rexistro xa
 > ten escrito. O paso de navegadores non serve de nada se despois se rompe a man.
+
+---
+
+## Probas de esforzo — roldas 2, 3 e 4
+
+### Rolda 2: a superficie HTTP (un achado)
+
+`tools/stressHttp.ts` contra a build de produción. Ningún 500, ningunha traza de pila,
+ningún colgue: código de parada baleiro, de 2.000 caracteres, `..%2F..%2Fetc%2Fpasswd`, un
+byte nulo, `<script>`, unicode e unha inxección de cabeceira por salto de liña — **todos
+404**. Buscas por riba do tope e con metacaracteres, 200 en 15 ms. **50 peticións
+simultáneas** ao endpoint do QR: 66 ms en total, as 50 con 200, porque a caché de 20 s fai
+o seu traballo. 40 plans nunha ventá: **14 rexeitados con 429**.
+
+O achado veu do número raro: a primeira chamada ao QR tardou **4.476 ms** (o operador ese
+día). `useOperatorTimes` non poñía prazo á súa propia espera, **e o `setInterval` de 30 s
+dispara volva ou non a anterior**, así que unha conexión atascada apila peticións. Un prazo
+de 12 s arranxa as dúas cousas: por riba do tope de 8 s do servidor e por baixo do
+intervalo, así que unha petición non pode sobrevivir ao seu propio ciclo.
+
+E chamado con `?.`, pola regra que este rexistro acaba de aprender.
+
+### Rolda 3: os datos, todo o día, toda a rede (limpa)
+
+`tools/stressInvariants.ts`: cada parada, cada dez minutos, en día laborable, sábado e
+domingo. **180.144 taboleiros, 401.109 saídas.** Ningunha negativa, ningunha máis alá do
+horizonte, ningunha vencida fóra da ventá de cinco minutos, ningunha liña que non exista,
+ningunha orde rota, ningunha parada que liste unha liña que non para nela.
+
+**Todo se sostivo.**
+
+### Rolda 4: os traxectos do planificador (limpa, tras corrixirme dúas veces)
+
+`tools/stressPlanner.ts`: 630 pares a sete horas distintas, **27.348 traxectos**.
+
+Sinalou dous problemas, e **os dous eran meus**:
+
+1. «Dille a alguén que saia despois de que pase o bus.» Non: `departureTime` é cando *podes*
+   saír (agora), e `leaveAt` cando *tes* que saír. Saír ás 07:31, andar cinco minutos, coller
+   o de 07:36, consultado ás 07:20. Correcto, e o comentario do tipo xa o dicía.
+2. «O mellor traxecto tarda máis de tres horas.» Desde Nadela ás 07:20, si: a liña 11 non
+   pasa ata as **10:00**. Son 160 minutos de espera na casa, ben informados. É a resposta
+   do cadro horario, non un erro do planificador.
+
+Ambas as dúas eran xuízos sobre a calidade do servizo disfrazados de invariantes. Quitáronse
+en vez de axustarlles o limiar.
+
+> **Regra:** un check que precisa unha excepción nova cada vez que corre non está
+> comprobando nada. Ou é unha invariante, ou é unha opinión.
+
+O que queda —que a duración declarada coincida co reloxo, que ningún tramo suba a unha liña
+que non para onde sobe, que a tarifa conte os mesmos tramos que o plan— **aguantou nos
+27.348**.
+
+**Estado: dúas roldas limpas seguidas (3 e 4). Bloque de esforzo pechado.**

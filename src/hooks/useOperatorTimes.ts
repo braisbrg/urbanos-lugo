@@ -26,7 +26,16 @@ export function useOperatorTimes(code: string | undefined): OperatorTimes | null
 
     const ask = async () => {
       try {
-        const res = await fetch(`${import.meta.env.BASE_URL}api/paradas/${encodeURIComponent(code)}/agora`);
+        // Twelve seconds: past the server's own eight-second cap on reading the operator,
+        // and under the thirty-second interval below. That second half matters as much as
+        // the first -- setInterval fires whether or not the last call came back, so
+        // without a deadline shorter than the interval a stalled connection stacks
+        // requests on top of each other. Optionally called because AbortSignal.timeout is
+        // Safari 16 and this app still works on 15.4; there it is undefined, which is what
+        // this line meant before it existed.
+        const res = await fetch(`${import.meta.env.BASE_URL}api/paradas/${encodeURIComponent(code)}/agora`, {
+          signal: AbortSignal.timeout?.(12_000),
+        });
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as OperatorTimes;
         if (current) setTimes(data);
