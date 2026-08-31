@@ -67,7 +67,21 @@ export function useServiceAlerts(): ServiceAlerts {
       setIsSyncing(true);
       try {
         // Only a server can reach buslugo.com; the browser is blocked by CORS.
-        const res = await fetch(`${import.meta.env.BASE_URL}api/alerts${force ? '?refresh=true' : ''}`);
+        //
+        // With a deadline, because `?refresh=true` makes the server go and read three
+        // council feeds and the operator's home page, and a slow upstream is exactly the
+        // day somebody presses the button. Without one the spinner turns for as long as
+        // the browser's own patience, which is minutes. Thirty seconds is past the
+        // server's honest worst case -- 6 s for buslugo plus 15 s for the feeds, which
+        // run together -- so a legitimate slow sync still lands, and anything longer
+        // falls into the catch below and shows the committed snapshot with its date.
+        // Optional call on purpose: AbortSignal.timeout is Safari 16, and this app carries
+        // an sRGB fallback so it still works on Safari 15.4. Calling it outright would
+        // throw there, be swallowed by the catch below, and quietly show the snapshot for
+        // ever. Undefined is a fine signal -- it means what it meant before this line.
+        const res = await fetch(`${import.meta.env.BASE_URL}api/alerts${force ? '?refresh=true' : ''}`, {
+          signal: AbortSignal.timeout?.(30_000),
+        });
         if (!res.ok) throw new Error(String(res.status));
         setData(await res.json());
         setSnapshotAt(null);

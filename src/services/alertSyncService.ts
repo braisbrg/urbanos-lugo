@@ -102,16 +102,27 @@ function plainText(raw: string): string {
 /** A press release runs for pages; a card wants the first thought. */
 const CONCELLO_EXCERPT = 220;
 
-/** Each `<item>...</item>` body, in one pass. Unclosed items end the walk rather than
- *  costing a scan each. */
-function* items(xml: string, lower: string): Generator<string> {
+/**
+ * Each `<open ... </close>` block, in one pass.
+ *
+ * Replaces three patterns of the shape `/<tag[\s\S]*?<\/tag>/gi`. That run restarts from
+ * every opening tag and scans to the end of the string when the closing one never comes,
+ * which is quadratic. Measured on markup whose tags never close, at the 512 KB ceiling
+ * `readCapped` allows: `<item>` cost 13.2 seconds for a megabyte, `<article>` 3.8 seconds
+ * and `<li>` 4.0 seconds. A truncated page or a CDN error page is enough to trigger it,
+ * and buslugo.com's home page runs two of the three.
+ *
+ * `lower` is the same string lower-cased, passed in so a caller scanning twice does not
+ * lower-case twice; it keeps the old patterns' case-insensitivity without a second pass.
+ */
+function* blocks(text: string, lower: string, open: string, close: string): Generator<string> {
   for (let from = 0; ; ) {
-    const start = lower.indexOf('<item>', from);
+    const start = lower.indexOf(open, from);
     if (start === -1) return;
-    const end = lower.indexOf('</item>', start);
+    const end = lower.indexOf(close, start);
     if (end === -1) return;
-    yield xml.slice(start, end + '</item>'.length);
-    from = end + '</item>'.length;
+    yield text.slice(start, end + close.length);
+    from = end + close.length;
   }
 }
 
@@ -128,7 +139,7 @@ export function extractConcelloNotices(xml: string, alwaysRelevant = false): Ser
   // for 256 KB and 13.2 seconds for a megabyte. A truncated feed is enough to cause it.
   // The lower-cased copy keeps the old pattern's case-insensitivity without a second scan.
   const haystack = xml.toLowerCase();
-  for (const block of items(xml, haystack)) {
+  for (const block of blocks(xml, haystack, '<item>', '</item>')) {
     const title = field(block, 'title');
     if (!title) continue;
     // The bus tag is its own filter; the broad ones are not.
@@ -222,7 +233,8 @@ function extractNavNotices(html: string): ServiceAlert[] {
   if (!list) return [];
 
   const notices: ServiceAlert[] = [];
-  for (const item of list[1].match(/<li[\s\S]*?<\/li>/gi) || []) {
+  const inner = list[1];
+  for (const item of blocks(inner, inner.toLowerCase(), '<li', '</li>')) {
     const text = item
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
@@ -252,8 +264,7 @@ export function extractAlertsFromHtml(html: string): ServiceAlert[] {
   const alerts: ServiceAlert[] = extractNavNotices(html);
   
   // Look for alert containers or notices in buslugo HTML
-  const articleRegex = /<article[\s\S]*?<\/article>/gi;
-  const matches = html.match(articleRegex) || [];
+  const matches = [...blocks(html, html.toLowerCase(), '<article', '</article>')];
 
   for (let i = 0; i < matches.length; i++) {
     const block = matches[i];
@@ -339,7 +350,11 @@ async function fetchAlerts(now: number): Promise<AlertSyncResult> {
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      const html = await response.text();
+      // Capped like the other two outbound reads. This one was missed on the first pass
+      // because the grep looked for `res.text()` and this call names its variable
+      // `response` -- which is why the rule is to fix every caller, not the one the
+      // report named.
+      const html = await readCapped(response);
       const operatorAlerts = extractAlertsFromHtml(html).map((a) => ({ ...a, source: 'operator' as const }));
       // The city's feed second, and only ever after the operator's: what the company
       // says about its own service outranks a press release that happens to mention a

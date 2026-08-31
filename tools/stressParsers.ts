@@ -91,4 +91,34 @@ for (const kb of [64, 256, 1024]) {
   time(`${kb} KB of unclosed items`, () => extractConcelloNotices(`<rss><channel>${opens}`));
 }
 
+
+console.log('\nthe operator home page scans: the pattern that was, and the walk that is');
+// extractAlertsFromHtml and extractNavNotices are not exported, so the two shapes are
+// measured here side by side: the lazy pattern they used, and the indexOf walk they use
+// now. 512 KB is the ceiling readCapped allows, so it is the worst case that can arrive.
+const walk = (text: string, open: string, close: string): number => {
+  const lower = text.toLowerCase();
+  let n = 0;
+  for (let from = 0; ; ) {
+    const start = lower.indexOf(open, from);
+    if (start === -1) return n;
+    const end = lower.indexOf(close, start);
+    if (end === -1) return n;
+    n++;
+    from = end + close.length;
+  }
+};
+
+for (const [tag, open, close, unit] of [
+  ['article', '<article', '</article>', '<article class="x">'],
+  ['li', '<li', '</li>', '<li class="x">'],
+] as [string, string, string, string][]) {
+  for (const kb of [256, 512]) {
+    const opens = unit.repeat((kb * 1024) / unit.length);
+    const pattern = new RegExp(`<${tag}[\\s\\S]*?</${tag}>`, 'gi');
+    time(`${kb} KB unclosed <${tag}>  was: lazy pattern`, () => (opens.match(pattern) || []).length);
+    time(`${kb} KB unclosed <${tag}>  now: indexOf walk`, () => walk(opens, open, close));
+  }
+}
+
 console.log('');

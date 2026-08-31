@@ -6,8 +6,14 @@ import type { NextFunction, Request, Response } from 'express';
  * Nothing here is expensive on its own — the timetable is in memory and the alert sync
  * has its own thirty-minute cache and sixty-second outbound cooldown, so buslugo.com is
  * never the thing being hammered. What this protects is the process: a loop over
- * `/api/plan` costs about 24 ms of planning each, which one client can turn into a busy
- * CPU for everybody else.
+ * `/api/plan` costs real CPU each time, which one client can turn into a busy CPU for
+ * everybody else.
+ *
+ * Measured across 72 pairs, including the four corners of the network against each other
+ * (tools/stressEngine.ts): median 25 ms, p95 67 ms, worst 82 ms. The "about 24 ms" this
+ * comment used to claim was the median mistaken for the cost. At the worst case the cap
+ * below is 2.5 seconds of CPU a minute per address, which is what it is meant to be; the
+ * cap is not moved, but the number it rests on is now the measured one.
  *
  * Deliberately in memory and per process. That means a restart forgets, and two
  * instances behind a load balancer allow twice this. Both are fine for a single small

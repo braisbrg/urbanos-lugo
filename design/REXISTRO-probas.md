@@ -320,3 +320,62 @@ marcado real do HULA ás 22:50 e escribiuse unha. Tres cousas que unha maqueta i
 ensinaría: hai un `<svg>` entre o div con clase e o seu `<p>`, a liña chega como `L4.2` cun
 prefixo que hai que quitar, e o tempo chega como `20 min` e non como un número. Comprobado
 que morde: quitando o recorte do `L`, falla con `the L prefix survived: "L4.2"`.
+
+---
+
+## Probas de esforzo — os camiños de cómputo, e tres escaneos da mesma forma
+
+`tools/stressEngine.ts` mide o que a app calcula, sempre o peor caso e non a media: unha
+media agocha o par de paradas que tarda dez veces máis, e é o par que alguén vai escribir.
+
+### Ben, e agora medido
+
+- **O taboleiro de paradas**: peor 3,9 ms nas 417 paradas, mediana ~0. E **sen deriva**:
+  500 pasadas seguidas na parada de máis liñas dan 0,04 ms nas dez primeiras e 0,03 nas dez
+  últimas. Recalcular cada 15 s é de balde.
+- **A busca**: 200 paradas contra unha consulta de 120 caracteres dunha soa letra, 20 ms.
+  Cos metacaracteres de regex, 0,6 ms — non hai ReDoS aí.
+- **`findStop`**: por debaixo do milisegundo mesmo con lixo.
+
+### O que corrixiu unha afirmación
+
+**O planificador**: mediana 25,1 ms, **p95 67 ms, peor 82,3 ms** en 72 pares, incluídos os
+catro extremos da rede uns contra outros. O comentario de `rateLimit.ts` dicía «uns 24 ms»
+e dimensionaba o límite sobre iso: era **a mediana confundida co custo**. O tope non se
+move —30 × 82 ms son 2,5 s de CPU por minuto e por enderezo, que é o que se pretendía— pero
+o número no que se apoia é agora o medido.
+
+### A terceira lectura sen tope, que se me escapara
+
+O grep anterior buscaba `res.text()`. `alertSyncService.ts:342` chámalle `response`, así que
+**a portada de buslugo.com seguía léndose enteira**. Agora busquei `.text()` en todo `src/`
+e `server.ts`: eran tres, e as tres pasan por `readCapped`.
+
+> **Regra:** buscar a chamada, non o nome da variable. «Arranxar todos os chamadores»
+> falla se o grep só atopa un deles.
+
+### Tres escaneos, e o teito só facía habitable un
+
+Ao chegar alí apareceron dúas regexes máis coa mesma forma perezosa. Medidas no teito de
+512 KB que permite `readCapped`, sobre marcado cuxas etiquetas nunca pechan:
+
+| escaneo | patrón perezoso | percorrido con `indexOf` |
+|---|---:|---:|
+| `<article>` (portada do operador) | **3.946 ms** | **0 ms** |
+| `<li>` (barra de avisos) | **4.012 ms** | **0 ms** |
+| `<item>` (RSS do Concello) | 13.196 ms | 1 ms |
+
+Unha portada truncada executa dúas delas. Os tres usan agora o mesmo percorrido; o test de
+marcado real da barra do operador segue pasando, que é o que proba que len igual.
+
+### E un que case me meto eu
+
+Púxenlle `AbortSignal.timeout(30_000)` ao `fetch` do cliente, porque non tiña ningún prazo
+e o spinner podía xirar minutos cun upstream lento. **`AbortSignal.timeout` é Safari 16**, e
+este proxecto leva un respaldo sRGB precisamente para seguir funcionando en Safari 15.4.
+Alí lanzaría, o `catch` de abaixo tragaríao, e amosaría o snapshot para sempre en silencio.
+Chamada opcional (`?.`), que en Safari 15 dá `undefined` — que é exactamente o que había
+antes desa liña.
+
+> **Regra:** antes de engadir unha API do navegador, mirar o suelo que este rexistro xa
+> ten escrito. O paso de navegadores non serve de nada se despois se rompe a man.
