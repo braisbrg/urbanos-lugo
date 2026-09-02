@@ -2122,4 +2122,37 @@ ok('the operator’s own stop page is read by class, not by position', () => {
   assert(spent < 1000, `unclosed blocks took ${spent} ms, which is heading for a stall`);
 });
 
+ok('nothing scraped reaches a Leaflet tooltip unescaped', () => {
+  // Leaflet takes HTML, not text. Verified in a browser rather than assumed: binding
+  // 'Rda. <b id="x">Muralla</b>' to a tooltip puts a real <b> element in the DOM.
+  //
+  // escapeHtml exists in the map folder for this, and its own comment says stop names come
+  // from a scrape -- but RouteMap and NearbyMiniMap never imported it, and carried eight
+  // tooltips of scraped names and line numbers straight into innerHTML between them. Three
+  // files had the control and two did not, which is the shape of a control that drifts.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const dir = join(root, 'src/components/Map');
+  const offenders: string[] = [];
+
+  for (const file of readdirSync(dir).filter((f) => /\.tsx?$/.test(f))) {
+    const lines = readFileSync(join(dir, file), 'utf8').split(/\r?\n/);
+    for (const [i, line] of lines.entries()) {
+      if (!/(bindTooltip|bindPopup)\(|innerHTML\s*=/.test(line)) continue;
+      // The call rarely fits on one line; three is enough for every one of them here.
+      const call = lines.slice(i, i + 4).join(' ');
+      // Names, zones and line numbers are the scraped fields. Numbers computed here are
+      // not markup and need no escaping.
+      const scraped = /\.(name|zone|number|color|address)\b/.exec(call);
+      if (scraped && !/escapeHtml/.test(call)) {
+        offenders.push(`${file}:${i + 1}  ${line.trim().slice(0, 70)}`);
+      }
+    }
+  }
+
+  assert(
+    offenders.length === 0,
+    `scraped text reaches a Leaflet tooltip without escapeHtml:\n    ${offenders.join('\n    ')}`,
+  );
+});
+
 console.log(`\n${checks} checks passed\n`);

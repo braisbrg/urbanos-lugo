@@ -434,3 +434,46 @@ que non para onde sobe, que a tarifa conte os mesmos tramos que o plan— **agua
 27.348**.
 
 **Estado: dúas roldas limpas seguidas (3 e 4). Bloque de esforzo pechado.**
+
+---
+
+## Auditoría propia — rolda 1, lente de seguridade
+
+Un achado real, atopado lendo o código en vez de agardar por un informe.
+
+### Nomes raspados chegando sen escapar a un tooltip de Leaflet
+
+`src/components/Map/escapeHtml.ts` existe precisamente para isto, e o seu propio comentario
+di que os nomes de parada veñen dun raspado. Estaba usado en `RouteLayer`, `StopLayer` e
+`VehicleLayer`. **`RouteMap` e `NearbyMiniMap` nin sequera o importaban**, e entre os dous
+levaban oito tooltips con nomes de parada, nomes de lugar e números de liña directos a
+`innerHTML`.
+
+**Comprobado no navegador, non supoñido.** Atar `'Rda. <b id="x">Muralla</b>'` a un tooltip
+deixa un elemento `<b>` real no DOM: `renderedAsMarkup: true`. Leaflet colle HTML, non texto.
+
+Non é explotable hoxe —os nomes veñen do operador, non dun descoñecido— pero ese é
+exactamente o argumento que o escapador xa rexeitaba por escrito: entrada raspada non se
+presume inerte. Tres ficheiros tratábana ben e dous non, que é a forma que ten un control de
+seguridade de esvarar.
+
+Escapados os oito. Comprobado despois que o lector segue vendo o nome limpo e non entidades:
+`Rda. Muralla 56 (Sindicatos)`, `anyEntities: false`.
+
+### O guardián
+
+Unha comprobación que percorre `src/components/Map/` e falla se calquera chamada a
+`bindTooltip`, `bindPopup` ou `innerHTML =` menciona `.name`, `.zone`, `.number`, `.color`
+ou `.address` sen `escapeHtml` preto. Comprobado que morde, e que nomea ficheiro e liña:
+
+```
+scraped text reaches a Leaflet tooltip without escapeHtml:
+    NearbyMiniMap.tsx:118  }).bindTooltip(`${stop.name} · ~${...} m`, {
+```
+
+### Mirado e limpo
+
+- **Sen `dangerouslySetInnerHTML`** en ningures.
+- **Os badges de liña de `StopLayer`** constrúense peza a peza con `escapeHtml`, así que
+  interpolar `${linesBadges}` xa é seguro. Non é descoido, é construción.
+- Os `${...}` que quedan sen escapar son **números** calculados aquí, que non son marcado.

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { escapeHtml } from './escapeHtml';
 import 'leaflet/dist/leaflet.css';
 import { BusStop } from '../../types';
 import { Lang, translations } from '../../i18n';
@@ -102,7 +103,7 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
         weight: 3,
         fillColor: kind === 'user' ? colors.userFill : colors.stopSelected,
         fillOpacity: 0.95,
-      }).bindTooltip(label, { direction: 'top', offset: [0, -8] }),
+      }).bindTooltip(escapeHtml(label), { direction: 'top', offset: [0, -8] }),
     );
 
     const bounds = L.latLngBounds([at]);
@@ -114,7 +115,7 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
         weight: 2,
         fillColor: colors.stopFill,
         fillOpacity: 1,
-      }).bindTooltip(`${stop.name} · ~${Math.round(stop.walkMeters)} m`, {
+      }).bindTooltip(`${escapeHtml(stop.name)} · ~${Math.round(stop.walkMeters)} m`, {
         direction: 'top',
         offset: [0, -8],
       });

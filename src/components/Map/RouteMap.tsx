@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
+import { escapeHtml } from './escapeHtml';
 import 'leaflet/dist/leaflet.css';
 import { RoutePlanResult } from '../../types';
 import { BUS_STOPS, LUGO_CENTER } from '../../data/transitData';
@@ -116,7 +117,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     // the next known one: origin -> first stop, last stop -> destination.
     let previous: [number, number] | null = origin ? [origin.lat, origin.lng] : null;
     if (origin) {
-      group.addLayer(L.marker([origin.lat, origin.lng], { icon: pinIcon(colors.originPin, 'A') }).bindTooltip(origin.name));
+      group.addLayer(L.marker([origin.lat, origin.lng], { icon: pinIcon(colors.originPin, 'A') }).bindTooltip(escapeHtml(origin.name)));
       bounds.extend([origin.lat, origin.lng]);
     }
 
@@ -145,12 +146,12 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 
         group.addLayer(
           L.polyline(slice, { color: segment.line.color, weight: 6, opacity: 0.95, lineJoin: 'round' }).bindTooltip(
-            translations(lang).planner.lineWithStops(segment.line.number, segment.stopsCount ?? 0),
+            escapeHtml(translations(lang).planner.lineWithStops(segment.line.number, segment.stopsCount ?? 0)),
           ),
         );
         group.addLayer(
           L.marker(slice[0], { icon: pinIcon(segment.line.color, segment.line.number.slice(0, 3)) }).bindTooltip(
-            `${translations(lang).planner.board} ${segment.fromStop.name}`,
+            `${escapeHtml(translations(lang).planner.board)} ${escapeHtml(segment.fromStop.name)}`,
           ),
         );
 
@@ -169,7 +170,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
               weight: 2,
               fillColor: colors.stopFill,
               fillOpacity: 1,
-            }).bindTooltip(stop.name, { direction: 'top', offset: [0, -6] }),
+            }).bindTooltip(escapeHtml(stop.name), { direction: 'top', offset: [0, -6] }),
           );
         }
 
@@ -185,7 +186,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
         group.addLayer(line);
         extend((line.getLatLngs() as L.LatLng[]).map((p) => [p.lat, p.lng]));
       }
-      group.addLayer(L.marker(end, { icon: pinIcon(colors.destinationPin, 'B') }).bindTooltip(destination.name));
+      group.addLayer(L.marker(end, { icon: pinIcon(colors.destinationPin, 'B') }).bindTooltip(escapeHtml(destination.name)));
       bounds.extend(end);
     }
 
