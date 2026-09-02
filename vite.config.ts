@@ -1,6 +1,7 @@
+import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { copyFileSync, existsSync } from 'fs';
+import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -38,6 +39,47 @@ const outDir = 'dist';
  * tab route -- /paradas, /mapa and the rest exist only in the browser. Without it a
  * direct visit or a refresh on any of them lands on GitHub's own 404 instead of the app.
  */
+/**
+ * A .gz and a .br beside every asset worth compressing.
+ *
+ * The entry chunk goes out at 544 KB and gzips to 139; the whole first load is 587 KB
+ * where 148 would do. GitHub Pages compresses by itself, so the published site never had
+ * the problem -- but `npm start` serves dist/ through express.static, which does not, and
+ * that is the documented way to self-host.
+ *
+ * Done here rather than per request: a build can afford brotli's slowest setting, and a
+ * server answering a phone at a bus stop should not be spending CPU on something that
+ * never changes between requests.
+ */
+const emitCompressedAssets = {
+  name: 'emit-compressed-assets',
+  apply: 'build' as const,
+  closeBundle() {
+    // Below about a kilobyte the headers cost more than the saving.
+    const FLOOR = 1024;
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry): string[] => {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) return walk(full);
+        return /\.(js|css|html|svg|json|webmanifest|xml|txt)$/.test(entry.name) ? [full] : [];
+      });
+
+    let saved = 0;
+    for (const file of walk(outDir)) {
+      const body = readFileSync(file);
+      if (body.length < FLOOR) continue;
+      const gz = gzipSync(body, { level: 9 });
+      const br = brotliCompressSync(body, {
+        params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: body.length },
+      });
+      writeFileSync(file + '.gz', gz);
+      writeFileSync(file + '.br', br);
+      saved += body.length - br.length;
+    }
+    console.log(`  compressed assets: ${(saved / 1024).toFixed(0)} KB saved if the client takes brotli`);
+  },
+};
+
 const emitSpaFallback = {
   name: 'emit-spa-fallback',
   apply: 'build' as const,
@@ -100,6 +142,7 @@ export default defineConfig(() => {
       injectSeoTags,
       emitSeoFiles,
       emitSpaFallback,
+      emitCompressedAssets,
       react(),
       tailwindcss(),
       // Everything the app computes — timetables, arrivals, route planning — runs from

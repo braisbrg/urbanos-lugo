@@ -2155,4 +2155,41 @@ ok('nothing scraped reaches a Leaflet tooltip unescaped', () => {
   );
 });
 
+ok('the build compresses its assets and the server hands them over', () => {
+  // Self-hosting put 544 KB of entry chunk on the wire where 116 KB of brotli would do --
+  // four times over, to a phone on mobile data at a bus stop. GitHub Pages compresses on
+  // its own so the published site never had it; `npm start` is the documented way to
+  // self-host and it did.
+  //
+  // The fix is two halves that are useless apart: a build plugin that writes the .br and
+  // .gz, and a middleware that picks one. Either half alone silently does nothing, which
+  // is why they are checked together.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  assert(/emitCompressedAssets/.test(vite), 'the build no longer writes compressed assets');
+  assert(
+    /brotliCompressSync/.test(vite) && /gzipSync/.test(vite),
+    'the build writes only one encoding; a client that takes the other pays full price',
+  );
+
+  const server = readFileSync(join(root, 'server.ts'), 'utf8');
+  assert(/Content-Encoding/.test(server), 'the server no longer serves the compressed copy');
+  assert(
+    /'Vary', 'Accept-Encoding'/.test(server),
+    'Vary is gone, so a shared cache could hand a brotli body to a client that cannot read it',
+  );
+
+  // And if there is a build to look at, the files really are there. Skipped rather than
+  // failed when there is not, because the suite runs before the build in CI.
+  const assets = join(root, 'dist', 'assets');
+  if (!existsSync(assets)) return;
+  const entry = readdirSync(assets).find((f) => /^index-.*\.js$/.test(f));
+  if (!entry) return;
+  assert(
+    existsSync(join(assets, entry + '.br')) && existsSync(join(assets, entry + '.gz')),
+    `dist has ${entry} but no compressed copy beside it`,
+  );
+});
+
 console.log(`\n${checks} checks passed\n`);

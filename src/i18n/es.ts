@@ -196,7 +196,7 @@ export const es: Dict = {
       {
         title: 'Cabecera en el casco histórico (líneas 7, 8, 9 y 12)',
         description:
-          'Las cuatro líneas terminan en Bolaño Ribadeneira. Entre 230 y 385 metros del final de cada recorrido caen sobre calles que OpenStreetMap tiene cerradas al tráfico — Montevideo, San Fernando y la propia Bolaño Ribadeneira — y aun así el operador publica paradas en ellas. Si el bus entra hasta la cabecera o se queda en la entrada, los datos abiertos no lo dicen.',
+          'Las cuatro líneas terminan en Bolaño Ribadeneira, dentro de la muralla. Entran por la Porta do Bispo Odoario, junto al Hospital Quirónsalud, y salen por la Porta de San Fernando: siempre en ese sentido, las cuatro. Entre 230 y 385 metros de cada recorrido van por calles que OpenStreetMap tiene como peatonales, sin la excepción de bus que les correspondería. Visto el 2 de septiembre de 2026: lo que falta es la etiqueta, no el paso.',
       },
       {
         title: 'Bonificación del 50% y Tarjeta Xente Nova (<21 años)',

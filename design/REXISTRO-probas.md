@@ -477,3 +477,39 @@ scraped text reaches a Leaflet tooltip without escapeHtml:
 - **Os badges de liña de `StopLayer`** constrúense peza a peza con `escapeHtml`, así que
   interpolar `${linesBadges}` xa é seguro. Non é descoido, é construción.
 - Os `${...}` que quedan sen escapar son **números** calculados aquí, que non son marcado.
+
+---
+
+## Auditoría propia — rolda 1, lente de optimización
+
+### O servidor propio enviaba catro veces o que debía
+
+`express.static` manda os bytes tal e como están no disco. Medido contra a build de
+produción: **556.913 bytes** do anaco de entrada, sen `Content-Encoding`.
+
+GitHub Pages comprime só, así que o sitio publicado nunca tivo isto. `npm start` é a
+maneira documentada de aloxalo un mesmo, e si o tiña.
+
+| | cru | gzip | brotli |
+|---|---:|---:|---:|
+| anaco de entrada | 544 KB | 139 KB | **116 KB** |
+| CSS de entrada | 43 KB | 9 KB | 7 KB |
+| **primeira carga** | **587 KB** | ~148 KB | **~124 KB** |
+
+**Comprimido na build, non por petición.** Un plugin de Vite —seguindo os catro que xa hai
+nese ficheiro— escribe un `.br` e un `.gz` ao lado de cada activo, e un middleware de
+catorce liñas entrega o que o cliente diga que sabe ler. Sen dependencia nova, sen CPU por
+petición, e a build pode permitirse o brotli lento de calidade 11.
+
+Comprobadas as tres rutas contra o servidor real: brotli **118.653 bytes**, gzip **142.833**,
+`identity` **557.096**, con `Vary: Accept-Encoding` e o `Content-Type` correcto. E medido
+polo propio navegador ao cargar a app: `transfer 116 KB, decoded 544 KB`.
+
+O `Vary` non é adorno: sen el unha caché compartida podería darlle un corpo brotli a alguén
+que non o pediu. O check faino fallar se desaparece, comprobado.
+
+### Mirado e descartado
+
+- **O anaco `palette` de 1.072 KB** é o maior do build, pero **non está na carga inicial**:
+  `index.html` só trae `theme-init.js`, un CSS e o anaco de entrada. MapLibre, Leaflet, a
+  xeometría das rutas e o worker cárganse cando fan falta. O nome enganaba, o peso non.

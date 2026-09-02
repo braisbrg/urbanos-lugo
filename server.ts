@@ -244,6 +244,56 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else if (existsSync(path.join(distPath, 'index.html'))) {
+    /**
+     * Serve the compressed copy the build already wrote, when the browser accepts one.
+     *
+     * express.static sends bytes off disk as they are, so self-hosting was putting 544 KB
+     * of entry chunk on the wire where 116 KB of brotli would do -- measured, four times
+     * over, to a phone on mobile data at a bus stop. GitHub Pages compresses on its own,
+     * so the published site never had this; `npm start` is the documented way to
+     * self-host and it did.
+     *
+     * No compression happens here: vite.config.ts writes a .br and a .gz beside every
+     * asset at build time, where brotli's slowest setting is affordable and is paid once
+     * rather than per request. This only picks one and lets express.static do the rest --
+     * which means the Content-Type still comes from the original extension, and the
+     * ETag and Last-Modified come from the file actually being sent.
+     *
+     * Vary matters even on the misses: without it a shared cache could hand a brotli body
+     * to a client that never asked for one.
+     */
+    const TYPES: Record<string, string> = {
+      '.js': 'text/javascript; charset=utf-8',
+      '.css': 'text/css; charset=utf-8',
+      '.html': 'text/html; charset=utf-8',
+      '.svg': 'image/svg+xml; charset=utf-8',
+      '.json': 'application/json; charset=utf-8',
+      '.webmanifest': 'application/manifest+json; charset=utf-8',
+      '.xml': 'application/xml; charset=utf-8',
+      '.txt': 'text/plain; charset=utf-8',
+    };
+    const ENCODINGS: [string, string][] = [['br', '.br'], ['gzip', '.gz']];
+    app.get(/.*/, (req, res, next) => {
+      res.setHeader('Vary', 'Accept-Encoding');
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+      const accepted = String(req.headers['accept-encoding'] ?? '');
+      for (const [token, suffix] of ENCODINGS) {
+        if (!accepted.includes(token)) continue;
+        // `express.static` has already refused anything outside distPath by the time this
+        // matters, but the join is done from the resolved path and checked anyway: a
+        // request is not allowed to name a file outside the build.
+        const target = path.join(distPath, req.path + suffix);
+        if (!target.startsWith(distPath) || !existsSync(target)) continue;
+        // Set explicitly, because the URL now ends in .br and express.static would call
+        // it an octet-stream. Only the extensions the build compresses need to be here.
+        const type = TYPES[path.extname(req.path).toLowerCase()];
+        if (type) res.setHeader('Content-Type', type);
+        res.setHeader('Content-Encoding', token);
+        req.url = req.url.replace(req.path, req.path + suffix);
+        return next();
+      }
+      return next();
+    });
     app.use(express.static(distPath));
     app.get('/{*splat}', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));

@@ -216,10 +216,27 @@ pechadas a vehículos sen excepción para o bus:
 
 Todo o demais: cero. Son 0,93 km de 158. O operador publica paradas nesas rúas e OSM ten
 alí unha parada de bus levantada sobre o terreo, así que algo pasa por elas; pero ningunha
-vía leva `bus=yes` nin `psv=yes`. **Pode ser unha etiqueta que falta ou pode ser que o bus
-quede na entrada: os datos abertos non o din, e non se afirma o que non se sabe.** O que
-si é seguro é que a alternativa —dar 2,1 km de volta á muralla— non describe ningunha
-realidade, así que se debuxa o itinerario levantado e queda anotado aquí.
+vía leva `bus=yes` nin `psv=yes`.
+
+**Resolto por observación directa.** O 2 de setembro de 2026 Brais viu a liña 9 entrar na
+muralla pola porta do Hospital Quirón, e supuxo que sairían pola de San Fernando.
+Comprobado contra os datos antes de escribilo, e as dúas cousas cadran — para as catro
+liñas, non só para a 9:
+
+| sentido | porta que toca o trazado |
+| :--- | :--- |
+| saíndo do casco (7, 8, 9, 12) | **Porta de San Fernando**, a 0 m |
+| entrando no casco (7, 8, 9, 12) | **Porta do Bispo Odoario**, a 0 m |
+
+O Hospital Quirónsalud está a **44 m** da Porta do Bispo Odoario. É dicir, o bus fai
+exactamente o que a relación de OSM di que fai, e faino nun só sentido por cada porta.
+**Era unha etiqueta que falta, non un bus que queda na entrada.**
+
+As vías concretas ás que lles falta a excepción, medidas con `tools/checkOsmGeometry.ts`:
+Rúa Bolaño Rivadeneira (unha delas con `access=no motor_vehicle=private`), Rúa de San
+Fernando e Rúa Montevideo, todas `highway=pedestrian`. Corrixilo é unha contribución a
+OpenStreetMap, non un cambio neste repositorio; mentres non se faga, o número segue medido
+e o aviso segue dicindo o que se sabe.
 
 A aplicación **non chama a ningunha destas fontes en execución**: os ficheiros xerados
 van no repositorio. As fontes só se consultan ao rexenerar os datos.

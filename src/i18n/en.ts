@@ -207,7 +207,7 @@ export const en: Dict = {
       {
         title: 'Old town terminus (lines 7, 8, 9 and 12)',
         description:
-          'All four lines end at Bolaño Ribadeneira. Between 230 and 385 metres of the tail of each route fall on streets OpenStreetMap has closed to vehicles — Montevideo, San Fernando and Bolaño Ribadeneira itself — and the operator publishes stops on them all the same. Whether the bus reaches the terminus or stops at the entrance is not something open data says.',
+          'All four lines end at Bolaño Ribadeneira, inside the walls. They come in through Porta do Bispo Odoario, beside Hospital Quirónsalud, and leave through Porta de San Fernando — always that way round, all four. Between 230 and 385 metres of each route run along streets OpenStreetMap marks pedestrian, without the bus exception they should carry. Seen on 2 September 2026: what is missing is the tag, not the passage.',
       },
       {
         title: '50% discount and the Xente Nova card (under 21)',
