@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { getDistanceMeters as haversine } from '../src/utils/geo';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '../src/data');
@@ -69,15 +70,6 @@ const ZONES: { name: string; lat: number; lng: number }[] = [
   { name: 'Rural', lat: 42.95, lng: -7.5 },
 ];
 
-function haversine(aLat: number, aLng: number, bLat: number, bLng: number): number {
-  const R = 6371e3;
-  const p1 = (aLat * Math.PI) / 180;
-  const p2 = (bLat * Math.PI) / 180;
-  const dp = ((bLat - aLat) * Math.PI) / 180;
-  const dl = ((bLng - aLng) * Math.PI) / 180;
-  const x = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
-  return Math.round(2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)));
-}
 
 function zoneFor(lat: number, lng: number): string {
   let best = ZONES[0];

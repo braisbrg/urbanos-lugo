@@ -25,6 +25,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_LINES, BUS_STOPS } from '../src/data/transitData';
 import { parseLine, stopsByPs } from './importOfficialData';
+import { metresBetween as distance } from '../src/utils/geo';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(HERE, '../.cache/official');
@@ -39,15 +40,6 @@ const osmStops: any[] = existsSync(join(HERE, '../.cache/osm-stops.json'))
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function distance(aLat: number, aLng: number, bLat: number, bLng: number): number {
-  const R = 6371e3;
-  const p1 = (aLat * Math.PI) / 180;
-  const p2 = (bLat * Math.PI) / 180;
-  const dp = ((bLat - aLat) * Math.PI) / 180;
-  const dl = ((bLng - aLng) * Math.PI) / 180;
-  const x = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
-  return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-}
 
 const percentile = (xs: number[], p: number): number =>
   xs.length ? [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor((xs.length * p) / 100))] : 0;

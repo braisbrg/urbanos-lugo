@@ -33,10 +33,19 @@ where no surveyed relation exists.
 - **Consequence:** the derived geometry in `src/data/routeGeometry.*` is a Derivative
   Database under ODbL and stays under ODbL. It is not covered by the MIT licence.
 
-## Map tiles — CARTO
+## Map tiles — OpenFreeMap
 
-Basemap tiles are served by CARTO from OpenStreetMap data, attributed in the map
-corner as their terms require. They are fetched at runtime and not redistributed here.
+Basemap tiles come from **OpenFreeMap**, which serves the OpenMapTiles schema built from
+OpenStreetMap data. No key, no account, no quota. The map credits OpenFreeMap,
+OpenMapTiles and OpenStreetMap contributors in its own corner, and the tiles are fetched
+as the reader pans rather than redistributed here.
+
+A device without WebGL2 falls back to raster tiles from **tile.openstreetmap.org**, under
+that project's tile usage policy: fetched as the reader pans, cached, never bulk
+downloaded or prefetched.
+
+This used to be CARTO. It was replaced in August 2026, when CARTO began stamping "API KEY
+REQUIRED" across the tiles of its keyless basemaps.
 
 ## What this project does NOT have
 

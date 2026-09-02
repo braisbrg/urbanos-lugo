@@ -1,3 +1,5 @@
+import { metresBetween } from '../src/utils/geo';
+
 /**
  * Talking to OpenStreetMap: the bits the importer and the weekly check both need.
  *
@@ -15,15 +17,10 @@ export const ROUTE_QUERY = `[out:json][timeout:180];
 relation["type"="route"]["route"="bus"]["network"~"Lugo"](${BBOX});
 out geom;`;
 
-export const distance = (a: [number, number], b: [number, number]): number => {
-  const R = 6371e3;
-  const p1 = (a[0] * Math.PI) / 180;
-  const p2 = (b[0] * Math.PI) / 180;
-  const dp = ((b[0] - a[0]) * Math.PI) / 180;
-  const dl = ((b[1] - a[1]) * Math.PI) / 180;
-  const x = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
-  return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-};
+/** Unrounded on purpose: these metres are summed along a polyline, and rounding each
+ *  segment first would not add up to the same length. */
+export const distance = (a: [number, number], b: [number, number]): number =>
+  metresBetween(a[0], a[1], b[0], b[1]);
 
 /**
  * One ordered polyline from a relation's way members.

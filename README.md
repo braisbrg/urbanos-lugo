@@ -330,7 +330,8 @@ Calde e Santa Comba), que se publican por separado porque son servizos distintos
 │   │   ├── StopArrivalsView.tsx    taboleiro de chegadas
 │   │   ├── LinesView.tsx           liñas e horarios
 │   │   ├── RoutePlannerView.tsx    planificador
-│   │   ├── FaresAndAlertsView.tsx  tarifas e avisos
+│   │   ├── AlertsView.tsx          avisos do servizo e novas do Concello
+│   │   ├── FaresView.tsx           tarifas, normas a bordo e contacto
 │   │   ├── FavoritesDrawer.tsx     favoritos
 │   │   ├── QrScannerModal.tsx      escáner QR
 │   │   ├── ErrorBoundary.tsx       illa un fallo nunha pestana sen tirar a app
@@ -632,9 +633,10 @@ desenvolvemento. Dependabot revisa semanalmente as dependencias e mais as action
 **Content Security Policy.** `script-src 'self'`, sen `unsafe-inline` nin `unsafe-eval`:
 o build non ten ningún script en liña, nin worker, nin wasm, e o escáner QR usa o
 `BarcodeDetector` do navegador en vez dunha librería. As únicas orixes remotas
-permitidas son as catro que a app usa de verdade — CARTO polas teselas, Google Fonts
-polas dúas tipografías e o enrutador peonil de OSM. buslugo.com non está: só o servidor
-o consulta, nunca o navegador.
+permitidas son as que a app usa de verdade — OpenFreeMap polas teselas vectoriais,
+tile.openstreetmap.org polo respaldo ráster, Google Fonts polas dúas tipografías e o
+enrutador peonil de OSM. buslugo.com non está: só o servidor o consulta, nunca o
+navegador.
 
 A política escríbese unha vez en [`src/security/csp.ts`](src/security/csp.ts) e vai a
 dous sitios, porque o despregue real é GitHub Pages e un aloxamento estático non envía
@@ -1043,7 +1045,7 @@ todo o que sexa do servizo — un bus que non pasou, unha reclamación — e a O
 o que sexa dun trazado mal levantado. Aquí só se arranxa o que esta aplicación le mal.
 Para un fallo de seguridade, [`SECURITY.md`](SECURITY.md).
 
-Cartografía © OpenStreetMap contributors © CARTO.
+Cartografía © OpenStreetMap contributors, teselas de OpenFreeMap © OpenMapTiles.
 
 ---
 

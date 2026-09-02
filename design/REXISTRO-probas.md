@@ -513,3 +513,51 @@ que non o pediu. O check faino fallar se desaparece, comprobado.
 - **O anaco `palette` de 1.072 KB** é o maior do build, pero **non está na carga inicial**:
   `index.html` só trae `theme-init.js`, un CSS e o anaco de entrada. MapLibre, Leaflet, a
   xeometría das rutas e o worker cárganse cando fan falta. O nome enganaba, o peso non.
+
+---
+
+## Auditoría propia — rolda 2, lente de mantibilidade
+
+### Deriva na documentación, e unha delas era de licenza
+
+`DATA.md` tiña unha sección enteira, «Map tiles — CARTO», dicindo que as teselas as serve
+CARTO. Non é certo dende que o basemap pasou a OpenFreeMap. A CSP permite
+`tiles.openfreemap.org` e `tile.openstreetmap.org`, e o mapa acredita OpenFreeMap,
+OpenMapTiles e OpenStreetMap na súa propia esquina.
+
+Tres sitios corrixidos:
+
+- **`DATA.md`**, a sección enteira, incluíndo o respaldo ráster e a política de uso de
+  teselas de OSM que xa se cumpría pero non estaba escrita.
+- **`README.md:635`**, que describía a propia CSP do proxecto nomeando CARTO.
+- **`README.md:1046`**, a liña de atribución: *«Cartografía © OpenStreetMap contributors ©
+  CARTO.»* **Iso non é cosmética.** A atribución é un termo de licenza, e acreditaba a unha
+  empresa cuxas teselas non se usan mentres non acreditaba as que si.
+
+E a árbore de ficheiros do README seguía listando `FaresAndAlertsView.tsx`, que se partiu
+en dous hai unhas horas.
+
+### Seis Haversine, agora un
+
+A mesma fórmula co mesmo radio estaba escrita seis veces: no motor e en cinco ferramentas.
+Nada derivara —eran carácter por carácter a mesma aritmética— pero é o mesmo argumento que
+xa se aplicou ao escapador de HTML e ao costurado de OSM.
+
+**Dúas funcións e non unha, porque as copias si diferían nunha cousa**: o motor e tres
+ferramentas redondean ao metro; o costurado de OSM e o reconciliador acumulan metros sen
+redondear ao longo dunha polilínea, e redondear cada segmento non daría a mesma lonxitude.
+O redondeo queda no sitio que o quería.
+
+**Verificado como se verifica isto aquí**: `pnpm data:build` reconstrúe o conxunto de datos
+sen rede e sae **byte a byte idéntico**, e `checkOsmGeometry.ts` segue dicindo que as 48
+rutas teñen a mesma forma e os mesmos metros restrinxidos.
+
+### Mirado e descartado
+
+- **Ningún `catch` baleiro** en todo o proxecto: todos din algo ou fan algo.
+- **Ningún TODO, FIXME nin HACK.**
+- **«0,93 km de 158» no README.** A miña primeira suma deu 2,78 km e pensei que derivara.
+  Estaba eu mal: o README conta **cada rúa compartida unha vez** (230 + 385 para o casco,
+  que comparten as catro liñas, máis 317 da 11) = **932 m**. O documento tiña razón.
+- **Ficheiros grandes** (`transitEngine.ts`, 1.543 liñas). Partilo é unha refactorización,
+  non un achado; e non hai duplicación dentro del.

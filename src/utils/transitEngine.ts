@@ -3,23 +3,13 @@ import { daysLabel } from './serviceLabels';
 import { Lang, translations } from '../i18n';
 import { BusStop, BusLine, StopArrival, ScheduledBus, RoutePlanResult, TripFare } from '../types';
 import { matchesQuery, calculateRelevanceScore } from './searchUtils';
+import { getDistanceMeters } from './geo';
+
+// Re-exported because half this file's consumers already import it from here.
+export { getDistanceMeters };
 import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, lineRunsOn, parseTimeToMinutes } from './schedule';
 
-// Haversine distance in meters
-export function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371e3; // Earth radius in meters
-  const phi1 = (lat1 * Math.PI) / 180;
-  const phi2 = (lat2 * Math.PI) / 180;
-  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
-  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
 
-  const a =
-    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-    Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return Math.round(R * c);
-}
 
 /**
  * Offline fallback for how long a walk takes.
