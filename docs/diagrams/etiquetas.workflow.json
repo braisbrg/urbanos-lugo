@@ -1,0 +1,253 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Como se etiqueta cada hora",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Cadro publicado"
+        },
+        "backend": {
+          "label": "Motor de horarios"
+        },
+        "messagebus": {
+          "label": "Sen hora impresa"
+        },
+        "frontend": {
+          "label": "Etiqueta final"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "fonte",
+      "label": "Cadro publicado polo operador"
+    },
+    {
+      "id": "motor",
+      "label": "src/utils/schedule.ts"
+    },
+    {
+      "id": "sen",
+      "label": "Sen hora impresa detrás",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "publicado",
+      "label": "O que publica o operador",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "ancoraxe",
+      "label": "Ancoraxe e interpolación",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "etiqueta",
+      "label": "Etiqueta en pantalla",
+      "fromCol": 5,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "reixa",
+    "expeds",
+    "ancoras",
+    "interp",
+    "oficial"
+  ],
+  "nodes": [
+    {
+      "id": "reixa",
+      "lane": "fonte",
+      "col": 1,
+      "type": "database",
+      "label": "Reixa completa",
+      "sublabel": "unha columna por expedición",
+      "width": 138
+    },
+    {
+      "id": "cadence",
+      "lane": "fonte",
+      "col": 0,
+      "type": "database",
+      "label": "Primeira e última",
+      "sublabel": "coa cadencia na cabeceira",
+      "width": 138
+    },
+    {
+      "id": "expeds",
+      "lane": "motor",
+      "col": 2,
+      "type": "backend",
+      "label": "Expedicións do día",
+      "sublabel": "por tipo de día",
+      "width": 138
+    },
+    {
+      "id": "ancoras",
+      "lane": "motor",
+      "col": 3,
+      "type": "backend",
+      "label": "Puntos horarios",
+      "sublabel": "encadeados con seguridade",
+      "tag": "hora impresa",
+      "width": 138
+    },
+    {
+      "id": "interp",
+      "lane": "motor",
+      "col": 4,
+      "type": "backend",
+      "label": "Interpolación",
+      "sublabel": "o tempo de estrada estírase",
+      "width": 138
+    },
+    {
+      "id": "oficial",
+      "lane": "motor",
+      "col": 5,
+      "type": "frontend",
+      "label": "HORARIO OFICIAL",
+      "sublabel": "o cadro imprime esa hora",
+      "width": 138
+    },
+    {
+      "id": "xeradas",
+      "lane": "sen",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Expedicións xeradas",
+      "sublabel": "sólidas, pero non impresas",
+      "width": 138
+    },
+    {
+      "id": "alonxe",
+      "lane": "sen",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Tras o último punto",
+      "sublabel": "nada contra que interpolar",
+      "width": 138
+    },
+    {
+      "id": "estimado",
+      "lane": "sen",
+      "col": 5,
+      "type": "frontend",
+      "label": "~ ESTIMADO",
+      "sublabel": "saída + tempo por estrada",
+      "width": 138
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-reixa",
+      "from": "reixa",
+      "to": "expeds",
+      "label": "columnas impresas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-cadence",
+      "from": "cadence",
+      "to": "xeradas",
+      "label": "cada 30 ou 60 min",
+      "role": "branch"
+    },
+    {
+      "id": "e-xeradas-dia",
+      "from": "xeradas",
+      "to": "expeds",
+      "label": "tamén circulan",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-ancoraxe",
+      "from": "expeds",
+      "to": "ancoras",
+      "label": "ánclase a cada punto"
+    },
+    {
+      "id": "e-interp",
+      "from": "ancoras",
+      "to": "interp",
+      "label": "entre dous puntos"
+    },
+    {
+      "id": "e-oficial",
+      "from": "interp",
+      "to": "oficial",
+      "label": "a hora cae no impreso",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-alonxe",
+      "from": "ancoras",
+      "to": "alonxe",
+      "label": "sen punto que ancore",
+      "role": "branch"
+    },
+    {
+      "id": "e-estimado",
+      "from": "alonxe",
+      "to": "estimado",
+      "label": "manda o tempo de estrada"
+    },
+    {
+      "id": "e-xeradas-est",
+      "from": "xeradas",
+      "to": "estimado",
+      "label": "nunca oficial",
+      "variant": "dashed",
+      "route": "bottom-channel"
+    }
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "reixa",
+      "cadence"
+    ],
+    "allowedTerminals": [
+      "oficial",
+      "estimado"
+    ]
+  },
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "A regra do proxecto",
+      "items": [
+        "Nada se presenta como medido se non o é",
+        "A etiqueta decídese por expedición e parada, non por liña",
+        "Os vehículos do mapa din que a posición é estimada do cadro, non GPS"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cobertura hoxe (pnpm validate:times)",
+      "items": [
+        "386 paradas quedan suxeitas por horas oficiais a ambos os lados",
+        "797 dependen do modelo de estrada",
+        "Erro mediano de 0,1 min nos 21 tramos contrastables; 8,3 min no peor"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Á parte, e atribuído",
+      "items": [
+        "O operador publica os seus propios minutos por parada detrás do QR",
+        "Amósanse nun bloque aparte: «segundo o operador», nunca «en directo»",
+        "Sen servidor amósase a instantánea e cando se tomou"
+      ]
+    }
+  ]
+}

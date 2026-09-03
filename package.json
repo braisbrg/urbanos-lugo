@@ -31,6 +31,7 @@
     "test": "tsx tools/test.ts",
     "data:amenities": "tsx tools/importStopAmenities.ts",
     "data:alerts": "tsx tools/fetchAlerts.ts",
+    "diagrams": "tsx tools/buildDiagrams.ts",
     "calibrate:walking": "tsx tools/calibrateWalking.ts",
     "validate:times": "tsx tools/validateRideTimes.ts"
   },

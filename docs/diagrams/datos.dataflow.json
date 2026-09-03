@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "De onde saen stops.json e lines.json",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      604
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "camiño principal"
+        },
+        "default": {
+          "label": "fluxo de datos"
+        },
+        "database": {
+          "label": "ficheiro no repositorio"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Fontes"
+    },
+    {
+      "label": "Importadores"
+    },
+    {
+      "label": "Instantáneas en data/"
+    },
+    {
+      "label": "Xerador"
+    },
+    {
+      "label": "src/data/ (vai no paquete)"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "buslugo",
+      "type": "external",
+      "label": "buslugo.com",
+      "sublabel": "portal do operador",
+      "stage": 0,
+      "row": 0,
+      "width": 140,
+      "tag": "scraping"
+    },
+    {
+      "id": "osrm",
+      "type": "external",
+      "label": "OSRM",
+      "sublabel": "router.project-osrm.org",
+      "stage": 0,
+      "row": 2,
+      "width": 140
+    },
+    {
+      "id": "overpass",
+      "type": "external",
+      "label": "Overpass API",
+      "sublabel": "OpenStreetMap",
+      "stage": 0,
+      "row": 3,
+      "width": 140
+    },
+    {
+      "id": "impOficial",
+      "type": "backend",
+      "label": "importOfficialData.ts",
+      "sublabel": "lento, cacheado",
+      "stage": 1,
+      "row": 1,
+      "width": 165
+    },
+    {
+      "id": "impOsm",
+      "type": "backend",
+      "label": "importOsmRoutes.ts",
+      "sublabel": "relacións de ruta",
+      "stage": 1,
+      "row": 2,
+      "width": 165
+    },
+    {
+      "id": "impEquip",
+      "type": "backend",
+      "label": "importStopAmenities.ts",
+      "sublabel": "marquesiñas e bancos",
+      "stage": 1,
+      "row": 3,
+      "width": 165
+    },
+    {
+      "id": "snapOperador",
+      "type": "database",
+      "label": "official-raw.json",
+      "sublabel": "+ routes.json (OSRM)",
+      "stage": 2,
+      "row": 0,
+      "width": 145,
+      "tag": "commiteado"
+    },
+    {
+      "id": "snapOsm",
+      "type": "database",
+      "label": "osm-routes.json",
+      "sublabel": "+ stop-amenities.json",
+      "stage": 2,
+      "row": 2,
+      "width": 145,
+      "tag": "commiteado"
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "buildDataset.ts",
+      "sublabel": "pnpm data:build",
+      "stage": 3,
+      "row": 1,
+      "width": 130
+    },
+    {
+      "id": "dataset",
+      "type": "database",
+      "label": "stops.json",
+      "sublabel": "+ lines.json",
+      "stage": 4,
+      "row": 0,
+      "width": 145
+    },
+    {
+      "id": "trazados",
+      "type": "database",
+      "label": "route-geometry.json",
+      "sublabel": "cargado baixo demanda",
+      "stage": 4,
+      "row": 2,
+      "width": 145
+    }
+  ],
+  "flows": [
+    {
+      "id": "f-buslugo",
+      "from": "buslugo",
+      "to": "impOficial",
+      "label": "cadros e itinerarios",
+      "classification": "oficial",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-osrm",
+      "from": "osrm",
+      "to": "impOficial",
+      "label": "tempo por tramo",
+      "classification": "medido"
+    },
+    {
+      "id": "f-osm-rutas",
+      "from": "overpass",
+      "to": "impOsm",
+      "label": "relacións de ruta",
+      "classification": "OSM",
+      "labelAt": [
+        120,
+        430
+      ]
+    },
+    {
+      "id": "f-osm-equip",
+      "from": "overpass",
+      "to": "impEquip",
+      "label": "equipamentos",
+      "classification": "OSM",
+      "route": "straight",
+      "labelAt": [
+        250,
+        430
+      ]
+    },
+    {
+      "id": "f-snap-op",
+      "from": "impOficial",
+      "to": "snapOperador",
+      "label": "scrape gardado",
+      "classification": "instantánea"
+    },
+    {
+      "id": "f-snap-osm",
+      "from": "impOsm",
+      "to": "snapOsm",
+      "label": "trazado por sentido",
+      "classification": "instantánea",
+      "route": "straight",
+      "labelAt": [
+        353,
+        430
+      ]
+    },
+    {
+      "id": "f-snap-equip",
+      "from": "impEquip",
+      "to": "snapOsm",
+      "label": "só o levantado",
+      "classification": "instantánea",
+      "labelAt": [
+        480,
+        430
+      ]
+    },
+    {
+      "id": "f-build-op",
+      "from": "snapOperador",
+      "to": "build",
+      "label": "cadros e paradas",
+      "classification": "local",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-build-osm",
+      "from": "snapOsm",
+      "to": "build",
+      "label": "trazado e equipamentos",
+      "classification": "local"
+    },
+    {
+      "id": "f-dataset",
+      "from": "build",
+      "to": "dataset",
+      "label": "postes agrupados",
+      "classification": "xerado",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-trazados",
+      "from": "build",
+      "to": "trazados",
+      "label": "48 sentidos, 45 de OSM",
+      "classification": "xerado"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Nada escrito a man",
+      "items": [
+        "stops.json e lines.json saen enteiros do xerador",
+        "Un poste leva moitos ids oficiais e consérvanse todos en officialIds"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Por que as instantáneas se commitean",
+      "items": [
+        "Sen elas o dataset non é reproducible",
+        "Volver pedilas cada vez machacaría servizos alleos e gratuítos"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "O que non se ve aquí",
+      "items": [
+        "importStopAmenities le stops.json para saber que postes consultar",
+        "fetchAlerts refresca src/data/alerts.json desde CI, á parte"
+      ]
+    }
+  ]
+}

@@ -86,7 +86,8 @@ debaixo, **preto de min**, que precisa permiso de localización e non inventa di
 se llo negas.
 
 ### Mapa da rede
-Leaflet sobre teselas de CartoDB. Os trazados **seguen a rede viaria real**: cada
+Leaflet cunha capa vectorial de MapLibre GL sobre teselas de OpenFreeMap; nun dispositivo
+sen WebGL2 cae ás teselas ráster de OpenStreetMap. Os trazados **seguen a rede viaria real**: cada
 itinerario está axustado ás rúas no momento de xerar os datos, non interpolado entre
 paradas. Corenta e cinco dos corenta e oito sentidos son o itinerario levantado en
 OpenStreetMap; **tres constrúense coa ruta que faría un coche** (a 3.2 nos dous sentidos
@@ -203,6 +204,11 @@ Non hai datos escritos a man. `stops.json` e `lines.json` xéranse a partir de:
    conxunto anterior inventábaos; agora 413 das 417 paradas están emparelladas cun nodo
    de OSM a menos de 45 m e o que ninguén levantou queda como `null`, non como "non".
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/datos-dark.png">
+  <img src="docs/diagrams/datos-light.png" alt="Diagrama do fluxo de datos: buslugo.com e OSRM alimentan importOfficialData.ts, e Overpass a importOsmRoutes.ts e importStopAmenities.ts; cada un deixa a súa instantánea en data/, e buildDataset.ts constrúe desde aí stops.json, lines.json e route-geometry.json en src/data/.">
+</picture>
+
 O operador **non publica ningún trazado**, só listas de paradas e cadros horarios. Non
 existe, polo tanto, unha fonte autorizada da liña que segue o bus: hai que reconstruíla.
 
@@ -317,21 +323,15 @@ Calde e Santa Comba), que se publican por separado porque son servizos distintos
 
 ## Arquitectura
 
-```
-[ SPA React 19 + TypeScript + Tailwind v4 ]
-  ├── index.css           tokens de cor e escala tipográfica (claro/escuro)
-  ├── components/         vistas e capas do mapa
-  ├── utils/schedule      cadro horario -> hora de paso en cada parada
-  ├── utils/transitEngine chegadas, vehículos, planificador, xeodesia
-  ├── utils/searchUtils   normalización e relevancia
-  └── data/               stops.json + lines.json (xerados)
-           │
-           ▼
-[ Express ]
-  ├── API REST
-  ├── Sincronización de avisos oficiais
-  └── Vite en desenvolvemento / estáticos en produción
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/arquitectura-dark.png">
+  <img src="docs/diagrams/arquitectura-light.png" alt="Diagrama da arquitectura: no navegador, src/data/*.json alimenta o motor de horarios, e este a SPA de React e o mapa de Leaflet, co Service Worker servindo a app sen conexión; a SPA fala cun servidor Express opcional que consulta buslugo.com e os feeds do Concello; fóra quedan as teselas de OpenFreeMap e o enrutador a pé de OpenStreetMap.">
+</picture>
+
+O reparto que importa é ese: **todo o cálculo de horas ocorre no navegador**, sobre os
+JSON que viaxan no paquete. O servidor de Node existe só para o que o navegador non pode
+facer por si mesmo —pedirlle avisos e minutos de poste a buslugo.com e ao Concello, que
+non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHub Pages.
 
 ---
 
@@ -400,6 +400,7 @@ Calde e Santa Comba), que se publican por separado porque son servizos distintos
 │   ├── fullAudit.ts                informe de calidade de datos
 │   └── test.ts                     comprobacións executables
 ├── design/                         artboards do redeseño (.dc.html) + canvas.json
+├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts
 ├── DATA.md                         procedencia e licenzas dos datos
 └── vite.config.ts
@@ -410,6 +411,12 @@ nun `.dc.html` e o `canvas.json` que os coloca. Son o rexistro de por que a inte
 é como é —as alternativas que se descartaron seguen aí— e ábrense coa canvas, non
 como páxinas soltas. O ficheiro sementado que a canvas publica é un artefacto de
 compilación e non se commitea.
+
+`docs/diagrams/` garda os tres diagramas deste README como o JSON do que se debuxan, e as
+dúas imaxes —clara e escura— que GitHub amosa. O visor `.html` que os acompaña non se
+commitea: `pnpm diagrams` reprodúceo desde o mesmo JSON byte a byte, así que sería medio
+megabyte por diagrama de algo que xa está no repositorio. Editar unha caixa é editar o
+JSON e volver correr ese comando, nunca a imaxe.
 
 ---
 
@@ -449,6 +456,11 @@ eses minutos non está confirmado por escrito. As horas propias desta app seguen
 | `HORARIO OFICIAL` | O operador publica esa hora para esa parada. |
 | `~ ESTIMADO` | Saída de cabeceira publicada + tempo de percorrido medido por estrada. |
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/etiquetas-dark.png">
+  <img src="docs/diagrams/etiquetas-light.png" alt="Diagrama do camiño de cada hora: o cadro publicado entra como reixa completa ou como primeira e última saída cunha cadencia; schedule.ts ancora as expedicións aos puntos horarios e interpola entre eles, e só entón unha hora pode levar HORARIO OFICIAL. As expedicións xeradas pola cadencia e as paradas máis alá do último punto horario saen pola vía de excepción e sempre levan ~ ESTIMADO.">
+</picture>
+
 Consecuencias en toda a aplicación:
 
 - Os vehículos do mapa din no seu globo que a posición é **estimada do cadro horario**,
@@ -476,9 +488,10 @@ impresa no cadro. Dúas cousas facían que se sobre-anunciase:
   unha mediana que para algunhas expedicións cae uns minutos fóra do impreso.
 
 Cobertura real hoxe (`pnpm validate:times`): **386 paradas** teñen a súa hora suxeita
-por horas oficiais a ambos os lados, e **822** quedan máis alá do último punto horario e
-dependen do modelo de estrada. Nesas, o erro fronte ao impreso ten mediana de 0,5 min e
-chega a 8,5 min no peor tramo medible. Por iso o `~` non é decorativo.
+por horas oficiais a ambos os lados, e **797** quedan máis alá do último punto horario e
+dependen do modelo de estrada. Nos 21 tramos que se poden contrastar, o erro fronte ao
+impreso ten mediana de 0,1 min, chega a 8,3 min no peor caso lento e a −7,4 no peor rápido,
+e só o 38% cae dentro de dous minutos. Por iso o `~` non é decorativo.
 
 `pnpm test` inclúe comprobacións que fallan se algunha hora volve presentarse sen dicir de
 onde vén, e se algunha parada reclama unha hora oficial que o cadro non imprime.
@@ -624,8 +637,9 @@ expresión regular.
 
 ## Tecnoloxías
 
-React 19 · TypeScript 5.8 · Vite 6 · Tailwind CSS 4 · Leaflet 1.9 (directo, sen
-envoltorio) · Lucide React · Express 4 · vite-plugin-pwa · tsx · esbuild.
+React 19 · TypeScript 7.0 · Vite 8 · Tailwind CSS 4 · Leaflet 1.9 (directo, sen
+envoltorio) coa capa vectorial de MapLibre GL 6 · Lucide React · Express 5 ·
+vite-plugin-pwa · tsx · esbuild.
 
 O escaneo de QR usa `BarcodeDetector`, nativo do navegador: sen dependencia externa.
 
@@ -832,6 +846,15 @@ Para activalo: **Settings → Pages → Source: GitHub Actions**. O workflow def
 `BASE_PATH` co nome do repositorio para que as rutas apunten a
 `https://<usuario>.github.io/<repo>/`. Con dominio propio ou nunha *user page*, pon
 `BASE_PATH: /`.
+
+A build escribe unha páxina en cada enderezo de pestana —`paradas/`, `linhas/`, `mapa/`,
+`ruta/`, `avisos/`, `tarifas/`— e deixa `404.html` detrás para todo o demais. Con só o
+`404.html`, Pages **debuxaba** ben `/tarifas` pero respondía 404 ao facelo, e iso non é
+un detalle: `sitemap.xml` anuncia esas seis rutas e un buscador descarta un enderezo
+listado que responde 404, e as aplicacións onde se pegan os enlaces de «copiar ligazón»
+saltan a vista previa cando ven un 404 — tirando xusto as etiquetas `og:` que existen
+porque eses enlaces se comparten. Son seis copias de 4,6 KB. Os slugs saen de
+`src/routes.ts`, que é a única lista: dela len o enrutador, o sitemap e a build.
 
 O único que cambia sen servidor son os **avisos oficiais**: o navegador non pode ler
 buslugo.com por CORS, así que se usa a copia horaria que deixa a tarefa programada e

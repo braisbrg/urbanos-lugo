@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Urbanos de Lugo — arquitectura",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "No navegador"
+        },
+        "backend": {
+          "label": "Servidor Node"
+        },
+        "database": {
+          "label": "Datos xerados"
+        },
+        "external": {
+          "label": "Servizos de fóra"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "sw",
+      "type": "frontend",
+      "label": "Service Worker",
+      "sublabel": "App Shell precacheado",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "datos",
+      "type": "database",
+      "label": "src/data/*.json",
+      "sublabel": "xerado, viaxa no paquete",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "nada escrito a man"
+    },
+    {
+      "id": "mapa",
+      "type": "frontend",
+      "label": "Mapa Leaflet",
+      "sublabel": "capa vectorial de MapLibre GL",
+      "pos": [
+        380,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "SPA React 19",
+      "sublabel": "TypeScript + Tailwind v4",
+      "pos": [
+        380,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "motor",
+      "type": "frontend",
+      "label": "Motor de horarios",
+      "sublabel": "transitEngine + schedule",
+      "pos": [
+        380,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "foot",
+      "type": "external",
+      "label": "Enrutador a pé de OSM",
+      "sublabel": "routing.openstreetmap.de",
+      "pos": [
+        740,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "tiles",
+      "type": "external",
+      "label": "OpenFreeMap",
+      "sublabel": "teselas vectoriais",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "express",
+      "type": "backend",
+      "label": "Express 5",
+      "sublabel": "API REST + estáticos",
+      "pos": [
+        740,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "buslugo",
+      "type": "external",
+      "label": "buslugo.com",
+      "sublabel": "portal do operador",
+      "pos": [
+        1080,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "concello",
+      "type": "external",
+      "label": "Concello de Lugo",
+      "sublabel": "tres feeds de novas",
+      "pos": [
+        1080,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Navegador",
+      "wraps": [
+        "sw",
+        "datos",
+        "mapa",
+        "spa",
+        "motor"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Servidor Node (opcional)",
+      "wraps": [
+        "express"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "datos-motor",
+      "from": "datos",
+      "to": "motor",
+      "label": "stops.json + lines.json"
+    },
+    {
+      "id": "motor-spa",
+      "from": "motor",
+      "to": "spa",
+      "label": "chegadas, vehículos, plans"
+    },
+    {
+      "id": "spa-mapa",
+      "from": "spa",
+      "to": "mapa",
+      "label": "trazados baixo demanda"
+    },
+    {
+      "id": "sw-spa",
+      "from": "sw",
+      "to": "spa",
+      "label": "serve sen conexión",
+      "variant": "dashed"
+    },
+    {
+      "id": "mapa-tiles",
+      "from": "mapa",
+      "to": "tiles",
+      "label": "teselas"
+    },
+    {
+      "id": "motor-foot",
+      "from": "motor",
+      "to": "foot",
+      "label": "tramos a pé, baixo demanda",
+      "variant": "dashed"
+    },
+    {
+      "id": "spa-express",
+      "from": "spa",
+      "to": "express",
+      "label": "/api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "express-buslugo",
+      "from": "express",
+      "to": "buslugo",
+      "label": "avisos e minutos"
+    },
+    {
+      "id": "express-concello",
+      "from": "express",
+      "to": "concello",
+      "label": "obras e tráfico"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "No navegador",
+      "items": [
+        "Todo o cálculo de horas ocorre no cliente",
+        "stops.json e lines.json viaxan no paquete",
+        "O Service Worker deixa a app usable sen rede"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "No servidor (opcional)",
+      "items": [
+        "A API REST le eses mesmos JSON",
+        "Consulta buslugo e o Concello porque o navegador non pode (CORS)",
+        "Sen servidor: build estática coa instantánea de avisos"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Fóra",
+      "items": [
+        "Teselas de OpenFreeMap, con OpenStreetMap de reserva",
+        "Enrutador a pé de OSM só se pides ver o paseo",
+        "Ningunha fonte do dataset se chama en execución"
+      ]
+    }
+  ]
+}
