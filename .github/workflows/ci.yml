@@ -1,0 +1,48 @@
+name: Checks
+
+# The same two gates the deployment runs, but on the proposal rather than after it.
+#
+# Everything else here triggers on a push to main, which means a pull request arrived with
+# nothing checked and the first evidence came from production. That is backwards for the
+# pull requests this repository actually gets: Dependabot's, where the whole question is
+# whether a version bump still builds and still agrees with the operator's data.
+#
+# Deliberately not the deployment: a pull request must never publish. This runs the same
+# `lint` and `test` and stops there.
+on:
+  pull_request:
+    branches: [main]
+  # And on a branch that is not main, so work in progress is checked before it becomes a
+  # pull request at all.
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run lint
+      - run: pnpm test
+
+      # A dependency bump that breaks the build is the failure this is here to catch, and
+      # `pnpm test` does not compile anything.
+      - run: pnpm run build
