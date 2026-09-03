@@ -178,7 +178,6 @@ export const gl = {
     walkingPathHint:
       'Traza os tramos a pé polas beirarrúas reais. Precisa conexión: consúltase o enrutador peonil de OpenStreetMap.',
     noWaitNoFare: 'sen esperas nin billete',
-    leaveAtShort: (hhmm: string) => `sae ás ${hhmm}`,
     waitShort: (minutes: number) => `${minutes} min de espera`,
     serviceNoticeTitle: 'Aviso de horario de servizo',
     includesWait: (minutes: number) =>

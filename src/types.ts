@@ -172,11 +172,6 @@ export interface RoutePlanResult {
   durationMinutes: number;
   fare?: TripFare;
   departureTime: string;
-  /**
-   * The latest you can leave the origin and still catch it. Differs from
-   * `departureTime` when the first bus is a while away: that wait is spent at home.
-   */
-  leaveAt: string;
   arrivalTime: string;
   walkToStartMeters: number;
   walkFromEndMeters: number;

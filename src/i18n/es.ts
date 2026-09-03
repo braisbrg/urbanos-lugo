@@ -164,7 +164,6 @@ export const es: Dict = {
     walkingPathHint:
       'Traza los tramos a pie por las aceras reales. Necesita conexión: se consulta el enrutador peatonal de OpenStreetMap.',
     noWaitNoFare: 'sin esperas ni billete',
-    leaveAtShort: (hhmm: string) => `sal a las ${hhmm}`,
     waitShort: (minutes: number) => `${minutes} min de espera`,
     serviceNoticeTitle: 'Aviso de horario de servicio',
     includesWait: (minutes: number) =>

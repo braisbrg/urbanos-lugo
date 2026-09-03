@@ -1377,7 +1377,6 @@ function walkingOnlyPlan(
     durationMinutes: walk.minutes,
     fare: { busLegs: 0, transfersFree: true, transferSpanMinutes: 0, singleTicketEuros: 0, citizenCardEuros: 0 },
     departureTime: formatMinutes(nowMinutes),
-    leaveAt: formatMinutes(nowMinutes),
     arrivalTime: formatMinutes(arrival),
     totalWaitMinutes: 0,
     isServiceActive: true,
@@ -1474,15 +1473,17 @@ function planBetweenStops(
       });
     }
 
-    // When to actually walk out of the door: the wait before the first bus is spent at
-    // home, not at the stop. Showing only "53 min" counts standing around as travel.
-    const firstWait = option.segments[0]?.type === 'wait' ? option.segments[0].durationMinutes ?? 0 : 0;
-
+    // There used to be a `leaveAt` here -- now plus the first wait, the last moment you
+    // could set off and still catch the bus. It was shown beside the same option whose
+    // summary and itinerary both said to leave now and wait at the stop, so the screen
+    // gave two departure times for one plan. Leaving now is the answer this app gives:
+    // the bus has no GPS here, buses on this network have been seen running early, and
+    // arriving with a few minutes in hand costs nothing while missing one costs up to
+    // ninety on some lines.
     return {
       durationMinutes: Math.round(end - nowMinutes),
       fare: fareFor(segments),
       departureTime: formatMinutes(nowMinutes),
-      leaveAt: formatMinutes(nowMinutes + firstWait),
       arrivalTime: formatMinutes(end),
       totalWaitMinutes: option.totalWaitMinutes,
       isServiceActive: option.isServiceActive,

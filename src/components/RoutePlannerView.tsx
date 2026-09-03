@@ -768,9 +768,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               idx === chosenOption ? 'opacity-85' : 'text-ink-3'
                             }`}
                           >
-                            {option.leaveAt !== option.departureTime
-                              ? t.planner.leaveAtShort(option.leaveAt)
-                              : option.departureTime}{' '}
+                            {option.departureTime}{' '}
                             → ~{shiftClock(option.arrivalTime, fix)}
                             {option.totalWaitMinutes > 0 &&
                               option.totalWaitMinutes <= LONG_WAIT_MIN &&

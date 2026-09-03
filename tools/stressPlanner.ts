@@ -46,7 +46,7 @@ for (const hour of HOURS) {
       offered++;
       const where = `${from.name} -> ${to.name} at ${hour}:20`;
 
-      for (const field of ['departureTime', 'arrivalTime', 'leaveAt'] as const) {
+      for (const field of ['departureTime', 'arrivalTime'] as const) {
         if (!/^\d{1,2}:\d{2}$/.test(plan[field])) {
           fail(`a plan's ${field} is not a clock time`, `${where}: "${plan[field]}"`);
         }
@@ -54,10 +54,12 @@ for (const hour of HOURS) {
       if (plan.durationMinutes <= 0 || !Number.isFinite(plan.durationMinutes)) {
         fail('a plan takes zero or nonsense time', `${where}: ${plan.durationMinutes}`);
       }
-      // `departureTime` is when you may set off, which is normally now; `leaveAt` is when
-      // you actually have to, so leaveAt after departureTime is the ordinary case and not
-      // a fault. The first draft of this file asserted the opposite and flagged a correct
-      // plan: walk five minutes from 07:31 to catch the 07:36, offered at 07:20.
+      // `departureTime` is when you set off, which is now. There used to be a `leaveAt`
+      // beside it -- the last moment you could leave and still catch the bus -- and this
+      // file asserted an ordering between the two that was a judgement about the service,
+      // not an invariant. Both the field and the assertion are gone: the app tells you to
+      // leave now and wait at the stop, because the buses here carry no GPS and have been
+      // seen running early.
       //
       // What must hold is that the clock and the stated duration agree with each other.
       const span = toMinutes(plan.arrivalTime) - toMinutes(plan.departureTime);
@@ -70,8 +72,8 @@ for (const hour of HOURS) {
       // about the bus service rather than invariants about the planner:
       //
       //   "never told to leave before the journey may begin" -- at 18:20 from Xosé
-      //   Castiñeira the list runs to 58 options and some are for tomorrow morning, so
-      //   leaveAt 07:45 against an earliest of 18:20 is a rollover and not a fault.
+      //   Castiñeira the list runs to 58 options and some are for tomorrow morning, so a
+      //   07:45 against an earliest of 18:20 is a rollover and not a fault.
       //
       //   "the best journey takes under three hours" -- from Nadela at 07:20 the best is
       //   3 h 36, because line 11 does not call there until 10:00. That is 160 minutes of

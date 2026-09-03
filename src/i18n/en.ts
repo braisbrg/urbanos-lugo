@@ -175,7 +175,6 @@ export const en: Dict = {
     walkingPathHint:
       'Traces the walking legs along the real pavements. Needs a connection: it queries the OpenStreetMap pedestrian router.',
     noWaitNoFare: 'no waiting, no fare',
-    leaveAtShort: (hhmm: string) => `leaves at ${hhmm}`,
     waitShort: (minutes: number) => `${minutes} min wait`,
     serviceNoticeTitle: 'Service hours notice',
     includesWait: (minutes: number) =>
