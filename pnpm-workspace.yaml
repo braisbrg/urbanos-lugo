@@ -1,15 +1,29 @@
-# pnpm's settings, which pnpm 10 moved out of package.json.
+# pnpm's settings, which do not live in package.json any more.
 #
-# They were in package.json's "pnpm" field and stopped being read: the tool printed
-# "The pnpm field in package.json is no longer read" on every command, which meant the
-# only real control here -- the list of dependencies allowed to run an install script --
-# had quietly stopped applying. It lives here now, where the tool looks.
+# They were in package.json's "pnpm" field and stopped being read: the tool printed "The
+# pnpm field in package.json is no longer read" on every command, which meant the only
+# real control here -- what may run an install script -- had quietly stopped applying.
+#
+# The key has moved twice. pnpm 10 called it `onlyBuiltDependencies`, a list; pnpm 11
+# calls it `allowBuilds`, a map with an explicit true or false per package. Writing the
+# older name here is not an error and not a warning: the install simply fails with
+# ERR_PNPM_IGNORED_BUILDS, which is how this was found -- in the first deployment.
 
 # A postinstall is where a compromised dependency runs first, before anything is built or
-# tested. From pnpm 10 every install script is blocked unless the package is named here.
-# esbuild needs one to place its platform binary; nothing else in this tree does.
-onlyBuiltDependencies:
-  - esbuild
+# tested. Every one is blocked unless it appears here, and pnpm fails the install rather
+# than warn, because a skipped build is a decision somebody has to make.
+#
+# esbuild is the only package in this tree with a script at all, and it does not need it:
+# since 0.25 the platform binary arrives as an optional dependency (@esbuild/linux-x64 on
+# the runner, @esbuild/win32-x64 on a Windows laptop) and the script is a legacy fallback
+# that verifies what is already there. Checked with it skipped: `transformSync` works and
+# `pnpm build` produces dist-server.
+#
+# So: false, deliberately. Nothing runs an install script, and the next dependency that
+# brings one turns the install red until a person decides, rather than slipping through
+# because an earlier entry had opened the door.
+allowBuilds:
+  esbuild: false
 
 # Transitive versions pinned above their advisories, both compatible with what their
 # parents ask for.

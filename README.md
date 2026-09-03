@@ -733,18 +733,22 @@ sitio onde buscalo se algún día se replica.
 só o de despregar escribe en Pages) e `persist-credentials: false` no checkout, para que
 o token non quede en `.git/config` durante o resto do traballo.
 
-**Scripts de instalación.** `pnpm-workspace.yaml` só lle permite executar un a `esbuild`,
-que o precisa para colocar o seu binario; calquera dependencia nova que traia un
-`postinstall` —que é onde correría primeiro se estivese comprometida— queda bloqueada ata
-que alguén a engada aí a man. Desde pnpm 10 o bloqueo é o comportamento por defecto e esa
-lista é a excepción, así que agora si fai algo: antes, permitir só esbuild e permitir todo
-daban o mesmo resultado.
+**Scripts de instalación.** Ningunha dependencia executa un `postinstall` —que é onde
+correría primeiro unha comprometida—, e `pnpm-workspace.yaml` declárao explícitamente en
+`allowBuilds`. `esbuild` é a única que ten un script, e leva `false` porque non o precisa:
+desde a 0.25 o binario da plataforma chega como dependencia opcional e o script só
+comproba o que xa está. Comprobado con el saltado: `transformSync` funciona e `pnpm build`
+produce `dist-server`. A seguinte dependencia que traia un script **detén a instalación**
+ata que alguén decida.
 
-Estivo un tempo sen aplicarse sen que nada parecese roto. O axuste vivía no campo `pnpm`
-de `package.json`, que pnpm 10 deixou de ler, e `packageManager` fixaba unha versión que
-xa non era a que ninguén corría. Hai unha comprobación en `pnpm test` que le a lista de
-onde a le esta versión de pnpm, esixe que `esbuild` estea nela, que non medre e que non
-quede unha copia vella en `package.json` contando outra cousa.
+Este axuste estivo mal dúas veces, e as dúas fallou no `install` e non nas probas. Vivía no
+campo `pnpm` de `package.json`, que pnpm 10 deixou de ler; despois chamouse
+`onlyBuiltDependencies`, e pnpm 11 renomeouno a `allowBuilds`. Poñer o nome vello non dá
+erro nin aviso: a instalación simplemente para con `ERR_PNPM_IGNORED_BUILDS`, que é como se
+atopou o segundo —no primeiro despregue do repositorio—. Hai unha comprobación en
+`pnpm test` que esixe que **o nome coincida co maior de pnpm fixado**, que `esbuild` teña
+unha decisión escrita, que sexa `true` ou `false` e non o marcador que pnpm escribe soa, e
+que non quede unha copia vella en `package.json` contando outra cousa.
 
 **Versións das dependencias.** `pnpm-workspace.yaml` fixa tamén `qs` e `fast-uri` por
 riba do seu aviso de seguridade. `qs` é con quen express analiza a cadea de consulta de

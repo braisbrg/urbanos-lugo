@@ -1479,15 +1479,20 @@ ok('the repository URL is written in one place', () => {
   assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
 });
 
-ok('the install-script allowlist is where the pinned pnpm looks for it', () => {
-  // pnpm 10 moved its settings out of package.json into pnpm-workspace.yaml and ignores
-  // the old key -- with a warning nobody reads on a CI log. Upgrading without moving
-  // this would silently re-allow every dependency's postinstall, which is the one thing
-  // it exists to prevent, and nothing would look broken.
+ok('the install-script setting uses the name the pinned pnpm reads', () => {
+  // This has been wrong twice, and both times it failed at install rather than here.
   //
-  // It cannot be observed working: esbuild is currently the only dependency with an
-  // install script, so allowing exactly esbuild and allowing everything behave the same
-  // today. That is precisely why it needs a test rather than a look.
+  // The setting decides which dependency may run a postinstall -- where a compromised
+  // package runs first, before anything is built or tested. pnpm 9 read it from
+  // package.json's "pnpm" field; pnpm 10 moved it to pnpm-workspace.yaml as
+  // `onlyBuiltDependencies`, a list; pnpm 11 renamed it to `allowBuilds`, a map with an
+  // explicit true or false per package. Writing an older name is neither an error nor a
+  // warning -- the install just stops with ERR_PNPM_IGNORED_BUILDS, which is how the
+  // second one was found: in the repository's first deployment.
+  //
+  // So this asserts the name matches the pinned major, not merely that some name is
+  // present. Parsed by hand rather than with a YAML dependency: both shapes are one flat
+  // block, and an unreadable file fails here instead of passing blind.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
@@ -1498,30 +1503,37 @@ ok('the install-script allowlist is where the pinned pnpm looks for it', () => {
   const workspaceFile = join(root, 'pnpm-workspace.yaml');
   const workspace = existsSync(workspaceFile) ? readFileSync(workspaceFile, 'utf8') : '';
 
-  // The list, wherever this pnpm reads it from. The YAML side is parsed by hand rather
-  // than with a dependency: it is a flat sequence of names under one key, and the shape
-  // is asserted below, so a file this check cannot read fails instead of passing blind.
-  const allowed: string[] = (() => {
-    if (major >= 10) {
-      const block = workspace.match(/^onlyBuiltDependencies:\n((?:\s*-\s*\S+\n)+)/m);
-      return block ? [...block[1].matchAll(/-\s*(\S+)/g)].map((m) => m[1]) : [];
-    }
-    return Array.isArray(pkg.pnpm?.onlyBuiltDependencies) ? pkg.pnpm.onlyBuiltDependencies : [];
-  })();
+  /** Every package named, with what was decided about it. */
+  const decided = new Map<string, string>();
+  if (major >= 11) {
+    const block = workspace.match(/^allowBuilds:\n((?:[ \t]+\S+:.*\n)+)/m);
+    assert(
+      block,
+      'pnpm 11 reads `allowBuilds` from pnpm-workspace.yaml and it is not there, so the ' +
+        'install stops on any dependency that has a build script',
+    );
+    for (const m of block![1].matchAll(/^[ \t]+(\S+):[ \t]*(\S+)/gm)) decided.set(m[1], m[2]);
+  } else if (major === 10) {
+    const block = workspace.match(/^onlyBuiltDependencies:\n((?:\s*-\s*\S+\n)+)/m);
+    assert(block, 'pnpm 10 reads `onlyBuiltDependencies` from pnpm-workspace.yaml and it is not there');
+    for (const m of block![1].matchAll(/-\s*(\S+)/g)) decided.set(m[1], 'true');
+  } else {
+    const list = pkg.pnpm?.onlyBuiltDependencies;
+    assert(Array.isArray(list), 'pnpm 9 reads onlyBuiltDependencies from package.json and it is missing');
+    for (const name of list) decided.set(name, 'true');
+  }
 
-  assert(
-    allowed.length > 0,
-    major >= 10
-      ? 'pnpm 10 reads settings from pnpm-workspace.yaml; onlyBuiltDependencies is not there ' +
-        'or is empty, so every dependency may run an install script again'
-      : 'pnpm 9 reads onlyBuiltDependencies from package.json and it is missing',
-  );
-  assert(
-    allowed.includes('esbuild'),
-    'esbuild is not allowed to run its install script, so the build cannot place its binary',
-  );
-  // Whatever the version, the list stays short enough to read.
-  assert(allowed.length <= 3, `${allowed.length} packages may run install scripts; that list should stay tiny`);
+  // Every package with a build script must be named. esbuild is the only one in this
+  // tree, and the answer for it is `false`: since 0.25 its platform binary arrives as an
+  // optional dependency and the script only verifies what is already there.
+  assert(decided.has('esbuild'), 'esbuild has an install script and no decision recorded for it');
+  for (const [name, value] of decided) {
+    assert(
+      value === 'true' || value === 'false',
+      `${name} is set to "${value}"; pnpm writes that placeholder itself and then fails the install`,
+    );
+  }
+  assert(decided.size <= 3, `${decided.size} packages named here; that list should stay short enough to read`);
 
   // And the settings live in exactly one place: leaving the old copy behind is how the
   // two disagree, and the one pnpm no longer reads is the one that looks reassuring.
