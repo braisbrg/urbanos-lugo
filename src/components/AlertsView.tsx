@@ -134,6 +134,29 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
           </button>
         </div>
 
+        {/* Where these came from, when it was not from asking just now.
+            The published build has no server -- GitHub Pages serves files -- so the list
+            below is whatever the last deploy baked in. That is usually fresh: the deploy
+            workflow runs hourly and refreshes the notices first. But it is best-effort by
+            design, and publishes the old snapshot rather than nothing when buslugo.com is
+            unreachable; and a reader whose service worker has not picked up a new build
+            yet is running an older one still.
+
+            So the age gets said out loud, above the alerts and not only on the "nothing
+            is wrong" card. A stale incident read as current is the worse of the two
+            mistakes, and it was the branch without the warning. */}
+        {liveAlerts.length > 0 && (snapshotAt || unreachable) && (
+          <p
+            className={`rounded-xl border px-4 py-3 text-label leading-relaxed ${
+              stale ? 'border-warn bg-warn/60 text-warn-ink' : 'border-edge bg-surface text-ink-2'
+            }`}
+          >
+            {unreachable && !snapshotAt
+              ? t.fares.unknownStatusDesc
+              : t.fares.snapshotNotice(formatInstant(snapshotAt ?? undefined, LOCALE[lang]))}
+          </p>
+        )}
+
         {/* Dynamic Live Incidents or Normal Operation Badge */}
         {liveAlerts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

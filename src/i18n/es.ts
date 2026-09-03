@@ -108,6 +108,8 @@ export const es: Dict = {
     phones: 'Teléfonos de atención',
     portals: 'Portales de referencia',
     lastCheck: 'Última verificación oficial:',
+    snapshotNotice: (at: string) =>
+      `Esto no se acaba de comprobar: es la copia que dejó la tarea programada el ${at}. Esta versión de la web no tiene servidor que pueda preguntarle al operador ahora mismo, así que un aviso puede ya no estar vigente. Comprueba en buslugo.com si te afecta.`,
     source: 'Fuente oficial:',
   },
 

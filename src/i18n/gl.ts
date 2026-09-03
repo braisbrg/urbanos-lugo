@@ -122,6 +122,8 @@ export const gl = {
     phones: 'Teléfonos de atención',
     portals: 'Portais de referencia',
     lastCheck: 'Última verificación oficial:',
+    snapshotNotice: (at: string) =>
+      `Isto non se acaba de comprobar: é a copia que deixou a tarefa programada o ${at}. Esta versión da web non ten servidor que poida preguntarlle ao operador agora mesmo, así que un aviso pode xa non estar vixente. Comproba en buslugo.com se che afecta.`,
     source: 'Fonte oficial:',
   },
 

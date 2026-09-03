@@ -607,3 +607,43 @@ algo baixo `src/` o nomea; comprobado que morde.
 - **`SECURITY.md`**: dicía que o servidor «proxies one scrape of buslugo.com». Son tres
   fontes, e agora di cales e que todas están capadas a 512 KB e con tempo límite.
 - **`design/PLAN-acento-vermello.md`** xa estaba marcado como feito. Correcto.
+
+---
+
+## Preparación para produción — rolda 1: a build estática, que é a que se publica
+
+Servida `dist/` sen o servidor Express, que é exactamente o que fai GitHub Pages.
+
+### O que funciona sen servidor
+
+- **A ligazón do QR** (`?parada=uilP`) abre a ficha da parada. Confirmado: encabezado
+  «Rda. Muralla 56 (Sindicatos)» e o mini mapa do poste.
+- **O bloque do operador non aparece**, que é o correcto: sen servidor non hai a quen
+  preguntar, e a app non inventa.
+- **Os avisos caen ao snapshot** commiteado e amósanse.
+
+### O achado
+
+O snapshot amosábase **sen dicir que o era**. A tarxeta lía «AVISO DEL OPERADOR ·
+28/8/2026 · Retenciones en zona Estación Tren», e a única data era a do propio aviso, que
+un lector toma por «segue pasando».
+
+A redacción honesta xa existía —`staleStatusTitle`, `staleStatusDesc`, `lastCheck`— pero só
+na tarxeta de «todo normal», que se debuxa cando **non** hai avisos. A rama que máis
+precisaba dicir de onde vén a súa información era a que non o dicía.
+
+Agora, cando os datos veñen da copia, dise enriba da lista: cando se tomou, que esta
+versión non ten servidor a quen preguntar, e que se comprobe en buslugo.com. Verificado na
+build estática.
+
+### E o encuadre que corrixín a min mesmo
+
+Dixen que iso era «o estado normal do sitio publicado». **Non o é.** `deploy-pages.yml`
+corre **cada hora** (`cron: '17 * * * *'`) e refresca os avisos antes de construír, así que
+en produción o snapshot ten como moito unha hora. O meu local estaba a seis días porque
+aquí non corre ese traballo.
+
+O rótulo segue facendo falta, pero por dúas razóns máis pequenas e reais: o paso de
+refresco é **best-effort** —se buslugo.com non responde, publica o snapshot vello sen
+queixarse— e alguén cun service worker que aínda non colleu a build nova está a ler unha
+máis antiga.

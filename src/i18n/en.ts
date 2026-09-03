@@ -119,6 +119,8 @@ export const en: Dict = {
     phones: 'Information lines',
     portals: 'Reference websites',
     lastCheck: 'Last official check:',
+    snapshotNotice: (at: string) =>
+      `This was not just checked: it is the copy a scheduled job committed on ${at}. This build has no server to ask the operator with, so a notice may no longer be current. Check buslugo.com if it affects you.`,
     source: 'Official source:',
   },
 
