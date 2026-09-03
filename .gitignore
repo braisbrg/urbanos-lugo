@@ -52,3 +52,12 @@ design/rediseno-urbanos-lugo.html
 
 # Backups written by the editing helper while working.
 *.snapshot
+
+# Diagram tooling. The QA renders it writes beside each diagram -- .visual-check.html,
+# .visual-check.json and the PNGs at two sizes in both themes -- are how the tool checks
+# its own output, not documentation. A single diagram brings 1.2 MB of them.
+#
+# The diagrams themselves (docs/diagrams/*.html and their source JSON) are NOT ignored on
+# purpose: whether they belong in the repository is a decision, and 700 KB each of
+# self-contained HTML is worth making it deliberately rather than by a stray .
+docs/diagrams/*.visual-check.*
