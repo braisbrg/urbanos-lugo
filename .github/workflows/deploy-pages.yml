@@ -54,24 +54,34 @@ jobs:
       - name: Refresh service notices
         run: pnpm exec tsx tools/fetchAlerts.ts || echo "notice refresh failed, keeping the committed snapshot"
 
+      # Project sites live at https://<user>.github.io/<repo>/. For a user site or a
+      # custom domain, set BASE_PATH to "/" and SITE_URL to that domain.
+      #
+      # Both are derived in the shell from GITHUB_REPOSITORY ("owner/name"), which every
+      # workflow run has whatever triggered it, rather than from the webhook payload,
+      # whose shape differs between a push, a schedule and a manual run. An empty value
+      # would put every asset under "//" -- and the hourly run is the one that would show
+      # it, days after the push that looked fine.
+      #
+      # SITE_URL is what emits the canonical link, robots.txt and sitemap.xml; they are
+      # left out entirely when it is unset, because pointing a crawler at the wrong origin
+      # is worse than pointing it nowhere.
+      #
+      # VITE_API_ORIGIN says where /api/… lives when it does not live beside the page.
+      # Empty unless the repository variable API_ORIGIN is set (Settings → Secrets and
+      # variables → Actions → Variables), and empty is the behaviour without a Worker: no
+      # endpoints, the committed snapshot of the notices, and no operator block behind the
+      # QR. Set it to a deployed Worker's address and the build both calls it and admits
+      # exactly that origin in the policy. A variable rather than a line of code, because
+      # it is the address of somebody's deployment and not a fact about this project.
       - name: Build
         env:
-          # Project sites live at https://<user>.github.io/<repo>/. For a user site or a
-          # custom domain, set BASE_PATH to "/" and SITE_URL to that domain.
-          BASE_PATH: /${{ github.event.repository.name }}/
-          # The canonical link, robots.txt and sitemap.xml are only emitted when this
-          # is set, because pointing a crawler at the wrong origin is worse than
-          # pointing it nowhere.
-          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-          # Where /api/… lives, when it does not live beside the page. Empty unless the
-          # repository variable API_ORIGIN is set (Settings → Secrets and variables →
-          # Actions → Variables), and empty is the current behaviour: no endpoints, the
-          # committed snapshot of the notices, and no operator block behind the QR. Set it
-          # to a deployed Worker's address and the build both calls it and admits exactly
-          # that origin in the policy. A variable rather than a line of code because it is
-          # the address of somebody's deployment, not a fact about this project.
           VITE_API_ORIGIN: ${{ vars.API_ORIGIN }}
-        run: pnpm run build
+        run: |
+          export BASE_PATH="/${GITHUB_REPOSITORY#*/}/"
+          export SITE_URL="https://${GITHUB_REPOSITORY%%/*}.github.io/${GITHUB_REPOSITORY#*/}/"
+          echo "building for $SITE_URL"
+          pnpm run build
 
       # Stops GitHub Pages from running Jekyll over the output.
       - run: touch dist/.nojekyll
