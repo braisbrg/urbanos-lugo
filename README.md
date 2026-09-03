@@ -918,6 +918,16 @@ por si soa.
 pnpm dlx wrangler deploy --config worker/wrangler.toml
 ```
 
+`dlx` e non unha dependencia: wrangler son 34 paquetes que só fan falta os poucos días ao
+ano nos que se desprega, e non teñen por que estar no lockfile nin instalarse en cada
+execución de CI. Envía telemetría por defecto; `pnpm dlx wrangler telemetry disable`
+apágaa, e é coherente co que este proxecto lle promete a quen o usa.
+
+O ficheiro non depende de Cloudflare máis que no xeito de despregalo: exporta
+`fetch(request, env, ctx)`, que é a interface que implementan tamén Deno Deploy, Netlify
+Edge e Vercel Edge, e usa `caches.open()` —o estándar— e non `caches.default`. Se algún día
+convén cambiar de casa, cámbiase o despregue e non o que fai.
+
 Despois, `ALLOWED_ORIGIN` co enderezo do sitio (`https://<usuario>.github.io`, sen barra
 final): é o único que poderá chamalo. Sen ese valor responde cun `allow-origin` baleiro,
 que o navegador rexeita — falla pechado, non aberto.

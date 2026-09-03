@@ -72,7 +72,12 @@ export default {
     // refused by its own browser for up to half an hour, with nothing in any log saying
     // why. Found exactly that way. `Vary: Origin` does not help -- the header comes from
     // configuration, not from the request.
-    const cache = (caches as unknown as { default: Cache }).default;
+    // `caches.open(name)` and not Cloudflare's `caches.default`, which is the same thing
+    // by a name only Cloudflare knows. Everything else in this file is the interface every
+    // edge runtime implements -- a default export with fetch(request, env, ctx) -- so with
+    // this line standard too, the whole Worker moves to another host by changing how it is
+    // deployed and nothing about what it does.
+    const cache = await caches.open('urbanos-lugo-api');
     const cacheKey = new Request(
       `${url.origin}${url.pathname}${url.search}${url.search ? '&' : '?'}__origin=${encodeURIComponent(origin)}`,
     );
