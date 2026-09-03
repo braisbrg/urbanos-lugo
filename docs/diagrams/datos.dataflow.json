@@ -56,8 +56,9 @@
       "label": "OSRM",
       "sublabel": "router.project-osrm.org",
       "stage": 0,
-      "row": 2,
-      "width": 140
+      "row": 1,
+      "width": 140,
+      "yOffset": 20
     },
     {
       "id": "overpass",
@@ -65,7 +66,7 @@
       "label": "Overpass API",
       "sublabel": "OpenStreetMap",
       "stage": 0,
-      "row": 3,
+      "row": 2,
       "width": 140
     },
     {
@@ -157,7 +158,11 @@
       "from": "osrm",
       "to": "impOficial",
       "label": "tempo por tramo",
-      "classification": "medido"
+      "classification": "medido",
+      "labelAt": [
+        201,
+        332
+      ]
     },
     {
       "id": "f-osm-rutas",
@@ -175,12 +180,7 @@
       "from": "overpass",
       "to": "impEquip",
       "label": "equipamentos",
-      "classification": "OSM",
-      "route": "straight",
-      "labelAt": [
-        250,
-        430
-      ]
+      "classification": "OSM"
     },
     {
       "id": "f-snap-op",
