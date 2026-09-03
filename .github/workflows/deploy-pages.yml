@@ -40,7 +40,7 @@ jobs:
       # package.json, so a laptop and this workflow can never drift apart.
       - uses: pnpm/action-setup@v4
 
-      # A postinstall is where a compromised dependency runs first. package.json names
+      # A postinstall is where a compromised dependency runs first. pnpm-workspace.yaml names
       # the only package allowed one (esbuild, which needs it to place its binary);
       # everything else is blocked without having to remember a flag here.
       - run: pnpm install --frozen-lockfile

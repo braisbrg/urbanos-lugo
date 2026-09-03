@@ -1495,32 +1495,42 @@ ok('the install-script allowlist is where the pinned pnpm looks for it', () => {
   assert(/^pnpm@\d/.test(pinned), `packageManager is "${pinned}", not a pinned pnpm`);
   const major = Number(pinned.slice('pnpm@'.length).split('.')[0]);
 
-  const inPackageJson = pkg.pnpm?.onlyBuiltDependencies;
   const workspaceFile = join(root, 'pnpm-workspace.yaml');
-  const inWorkspace = existsSync(workspaceFile)
-    ? /onlyBuiltDependencies/.test(readFileSync(workspaceFile, 'utf8'))
-    : false;
+  const workspace = existsSync(workspaceFile) ? readFileSync(workspaceFile, 'utf8') : '';
 
+  // The list, wherever this pnpm reads it from. The YAML side is parsed by hand rather
+  // than with a dependency: it is a flat sequence of names under one key, and the shape
+  // is asserted below, so a file this check cannot read fails instead of passing blind.
+  const allowed: string[] = (() => {
+    if (major >= 10) {
+      const block = workspace.match(/^onlyBuiltDependencies:\n((?:\s*-\s*\S+\n)+)/m);
+      return block ? [...block[1].matchAll(/-\s*(\S+)/g)].map((m) => m[1]) : [];
+    }
+    return Array.isArray(pkg.pnpm?.onlyBuiltDependencies) ? pkg.pnpm.onlyBuiltDependencies : [];
+  })();
+
+  assert(
+    allowed.length > 0,
+    major >= 10
+      ? 'pnpm 10 reads settings from pnpm-workspace.yaml; onlyBuiltDependencies is not there ' +
+        'or is empty, so every dependency may run an install script again'
+      : 'pnpm 9 reads onlyBuiltDependencies from package.json and it is missing',
+  );
+  assert(
+    allowed.includes('esbuild'),
+    'esbuild is not allowed to run its install script, so the build cannot place its binary',
+  );
+  // Whatever the version, the list stays short enough to read.
+  assert(allowed.length <= 3, `${allowed.length} packages may run install scripts; that list should stay tiny`);
+
+  // And the settings live in exactly one place: leaving the old copy behind is how the
+  // two disagree, and the one pnpm no longer reads is the one that looks reassuring.
   if (major >= 10) {
     assert(
-      inWorkspace,
-      'pnpm 10 reads settings from pnpm-workspace.yaml; onlyBuiltDependencies is not there, ' +
-        'so every dependency may run an install script again',
-    );
-  } else {
-    assert(
-      Array.isArray(inPackageJson),
-      'pnpm 9 reads onlyBuiltDependencies from package.json and it is missing',
-    );
-    assert(
-      inPackageJson.includes('esbuild'),
-      'esbuild is not allowed to run its install script, so the build cannot place its binary',
+      pkg.pnpm === undefined,
+      'package.json still has a "pnpm" field, which this pnpm ignores — move it or drop it',
     );
   }
-
-  // Whatever the version, the list stays short enough to read.
-  const allowed = inPackageJson ?? [];
-  assert(allowed.length <= 3, `${allowed.length} packages may run install scripts; that list should stay tiny`);
 });
 
 ok('the policy is not sent in development, where it serves a blank page', () => {

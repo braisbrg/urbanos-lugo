@@ -1,0 +1,29 @@
+# pnpm's settings, which pnpm 10 moved out of package.json.
+#
+# They were in package.json's "pnpm" field and stopped being read: the tool printed
+# "The pnpm field in package.json is no longer read" on every command, which meant the
+# only real control here -- the list of dependencies allowed to run an install script --
+# had quietly stopped applying. It lives here now, where the tool looks.
+
+# A postinstall is where a compromised dependency runs first, before anything is built or
+# tested. From pnpm 10 every install script is blocked unless the package is named here.
+# esbuild needs one to place its platform binary; nothing else in this tree does.
+onlyBuiltDependencies:
+  - esbuild
+
+# Transitive versions pinned above their advisories, both compatible with what their
+# parents ask for.
+#
+# qs is what express parses every query string with, before a single line of this project
+# sees the request -- 6.15.3 carries a denial of service and an array-limit bypass, and
+# express asks for ^6.14.0, so 6.16 is a patch away rather than a leap. fast-uri arrives
+# under ajv inside workbox-build, which only ever reads our own files at build time, but
+# there is no reason to ship a known-bad version to anyone who clones this.
+#
+# Drop an entry once its parent asks for a fixed version by itself.
+overrides:
+  qs: '>=6.16.0'
+  # Upper bound on purpose: an open `>=3.1.6` resolved to 4.1.4, and ajv asks for ^3.0.1.
+  # An override is allowed to ignore that, which is exactly how a security fix becomes an
+  # outage. Patched, and still inside the range its parent was written against.
+  fast-uri: '>=3.1.6 <4'

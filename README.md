@@ -733,17 +733,24 @@ sitio onde buscalo se algún día se replica.
 só o de despregar escribe en Pages) e `persist-credentials: false` no checkout, para que
 o token non quede en `.git/config` durante o resto do traballo.
 
-**Scripts de instalación.** `package.json` só lle permite executar un a `esbuild`, que o
-precisa para colocar o seu binario; calquera dependencia nova que traia un `postinstall`
-—que é onde correría primeiro se estivese comprometida— queda bloqueada ata que alguén a
-engada aí a man.
+**Scripts de instalación.** `pnpm-workspace.yaml` só lle permite executar un a `esbuild`,
+que o precisa para colocar o seu binario; calquera dependencia nova que traia un
+`postinstall` —que é onde correría primeiro se estivese comprometida— queda bloqueada ata
+que alguén a engada aí a man. Desde pnpm 10 o bloqueo é o comportamento por defecto e esa
+lista é a excepción, así que agora si fai algo: antes, permitir só esbuild e permitir todo
+daban o mesmo resultado.
 
-Con dúas honestidades. Hoxe **non se pode observar funcionando**, porque esbuild é o
-único paquete con script de instalación e permitir só esbuild ou permitir todo dan o
-mesmo resultado; a protección é para a próxima dependencia, non para as de agora. E pnpm
-10 moveu os seus axustes fóra de `package.json`, así que actualizar sen movelos volvería
-permitir todo sen que nada parecese roto: hai unha comprobación en `pnpm test` que falla
-dicindo exactamente iso se `packageManager` sobe a 10 e o axuste segue onde estaba.
+Estivo un tempo sen aplicarse sen que nada parecese roto. O axuste vivía no campo `pnpm`
+de `package.json`, que pnpm 10 deixou de ler, e `packageManager` fixaba unha versión que
+xa non era a que ninguén corría. Hai unha comprobación en `pnpm test` que le a lista de
+onde a le esta versión de pnpm, esixe que `esbuild` estea nela, que non medre e que non
+quede unha copia vella en `package.json` contando outra cousa.
+
+**Versións das dependencias.** `pnpm-workspace.yaml` fixa tamén `qs` e `fast-uri` por
+riba do seu aviso de seguridade. `qs` é con quen express analiza a cadea de consulta de
+cada petición, antes de que a vexa ningunha liña deste proxecto. O de `fast-uri` leva
+tope superior a propósito: sen el resolvía a unha versión maior por diante da que pide o
+seu pai, que é xusto como un arranxo de seguridade se converte nunha caída.
 
 O servidor normaliza todo o que chega pola query string (`?q[]=a` facía caer o endpoint
 cun volcado de pila), devolve JSON en caso de erro en lugar da páxina de erro de Express,
