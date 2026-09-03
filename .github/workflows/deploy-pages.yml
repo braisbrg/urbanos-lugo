@@ -63,6 +63,14 @@ jobs:
           # is set, because pointing a crawler at the wrong origin is worse than
           # pointing it nowhere.
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          # Where /api/… lives, when it does not live beside the page. Empty unless the
+          # repository variable API_ORIGIN is set (Settings → Secrets and variables →
+          # Actions → Variables), and empty is the current behaviour: no endpoints, the
+          # committed snapshot of the notices, and no operator block behind the QR. Set it
+          # to a deployed Worker's address and the build both calls it and admits exactly
+          # that origin in the policy. A variable rather than a line of code because it is
+          # the address of somebody's deployment, not a fact about this project.
+          VITE_API_ORIGIN: ${{ vars.API_ORIGIN }}
         run: pnpm run build
 
       # Stops GitHub Pages from running Jekyll over the output.
