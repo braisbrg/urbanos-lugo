@@ -67,3 +67,7 @@ design/rediseno-urbanos-lugo.html
 # because nothing can reproduce them.
 docs/diagrams/*.visual-check.*
 docs/diagrams/*.html
+
+# The worker bundle. esbuild rebuilds it from worker/index.ts in seconds; committing it
+# would be committing build output, which this repository does not do anywhere else.
+worker/dist/

@@ -28,7 +28,8 @@
     "data:alerts": "tsx tools/fetchAlerts.ts",
     "diagrams": "tsx tools/buildDiagrams.ts",
     "calibrate:walking": "tsx tools/calibrateWalking.ts",
-    "validate:times": "tsx tools/validateRideTimes.ts"
+    "validate:times": "tsx tools/validateRideTimes.ts",
+    "worker:build": "esbuild worker/index.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=worker/dist/worker.js"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-leaflet": "^0.1.4",

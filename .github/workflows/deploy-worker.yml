@@ -1,0 +1,81 @@
+name: Deploy the API worker
+
+# The two endpoints a static host cannot serve: the operator's service notices and the
+# minutes their own page shows behind a pole's QR. Neither site sends a CORS header, so a
+# browser is refused and something with a server has to ask for it.
+#
+# It only exists if somebody deploys it. Without it the site is exactly what it is today:
+# the notices come from the copy the hourly job commits, and the QR block does not appear.
+# So this workflow does nothing at all until DENO_DEPLOY_TOKEN is set as a repository
+# secret — no red runs on a repository that has decided not to bother.
+on:
+  push:
+    branches: [main]
+    # Only when something it is made of changed. The app's own screens are Pages' business.
+    paths:
+      - 'worker/**'
+      - 'src/services/**'
+      - 'src/data/**'
+      - 'src/utils/**'
+      - 'src/project.ts'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # deployctl exchanges this for a short-lived credential; nothing long-lived is stored.
+  id-token: write
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Read here and not in the step's `if`: the secrets context is available to a job's
+      # env and not to a step's condition, where it would quietly evaluate to nothing and
+      # skip the deploy on a repository that had configured one.
+      HAS_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+
+      - run: pnpm install --frozen-lockfile
+
+      # The same gate the site gets. A worker that answers with a dataset contradicting
+      # itself is worse than one that is not there, because the app has a fallback for
+      # absent and none for wrong.
+      - run: pnpm run lint
+      - run: pnpm test
+
+      # Deno needs explicit extensions in relative imports and every file under src/ is
+      # written for a bundler, so the worker is bundled first. esbuild is already here for
+      # server.ts; this adds no dependency.
+      - run: pnpm run worker:build
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Deploy
+        if: env.HAS_TOKEN == 'true'
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+        run: deno run -A jsr:@deno/deployctl deploy --project=urbanos-lugo-api --prod worker/dist/worker.js
+
+      - name: Say why nothing was deployed
+        if: env.HAS_TOKEN != 'true'
+        run: |
+          echo "No DENO_DEPLOY_TOKEN secret, so there is nothing to deploy to."
+          echo "The site does not need this: without the worker the notices come from the"
+          echo "committed snapshot and the QR block stays hidden, which is the published"
+          echo "behaviour today. README, 'Devolverlle a Pages as dúas cousas que lle faltan'."

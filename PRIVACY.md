@@ -62,9 +62,9 @@ of these requests.
 
 The published site has no API of its own: service notices come from a copy committed by a
 scheduled job, and the app says on screen when that copy was taken. Where an API **is**
-configured, it is a Cloudflare Worker (`worker/index.ts`) that reads buslugo.com and the
-council's feeds on the browser's behalf, because those sites refuse a browser directly.
-It is sent a stop code and nothing else — no identifier, no position.
+configured, it is a small service on Deno Deploy (`worker/index.ts`) that reads
+buslugo.com and the council's feeds on the browser's behalf, because those sites refuse a
+browser directly. It is sent a stop code and nothing else — no identifier, no position.
 
 ## If you run the server yourself
 
@@ -73,8 +73,9 @@ the route planner for everybody (`src/security/rateLimit.ts`). It is a `Map` tha
 sweeps; nothing is written to disk, and restarting the process forgets it. Nothing else
 about a request is recorded — there is no access log in this project.
 
-Whoever hosts it may of course be keeping their own logs. GitHub Pages and Cloudflare
-both do; that is between you and them, and their policies say what they keep.
+Whoever hosts it may of course be keeping their own logs. GitHub Pages does, and so does
+Deno Deploy where the API is configured; that is between you and them, and their policies
+say what they keep.
 
 ## Children
 

@@ -421,7 +421,9 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   └── test.ts                     comprobacións executables
 ├── .github/workflows/
 │   ├── deploy-pages.yml            publica en Pages: push, cada hora e a man
+│   ├── deploy-worker.yml           publica a API en Deno Deploy, se hai token
 │   └── check-source.yml            luns: reconcile + xeometría + tarifas
+├── worker/                         a API que Pages non pode servir (opcional)
 ├── design/                         artboards do redeseño (.dc.html) + canvas.json
 ├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts
@@ -905,39 +907,44 @@ Só dúas pezas precisan servidor, e as dúas polo mesmo motivo: nin buslugo.com
 `info.urbanoslugo.com` envían cabeceira CORS, así que o navegador ten prohibido lelas. Son
 os **avisos en vivo** e os **minutos que o operador amosa detrás do QR do poste**. En Pages
 non aparecen —a app cae na copia e dío—, pero non hai que mover o sitio para recuperalas:
-abonda cun Worker que responda `/api/…`.
+abonda cun servizo pequeno que responda `/api/…`.
 
-`worker/index.ts` é ese Worker. Non reimplementa nada: chama ás mesmas funcións de
+`worker/index.ts` é ese servizo. Non reimplementa nada: chama ás mesmas funcións de
 `src/services/`, que só usan `fetch`, `Response`, `ReadableStream` e `TextDecoder`. Diante
-delas pon a caché de Cloudflare —trinta minutos para os avisos, vinte segundos para unha
-parada— que é o que de verdade mantén preto de unha por xanela as peticións que saen cara
-a servizos alleos, porque a caché en memoria dos módulos vive por illa e non limita nada
-por si soa.
+delas pon a Cache API —trinta minutos para os avisos, vinte segundos para unha parada— que
+é o que de verdade mantén preto de unha por xanela as peticións que saen cara a servizos
+alleos, porque a caché en memoria dos módulos vive por illa e non limita nada por si soa.
 
-```bash
-pnpm dlx wrangler deploy --config worker/wrangler.toml
-```
+**Vai en Deno Deploy**, e despregao `.github/workflows/deploy-worker.yml` cando cambia algo
+do que está feito. Non hai CLI que instalar nin sesión que iniciar nunha máquina: fai falta
+un `DENO_DEPLOY_TOKEN` nos segredos do repositorio, e **sen ese segredo o workflow non fai
+nada e dío** —non deixa unha execución en vermello nun repositorio que decidiu non montalo.
 
-`dlx` e non unha dependencia: wrangler son 34 paquetes que só fan falta os poucos días ao
-ano nos que se desprega, e non teñen por que estar no lockfile nin instalarse en cada
-execución de CI. Envía telemetría por defecto; `pnpm dlx wrangler telemetry disable`
-apágaa, e é coherente co que este proxecto lle promete a quen o usa.
+Escribiuse primeiro para Cloudflare Workers e mudarse custou tres liñas —o ambiente, a
+escritura diferida na caché e o punto de entrada—, porque todo o que importa aquí é
+estándar. Dúas razóns para a mudanza, e a segunda é local: Cloudflare envía telemetría
+desde a súa ferramenta de despregue, e sobre todo, os **bloqueos por IP que LaLiga obtén
+en España** levan caído enriba de rangos de Cloudflare en tardes de fin de semana, que é
+exactamente cando alguén mira cando pasa o bus para volver á casa. Non é unha garantía
+—ningún aloxamento a dá, e o propio sitio está en GitHub Pages—, pero é a exposición máis
+documentada e evitábase cambiando de casa.
 
-O ficheiro non depende de Cloudflare máis que no xeito de despregalo: exporta
-`fetch(request, env, ctx)`, que é a interface que implementan tamén Deno Deploy, Netlify
-Edge e Vercel Edge, e usa `caches.open()` —o estándar— e non `caches.default`. Se algún día
-convén cambiar de casa, cámbiase o despregue e non o que fai.
+Deno esixe extensión explícita nos imports relativos e todo `src/` está escrito para un
+empaquetador, así que o workflow empaqueta antes con esbuild, que xa está aquí por
+`server.ts`. `pnpm run worker:build` fai o mesmo en local.
 
-Despois, `ALLOWED_ORIGIN` co enderezo do sitio (`https://<usuario>.github.io`, sen barra
-final): é o único que poderá chamalo. Sen ese valor responde cun `allow-origin` baleiro,
-que o navegador rexeita — falla pechado, non aberto.
+Fai falta, unha vez: un proxecto en Deno Deploy chamado `urbanos-lugo-api`, o seu token
+como segredo `DENO_DEPLOY_TOKEN`, e no ambiente do proxecto `ALLOWED_ORIGIN` co enderezo
+do sitio (`https://<usuario>.github.io`, sen barra final) — é o único que poderá chamalo.
+Sen ese valor responde sen cabeceira de CORS e o navegador rexéitao: falla pechado.
 
-E na build, `VITE_API_ORIGIN` co enderezo do Worker. Iso fai dúas cousas á vez: as
-peticións van alí en lugar de a carón da páxina, e ese mesmo enderezo —só a orixe— engádese
-a `connect-src` na política. Unha build que nomea unha orixe non pode falar con outra.
+E na build do sitio, a variable de repositorio `API_ORIGIN` co enderezo do despregue. Iso
+fai dúas cousas á vez: as peticións van alí en lugar de a carón da páxina, e ese mesmo
+enderezo —só a orixe— engádese a `connect-src` na política. Unha build que nomea unha orixe
+non pode falar con outra.
 
-O limitador de peticións de `server.ts` non viaxa: un Worker non garda estado entre
-peticións. Cloudflare ten o seu, que se activa no panel.
+O limitador de peticións de `server.ts` non viaxa: isto non garda estado entre peticións.
+O que si limita é a caché de arriba, que é a que protexe aos de fóra.
 
 ---
 
