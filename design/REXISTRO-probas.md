@@ -647,3 +647,73 @@ O rótulo segue facendo falta, pero por dúas razóns máis pequenas e reais: o 
 refresco é **best-effort** —se buslugo.com non responde, publica o snapshot vello sen
 queixarse— e alguén cun service worker que aínda non colleu a build nova está a ler unha
 máis antiga.
+
+---
+
+## Preparación para produción — rolda 2: o enderezo real de Pages
+
+A rolda 1 serviu `dist/` na raíz. O sitio publicado non vive na raíz: vive en
+`https://<usuario>.github.io/<repo>/`, e o workflow pon `BASE_PATH` co nome do repositorio.
+Así que esta rolda construíu con `BASE_PATH=/urbanos-lugo/` e serviu o resultado cun
+servidor que imita a Pages de verdade —non `vite preview`, que reescribe calquera ruta
+descoñecida a `index.html` e responde **200**. Pages busca un ficheiro no disco e, cando
+non o hai, envía `404.html` **con estado 404**. Esa diferenza é a rolda enteira.
+
+### Tres achados
+
+**1. A pantalla de Tarifas anunciábase como a de Avisos.** O `<h1>` do shell era unha
+cadea de ternarios que remataba nun caso por defecto. Cando a pantalla única se partiu en
+dúas, a nova herdou o título da vella, e quen navega por encabezados —lector de pantalla,
+ou o índice do navegador— oía o nome equivocado. Non era específico de Pages: pasaba en
+todas as builds desde a división.
+
+Arranxado como `Record<Tab, string>`: falta unha pestana e agora é un erro de compilación,
+non un texto equivocado en pantalla.
+
+**2. Todas as rutas do `sitemap.xml` respondían 404.** Medido: das sete que anuncia, só a
+raíz devolvía 200. As outras seis debuxaban a app —o `404.html` é unha copia da páxina— pero
+co estado 404. Un buscador descarta un enderezo listado que responde 404, e as aplicacións
+de mensaxería saltan a vista previa dun 404, tirando as etiquetas `og:` que se engadiran
+**porque** os enlaces de «copiar ligazón» se comparten.
+
+Arranxado escribindo unha páxina en cada enderezo (`paradas/index.html`, …). As seis
+responden 200 e `404.html` queda para o resto. Verificado antes e despois. E os slugs
+pasaron a vivir nunha soa lista, `src/routes.ts`, porque estaban escritos en tres sitios: o
+enrutador, o sitemap e —desde hoxe— a build.
+
+**3. Sen servidor, a app pedía os minutos do operador cada 30 segundos para sempre.** En
+Pages `/api/…` non existe e nunca vai existir: cada intento traía o `404.html` enteiro.
+Pequeno en bytes (1,9 KB comprimido) pero é unha radio que esperta cada medio minuto no
+móbil de alguén que está de pé nunha parada. Un 404 aquí é permanente —ou non hai servidor,
+ou a parada non ten código do operador—, mentres que un 502 si é transitorio. Agora o 404
+para o temporizador e o 502 conserva o seu reintento. Medido: 3 peticións en 80 segundos
+antes, 1 despois.
+
+### O que segue ben
+
+- A ligazón do QR resolve, tanto `/paradas?parada=uilP` como `/paradas/?parada=uilP` —que é
+  a forma á que Pages redirixe cando hai un directorio.
+- Todos os activos resolven co prefixo do repositorio; o `manifest`, o `favicon` e o
+  `theme-init.js` tamén.
+- **Xeolocalización**: desde a Praza Maior dá Sindicatos ~209 m, Bolaño Ribadeneira ~277 m,
+  Arenal ~387 m. Plausible. E se se denega o permiso di «No se pudo acceder a la ubicación.
+  Revisa los permisos del navegador» en lugar de inventar unha lista desde o centro de Lugo.
+- Os avisos caen ao snapshot e o rótulo da rolda 1 dise.
+
+### Falso positivo apuntado
+
+**O service worker non se pode probar neste navegador.** `navigator.serviceWorker.register`
+falla con «An unknown error occurred when fetching the script» —e o script nin sequera se
+pide ao servidor, comprobado no log—. Antes de escribilo como un fallo do proxecto probei o
+caso mínimo: unha páxina de tres liñas cun service worker dunha liña, sen CSP, sen framework,
+servida do mesmo xeito. **Falla igual.** Non hai violación de CSP (escoitei
+`securitypolicyviolation`: cero eventos). É o panel, non a app.
+
+O que si se pode afirmar é o que se comprobou estaticamente: `sw.js` lista 20 entradas de
+precaché con URLs relativas ao seu propio directorio —que é o correcto baixo un prefixo— e
+`navigateFallback` apunta a `/urbanos-lugo/index.html`. **O comportamento offline real
+segue sen probarse nun navegador de verdade**, e non se vai dicir que si ata que se probe.
+
+Regra: cando algo do navegador falla, reproducilo co caso mínimo antes de chamarlle fallo.
+É a terceira vez que o panel produce un falso positivo (as dúas anteriores, `:focus` sen
+foco real no documento).

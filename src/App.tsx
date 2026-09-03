@@ -24,6 +24,7 @@ import { Lang, isLang, translations } from './i18n';
 import { MenuDrawer } from './components/MenuDrawer';
 import { useTheme } from './hooks/useTheme';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
+import type { Tab } from './components/navSections';
 import { isLineInService } from './utils/schedule';
 import { findStop } from './utils/transitEngine';
 import { BusStop, BusLine } from './types';
@@ -345,12 +346,21 @@ export default function App() {
             shell-level heading is correct in both layouts, and a reader jumping by
             heading hears which section they are in before anything else. */}
         <ErrorBoundary t={t} resetKey={activeTab}>
+        {/* A record and not a ternary chain: the chain ended in a catch-all, so when the
+            one screen became two the new tab inherited the old one's heading and
+            announced itself as the wrong screen to anyone navigating by heading.
+            Record<Tab, …> makes the next tab a compile error instead. */}
         <h1 className="sr-only">
-          {activeTab === 'stops' ? t.nav.stops
-            : activeTab === 'lines' ? t.nav.lines
-            : activeTab === 'map' ? t.nav.map
-            : activeTab === 'plan' ? t.nav.plan
-            : t.menu.alerts}
+          {
+            ({
+              stops: t.nav.stops,
+              lines: t.nav.lines,
+              map: t.nav.map,
+              plan: t.nav.plan,
+              info: t.menu.alerts,
+              fares: t.menu.fares,
+            } satisfies Record<Tab, string>)[activeTab]
+          }
         </h1>
 
         {/* Below lg the two panes take turns; from lg up the saved stops stay beside the

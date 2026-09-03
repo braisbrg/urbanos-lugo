@@ -23,6 +23,7 @@ export function useOperatorTimes(code: string | undefined): OperatorTimes | null
     // A stop change must not leave the previous stop's minutes on screen for a moment.
     setTimes(null);
     let current = true;
+    let timer: ReturnType<typeof setInterval> | undefined;
 
     const ask = async () => {
       try {
@@ -36,6 +37,16 @@ export function useOperatorTimes(code: string | undefined): OperatorTimes | null
         const res = await fetch(`${import.meta.env.BASE_URL}api/paradas/${encodeURIComponent(code)}/agora`, {
           signal: AbortSignal.timeout?.(12_000),
         });
+        // A 404 here is permanent, and asking again every thirty seconds for as long as
+        // the board is open answers nothing. Two ways to get one: the published build is
+        // static, so `/api/…` is a file that does not exist and the host returns its
+        // fallback page; or the stop has no code on the operator's own site. Neither
+        // changes while somebody stands at the pole. A 502 does -- that is the operator
+        // being unreadable right now -- so it keeps its retry.
+        //
+        // The interval is already assigned by the time this runs: the await above yields
+        // before the rest of the effect body, which is what creates it.
+        if (res.status === 404) clearInterval(timer);
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as OperatorTimes;
         if (current) setTimes(data);
@@ -49,7 +60,7 @@ export function useOperatorTimes(code: string | undefined): OperatorTimes | null
     ask();
     // Their own page refreshes on this cadence; the server caches for twenty seconds, so
     // this costs one outbound request a minute at most however many people are looking.
-    const timer = setInterval(ask, 30_000);
+    timer = setInterval(ask, 30_000);
     return () => {
       current = false;
       clearInterval(timer);

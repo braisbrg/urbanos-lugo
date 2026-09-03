@@ -10,6 +10,8 @@
  * than guessed, so a local build never ships a canonical pointing at somebody's laptop.
  */
 
+import { PATHS } from './routes';
+
 /** The site's own address, with a trailing slash, or null when nothing was configured. */
 export function siteUrl(raw: string | undefined): string | null {
   if (!raw) return null;
@@ -59,8 +61,13 @@ export function robotsTxt(site: string): string {
   return ['User-agent: *', 'Allow: /', '', `Sitemap: ${site}sitemap.xml`, ''].join('\n');
 }
 
-/** The paths a crawler should know about: the root and one per tab. */
-export const SITE_PATHS = ['', 'paradas', 'linhas', 'mapa', 'ruta', 'avisos', 'tarifas'];
+/**
+ * The paths a crawler should know about: the root and one per tab.
+ *
+ * Taken from the router's own record rather than typed out again, because the copy that
+ * used to be here was free to drift from it and nothing would have said so.
+ */
+export const SITE_PATHS = ['', ...Object.values(PATHS)];
 
 /**
  * The sitemap.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Tab } from '../components/navSections';
+import { PATHS } from '../routes';
 
 /**
  * The open tab, in the address bar.
@@ -13,16 +14,6 @@ import type { Tab } from '../components/navSections';
  * and `?linea=`, which is what the QR stickers on the poles carry and what a shared
  * link uses. Those keep working exactly as they did.
  */
-
-/** The Galician words, because that is the language the app is written in. */
-const PATHS: Record<Tab, string> = {
-  stops: 'paradas',
-  lines: 'linhas',
-  map: 'mapa',
-  plan: 'ruta',
-  info: 'avisos',
-  fares: 'tarifas',
-};
 
 const TABS = Object.entries(PATHS) as [Tab, string][];
 

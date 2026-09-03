@@ -23,6 +23,7 @@ import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/uti
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
+import { PATHS } from '../src/routes';
 import { walkHopsOf } from '../src/services/walkingPath';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
 import {
@@ -1779,15 +1780,19 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const hook = readFileSync(join(root, 'src/hooks/useTabRoute.ts'), 'utf8');
 
-  const slugs = [...hook.matchAll(/^\s{2}\w+: '([a-z]+)',$/gm)].map((m) => m[1]);
-  assert(slugs.length === 6, `the hook maps ${slugs.length} tabs, expected 6: ${slugs.join(', ')}`);
-
+  // The slugs used to be written out twice, here and in the sitemap, and this check
+  // compared the two copies by parsing the hook's source. They are one record now, in
+  // src/routes.ts, so what is left to check is that it still covers every tab and that
+  // the hook reads it rather than growing its own list again.
+  const slugs = Object.values(PATHS);
+  assert(slugs.length === 6, `${slugs.length} tabs have a path, expected 6: ${slugs.join(', ')}`);
+  assert(new Set(slugs).size === slugs.length, `two tabs share a path: ${slugs.join(', ')}`);
+  assert(
+    /from '\.\.\/routes'/.test(hook),
+    'useTabRoute no longer reads the shared route record, so the sitemap can drift from it',
+  );
   for (const slug of slugs) {
     assert(SITE_PATHS.includes(slug), `"${slug}" is a tab route but is not in the sitemap`);
-  }
-  for (const path of SITE_PATHS) {
-    if (path === '') continue;
-    assert(slugs.includes(path), `the sitemap advertises "${path}", which no tab serves`);
   }
 
   // A side effect inside a state updater is not guaranteed to run once -- React calls
@@ -1800,10 +1805,17 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
     'history.pushState is back inside the state updater, which double-pushes in development',
   );
 
-  // Vite is told to copy the built page to 404.html; without it a direct visit to any
-  // of these paths lands on GitHub's own 404 rather than the app.
+  // Vite is told to copy the built page to 404.html, and to write one at each tab's own
+  // address. Without the first, a mistyped or old link lands on GitHub's own 404 page
+  // instead of the app; without the second, every path in sitemap.xml answers 404 --
+  // rendering the app, but telling a crawler the page is not there and stopping the
+  // link previews the og: tags exist for.
   const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
   assert(/404\.html/.test(vite), 'the SPA fallback copy is gone, so tab paths break on GitHub Pages');
+  assert(
+    /SITE_PATHS/.test(vite),
+    'the build no longer writes a page per route, so every path in the sitemap answers 404',
+  );
 });
 
 ok('the hand-written notices are dated, not declared current', () => {

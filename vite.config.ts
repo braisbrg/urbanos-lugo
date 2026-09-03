@@ -1,12 +1,12 @@
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { CSP_META } from './src/security/csp';
-import { robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
+import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
 
 // GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
 // Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
@@ -80,12 +80,36 @@ const emitCompressedAssets = {
   },
 };
 
+/**
+ * A real page at every tab's address, and 404.html behind them.
+ *
+ * The fallback alone was enough to *render* /paradas or /tarifas -- Pages serves 404.html
+ * for a path it does not have -- but it sends 404 with it, and a 404 is not only a
+ * rendering detail. sitemap.xml advertises all six of these paths, and a crawler drops a
+ * listed URL that answers 404, which turned the SEO work into a list of dead links. The
+ * app also has a "copy link" button on every stop, and the apps people paste those into
+ * skip the preview on a 404 -- so the og: tags added *because* those links get shared
+ * were being thrown away too.
+ *
+ * One 4.6 KB copy per tab fixes both: the six addresses answer 200, and 404.html stays
+ * for everything else, which is what still catches an old link or a mistyped path.
+ *
+ * Runs before emit-compressed-assets in the plugin list on purpose, so the copies get
+ * their .br and .gz like every other file.
+ */
 const emitSpaFallback = {
   name: 'emit-spa-fallback',
   apply: 'build' as const,
   closeBundle() {
     const built = path.resolve(outDir, 'index.html');
-    if (existsSync(built)) copyFileSync(built, path.resolve(outDir, '404.html'));
+    if (!existsSync(built)) return;
+    copyFileSync(built, path.resolve(outDir, '404.html'));
+    for (const route of SITE_PATHS) {
+      if (!route) continue; // the root is index.html itself
+      const dir = path.resolve(outDir, route);
+      mkdirSync(dir, { recursive: true });
+      copyFileSync(built, path.join(dir, 'index.html'));
+    }
   },
 };
 
