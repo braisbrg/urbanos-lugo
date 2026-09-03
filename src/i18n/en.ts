@@ -77,6 +77,7 @@ export const en: Dict = {
     checkTimetable: 'See timetable',
     every: (minutes: number) => `Every ${minutes} min`,
     everyRange: (from: number, to: number) => `Every ${from}–${to} min`,
+    towards: (place: string) => `Towards ${place}`,
   },
 
   fares: {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Lang, translations } from '../../i18n';
 import { escapeHtml } from './escapeHtml';
+import { directionLabel } from '../../utils/serviceLabels';
 import L from 'leaflet';
 import { BusLine } from '../../types';
 
@@ -59,7 +60,7 @@ function linesHerePopup(
       <button type="button" data-draw="1" title="${escapeHtml(t.map.drawRoute)}"
         style="display:flex; flex:1; align-items:center; gap:8px; min-height:44px; padding:0 8px; background:none; border:none; cursor:pointer; text-align:left; font-family:inherit;">
         <span style="background-color:${escapeHtml(line.color)}; color:#fff; font-weight:700; font-size:12px; padding:3px 7px; border-radius:5px;">${escapeHtml(line.number)}</span>
-        <span style="font-size:13px; color:var(--c-ink-2);">${escapeHtml(dir.name)}</span>
+        <span style="font-size:13px; color:var(--c-ink-2);">${escapeHtml(directionLabel(dir, lang))}</span>
       </button>
       <button type="button" data-open="1" title="${escapeHtml(t.map.openLineInfo)}"
         aria-label="${escapeHtml(t.map.openLineInfo)}: ${escapeHtml(line.number)}"
@@ -123,7 +124,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           });
 
           polyline.bindTooltip(
-            `<div class="font-sans text-label"><b>${escapeHtml(translations(lang).lines.lineLabel(line.number))}</b><br/>${escapeHtml(dir.name)}</div>`,
+            `<div class="font-sans text-label"><b>${escapeHtml(translations(lang).lines.lineLabel(line.number))}</b><br/>${escapeHtml(directionLabel(dir, lang))}</div>`,
             { sticky: true, className: 'transit-map-tooltip' },
           );
 

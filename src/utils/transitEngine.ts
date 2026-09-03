@@ -1,5 +1,5 @@
 import { BUS_STOPS, BUS_LINES, FARES } from '../data/transitData';
-import { daysLabel } from './serviceLabels';
+import { daysLabel, directionLabel } from './serviceLabels';
 import { Lang, translations } from '../i18n';
 import { BusStop, BusLine, StopArrival, ScheduledBus, RoutePlanResult, TripFare } from '../types';
 import { matchesQuery, calculateRelevanceScore } from './searchUtils';
@@ -915,7 +915,7 @@ function buildLeg(
     delayMinutes: departure.delayMinutes,
     instruction: translations(lang).engine.board(
       line.number,
-      direction.name,
+      directionLabel(direction, lang),
       formatMinutes(boardTime),
       toStop.name,
       ride.stopsCount,

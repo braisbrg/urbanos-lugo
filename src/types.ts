@@ -35,11 +35,18 @@ export interface BusLine {
   color: string; // Hex color for line badge & map route
   textColor: string;
   category: 'urbano' | 'hospital' | 'periferia' | 'rural' | 'especial';
-  days: string; // e.g. "Luns a Venres" | "Todos os días" | "Laborables e Sábados"
-  frequency: string; // e.g. "Cada 30 min" | "Cada 60 min"
+  /**
+   * The next three are prose in the operator's own Spanish, written once by the
+   * generator, and they cannot follow the reader's language — do NOT render them.
+   * `daysLabel()` and `frequencyLabel()` in utils/serviceLabels say the same facts in
+   * any of the three. `description` is "name. days. frequency." and exists only so the
+   * search matches a line by what it says.
+   */
+  days: string; // e.g. "Todos los días" | "De lunes a viernes (laborables)"
+  frequency: string; // e.g. "Cada 30 min"
+  description: string;
   firstDeparture: string; // "07:00"
   lastDeparture: string; // "22:30"
-  description: string;
   /**
    * Published timetable, one pattern per kind of day the operator distinguishes.
    * `headwayMinutes` is set when the operator gives a cadence and prints only the
@@ -52,7 +59,9 @@ export interface BusLine {
   }[];
   directions: {
     id: 'ida' | 'volta' | 'circular';
-    name: string; // e.g. "Sentido O Ceao"
+    /** `Sentido ${destination}`, written by the generator in one language — do NOT
+     *  render it. `directionLabel()` in utils/serviceLabels says it in the reader's. */
+    name: string;
     origin: string;
     destination: string;
     stops: string[]; // Stop IDs in sequence

@@ -15,7 +15,7 @@ import { BusLine, BusStop, ScheduledBus } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
 import { getScheduledBuses } from '../utils/transitEngine';
 import { buildRuns, dayKind, formatMinutes, minutesNow, scheduledDuration } from '../utils/schedule';
-import { daysLabel, frequencyLabel } from '../utils/serviceLabels';
+import { daysLabel, directionLabel, frequencyLabel } from '../utils/serviceLabels';
 import { MAX_QUERY_LENGTH, matchesQuery } from '../utils/searchUtils';
 
 /** The categories the dataset actually uses, in the order the lines declare them. */
@@ -385,9 +385,11 @@ export const LinesView: React.FC<LinesViewProps> = ({
               </div>
             </div>
 
-            <p className="text-label text-ink-2 mt-3 bg-surface/50 p-3 rounded-md border border-line">
-              {currentLine.description}
-            </p>
+            {/* The line's `description` used to be printed here. It is built by the
+                generator as "name. days. frequency." out of the operator's own Spanish,
+                so on the Galician screen it said "Todos los días" three lines under a
+                grid already saying "Todos os días" — the same three facts, once
+                translated and once not. The field stays: the search matches against it. */}
 
             {direction.geometrySource && direction.geometrySource !== 'osm' && (
               <p className="mt-3 flex gap-2 rounded-md border border-line bg-surface/50 p-3 text-label leading-relaxed text-ink-2">
@@ -442,7 +444,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       onClick={() => setDirectionIndex(idx)}
                       className={`px-3 py-1.5 rounded text-label font-bold transition-all ${directionIndex === idx ? 'bg-bg text-ink shadow-xs' : 'text-ink-2 hover:text-ink'}`}
                     >
-                      {dir.name}
+                      {directionLabel(dir, lang)}
                     </button>
                   ))}
                 </div>

@@ -785,3 +785,61 @@ A reconciliación con datos de hoxe: **24/24 liñas envían o horario que imprim
 itinerarios pasan por alí. Non houbo cambio de horarios en setembro. A única diferenza é a
 orde de tres paradas na 5.1/volta, que a ferramenta marca como informativa porque a nosa
 orde é máis curta —8,2 km fronte a 19,0— e é o sitio onde os datos se arranxaron a man.
+
+---
+
+## Rolda 5: percorrer a app enteira na build estática
+
+Paradas, liñas, mapa, ruta, avisos, tarifas, o modal do código, a xeolocalización nas dúas
+respostas, a alarma, os tres idiomas e a batería de carga. **Sen defectos confirmados.**
+
+- **Os códigos QR resolven.** 271 postes teñen token do operador; todos resolven, e ao seu
+  propio poste. Ningunha colisión ao ignorar maiúsculas. 1186 ids oficiais, ningún
+  compartido, ningún sen resolver. Xa estaba todo cuberto polas comprobacións existentes,
+  así que non se engadiu ningunha nova.
+- **O modal do código** cae ben onde non hai `BarcodeDetector`: entrada manual, exemplos, e
+  acepta tanto `qFuw` como a URL completa `info.urbanoslugo.com/qr-demo-paradas/uilP`.
+- **Carga e disparates**: 50 peticións á vez en 49 ms, todas 200; travesía de rutas, bytes
+  nulos, parámetros enormes → 404 ou 400, nada 500. O limitador segue dicindo que non (14
+  de 40 refusadas). O único número alto é o primeiro `/agora`: 4,5 s, que é o servidor do
+  operador tardando, e a app non bloquea agardándoo.
+- **Planificador**: 4 opcións de 62, tramo a pé con distancia e minutos, espera na parada,
+  22 min de viaxe, chegada etiquetada `~ ESTIMADO`, tarifa 0,45 €.
+
+### Un falso positivo máis, e a regra que o colleu
+
+«Enter non envía o código do poste» — falso. A tecla chámase `Enter`, non `Return`; co nome
+correcto funciona e abre a parada. Cuarta vez que a ferramenta finxe un fallo da app.
+
+### Unha decisión que non é miña
+
+O planificador conta dúas historias sobre a **mesma** opción. A cabeceira di «Salida 16:36»
+(`departureTime`, que é *agora*), a fila da opción di «sal a las 16:46» (`leaveAt`, a última
+hora á que podes saír e chegar xusto), e o detalle narra saír ás 16:36 e agardar 10 min na
+parada. Os tres números son certos por separado —16:46 + 7 min a pé = 16:53, que é cando sae
+o bus— pero xuntos contradinse, e a fila remata dicindo «10 min de espera» xunto a unha hora
+de saída na que non se agarda nada.
+
+Cal debe mandar é unha decisión de deseño: aconsellar saír xa e agardar na parada, ou saír no
+último momento. O README di «para non perder o bus, chega uns minutos antes», o que apunta á
+primeira. Queda apuntado, sen tocar.
+
+---
+
+## Rolda 6: prosa do xerador amosada tal cal
+
+`serviceLabels.ts` existe precisamente por isto: `line.days` e `line.frequency` son prosa
+castelá escrita unha vez, e a interface galega chegou a imprimir «De lunes a viernes». Ese
+arranxo cubriu eses dous campos. **Faltaban dous máis.**
+
+- **`line.description`** —`"nome. días. frecuencia."`, construído polo xerador— imprimíase
+  nun recadro na ficha da liña. En galego dicía «Todos los días» tres liñas por debaixo dun
+  cadro que xa dicía «Todos os días». Eran os mesmos tres feitos, unha vez traducidos e
+  outra non. **Borrado o recadro**; o campo queda porque a busca casa contra el.
+- **`direction.name`** —`"Sentido ${destino}"`— era a etiqueta dos dous botóns de sentido, e
+  en inglés lía «Sentido HULA (Ent. Principal)». Tamén en dous globos do mapa e na frase que
+  o motor escribe para subir ao bus. Agora sae de `directionLabel(dir, lang)`: «Sentido …» en
+  galego e castelán, «Towards …» en inglés. Verificado nos tres idiomas.
+
+E os dous campos levan agora un comentario no tipo que di **non amosar**, porque é aí onde
+mira quen vai usalos.

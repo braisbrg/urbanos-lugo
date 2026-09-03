@@ -2,6 +2,18 @@ import { BusLine } from '../types';
 import { Lang, translations } from '../i18n';
 
 /**
+ * Which way round the line is running.
+ *
+ * `direction.name` is another string the generator writes once, in one language --
+ * `Sentido ${destination}` -- and the English interface was labelling its two direction
+ * tabs "Sentido HULA (Ent. Principal)". The destination beside it is a place name, which
+ * stays as it is published; only the word in front of it belongs to the reader.
+ */
+export function directionLabel(direction: BusLine['directions'][number], lang: Lang): string {
+  return translations(lang).service.towards(direction.destination);
+}
+
+/**
  * Human labels for when a line runs and how often, derived from the structured service
  * data rather than read from a pre-rendered string.
  *

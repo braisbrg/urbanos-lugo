@@ -80,6 +80,7 @@ export const gl = {
     checkTimetable: 'Consultar horario',
     every: (minutes: number) => `Cada ${minutes} min`,
     everyRange: (from: number, to: number) => `Cada ${from}–${to} min`,
+    towards: (place: string) => `Sentido ${place}`,
   },
 
   fares: {
