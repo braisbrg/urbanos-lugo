@@ -891,3 +891,44 @@ workflows/`, e os ficheiros de `src/` que aguantan cousas —`routes.ts`, `seo.t
 `Invoke-WebRequest` de PowerShell descomprime só e agocha `Content-Encoding`: as tres
 peticións parecían devolver 558 KB sen comprimir. Con `curl.exe --raw` vense os 118 KB
 reais. Ferramenta, non aplicación.
+
+---
+
+## Rolda 8: dependencias, e un xestor de paquetes que non é o que di ser
+
+**`package.json` di `packageManager: pnpm@9.0.0`. Aquí corre pnpm 11.25.0.** E pnpm 11
+imprime, en cada orde, que **ignora** `pnpm.onlyBuiltDependencies`, que é o control que o
+comentario do workflow describe así: «package.json nomea o único paquete ao que se lle
+permite un postinstall (esbuild); todo o demais queda bloqueado». Non hai
+`pnpm-workspace.yaml` nin `.npmrc` que recolla ese axuste.
+
+O importante non é cal das dúas versións ten razón: é que **desde o repositorio non se pode
+saber cal manda**. A integración continua instala exactamente `9.0.0` porque
+`pnpm/action-setup` le ese campo, e o que se proba aquí resólvese cun pnpm dous maiores por
+diante. A árbore que se despregue non é a que se probou.
+
+**E `pnpm audit` saca seis avisos, todos por versións que o lockfile fixa:**
+
+| | paquete | fixado | parcheado en | onde |
+| :--- | :--- | :--- | :--- | :--- |
+| 4 altos | `fast-uri` | 3.1.5 | ≥ 3.1.6 | `vite-plugin-pwa > workbox-build`, só na build |
+| 2 medios | `qs` | 6.15.3 | ≥ 6.16.0 | `express`, **en execución** |
+
+Os de `fast-uri` non tocan nada que se envíe: workbox le os nosos propios ficheiros. Os de
+`qs` si: express analiza con el a cadea de consulta de **cada** petición, antes de que
+ningún código deste proxecto a vexa, e un dos dous é unha denegación de servizo. En GitHub
+Pages non hai servidor e non aplica; en `pnpm start` si.
+
+Os dous arránxanse cun `overrides`… que pnpm 11 tampouco lería de `package.json`. E
+rexenerar o lockfile cun pnpm 11 para unha CI que instala 9.0.0 é exactamente o xeito de
+romper algo grande cun arranxo pequeno. **Isto queda para decidir, non para tocar.**
+
+### O que si se comprobou, e está limpo
+
+- **Exportacións mortas**: ningunha. As tres que saíron do escáner úsanse dentro do seu
+  propio ficheiro (`WAY_TAG_QUERY`, `closedToBuses`) ou son o tipo de retorno dunha función
+  pública (`MapColors`). Os 19 «ficheiros que ninguén importa» son os puntos de entrada de
+  `tools/`, que se executan, non se importan.
+- **Composición do paquete**: o anaco de entrada son 544 KB e leva React, a app e os 261 KB
+  de `stops.json` + `lines.json`. **Cero mencións** de leaflet ou maplibre: o renderizador
+  segue fóra, baixo demanda. 119 KB en brotli.
