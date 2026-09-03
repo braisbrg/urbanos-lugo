@@ -984,3 +984,26 @@ caché de bordo devolvendo unha resposta gardada coa orixe **anterior**, e con `
 iso son ata trinta minutos nos que o sitio que acaba de ser autorizado se rexeita a si mesmo
 sen que nada o explique. `Vary: Origin` non axuda: a cabeceira vén da configuración, non da
 petición. Agora a orixe entra na clave da caché.
+
+---
+
+## Roldas 10 e 11: as dúas limpas
+
+**Rolda 10 — regresión sobre todo o tocado hoxe.** `stressParsers`, `stressEngine`,
+`stressInvariants`, `fullAudit`, `reconcileSelfTest`: todos en verde, incluído «180.144
+taboleiros, 401.109 saídas examinadas, todas as respostas aguantaron» e «5/5 faltas cazadas
+pola comprobación que existe para cazalas». As seis rutas da build estática debuxan co seu
+encabezado correcto e o rótulo da copia segue aparecendo nos avisos. E o servidor de
+desenvolvemento, que non se probara en toda a sesión e importa o `csp.ts` que cambiou:
+raíz 200, os dous endpoints 200, e **sen** cabeceira CSP en dev, que é o que se decidiu.
+Cero achados.
+
+**Rolda 11 — as comprobacións de CI que faltaban por executar.** Contra as fontes de hoxe:
+
+- `checkFares`: **todos os prezos coinciden** cos que publica o operador.
+- `checkParsersUnchanged`: a lectura capada devolve o feed enteiro (71.843 caracteres), e un
+  corpo tres veces o teito córtase nos 524.288 exactos.
+- `stressHttp` contra o servidor reconstruído: 50 peticións á vez en 55 ms, todas 200;
+  disparates todos en 400 ou 404; o limitador refusa 14 de 40.
+
+Cero achados. **Dúas roldas limpas seguidas.**
