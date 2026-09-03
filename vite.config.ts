@@ -202,22 +202,12 @@ export default defineConfig(() => {
           navigateFallback: `${base}index.html`,
           navigateFallbackDenylist: [/\/api\//],
           runtimeCaching: [
-            {
-              // The typeface.
-              //
-              // Atkinson Hyperlegible is loaded from Google's CDN and was the one asset
-              // with no caching rule, so a second visit with no signal fell back to the
-              // system sans — losing the face chosen for legibility exactly where it
-              // matters, at a shelter with no coverage. The stylesheet and the font
-              // files live on different hosts, so both are covered.
-              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts',
-                expiration: { maxEntries: 24, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
+            // The typeface had a rule here, because it came from Google's CDN and was
+            // the one asset the service worker did not precache — so a second visit with
+            // no signal fell back to the system sans, losing the face chosen for
+            // legibility exactly where it matters. It is served from this origin now, so
+            // `globPatterns` above precaches the woff2 files with everything else and a
+            // runtime rule for them would be a rule for something already in the cache.
             {
               // Map data: show what was seen before rather than grey squares offline.
               // Covers the vector tiles, the glyphs and the sprites, which all come from

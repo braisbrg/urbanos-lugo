@@ -49,16 +49,20 @@ Opening any web page tells the servers it contacts your IP address. This one con
 
 | Host | What for | When |
 | :--- | :--- | :--- |
-| `fonts.googleapis.com`, `fonts.gstatic.com` | the Atkinson Hyperlegible typeface | every visit, until cached |
 | `tiles.openfreemap.org` | the map background | when you open a map |
 | `tile.openstreetmap.org` | the map background, on a device with no WebGL2 | when you open a map |
 | `routing.openstreetmap.de` | the real walking path | only when you ask for it |
 | the API, if one is configured | service notices, and the operator's own minutes behind a QR | on the notices screen, and on a stop you reached by scanning |
 
-The map hosts necessarily learn roughly which part of Lugo you are looking at, because
-that is what a tile request is. The font host learns nothing but that you opened the
-page. None of them is asked to identify you, and no identifier of ours travels with any
-of these requests.
+That is the whole list, and the map is the only one you meet on an ordinary visit. Those
+hosts necessarily learn roughly which part of Lugo you are looking at, because that is
+what a tile request is. None of them is asked to identify you, and no identifier of ours
+travels with any of these requests.
+
+**The typeface used to be on that list** — it came from Google's CDN, so every visit told
+Google you had opened a bus timetable. It is served from this site now
+(`tools/importFonts.ts`), which changes nothing about what you download and removes the
+one third party that was giving neither the map nor the data.
 
 The published site has no API of its own: service notices come from a copy committed by a
 scheduled job, and the app says on screen when that copy was taken. Where an API **is**

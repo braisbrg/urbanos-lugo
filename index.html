@@ -32,9 +32,11 @@
     <meta name="twitter:card" content="summary" />
     <link rel="apple-touch-icon" href="%BASE_URL%icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- No <link> to a font CDN. The faces are declared in src/fonts.css and served from
+         this origin, so the only hosts a visitor's browser contacts are the map's — see
+         PRIVACY.md. That also removes two DNS lookups and two TLS handshakes from the
+         critical path, which is a smaller win than it sounds but not nothing on a phone
+         at a bus stop. -->
   </head>
   <body class="bg-bg text-ink antialiased selection:bg-accent selection:text-on-accent">
     <div id="root"></div>

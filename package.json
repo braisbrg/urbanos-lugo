@@ -29,7 +29,8 @@
     "diagrams": "tsx tools/buildDiagrams.ts",
     "calibrate:walking": "tsx tools/calibrateWalking.ts",
     "validate:times": "tsx tools/validateRideTimes.ts",
-    "worker:build": "esbuild worker/index.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=worker/dist/worker.js"
+    "worker:build": "esbuild worker/index.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=worker/dist/worker.js",
+    "fonts:import": "tsx tools/importFonts.ts"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-leaflet": "^0.1.4",

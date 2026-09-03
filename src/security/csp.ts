@@ -52,8 +52,9 @@ const DIRECTIVES = [
   "script-src 'self'",
   "worker-src 'self'",
   "manifest-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  // No CDN: the typeface is served from this origin. See tools/importFonts.ts.
+  "font-src 'self'",
   // blob: because the renderer decodes sprites and glyphs into object URLs before
   // drawing them; it never fetches an image from an origin not named here.
   "img-src 'self' data: blob: https://tiles.openfreemap.org https://tile.openstreetmap.org",

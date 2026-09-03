@@ -387,6 +387,8 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── geo.ts                  a única Haversine
 │   │   ├── snapshotAge.ts          cando unha copia deixa de falar do presente
 │   │   └── searchUtils.ts          buscador
+│   ├── fonts/                      as dúas caras variables + OFL.txt
+│   ├── fonts.css                   XERADO por tools/importFonts.ts
 │   ├── i18n/                       gl.ts · es.ts · en.ts
 │   ├── security/csp.ts             unha política, para a meta e para a cabeceira
 │   ├── routes.ts                   os slugs das pestanas, nunha soa lista
@@ -415,6 +417,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── checkParsersUnchanged.ts    o HTML de fóra segue tendo a forma esperada
 │   ├── osm.ts                      Overpass, coseduras e metros restrinxidos
 │   ├── buildDiagrams.ts            redebuxa os diagramas deste README
+│   ├── importFonts.ts              baixa a tipografía e escribe os @font-face
 │   ├── stress*.ts                  carga e disparates: parsers, motor, HTTP,
 │   │                               planificador e invariantes
 │   ├── fullAudit.ts                informe de calidade de datos
@@ -689,11 +692,18 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 
 | | sen comprimir | gzip | brotli |
 | :--- | ---: | ---: | ---: |
-| Anaco de entrada | 544 KB | 139 KB | **116 KB** |
-| Folla de estilos | 43 KB | 9 KB | **7 KB** |
-| **Primeira carga** | **587 KB** | ~148 KB | **~124 KB** |
+| Anaco de entrada | 546 KB | 140 KB | **116 KB** |
+| Folla de estilos | 46 KB | 9 KB | **8 KB** |
+| `index.html` | 4 KB | 2 KB | **2 KB** |
+| **Primeira carga** | **596 KB** | ~151 KB | **~126 KB** |
+| Tipografía | 51 KB | — | 51 KB, en paralelo |
 | Renderizador do mapa | 1.072 KB | 281 KB | 232 KB, baixo demanda |
 | Xeometría viaria | 511 KB | 82 KB | 28 KB, baixo demanda |
+
+A tipografía non leva columnas: o `woff2` xa vén comprimido e volver comprimilo non aforra
+nada, así que a build nin o intenta. Son dous ficheiros e non oito —son fontes variables,
+e o navegador instánciaas no peso que faga falta—, e antes viñan da CDN de Google. Os bytes
+que descarga o lector son os mesmos; o que cambia é a quen llos pide.
 
 GitHub Pages comprime por si mesmo, así que o sitio publicado sempre foi o da columna da
 dereita. `npm start` non o facía: enviaba a da esquerda ata que se engadiu isto.
@@ -716,9 +726,10 @@ desenvolvemento. Dependabot revisa semanalmente as dependencias e mais as action
 o build non ten ningún script en liña, nin worker, nin wasm, e o escáner QR usa o
 `BarcodeDetector` do navegador en vez dunha librería. As únicas orixes remotas
 permitidas son as que a app usa de verdade — OpenFreeMap polas teselas vectoriais,
-tile.openstreetmap.org polo respaldo ráster, Google Fonts polas dúas tipografías e o
-enrutador peonil de OSM. buslugo.com non está: só o servidor o consulta, nunca o
-navegador.
+tile.openstreetmap.org polo respaldo ráster e o enrutador peonil de OSM. `font-src` é
+`'self'` a secas: a tipografía viña de Google e agora sérvese desde aquí, así que abrir un
+horario de bus xa non llo conta a Google. buslugo.com tampouco está: só o servidor o
+consulta, nunca o navegador.
 
 A política escríbese unha vez en [`src/security/csp.ts`](src/security/csp.ts) e vai a
 dous sitios, porque o despregue real é GitHub Pages e un aloxamento estático non envía

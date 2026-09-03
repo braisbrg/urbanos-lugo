@@ -37,10 +37,15 @@ Applied Design Works. It exists because letterforms that are easy to tell apart 
 more to somebody with low vision than a designer's preference does, which is a good reason
 to use it on a bus app read at arm's length in the rain.
 
-It is loaded from Google Fonts rather than served from here — see `PRIVACY.md` for what
-that means for a visitor — so this project redistributes no font files and the licence
-travels with them from Google. If that ever changes, the licence text has to be shipped
-alongside.
+It is **served from this project**, so the files are redistributed here and the OFL asks
+that its text travel with them: `src/fonts/OFL.txt`, carrying the copyright line of both
+families. They used to come from Google's CDN, which told Google about every visit for no
+benefit a visitor could see — `PRIVACY.md` has the reasoning.
+
+Two files, 51 KB, not eight: these are variable fonts, and Google declares a face per
+weight against a single file that the browser instances. `tools/importFonts.ts` fetches
+them, keeps one copy per distinct set of bytes, and writes the `@font-face` block. Run
+`pnpm fonts:import` and commit what it writes.
 
 ## The data, in one line each
 
