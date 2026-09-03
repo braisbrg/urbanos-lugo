@@ -717,3 +717,71 @@ segue sen probarse nun navegador de verdade**, e non se vai dicir que si ata que
 Regra: cando algo do navegador falla, reproducilo co caso mínimo antes de chamarlle fallo.
 É a terceira vez que o panel produce un falso positivo (as dúas anteriores, `:focus` sen
 foco real no documento).
+
+---
+
+## Rolda 3: os diagramas do README, contra o código
+
+Non se trataba de mirar se se ven ben. Un diagrama é unha afirmación, e afirma cousas que
+se poden comprobar: catro non se sostiñan.
+
+- **«Mapa MapLibre GL»** na arquitectura. A app é **Leaflet**: seis ficheiros importan `L`
+  e a atribución que sae en pantalla dio. MapLibre é unha capa vectorial dentro dese mapa,
+  vía `@maplibre/maplibre-gl-leaflet`. Corrixido a «Mapa Leaflet / capa vectorial de
+  MapLibre GL», que é o que atopa quen abre `src/components/Map/`.
+- **Tres cifras vellas** no diagrama das etiquetas: 822 paradas no modelo de estrada, erro
+  mediano 0,5 min, 8,5 min no peor. Corrín a ferramenta: **797, 0,1 e 8,3**, sobre 21
+  tramos contrastables. O README levaba as mesmas tres. Corrixidos os dous, e engadido o
+  38% dentro de dous minutos, que é o dato que de verdade xustifica o til.
+- **«45 dos 48 sentidos»** na frecha que produce `route-geometry.json`. O ficheiro ten
+  **48**: 45 de OSM e 3 debuxados como iría un coche, cousa que o propio README di dúas
+  seccións antes.
+- E de camiño: a liña de tecnoloxías dicía **TypeScript 5.8, Vite 6, Express 4** contra
+  7.0, 8.2 e 5.2 instalados, e a sección do mapa da rede seguía acreditando **CartoDB**,
+  que este proxecto deixou de usar en agosto.
+
+**O que non se tocou.** OSRM está na fila de `importOsmRoutes.ts`, á que non alimenta, e
+iso lese mal. Movelo á fila que lle toca **recházao o propio validador de composición** —o
+fluxo colapsa a un segmento de 7 px e a etiqueta cae enriba de dous nodos—, así que a fila
+era unha restrición e non un descoido. Revisable desde o lado do diagrama, non forzándoo.
+
+`pnpm diagrams` agora di que falta o renderizador cando non está: vive baixo `.claude/`,
+que non se segue, e antes daba un ENOENT cunha ruta e ningunha explicación.
+
+---
+
+## Rolda 4: o que corre en CI, e o que non
+
+**O traballo semanal estaba a ler 1186 páxinas cada luns.** A cabeceira de `reconcile.ts`
+di que `--fresh` son as 24 páxinas de liña, trinta segundos, e que as 1186 de parada son
+outro flag «porque non paga a pena vinte minutos». Era certo só onde `.cache/` xa existía:
+coa caché baleira, `page()` cae ao `fetch`, e en CI a caché **nunca** está porque `.cache/`
+non se segue. Así que o luns pola mañá o traballo pasaba vinte e dous minutos pedíndolle
+páxinas ao servidor do operador, xusto o que o proxecto di que non quere facer.
+
+Medido antes e despois cunha simulación de CI —a caché apartada, o traballo tal cal—:
+**44 segundos**, e todos os contrastes que importan seguen aí.
+
+**E dúas comprobacións non corrían en CI sen dicilo.** A posición de cada poste contra a súa
+propia páxina, e a comparación coa topografía de OpenStreetMap, dependen das dúas cachés.
+En CI imprimían unha liña discreta dentro dun rexistro verde. Agora din `NOT CHECKED`, e o
+comentario do workflow di cales corren alí e cales son locais.
+
+**A Brea puña o run en vermello para sempre.** O poste está a 523 m do máis próximo
+topografado en OSM, e o límite de aviso son 500. Iso non di nada da nosa coordenada: son as
+do propio operador, e a pasada de arriba mídeas contra as súas propias páxinas cunha mediana
+de 0 m. É unha ausencia en OSM, non un erro noso, e ningunha edición aquí a arranxa. Agora é
+unha excepción con nome e data, para que un poste que **pase** a estar lonxe siga fallando.
+
+**Un erro meu, atopado polo mesmo experimento.** Ao saltar a primeira pasada, a segunda
+—postes que funden varios ids— quedou lendo unha caché baleira e dicía «0 poles merge 2+
+ids» en lugar de «non comprobado». Cero non é o mesmo que non mirar. Corrixido antes de
+commitear.
+
+### E de paso, a resposta que interesaba
+
+A reconciliación con datos de hoxe: **24/24 liñas envían o horario que imprime a páxina**,
+417/417 postes levan un nome que o sitio imprime, e 417/417 levan exactamente as liñas cuxos
+itinerarios pasan por alí. Non houbo cambio de horarios en setembro. A única diferenza é a
+orde de tres paradas na 5.1/volta, que a ferramenta marca como informativa porque a nosa
+orde é máis curta —8,2 km fronte a 19,0— e é o sitio onde os datos se arranxaron a man.

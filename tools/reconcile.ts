@@ -20,7 +20,7 @@
  *
  * Changes nothing. Read the report, then decide whether to regenerate.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_LINES, BUS_STOPS } from '../src/data/transitData';
@@ -34,9 +34,36 @@ const FRESH_STOPS = process.argv.includes('--fresh-stops');
 const FRESH = FRESH_STOPS || process.argv.includes('--fresh');
 const PAGES = 30;
 
+/**
+ * Whether a stop page has ever been read on this machine.
+ *
+ * `--fresh` is documented as the 24 line pages, thirty seconds. It was that only where
+ * `.cache/` already existed: with an empty cache `page()` falls through and fetches, so
+ * the stop-position pass went and read all 1186 pages anyway — twenty-two minutes at the
+ * 1.1 s spacing, on somebody else's free server, once a week from CI, where the cache is
+ * never there because `.cache/` is not tracked. The weekly job was doing exactly what the
+ * header says it deliberately does not do.
+ */
+const HAVE_STOP_CACHE =
+  existsSync(CACHE) && readdirSync(CACHE).some((f) => f.startsWith('stop-'));
+
 const osmStops: any[] = existsSync(join(HERE, '../.cache/osm-stops.json'))
   ? Object.values(JSON.parse(readFileSync(join(HERE, '../.cache/osm-stops.json'), 'utf8')))
   : [];
+
+/**
+ * Poles that nobody has surveyed in OpenStreetMap, checked on 3 September 2026.
+ *
+ * Being far from every surveyed stop says nothing about our coordinate on its own: these
+ * are the operator's own numbers, and the pass above measures them against the operator's
+ * own pages at a median of 0 m. So a 523 m gap is OSM's gap, not ours — and left as a
+ * failure it made this run red every week for something no edit here can fix, which is
+ * how a weekly check stops being read.
+ *
+ * Named rather than tolerated by raising the threshold, so a pole that *becomes* distant
+ * still fails. Drop a name from here once somebody maps it.
+ */
+const UNSURVEYED = new Set(['A Brea']);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -134,6 +161,7 @@ async function main(): Promise<void> {
   const drift: number[] = [];
   let missingPage = 0;
   for (const [ps, canonical] of canonicalOf) {
+    if (!FRESH_STOPS && !HAVE_STOP_CACHE) break;
     const html = await page(`https://buslugo.com/mapa/?ps=${ps}`, `stop-${ps}`, FRESH_STOPS);
     const coords = html ? publishedCoords(html) : null;
     if (!coords) {
@@ -145,17 +173,27 @@ async function main(): Promise<void> {
     drift.push(d);
     if (d > 60) flag(`${stop.name} sits ${Math.round(d)} m from what its page publishes for ps=${ps}`);
   }
-  console.log(
-    `  ${drift.length} stop pages checked; drift p50 ${Math.round(percentile(drift, 50))} m, ` +
-      `p99 ${Math.round(percentile(drift, 99))} m, worst ${Math.round(Math.max(0, ...drift))} m`,
-  );
-  if (missingPage) console.log(`  ${missingPage} operator ids publish no coordinate`);
+  if (!FRESH_STOPS && !HAVE_STOP_CACHE) {
+    console.log(
+      `  skipped: nothing cached, and reading ${canonicalOf.size} stop pages is twenty-odd\n` +
+        '  minutes on the operator\'s server. Run with --fresh-stops when a pole is suspected\n' +
+        '  of having moved; the itineraries and timetables below are what actually drift.',
+    );
+  } else {
+    console.log(
+      `  ${drift.length} stop pages checked; drift p50 ${Math.round(percentile(drift, 50))} m, ` +
+        `p99 ${Math.round(percentile(drift, 99))} m, worst ${Math.round(Math.max(0, ...drift))} m`,
+    );
+    if (missingPage) console.log(`  ${missingPage} operator ids publish no coordinate`);
+  }
 
   // ---- 2. poles that merge several operator ids ---------------------------------
   rule('Poles that merge several operator ids');
   let merged = 0;
   let worstSpread = 0;
-  for (const stop of BUS_STOPS) {
+  // Reads the same cached pages as the pass above, so with nothing cached it would find
+  // no points and report "0 poles merge 2+ ids" -- which is not the same as zero.
+  for (const stop of HAVE_STOP_CACHE || FRESH_STOPS ? BUS_STOPS : []) {
     const points: [number, number][] = [];
     for (const ps of (stop as any).officialIds ?? []) {
       const file = join(CACHE, `stop-${ps}.html`);
@@ -175,12 +213,18 @@ async function main(): Promise<void> {
     // Two poles more than a street apart are two stops, and merging them moves both.
     if (spread > 80) flag(`${stop.name} merges ids ${Math.round(spread)} m apart — likely two different stops`);
   }
-  console.log(`  ${merged} poles merge 2+ ids; widest spread ${Math.round(worstSpread)} m`);
+  console.log(
+    HAVE_STOP_CACHE || FRESH_STOPS
+      ? `  ${merged} poles merge 2+ ids; widest spread ${Math.round(worstSpread)} m`
+      : '  NOT CHECKED: needs the same cached stop pages as the pass above.',
+  );
 
   // ---- 3. the independent survey in OpenStreetMap -------------------------------
   rule('Stop position vs the survey in OpenStreetMap');
   if (!osmStops.length) {
-    console.log('  no OSM stop cache; run `npm run data:amenities` first');
+    // Said plainly, because this is a check that did not run rather than a check that
+    // passed, and in CI -- where .cache/ is never present -- it prints inside a green log.
+    console.log('  NOT CHECKED: no .cache/osm-stops.json here. Run `pnpm data:amenities` to fetch it.');
   } else {
     const offsets: number[] = [];
     let unmatched = 0;
@@ -189,7 +233,9 @@ async function main(): Promise<void> {
       for (const node of osmStops) best = Math.min(best, distance(stop.lat, stop.lng, node.lat, node.lon));
       if (best > 120) {
         unmatched++;
-        if (best > 500) flag(`${stop.name} has no surveyed stop within ${Math.round(best)} m`);
+        if (best > 500 && !UNSURVEYED.has(stop.name)) {
+          flag(`${stop.name} has no surveyed stop within ${Math.round(best)} m`);
+        }
       } else offsets.push(best);
     }
     console.log(

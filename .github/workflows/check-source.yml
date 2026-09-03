@@ -51,6 +51,12 @@ jobs:
 
       # Around 30 seconds and 24 requests, once a week, with a User-Agent that says who
       # is asking and links back here.
+      #
+      # Two of the passes in that report are local-only and say so in the output: the
+      # per-stop coordinate check needs .cache/official (1186 pages, twenty-odd minutes)
+      # and the OpenStreetMap survey check needs .cache/osm-stops.json. Neither directory
+      # is tracked, so neither runs here — deliberately. What runs is what drifts:
+      # itineraries, stop names, the lines each pole badges, and the timetables.
       - name: Re-read the line pages and compare
         run: pnpm exec tsx tools/reconcile.ts --fresh
 
