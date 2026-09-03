@@ -359,34 +359,46 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── FavoritesDrawer.tsx     favoritos
 │   │   ├── QrScannerModal.tsx      escáner QR
 │   │   ├── ErrorBoundary.tsx       illa un fallo nunha pestana sen tirar a app
-│   │   └── navSections.ts          as seccións, nun sitio: rail, barra e menú
-│   ├── data/
+│   │   └── navSections.tsx         as seccións, nun sitio: rail, barra e menú
+│   ├── data/                       SÓ o que viaxa no paquete
 │   │   ├── stops.json              XERADO — o que le a app
 │   │   ├── lines.json              XERADO — o que le a app
 │   │   ├── route-geometry.json     XERADO — trazados, baixo demanda
 │   │   ├── alerts.json             INSTANTÁNEA — avisos, refrescada por CI
-│   │   ├── official-raw.json       INSTANTÁNEA — scraping de buslugo
-│   │   ├── osm-routes.json         INSTANTÁNEA — relacións de OSM (Overpass)
-│   │   ├── routes.json             INSTANTÁNEA — xeometría de OSRM
-│   │   ├── stop-amenities.json     INSTANTÁNEA — equipamentos de OSM
 │   │   ├── routeGeometry.ts        carga os trazados baixo demanda
 │   │   └── transitData.ts          carga dos datos + tarifas
 │   ├── services/
 │   │   ├── alertSyncService.ts     avisos oficiais (só servidor)
+│   │   ├── operatorTimes.ts        os minutos do operador detrás do QR
+│   │   ├── readCapped.ts           teito de 512 KB en cada lectura de fóra
 │   │   ├── stopAlarm.ts            alarma de proximidade á parada
 │   │   └── walkingPath.ts          tramos a pé polo enrutador de OSRM
 │   ├── hooks/
+│   │   ├── useTabRoute.ts          unha ruta por pestana, para o xesto de atrás
+│   │   ├── useServiceAlerts.ts     avisos, ou a instantánea coa súa data
+│   │   ├── useOperatorTimes.ts     os minutos do operador, se hai servidor
 │   │   ├── useTheme.ts             clara / escura / automática
 │   │   ├── useRecentStops.ts       últimas paradas abertas (só ids)
 │   │   └── useDialog.ts            Escape, foco atrapado e foco devolto
 │   ├── utils/
 │   │   ├── schedule.ts             calendario e cadro horario
 │   │   ├── transitEngine.ts        chegadas, vehículos e rutas
-│   │   ├── serviceLabels.ts        días e frecuencia no idioma da interface
+│   │   ├── serviceLabels.ts        días, frecuencia e sentido no idioma da IU
+│   │   ├── geo.ts                  a única Haversine
+│   │   ├── snapshotAge.ts          cando unha copia deixa de falar do presente
 │   │   └── searchUtils.ts          buscador
+│   ├── i18n/                       gl.ts · es.ts · en.ts
+│   ├── security/csp.ts             unha política, para a meta e para a cabeceira
+│   ├── routes.ts                   os slugs das pestanas, nunha soa lista
+│   ├── seo.ts                      canonical, sitemap e datos estruturados
 │   ├── types.ts
 │   ├── App.tsx
 │   └── main.tsx
+├── data/                           SÓ entradas da build; a app non as importa
+│   ├── official-raw.json           INSTANTÁNEA — scraping de buslugo
+│   ├── osm-routes.json             INSTANTÁNEA — relacións de OSM (Overpass)
+│   ├── routes.json                 INSTANTÁNEA — xeometría de OSRM
+│   └── stop-amenities.json         INSTANTÁNEA — equipamentos de OSM
 ├── tools/
 │   ├── importOfficialData.ts       descarga e axuste viario (lento, cacheado)
 │   ├── importStopAmenities.ts      equipamentos de parada desde OSM
@@ -395,10 +407,21 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── fetchAlerts.ts              refresca a instantánea de avisos (CI)
 │   ├── calibrateWalking.ts         mide o factor de rodeo peonil
 │   ├── validateRideTimes.ts        contrasta os tempos de percorrido
+│   ├── compareOperatorTimes.ts     os nosos minutos fronte aos do operador
 │   ├── reconcile.ts                coteja o dataset con buslugo, liña a liña
 │   ├── reconcileSelfTest.ts        insire faltas para ver se reconcile as caza
+│   ├── checkOsmGeometry.ts         SEMANAL — o trazado segue sendo o de OSM?
+│   ├── checkFares.ts               SEMANAL — as tarifas seguen sendo esas?
+│   ├── checkParsersUnchanged.ts    o HTML de fóra segue tendo a forma esperada
+│   ├── osm.ts                      Overpass, coseduras e metros restrinxidos
+│   ├── buildDiagrams.ts            redebuxa os diagramas deste README
+│   ├── stress*.ts                  carga e disparates: parsers, motor, HTTP,
+│   │                               planificador e invariantes
 │   ├── fullAudit.ts                informe de calidade de datos
 │   └── test.ts                     comprobacións executables
+├── .github/workflows/
+│   ├── deploy-pages.yml            publica en Pages: push, cada hora e a man
+│   └── check-source.yml            luns: reconcile + xeometría + tarifas
 ├── design/                         artboards do redeseño (.dc.html) + canvas.json
 ├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts

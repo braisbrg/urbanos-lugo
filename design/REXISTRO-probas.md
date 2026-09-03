@@ -843,3 +843,51 @@ arranxo cubriu eses dous campos. **Faltaban dous máis.**
 
 E os dous campos levan agora un comentario no tipo que di **non amosar**, porque é aí onde
 mira quen vai usalos.
+
+---
+
+## Rolda 7: os documentos, contra o repositorio
+
+**`DATA.md` documentaba catro das nove fontes.** É o ficheiro que existe para dicir de onde
+vén cada dato e baixo que condicións, e faltaban cinco:
+
+- **Overpass** (`overpass-api.de`), de onde saen as relacións de ruta e os equipamentos.
+- **`router.project-osrm.org`**, o servidor de demostración do proxecto OSRM, que dá o
+  tempo e a forma en coche entre paradas. Só en tempo de build, e a resposta commitéase
+  precisamente para non volver alí.
+- **`routing.openstreetmap.de/routed-foot`**, que si se chama **desde o navegador do
+  lector** —é o único xeito, porque os extremos son onde el diga—. É opcional: ata que
+  preme «ver o camiño a pé» a app debuxa unha liña recta.
+- **Tres feeds RSS do Concello de Lugo**, que se len no servidor e se manteñen á parte dos
+  avisos do operador.
+- **`info.urbanoslugo.com`**, a páxina do operador detrás do QR do poste.
+
+Que dúas delas se chamen en nome do lector é xusto o que un documento de fontes ten que
+dicir. Engadidas as cinco, con como se usan e con que frecuencia.
+
+Ademais, `DATA.md` dicía «os conxuntos de datos baixo `src/data/`» e nomeaba
+`src/data/routeGeometry.*` como a base derivada baixo ODbL. Son dous directorios desde que
+as entradas da build saíron de `src/`, e a base derivada é `route-geometry.json` máis as
+tres instantáneas de `data/`. Nun documento de licenzas iso importa.
+
+**E a árbore do README seguía listando en `src/data/` os catro ficheiros que xa non están
+alí** —hai unha comprobación que falla se volven— e contradicía a prosa do propio README
+dúas seccións máis abaixo. Corrixida, e de paso: `navSections.tsx` (non `.ts`), os once
+`tools/` que faltaban (incluídos os dous que corre o traballo semanal), os `.github/
+workflows/`, e os ficheiros de `src/` que aguantan cousas —`routes.ts`, `seo.ts`,
+`security/csp.ts`, `geo.ts`, `snapshotAge.ts`, `readCapped.ts` e os tres hooks.
+
+### O que si estaba ben
+
+- **Activos precomprimidos**: brotli 118.972 B, gzip 143.248 B, sen comprimir 558.295 B,
+  con `Vary: Accept-Encoding` e o `Content-Type` correcto en cada caso.
+- **Cabeceiras**: CSP con `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy: no-referrer`, `Permissions-Policy` con só o que a app usa.
+- **Favoritos e vistas hai pouco** sobreviven a unha recarga; o tema claro aplícase sen
+  a clase `dark` e sen flash; a busca atopa «muralla».
+
+### Falso positivo (o quinto)
+
+`Invoke-WebRequest` de PowerShell descomprime só e agocha `Content-Encoding`: as tres
+peticións parecían devolver 558 KB sen comprimir. Con `curl.exe --raw` vense os 118 KB
+reais. Ferramenta, non aplicación.
