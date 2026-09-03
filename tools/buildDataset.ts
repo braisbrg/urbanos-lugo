@@ -1,6 +1,7 @@
 /**
  * Turns the scraped official data + snapped street geometry into the two files the
- * app actually reads: src/data/stops.json and src/data/lines.json.
+ * app actually reads: src/data/stops.json and src/data/lines.json. Its inputs live in
+ * data/, outside src/, because nothing in the application imports them.
  *
  *   npx tsx tools/importOfficialData.ts   # fetch (slow, cached)
  *   npx tsx tools/buildDataset.ts         # shape (fast, offline)
@@ -12,15 +13,17 @@ import { getDistanceMeters as haversine } from '../src/utils/geo';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '../src/data');
+/** Build inputs, outside src/ because the application never imports them. */
+const RAW = join(HERE, '../data');
 
-const raw = JSON.parse(readFileSync(join(DATA, 'official-raw.json'), 'utf8'));
+const raw = JSON.parse(readFileSync(join(RAW, 'official-raw.json'), 'utf8'));
 // Optional: written by tools/importStopAmenities.ts from OpenStreetMap surveys.
-const amenitiesPath = join(DATA, 'stop-amenities.json');
+const amenitiesPath = join(RAW, 'stop-amenities.json');
 const amenities: Record<string, { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null }> =
   existsSync(amenitiesPath) ? JSON.parse(readFileSync(amenitiesPath, 'utf8')) : {};
-const routes = JSON.parse(readFileSync(join(DATA, 'routes.json'), 'utf8'));
+const routes = JSON.parse(readFileSync(join(RAW, 'routes.json'), 'utf8'));
 // Optional: written by tools/importOsmRoutes.ts. The real itineraries, surveyed.
-const osmPath = join(DATA, 'osm-routes.json');
+const osmPath = join(RAW, 'osm-routes.json');
 const osmRoutes: { ref: string; name: string; path: [number, number][] }[] = existsSync(osmPath)
   ? JSON.parse(readFileSync(osmPath, 'utf8'))
   : [];

@@ -2192,4 +2192,43 @@ ok('the build compresses its assets and the server hands them over', () => {
   );
 });
 
+ok('src/data holds only what ships, and the build inputs stay out of it', () => {
+  // Four files in src/data were build scaffolding the app never imported: the scrape and
+  // three intermediates, 1.4 MB between them. They cost nothing at runtime, which is why
+  // nobody noticed, but a reader could not tell which of the ten files ship and one
+  // distracted import would have put half a megabyte in the bundle with nothing to catch
+  // it. They live in data/ now.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+  const BUILD_ONLY = ['official-raw.json', 'osm-routes.json', 'routes.json', 'stop-amenities.json'];
+  for (const name of BUILD_ONLY) {
+    assert(
+      !existsSync(join(root, 'src', 'data', name)),
+      `${name} is back in src/data; it is a build input and the app never reads it`,
+    );
+    assert(existsSync(join(root, 'data', name)), `data/${name} is missing, so the build cannot run`);
+  }
+
+  // And nothing under src/ may import one of them, whatever directory it sits in.
+  const offenders: string[] = [];
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) return walk(full);
+      return /\.tsx?$/.test(entry.name) ? [full] : [];
+    });
+  for (const file of walk(join(root, 'src'))) {
+    const text = readFileSync(file, 'utf8');
+    for (const name of BUILD_ONLY) {
+      if (text.includes(name)) offenders.push(`${file.slice(root.length + 1)} names ${name}`);
+    }
+  }
+  assert(offenders.length === 0, `a build input reached the app:\n    ${offenders.join('\n    ')}`);
+
+  // The other half of the same rule: everything left in src/data is either imported by the
+  // app or is the loader that imports it.
+  const shipped = readdirSync(join(root, 'src', 'data'));
+  assert(shipped.length > 0, 'src/data is empty, which cannot be right');
+});
+
 console.log(`\n${checks} checks passed\n`);

@@ -18,6 +18,8 @@ import { getDistanceMeters as haversine } from '../src/utils/geo';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '../src/data');
+/** Build inputs, outside src/ because the application never imports them. */
+const RAW = join(HERE, '../data');
 const CACHE = join(HERE, '../.cache/osm-stops.json');
 
 /** Same pole, allowing for survey imprecision on either side. */
@@ -74,7 +76,7 @@ async function main() {
     };
   }
 
-  writeFileSync(join(DATA, 'stop-amenities.json'), JSON.stringify(amenities, null, 2) + '\n');
+  writeFileSync(join(RAW, 'stop-amenities.json'), JSON.stringify(amenities, null, 2) + '\n');
 
   const withShelter = Object.values(amenities).filter((a) => a.shelter === true).length;
   const withTactile = Object.values(amenities).filter((a) => a.tactilePaving === true).length;

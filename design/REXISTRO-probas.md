@@ -561,3 +561,49 @@ rutas teñen a mesma forma e os mesmos metros restrinxidos.
   que comparten as catro liñas, máis 317 da 11) = **932 m**. O documento tiña razón.
 - **Ficheiros grandes** (`transitEngine.ts`, 1.543 liñas). Partilo é unha refactorización,
   non un achado; e non hai duplicación dentro del.
+
+---
+
+## Revisión de documentación e sistema de ficheiros
+
+### O que chega a git está limpo
+
+**129 ficheiros, 3,5 MB.** Revisado un por un por tamaño, polos dous extremos. Nada de
+restos: nin `.bak`, nin copias, nin saídas de build, nin ficheiros baleiros.
+
+O `.gitignore` xa estaba ben pensado e comentado, e explica cada exclusión —incluído por
+que `.antigravity/` e `.impeccable/` **non** son dotfiles inofensivos. As tres carpetas
+`CLAUDE-SECURITY-*` non aparecen porque **se auto-ignoran** cun `.gitignore` propio dentro,
+que é como as deixa a ferramenta; 76 KB no disco, cero no repositorio. `bun.lock` está
+ignorado a propósito, cun comentario que di que só pnpm manda porque é o que CI usa con
+`--frozen-lockfile`.
+
+O único que había eran os meus `.snapshot` de traballo, ignorados pero no disco. Borrados.
+
+### `src/` era o que se envía, mesturado co andamio
+
+Catro dos dez ficheiros de `src/data` eran entradas da build que a aplicación non importa
+nunca: `official-raw.json`, `osm-routes.json`, `routes.json` e `stop-amenities.json`,
+**1,4 MB**. Non custaban nada en execución, por iso pasaran desapercibidos, pero custaban
+dúas cousas: quen abría `src/data/` non podía saber cales viaxan ao navegador, e un
+`import` distraído metería medio megabyte no paquete sen que nada avisase.
+
+Móvense a `data/`. **Verificado como se verifica aquí**: `pnpm data:build` reconstrúe e o
+que se envía sae byte a byte idéntico. E un check falla se algún volve a `src/data` ou se
+algo baixo `src/` o nomea; comprobado que morde.
+
+### Documentación posta ao día
+
+- **`DATA.md`** e **`README.md`** deixan de acreditar a CARTO (ver rolda 2).
+- **`README.md`**: «392 das 417 paradas sen hora publicada» → **390**. A aplicación amosa a
+  cifra en vivo, así que só a prosa derivara.
+- **`README.md`**: «Tarifas e avisos» describía unha pantalla; son dúas dende hoxe, con
+  fontes distintas e as novas do Concello á parte.
+- **`README.md`**: engadido o que cambiou hoxe e que un lector debe saber — que un bus
+  atrasado segue cinco minutos no taboleiro, e que quen escanea o QR ve tamén o que di o
+  operador.
+- **`README.md`**: a táboa de tamaño de descarga levaba cifras vellas; agora leva as
+  medidas de hoxe, coas tres columnas (sen comprimir, gzip, brotli).
+- **`SECURITY.md`**: dicía que o servidor «proxies one scrape of buslugo.com». Son tres
+  fontes, e agora di cales e que todas están capadas a 512 KB e con tempo límite.
+- **`design/PLAN-acento-vermello.md`** xa estaba marcado como feito. Correcto.

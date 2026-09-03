@@ -24,7 +24,7 @@
  * exception. Nothing in open data resolves that, so this measures it and says so rather
  * than picking a story. `restrictedMeters` is that number, per route.
  *
- * Writes src/data/osm-routes.json; `npm run data:build` decides which source to use.
+ * Writes data/osm-routes.json; `npm run data:build` decides which source to use.
  */
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -32,6 +32,8 @@ import { fileURLToPath } from 'url';
 import { BBOX, ROUTE_QUERY, fetchWayTags, overpass, restrictedMeters, stitch } from './osm';
 
 const DATA = join(dirname(fileURLToPath(import.meta.url)), '../src/data');
+/** Build inputs, outside src/ because the application never imports them. */
+const RAW = join(dirname(fileURLToPath(import.meta.url)), '../data');
 
 async function main() {
   console.log('Asking Overpass for the mapped bus routes...');
@@ -59,7 +61,7 @@ async function main() {
     }))
     .filter((r: any) => r.ref && r.path.length > 10);
 
-  writeFileSync(join(DATA, 'osm-routes.json'), JSON.stringify(routes) + '\n');
+  writeFileSync(join(RAW, 'osm-routes.json'), JSON.stringify(routes) + '\n');
 
   const byRef = new Map<string, number>();
   for (const r of routes) byRef.set(r.ref, (byRef.get(r.ref) ?? 0) + 1);

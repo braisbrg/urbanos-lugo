@@ -54,8 +54,16 @@ agardas por unha en concreto.
 da próxima hora") en lugar de cortarse en silencio. "Por liña" non ten horizonte, porque
 aí a pregunta xa é de planificación.
 
-Nas paradas que non son punto horario publicado —392 das 417— todas as horas son
+Nas paradas que non son punto horario publicado —390 das 417— todas as horas son
 estimadas, e o taboleiro explica por que en lugar de deixalo a interpretación.
+
+**Un bus que vai tarde non desaparece.** Unha saída segue no taboleiro cinco minutos
+despois da súa hora, marcada como «hai 3 min» e non como «Chegando», porque esta web non
+sabe onde está o bus e só sabe que a hora pasou. Cinco minutos, e non outro número, porque
+son os que cobren o 84% dos atrasos medidos contra o seguimento do propio operador. Antes
+caía aos sesenta segundos e o taboleiro anunciaba o servizo seguinte: nunha liña cada 90
+minutos iso significaba pasar de «Chegando» a «88 min» mentres o bus estaba a tres minutos
+da parada.
 
 ### Avisos de bus e de baixada
 Dous avisos, os dous opcionais:
@@ -146,15 +154,31 @@ impreso no poste como a URL completa que codifica o QR.
 
 Tamén se resolven parámetros na URL: `?parada=…`, `?stop=…`, `?ps=…`, `?qr=…`.
 
-### Tarifas e avisos
-Títulos de transporte tal e como os publica o operador, **cada un coa súa fonte
-enlazada**: billete ordinario, bono ordinario e bono social da Tarxeta Cidadá, e a
-**Tarxeta do transporte público de Galicia (TMG)**, válida na rede urbana de Lugo desde
-que a cidade entrou na Área de Transporte Metropolitano en 2012.
+A quen chega escaneando o poste —e só a esa persoa— amósaselle tamén **o que di a páxina
+do operador para esa parada**, que é a mesma que abriría o código. En calquera outro sitio
+serían dúas listas de minutos que se contradín sen que ninguén poida dicir cal manda; ao pé
+do poste é o que a pegatina prometía.
 
-Máis a sincronización dos avisos de servizo publicados en buslugo.com. A consulta faise **desde o servidor** (o navegador non pode por CORS). Se
-non hai servidor —ou non responde— úsase a copia que deixou a tarefa programada e
-amósase **cando se tomou**, en lugar de facela pasar por actual.
+### Avisos, e tarifas por separado
+Dúas pantallas, porque son dúas preguntas feitas en momentos distintos: «afectoulle algo ao
+meu bus» pregúntase de pé nunha parada, e «canto custa o bono» lese unha vez e recórdase.
+Estaban apiladas nunha soa que chegara a sete seccións.
+
+**Avisos** (`/avisos`) trae os avisos de servizo do operador, e por separado —sen contar
+para o distintivo da navegación— as **novas do Concello** sobre obras e tráfico. Unha nota
+de prensa municipal non é unha incidencia do servizo, e mesturalas facía que a barra dixese
+«1» por unha noticia sobre asfaltado. Ademais, os avisos estruturais escritos neste
+proxecto, cada un coa súa data de revisión.
+
+A consulta faise **desde o servidor** (o navegador non pode por CORS), contra buslugo.com e
+tres feeds do Concello. Se non hai servidor —ou non responde— úsase a copia que deixou a
+tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por actual.
+
+**Tarifas** (`/tarifas`) leva os títulos de transporte tal e como os publica o operador,
+**cada un coa súa fonte enlazada**: billete ordinario, bono ordinario e bono social da
+Tarxeta Cidadá, e a **Tarxeta do transporte público de Galicia (TMG)**, válida na rede
+urbana de Lugo desde que a cidade entrou na Área de Transporte Metropolitano en 2012. Máis
+as normas a bordo, as preguntas frecuentes e os contactos.
 
 ---
 
@@ -391,8 +415,15 @@ compilación e non se commitea.
 
 ### Por que hai 1,4 MB de JSON que a app non le
 
-`official-raw.json`, `osm-routes.json`, `routes.json` e `stop-amenities.json` non se
-importan en ningures da aplicación: só os len as ferramentas. Non son restos.
+`data/official-raw.json`, `data/osm-routes.json`, `data/routes.json` e
+`data/stop-amenities.json` non se importan en ningures da aplicación: só os len as
+ferramentas. Non son restos.
+
+Viven en `data/` e non en `src/data/` precisamente por iso. Mentres estaban mesturados,
+quen abría `src/data/` non podía saber cales dos dez ficheiros viaxan ao navegador, e un
+`import` distraído metía medio megabyte no paquete sen que nada avisase. Agora `src/data/`
+é o que se envía, `data/` é o que alimenta a build, e unha comprobación falla se un dos
+segundos volve aparecer no primeiro ou se algo de `src/` o nomea.
 
 Son **instantáneas do que dixeron fontes de terceiros**, e están commiteadas por tres
 razóns. Regeneralas require que buslugo.com, Overpass e OSRM estean en pé e devolvan o
@@ -608,13 +639,22 @@ cachéanse segundo se van vendo e os avisos oficiais usan rede-primeiro con recu
 
 ### Tamaño de descarga
 
-A xeometría viaria (510 KB) e Leaflet cárganse só ao abrir un mapa:
+A xeometría viaria e o renderizador do mapa cárganse só ao abrir un mapa. `index.html` só
+pide tres cousas: `theme-init.js`, unha folla de estilos e o anaco de entrada.
 
-| | Antes | Agora |
-| :--- | ---: | ---: |
-| Carga inicial (gzip) | 267 KB | **136 KB** |
-| Xeometría viaria | no bundle | 85 KB, baixo demanda |
-| Leaflet + capas | no bundle | 50 KB, baixo demanda |
+E a build escribe un `.br` e un `.gz` ao lado de cada activo, que o servidor entrega cando
+o navegador di que sabe lelos. Medido contra a build de produción:
+
+| | sen comprimir | gzip | brotli |
+| :--- | ---: | ---: | ---: |
+| Anaco de entrada | 544 KB | 139 KB | **116 KB** |
+| Folla de estilos | 43 KB | 9 KB | **7 KB** |
+| **Primeira carga** | **587 KB** | ~148 KB | **~124 KB** |
+| Renderizador do mapa | 1.072 KB | 281 KB | 232 KB, baixo demanda |
+| Xeometría viaria | 511 KB | 82 KB | 28 KB, baixo demanda |
+
+GitHub Pages comprime por si mesmo, así que o sitio publicado sempre foi o da columna da
+dereita. `npm start` non o facía: enviaba a da esquerda ata que se engadiu isto.
 
 ### Rigor de tipos
 

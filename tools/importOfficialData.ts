@@ -5,7 +5,7 @@
  *
  *   npx tsx tools/importOfficialData.ts
  *
- * Writes src/data/official-raw.json + routes.json, which buildDataset.ts then
+ * Writes data/official-raw.json + data/routes.json, which buildDataset.ts then
  * turns into stops.json / lines.json. The app never calls these sources at runtime.
  */
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
@@ -15,6 +15,8 @@ import { fileURLToPath } from 'url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '../src/data');
+/** Build inputs, outside src/ because the application never imports them. */
+const RAW = join(HERE, '../data');
 const CACHE = join(HERE, '../.cache/official');
 const UA = 'Mozilla/5.0 (compatible; UrbanosLugoOpenData/1.0)';
 const PAUSE_MS = 700;
@@ -392,7 +394,7 @@ async function main() {
   console.log('\n3/4  Snapping itineraries to the street network');
   // Geometry only changes when an itinerary changes, so reuse what is already on disk
   // instead of re-hitting the public router on every timetable tweak.
-  const existingPath = join(DATA, 'routes.json');
+  const existingPath = join(RAW, 'routes.json');
   const previous: any[] = existsSync(existingPath) ? JSON.parse(readFileSync(existingPath, 'utf8')) : [];
   const cachedRoute = new Map<string, any>(previous.map((r: any) => [`${r.lineId}|${r.direction}`, r]));
   const routes: ({ lineId: string; direction: string } & SnappedRoute)[] = [];
@@ -421,7 +423,7 @@ async function main() {
 
   console.log('\n4/4  Writing raw dataset');
   writeFileSync(
-    join(DATA, 'official-raw.json'),
+    join(RAW, 'official-raw.json'),
     JSON.stringify(
       {
         source: 'https://buslugo.com',
@@ -432,7 +434,7 @@ async function main() {
       2,
     ),
   );
-  writeFileSync(join(DATA, 'routes.json'), JSON.stringify(routes) + '\n');
+  writeFileSync(join(RAW, 'routes.json'), JSON.stringify(routes) + '\n');
   console.log(`     ${lines.length} lines, ${stopsByPs.size} stops, ${routes.length} routes`);
 }
 
