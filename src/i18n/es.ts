@@ -26,6 +26,9 @@ export const es: Dict = {
     sourceGeometry: 'Trazado levantado en OpenStreetMap',
     sourceNoGps: 'Horas calculadas, no medidas',
     sourceShort: 'Horarios oficiales de buslugo.com. Las horas de esta app son calculadas.',
+    unofficial: 'Proyecto no oficial: ni AULUSA / Monbus ni el Ayuntamiento de Lugo lo hacen ni lo avalan.',
+    privacy: 'Tu ubicación no sale de este móvil, salvo si pides ver el camino a pie.',
+    sourceCode: 'Código, licencias y privacidad',
   },
 
   search: {

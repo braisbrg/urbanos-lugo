@@ -24,6 +24,16 @@ residents are pointed at.
 - **Verification:** `npm run reconcile` re-parses buslugo's own pages and compares
   them stop by stop against the shipped dataset. `npm run reconcile:selftest` proves
   that comparison can actually fail.
+- **One thing worth naming rather than leaving implied:** a departure time is a fact and
+  facts are not copyrightable, but in the EU a *collection* of them can carry a sui
+  generis database right of its own, separate from copyright, belonging to whoever
+  invested in assembling it. Whether the timetables attract one, and whether reading them
+  the way this project does falls inside it, is not something this file can settle. It is
+  written down here so that anyone who needs an answer knows the question exists rather
+  than assuming "public web page" settles it. What this project does about it in practice:
+  it reads the pages a passenger reads, at the rate a passenger would, identifies itself
+  in its User-Agent, links back to the source on every screen, and points anyone who needs
+  certainty at the operator's own page.
 
 ## Route geometry — OpenStreetMap
 

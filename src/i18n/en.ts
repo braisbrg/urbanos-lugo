@@ -37,6 +37,9 @@ export const en: Dict = {
     sourceGeometry: 'Routes surveyed in OpenStreetMap',
     sourceNoGps: 'Times computed, not measured',
     sourceShort: "Official timetables from buslugo.com. This app's times are computed.",
+    unofficial: 'Unofficial project: not made or endorsed by AULUSA / Monbus or Lugo city council.',
+    privacy: 'Your location stays on this phone, unless you ask to see the walking path.',
+    sourceCode: 'Code, licences and privacy',
   },
 
   search: {

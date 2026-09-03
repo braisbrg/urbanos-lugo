@@ -4,6 +4,7 @@ import { AlertTriangle, ChevronRight, CreditCard, Globe, Moon, X } from 'lucide-
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
 import type { Tab } from './navSections';
+import { REPO_URL } from '../project';
 
 interface MenuDrawerProps {
   open: boolean;
@@ -140,10 +141,27 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           </div>
         </div>
 
+        {/* Who made this, and what it does with you.
+            Everything above says where the numbers come from; nothing said where the app
+            itself comes from. On screen it reads "the whole Lugo urban bus network,
+            operated by Monbus" and "official prices", which is exactly what the
+            operator's own app would say — so a reader had no way to tell this is not it.
+            The README, DATA.md and the structured data a crawler reads all say so
+            plainly. The person holding the phone was the only one not being told. */}
         <div className="mt-auto flex flex-col gap-1 border-t border-line p-5 text-label text-ink-3">
           <span>{t.menu.sourceTimetables}</span>
           <span>{t.menu.sourceGeometry}</span>
           <span>{t.menu.sourceNoGps}</span>
+          <span className="mt-2 border-t border-line pt-2 text-ink-2">{t.menu.unofficial}</span>
+          <span>{t.menu.privacy}</span>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-0.5 self-start underline decoration-dotted underline-offset-2"
+          >
+            {t.menu.sourceCode}
+          </a>
         </div>
       </div>
     </div>

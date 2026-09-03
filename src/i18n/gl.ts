@@ -40,6 +40,9 @@ export const gl = {
     sourceGeometry: 'Trazado levantado en OpenStreetMap',
     sourceNoGps: 'Horas calculadas, non medidas',
     sourceShort: 'Horarios oficiais de buslugo.com. As horas desta app son calculadas.',
+    unofficial: 'Proxecto non oficial: nin AULUSA / Monbus nin o Concello de Lugo o fan nin o avalan.',
+    privacy: 'A túa localización non sae deste móbil, agás se pides ver o camiño a pé.',
+    sourceCode: 'Código, licenzas e privacidade',
   },
 
   search: {

@@ -425,7 +425,10 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 ├── design/                         artboards do redeseño (.dc.html) + canvas.json
 ├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts
-├── DATA.md                         procedencia e licenzas dos datos
+├── DATA.md                         procedencia e condicións dos datos
+├── NOTICE.md                       librarías, tipografía e a quen pertencen
+├── PRIVACY.md                      que fai esta app cos teus datos
+├── SECURITY.md                     como informar dun fallo de seguridade
 └── vite.config.ts
 ```
 

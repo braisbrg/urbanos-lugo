@@ -22,5 +22,16 @@ SOFTWARE.
 
 ---
 
-The MIT licence above covers the SOURCE CODE only. The data this project ships
-carries its own terms — see DATA.md.
+The MIT licence above covers the SOURCE CODE WRITTEN FOR THIS PROJECT. Three
+other things travel with it and are not the authors' to license:
+
+  DATA.md     the timetables, the stops and the route geometry. The geometry is
+              a Derivative Database under ODbL 1.0 and stays under ODbL; the
+              timetables are the operator's, published for public consultation
+              with no licence stated and no agreement granted to this project.
+  NOTICE.md   the libraries bundled into the shipped application — MIT, BSD-2,
+              BSD-3 and ISC — and the typeface.
+  PRIVACY.md  not a licence: what the software does with a visitor's data.
+
+This project is unofficial. It is not made, reviewed, endorsed by or affiliated
+with AULUSA, Grupo Monbus or the Concello de Lugo.
