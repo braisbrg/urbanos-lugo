@@ -16,6 +16,9 @@ coverage/
 
 # Local caches
 .cache/
+# wrangler's own working directory: dev bundles, the local cache as sqlite, and its
+# observability store. 5.6 MB after a few `wrangler dev` runs, none of it ours.
+worker/.wrangler/
 
 # AI assistant and tooling state.
 #

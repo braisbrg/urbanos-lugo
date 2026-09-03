@@ -892,6 +892,36 @@ amósase **cando se tomou**. Todo o demais é idéntico, incluído o funcionamen
 
 Se despregas o servidor Express (`pnpm start`), os avisos pásanse a consultar en vivo.
 
+### Devolverlle a Pages as dúas cousas que lle faltan
+
+Só dúas pezas precisan servidor, e as dúas polo mesmo motivo: nin buslugo.com nin
+`info.urbanoslugo.com` envían cabeceira CORS, así que o navegador ten prohibido lelas. Son
+os **avisos en vivo** e os **minutos que o operador amosa detrás do QR do poste**. En Pages
+non aparecen —a app cae na copia e dío—, pero non hai que mover o sitio para recuperalas:
+abonda cun Worker que responda `/api/…`.
+
+`worker/index.ts` é ese Worker. Non reimplementa nada: chama ás mesmas funcións de
+`src/services/`, que só usan `fetch`, `Response`, `ReadableStream` e `TextDecoder`. Diante
+delas pon a caché de Cloudflare —trinta minutos para os avisos, vinte segundos para unha
+parada— que é o que de verdade mantén preto de unha por xanela as peticións que saen cara
+a servizos alleos, porque a caché en memoria dos módulos vive por illa e non limita nada
+por si soa.
+
+```bash
+pnpm dlx wrangler deploy --config worker/wrangler.toml
+```
+
+Despois, `ALLOWED_ORIGIN` co enderezo do sitio (`https://<usuario>.github.io`, sen barra
+final): é o único que poderá chamalo. Sen ese valor responde cun `allow-origin` baleiro,
+que o navegador rexeita — falla pechado, non aberto.
+
+E na build, `VITE_API_ORIGIN` co enderezo do Worker. Iso fai dúas cousas á vez: as
+peticións van alí en lugar de a carón da páxina, e ese mesmo enderezo —só a orixe— engádese
+a `connect-src` na política. Unha build que nomea unha orixe non pode falar con outra.
+
+O limitador de peticións de `server.ts` non viaxa: un Worker non garda estado entre
+peticións. Cloudflare ten o seu, que se activa no panel.
+
 ---
 
 ## Instalación

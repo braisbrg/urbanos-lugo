@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { AlertSyncResult } from '../services/alertSyncService';
 import alertSnapshot from '../data/alerts.json';
 import { isSnapshotStale } from '../utils/snapshotAge';
+import { apiUrl } from '../services/apiUrl';
 
 /**
  * The operator's notices, fetched once for the whole app.
@@ -79,7 +80,7 @@ export function useServiceAlerts(): ServiceAlerts {
         // an sRGB fallback so it still works on Safari 15.4. Calling it outright would
         // throw there, be swallowed by the catch below, and quietly show the snapshot for
         // ever. Undefined is a fine signal -- it means what it meant before this line.
-        const res = await fetch(`${import.meta.env.BASE_URL}api/alerts${force ? '?refresh=true' : ''}`, {
+        const res = await fetch(apiUrl(`alerts${force ? '?refresh=true' : ''}`), {
           signal: AbortSignal.timeout?.(30_000),
         });
         if (!res.ok) throw new Error(String(res.status));

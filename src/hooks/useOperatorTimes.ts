@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { OperatorTimes } from '../services/operatorTimes';
+import { apiUrl } from '../services/apiUrl';
 
 /**
  * What the operator says is coming at this stop, when there is a server to ask.
@@ -34,7 +35,7 @@ export function useOperatorTimes(code: string | undefined): OperatorTimes | null
         // requests on top of each other. Optionally called because AbortSignal.timeout is
         // Safari 16 and this app still works on 15.4; there it is undefined, which is what
         // this line meant before it existed.
-        const res = await fetch(`${import.meta.env.BASE_URL}api/paradas/${encodeURIComponent(code)}/agora`, {
+        const res = await fetch(apiUrl(`paradas/${encodeURIComponent(code)}/agora`), {
           signal: AbortSignal.timeout?.(12_000),
         });
         // A 404 here is permanent, and asking again every thirty seconds for as long as

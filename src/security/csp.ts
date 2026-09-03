@@ -22,6 +22,28 @@
  * `unsafe-inline` under style-src is load-bearing — stop popups are built as HTML with
  * style attributes — and scripts do not get the same licence.
  */
+/**
+ * The Worker's address, when the build has one.
+ *
+ * `connect-src 'self'` covers the endpoints while a server serves them beside the page.
+ * The published static build has no server, so it can be pointed at a Cloudflare Worker
+ * instead — and then the policy has to admit exactly that origin and no other. Read from
+ * the environment rather than written here because it belongs to whoever deploys it.
+ *
+ * `process.env` and not `import.meta.env`: this file is only ever imported by Node —
+ * vite.config.ts, server.ts and the test suite — and never reaches the browser.
+ */
+const apiOrigin = (() => {
+  const raw = process.env.VITE_API_ORIGIN;
+  if (!raw) return '';
+  try {
+    // The origin alone, so a stray path or query cannot widen the directive.
+    return ` ${new URL(raw).origin}`;
+  } catch {
+    return '';
+  }
+})();
+
 const DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -35,7 +57,7 @@ const DIRECTIVES = [
   // blob: because the renderer decodes sprites and glyphs into object URLs before
   // drawing them; it never fetches an image from an origin not named here.
   "img-src 'self' data: blob: https://tiles.openfreemap.org https://tile.openstreetmap.org",
-  "connect-src 'self' https://tiles.openfreemap.org https://routing.openstreetmap.de",
+  `connect-src 'self' https://tiles.openfreemap.org https://routing.openstreetmap.de${apiOrigin}`,
   'upgrade-insecure-requests',
 ];
 

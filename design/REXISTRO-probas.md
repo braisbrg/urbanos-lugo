@@ -932,3 +932,55 @@ romper algo grande cun arranxo pequeno. **Isto queda para decidir, non para toca
 - **Composición do paquete**: o anaco de entrada son 544 KB e leva React, a app e os 261 KB
   de `stops.json` + `lines.json`. **Cero mencións** de leaflet ou maplibre: o renderizador
   segue fóra, baixo demanda. 119 KB en brotli.
+
+---
+
+## Rolda 9: as decisións tomadas, e o Worker probado de verdade
+
+**O diagrama de datos, ben desta vez.** Na rolda 3 movín OSRM á fila do importador ao que
+alimenta, o validador de composición rexeitouno e deixeino como estaba. Iso foi un erro de
+lectura: o validador dicía que a *colocación* precisaba traballo, non que a colocación vella
+fose correcta. Con OSRM na fila de `importOfficialData.ts` e 20 px de desprazamento, a
+frecha ten sitio e a etiqueta cae no oco; Overpass sobe á fila de `importOsmRoutes.ts`, que
+si alimenta. 9/9 comprobacións, `sha256 938664affbb8`.
+
+**Un só pnpm.** `packageManager` pasa a 11.25.0, que é o que corre aquí e o que instalará
+CI. `onlyBuiltDependencies` vai a `pnpm-workspace.yaml`, onde pnpm 10+ o le — e agora vale
+para algo, porque desde pnpm 10 o bloqueo é o defecto e esa lista é a excepción. Con
+`overrides` para `qs` (6.15.3 → 6.16.0) e `fast-uri` (3.1.5 → 3.1.7). `pnpm audit`: **sen
+vulnerabilidades**.
+
+Con tope superior en `fast-uri` a propósito: un `>=3.1.6` aberto resolvía a **4.1.4** contra
+o `^3.0.1` que pide `ajv`. Un override pode ignorar o rango do seu pai, que é exactamente
+como un arranxo de seguridade se converte nunha caída.
+
+**O planificador conta unha soa historia.** Escollida a primeira opción: saír xa e agardar na
+parada. `leaveAt` non se renomeou, borrouse — o campo, os dous sitios onde o motor o poñía,
+as tres cadeas que o debuxaban e a súa entrada nas probas de esforzo. Cabeceira, fila e pasos
+din agora todos a mesma hora. É ademais o consello máis seguro: sen GPS, e vistos buses desta
+rede adiantados, chegar con marxe non custa nada e perder un custa ata noventa minutos.
+
+### O Worker, medido e non suposto
+
+Escrito en `worker/index.ts` e **executado de verdade** con `wrangler dev --local`, contra os
+servizos reais:
+
+| | |
+| :--- | :--- |
+| `/api/alerts` | 200, `max-age=1800`, avisos reais de buslugo.com |
+| `/api/paradas/uilP/agora` | 200, `max-age=20`, saídas reais do operador |
+| parada descoñecida | 404, sen cachear |
+| endpoint descoñecido | 404 |
+| POST | 405 |
+| sen `ALLOWED_ORIGIN` | **sen cabeceira de CORS** — falla pechado |
+
+E despois enteiro: build estática servida como serve Pages, chamando ao Worker, coa política
+admitindo esa orixe e só esa. O bloque do QR aparece: «O QUE AMOSA O QR DESTA PARADA ·
+Avenida · 22 min · É o dato do operador, non o desta app».
+
+**Un fallo atopado no camiño, xusto polo xeito de probalo.** Ao cambiar `ALLOWED_ORIGIN` e
+recargar, `/api/alerts` seguía fallando mentres `/agora` xa funcionaba. Non era CORS: era a
+caché de bordo devolvendo unha resposta gardada coa orixe **anterior**, e con `max-age=1800`
+iso son ata trinta minutos nos que o sitio que acaba de ser autorizado se rexeita a si mesmo
+sen que nada o explique. `Vary: Origin` non axuda: a cabeceira vén da configuración, non da
+petición. Agora a orixe entra na clave da caché.

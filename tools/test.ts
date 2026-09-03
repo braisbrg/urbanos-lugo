@@ -2253,4 +2253,31 @@ ok('src/data holds only what ships, and the build inputs stay out of it', () => 
   assert(shipped.length > 0, 'src/data is empty, which cannot be right');
 });
 
+ok('the address the app calls for /api is the one the policy admits', () => {
+  // Two files decide whether a static build can reach a Worker, and they have to agree:
+  // src/services/apiUrl.ts builds the request URL, src/security/csp.ts adds that origin to
+  // connect-src. Name the variable differently in one of them and the build still
+  // succeeds -- it just fails in the browser, silently on Pages, where nobody is looking
+  // at a console.
+  //
+  // This does not prove the policy is right, only that both halves read the same setting;
+  // proving the rest means building twice, which `pnpm build` does anyway.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  for (const file of ['src/services/apiUrl.ts', 'src/security/csp.ts']) {
+    assert(
+      readFileSync(join(root, file), 'utf8').includes('VITE_API_ORIGIN'),
+      `${file} no longer reads VITE_API_ORIGIN, so the request and the policy can disagree`,
+    );
+  }
+
+  // And csp.ts runs in Node, where import.meta.env does not exist. Reading it there would
+  // throw during the build config's own load, before anything else could report it.
+  // Comments stripped first: this file explains that rule in prose, and the first draft
+  // of the check failed on its own explanation.
+  const csp = readFileSync(join(root, 'src/security/csp.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert(!csp.includes('import.meta.env'), 'csp.ts reads import.meta.env, which is undefined in Node');
+});
+
 console.log(`\n${checks} checks passed\n`);
