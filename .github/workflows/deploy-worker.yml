@@ -156,6 +156,20 @@ jobs:
               "$STAGE"
           fi
 
+          # The one thing the worker cannot work without, set here rather than by hand.
+          #
+          # It goes into access-control-allow-origin verbatim, so an app without it
+          # answers 200 with an empty origin header and every browser throws the response
+          # away — a failure that looks like the API being down and is not. It lived on
+          # the app, which meant deleting the app took it with it and the next deploy came
+          # back silently broken. Deriving it from the repository owner also keeps it
+          # correct in a fork, where a hardcoded braisbrg would not be.
+          ORIGIN="https://${{ github.repository_owner }}.github.io"
+          $DEPLOY env add ALLOWED_ORIGIN "$ORIGIN" \
+              --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api \
+            || $DEPLOY env update-value ALLOWED_ORIGIN "$ORIGIN" \
+              --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api
+
           $DEPLOY \
             --json --non-interactive \
             --org "$DENO_DEPLOY_ORG" \
