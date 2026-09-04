@@ -1,7 +1,7 @@
 {
   "name": "urbanos-lugo",
   "description": "Liñas, paradas e tempos de paso do autobús urbano de Lugo. Horarios oficiais e estimacións, sempre etiquetados.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "author": "Urbanos de Lugo contributors",
   "private": true,
