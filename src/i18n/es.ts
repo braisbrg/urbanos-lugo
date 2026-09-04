@@ -75,6 +75,33 @@ export const es: Dict = {
 
   fares: {
     priceNotPublished: 'Precio no publicado',
+    cards: {
+      single: {
+        badge: 'General',
+        title: 'Billete ordinario',
+        subtitle: 'Pago a bordo',
+        details: 'Válido para un viaje en cualquier línea de la red urbana de Lugo.',
+      },
+      citizenCard: {
+        badge: 'Tarjeta Ciudadana',
+        title: 'Bono ordinario',
+        subtitle: (minutes: number) => `Transbordo gratuito (${minutes} min)`,
+        details: 'Requiere tener la Tarjeta Ciudadana del Ayuntamiento de Lugo.',
+      },
+      socialCard: {
+        badge: 'Tarjeta Ciudadana',
+        title: 'Bono social',
+        subtitle: 'Juvenil, universitario, pensionista, desempleo y discapacidad',
+        details: 'El transbordo social también es gratuito. Consulta las condiciones en el teléfono 010.',
+      },
+      tmg: {
+        badge: 'Xunta de Galicia',
+        title: 'Tarjeta del transporte público de Galicia (TMG)',
+        subtitle: 'Válida en la red urbana de Lugo',
+        details: (minutes: number) =>
+          `Si llegas en un bus metropolitano, el urbano va incluido dentro de los ${minutes} min siguientes sin volver a pagar. Más de 41 viajes metropolitanos al mes devuelven el 15% del gasto.`,
+      },
+    },
     alertsTitle: 'Avisos oficiales e incidencias en Lugo',
     alertsSubtitle:
       'Comprobación automatizada cada hora desde el portal del operador, buslugo.com',

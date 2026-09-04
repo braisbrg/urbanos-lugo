@@ -20,9 +20,7 @@
  * under "Despregue".
  */
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
-import { operatorTimesForStop } from '../src/services/operatorTimes';
-import { poleCode } from '../src/data/transitData';
-import { findStop } from '../src/utils/transitEngine';
+import { operatorTimesResponse } from '../src/services/operatorTimesRoute';
 
 /**
  * How long the edge keeps an answer.
@@ -96,19 +94,10 @@ export async function handle(request: Request): Promise<Response> {
 
   const stopMatch = url.pathname.match(/^\/api\/paradas\/([^/]+)\/agora$/);
   if (stopMatch) {
-    // Only stops this app knows about. Without it anybody could use this deployment to
-    // fire arbitrary codes at the operator's site, which is both rude and pointless: a
-    // code we cannot resolve is a code they cannot either.
-    const stop = findStop(decodeURIComponent(stopMatch[1]));
-    if (!stop) return respond({ error: 'Unknown stop' }, 404, 0);
-    const code = poleCode(stop);
-    if (!code) return respond({ error: 'That stop has no operator code' }, 404, 0);
-
-    const times = await operatorTimesForStop(code);
-    // Null means their page could not be read, which is not the same as no buses coming.
-    // 502 rather than an empty list, and the app shows only its own estimates.
-    if (!times) return respond({ error: 'The operator could not be read' }, 502, 0);
-    return respond(times, 200, EDGE_SECONDS.operator);
+    // Shared with the express server, which serves the same endpoint. Only the caching
+    // differs: an answer is worth holding at the edge, an error is not.
+    const { status, body } = await operatorTimesResponse(decodeURIComponent(stopMatch[1]));
+    return respond(body, status, status === 200 ? EDGE_SECONDS.operator : 0);
   }
 
   return respond({ error: 'Unknown endpoint' }, 404, 0);

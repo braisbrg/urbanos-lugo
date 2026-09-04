@@ -89,6 +89,45 @@ export const gl = {
 
   fares: {
     priceNotPublished: 'Prezo non publicado',
+    /**
+     * The four fare cards.
+     *
+     * The words were in `src/data/transitData.ts`, three languages deep, which put
+     * thirty-six strings of interface text outside the dictionaries — where nothing
+     * translating this app could see them, and where the check that catches Galician
+     * typed into a view happens not to look. What stays in the data is what is not
+     * language: the price, and where to go and read it.
+     *
+     * Only the two that interpolate a number are functions, which is the rule the rest of
+     * this file already follows.
+     */
+    cards: {
+      single: {
+        badge: 'Xeral',
+        title: 'Billete ordinario',
+        subtitle: 'Pago a bordo',
+        details: 'Válido para unha viaxe en calquera liña da rede urbana de Lugo.',
+      },
+      citizenCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Bono ordinario',
+        subtitle: (minutes: number) => `Transbordo gratuíto (${minutes} min)`,
+        details: 'Require ter a Tarxeta Cidadá do Concello de Lugo.',
+      },
+      socialCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Bono social',
+        subtitle: 'Mocidade, universitario, pensionista, desemprego e discapacidade',
+        details: 'Transbordo social tamén gratuíto. Consulta as condicións no teléfono 010.',
+      },
+      tmg: {
+        badge: 'Xunta de Galicia',
+        title: 'Tarxeta do transporte público de Galicia (TMG)',
+        subtitle: 'Válida na rede urbana de Lugo',
+        details: (minutes: number) =>
+          `Se chegas nun bus metropolitano, o urbano vai incluído dentro dos ${minutes} min seguintes sen pagar de novo. Máis de 41 viaxes metropolitanas ao mes devolven o 15% do gasto.`,
+      },
+    },
     alertsTitle: 'Avisos oficiais e incidencias en Lugo',
     alertsSubtitle:
       'Comprobación automatizada cada hora dende o portal do operador, buslugo.com',

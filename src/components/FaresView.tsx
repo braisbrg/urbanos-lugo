@@ -1,7 +1,7 @@
 import React from 'react';
 import { Lang, translations } from '../i18n';
 import { CreditCard, Info, Phone, Globe, HelpCircle } from 'lucide-react';
-import { FARES_LIST } from '../data/transitData';
+import { FARE_CARDS } from '../data/transitData';
 
 interface FaresViewProps {
   lang: Lang;
@@ -19,7 +19,14 @@ interface FaresViewProps {
 export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
   const t = translations(lang);
   const faqs = t.faresContent.faqs;
-  const currentFares = FARES_LIST[lang];
+  /**
+   * The words for a card, given the number it interpolates.
+   *
+   * Only two of the eight strings need one, so only those two are functions in the
+   * dictionary — the same rule the rest of the dictionary follows. This resolves either.
+   */
+  const copy = (value: string | ((minutes: number) => string), minutes = 0) =>
+    typeof value === 'function' ? value(minutes) : value;
 
   /**
    * Where somebody can go to check any of this for themselves. buslugo.com is the
@@ -51,22 +58,25 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {currentFares.map((fare, idx) => (
+          {FARE_CARDS.map((fare) => {
+            const words = t.fares.cards[fare.id];
+            const minutes = 'minutes' in fare ? fare.minutes : 0;
+            return (
             <div
-              key={idx}
+              key={fare.id}
               className="p-5 rounded-xl bg-bg border border-edge shadow-sm flex flex-col justify-between"
             >
               <div>
                 <span className="text-label font-bold text-accent bg-surface border border-edge px-2 py-0.5 rounded uppercase tracking-wider">
-                  {fare.badge}
+                  {words.badge}
                 </span>
-                <h3 className="font-bold text-body text-ink mt-2.5">{fare.title}</h3>
+                <h3 className="font-bold text-body text-ink mt-2.5">{words.title}</h3>
                 {/* No invented number when the operator publishes none. */}
                 <div className="text-title font-black text-ink mt-1 font-mono">
                   {fare.price || <span className="text-body text-ink-3">{t.fares.priceNotPublished}</span>}
                 </div>
-                <p className="text-label font-bold text-ink-2 mt-1">{fare.subtitle}</p>
-                <p className="text-label text-ink-3 mt-2 leading-relaxed">{fare.details}</p>
+                <p className="text-label font-bold text-ink-2 mt-1">{copy(words.subtitle, minutes)}</p>
+                <p className="text-label text-ink-3 mt-2 leading-relaxed">{copy(words.details, minutes)}</p>
               </div>
               <a
                 href={fare.sourceUrl}
@@ -77,7 +87,8 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
                 {fare.source}
               </a>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -2,10 +2,10 @@ import express from 'express';
 import { existsSync } from 'fs';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { BUS_STOPS, BUS_LINES, FARE_INFO, poleCode } from './src/data/transitData';
-import { findStop, getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
+import { BUS_STOPS, BUS_LINES, FARE_INFO } from './src/data/transitData';
+import { getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
 import { syncOfficialAlerts } from './src/services/alertSyncService';
-import { operatorTimesForStop } from './src/services/operatorTimes';
+import { operatorTimesResponse } from './src/services/operatorTimesRoute';
 // The same cap the search inputs enforce, imported rather than repeated: two numbers
 // that must agree are one number.
 import { MAX_QUERY_LENGTH } from './src/utils/searchUtils';
@@ -197,18 +197,11 @@ async function startServer() {
    * degraded one.
    */
   app.get('/api/paradas/:code/agora', async (req, res) => {
-    // Only stops this app knows. queryString narrows the type and nothing more, and
-    // encodeURIComponent keeps the request inside their one path -- but without this
-    // anybody could use this server to fire arbitrary codes at theirs, which is both
-    // rude and pointless. A code we cannot resolve is a code they cannot either.
-    const stop = findStop(queryString(req.params.code));
-    if (!stop) return res.status(404).json({ error: 'Unknown stop' });
-    const code = poleCode(stop);
-    if (!code) return res.status(404).json({ error: 'That stop has no operator code' });
-    const times = await operatorTimesForStop(code);
-    // Null means the page could not be read, which is not the same as no buses coming.
-    if (!times) return res.status(502).json({ error: 'The operator could not be read' });
-    return res.json(times);
+    // Shared with the Deno worker, which serves the same endpoint: see
+    // src/services/operatorTimesRoute.ts for why the stop is resolved before the
+    // operator's site is touched at all.
+    const { status, body } = await operatorTimesResponse(queryString(req.params.code));
+    return res.status(status).json(body);
   });
 
   app.post('/api/alerts/sync', async (_req, res) => {

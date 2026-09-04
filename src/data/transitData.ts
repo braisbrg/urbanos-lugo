@@ -52,145 +52,54 @@ export const FARES = {
 
 const formatEuros = (amount: number): string => `${amount.toFixed(2).replace('.', ',')} €`;
 
-interface FareCardItem {
-  badge: string;
-  title: string;
-  /** Empty when the operator publishes no price for it — see the TMG card. */
-  price: string;
-  subtitle: string;
-  details: string;
-  /** Where this came from, so nothing on this screen is unattributable. */
-  source: string;
-  sourceUrl: string;
-}
-
 const BUSLUGO = 'buslugo.com/tarifas';
 const BUSLUGO_URL = 'https://buslugo.com/tarifas';
 const TMG_URL = 'https://tmg.xunta.gal/area-de-lugo';
 
 /**
- * Fare cards, in every interface language.
+ * The four fares, and the facts about them that are not language.
  *
- * Typed as a full Record so a new language cannot be added without its fares: the
- * lookup used to be `FARES_LIST[lang] || FARES_LIST.gl`, which quietly served Galician
- * prices to an English reader rather than failing loudly.
+ * This was `FARES_LIST: Record<Lang, FareCardItem[]>` — the same four cards written out
+ * three times, 116 lines, with the price and the source repeated in each copy and the
+ * prose sitting in `src/data/` rather than in the dictionaries. Thirty-six strings of
+ * interface text lived outside the translation system, where the check that catches
+ * Galician typed into a view does not look.
+ *
+ * What is left here is what does not change with the reader: the price, computed from
+ * FARES so there is one number and not twelve, and where to go and verify it. The words
+ * are in `t.fares.cards`.
+ *
+ * `minutes` is the figure the copy interpolates, where it has one. Passing it from here
+ * keeps the dictionaries free of any import from the dataset.
  */
-export const FARES_LIST: Record<Lang, FareCardItem[]> = {
-  gl: [
-    {
-      badge: 'Xeral',
-      title: 'Billete ordinario',
-      price: formatEuros(FARES.singleTicket),
-      subtitle: 'Pago a bordo',
-      details: 'Válido para unha viaxe en calquera liña da rede urbana de Lugo.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Tarxeta Cidadá',
-      title: 'Bono ordinario',
-      price: formatEuros(FARES.citizenCard),
-      subtitle: `Transbordo gratuíto (${FARES.freeTransferWindowMinutes} min)`,
-      details: 'Require ter a Tarxeta Cidadá do Concello de Lugo.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Tarxeta Cidadá',
-      title: 'Bono social',
-      price: formatEuros(FARES.socialCard),
-      subtitle: 'Mocidade, universitario, pensionista, desemprego e discapacidade',
-      details: 'Transbordo social tamén gratuíto. Consulta as condicións no teléfono 010.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Xunta de Galicia',
-      title: 'Tarxeta do transporte público de Galicia (TMG)',
-      price: formatEuros(FARES.metropolitanCardUrban),
-      subtitle: 'Válida na rede urbana de Lugo',
-      details: `Se chegas nun bus metropolitano, o urbano vai incluído dentro dos ${FARES.metropolitanTransferMinutes} min seguintes sen pagar de novo. Máis de 41 viaxes metropolitanas ao mes devolven o 15% do gasto.`,
-      source: 'tmg.xunta.gal/area-de-lugo',
-      sourceUrl: TMG_URL,
-    },
-  ],
-  es: [
-    {
-      badge: 'General',
-      title: 'Billete ordinario',
-      price: formatEuros(FARES.singleTicket),
-      subtitle: 'Pago a bordo',
-      details: 'Válido para un viaje en cualquier línea de la red urbana de Lugo.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Tarjeta Ciudadana',
-      title: 'Bono ordinario',
-      price: formatEuros(FARES.citizenCard),
-      subtitle: `Transbordo gratuito (${FARES.freeTransferWindowMinutes} min)`,
-      details: 'Requiere tener la Tarjeta Ciudadana del Ayuntamiento de Lugo.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Tarjeta Ciudadana',
-      title: 'Bono social',
-      price: formatEuros(FARES.socialCard),
-      subtitle: 'Juvenil, universitario, pensionista, desempleo y discapacidad',
-      details: 'El transbordo social también es gratuito. Consulta las condiciones en el teléfono 010.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Xunta de Galicia',
-      title: 'Tarjeta del transporte público de Galicia (TMG)',
-      price: formatEuros(FARES.metropolitanCardUrban),
-      subtitle: 'Válida en la red urbana de Lugo',
-      details: `Si llegas en un bus metropolitano, el urbano va incluido dentro de los ${FARES.metropolitanTransferMinutes} min siguientes sin volver a pagar. Más de 41 viajes metropolitanos al mes devuelven el 15% del gasto.`,
-      source: 'tmg.xunta.gal/area-de-lugo',
-      sourceUrl: TMG_URL,
-    },
-  ],
-  en: [
-    {
-      badge: 'Standard',
-      title: 'Single ticket',
-      price: formatEuros(FARES.singleTicket),
-      subtitle: 'Paid on board',
-      details: 'Valid for one trip on any line of the Lugo city network.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Tarxeta Cidadá',
-      title: 'Standard travel card fare',
-      price: formatEuros(FARES.citizenCard),
-      subtitle: `Free transfer (${FARES.freeTransferWindowMinutes} min)`,
-      details: 'Requires the Tarxeta Cidadá issued by Lugo city council.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Tarxeta Cidadá',
-      title: 'Concession fare',
-      price: formatEuros(FARES.socialCard),
-      subtitle: 'Young people, students, pensioners, unemployed and disabled passengers',
-      details: 'Transfers are free on this fare too. Ask about eligibility on 010.',
-      source: BUSLUGO,
-      sourceUrl: BUSLUGO_URL,
-    },
-    {
-      badge: 'Xunta de Galicia',
-      title: 'Galician public transport card (TMG)',
-      price: formatEuros(FARES.metropolitanCardUrban),
-      subtitle: 'Valid on the Lugo city network',
-      details: `If you arrive on a regional bus, the city bus is included for the next ${FARES.metropolitanTransferMinutes} min at no extra charge. More than 41 regional trips a month earns 15% of the spend back.`,
-      source: 'tmg.xunta.gal/area-de-lugo',
-      sourceUrl: TMG_URL,
-    },
-  ],
-};
+export const FARE_CARDS = [
+  {
+    id: 'single',
+    price: formatEuros(FARES.singleTicket),
+    source: BUSLUGO,
+    sourceUrl: BUSLUGO_URL,
+  },
+  {
+    id: 'citizenCard',
+    price: formatEuros(FARES.citizenCard),
+    minutes: FARES.freeTransferWindowMinutes,
+    source: BUSLUGO,
+    sourceUrl: BUSLUGO_URL,
+  },
+  {
+    id: 'socialCard',
+    price: formatEuros(FARES.socialCard),
+    source: BUSLUGO,
+    sourceUrl: BUSLUGO_URL,
+  },
+  {
+    id: 'tmg',
+    price: formatEuros(FARES.metropolitanCardUrban),
+    minutes: FARES.metropolitanTransferMinutes,
+    source: 'tmg.xunta.gal/area-de-lugo',
+    sourceUrl: TMG_URL,
+  },
+] as const;
 
 export const FARE_INFO = {
   singleTicket: formatEuros(FARES.singleTicket),

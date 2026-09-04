@@ -86,6 +86,33 @@ export const en: Dict = {
 
   fares: {
     priceNotPublished: 'Price not published',
+    cards: {
+      single: {
+        badge: 'Standard',
+        title: 'Single ticket',
+        subtitle: 'Paid on board',
+        details: 'Valid for one trip on any line of the Lugo city network.',
+      },
+      citizenCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Standard travel card fare',
+        subtitle: (minutes: number) => `Free transfer (${minutes} min)`,
+        details: 'Requires the Tarxeta Cidadá issued by Lugo city council.',
+      },
+      socialCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Concession fare',
+        subtitle: 'Young people, students, pensioners, unemployed and disabled passengers',
+        details: 'Transfers are free on this fare too. Ask about eligibility on 010.',
+      },
+      tmg: {
+        badge: 'Xunta de Galicia',
+        title: 'Galician public transport card (TMG)',
+        subtitle: 'Valid on the Lugo city network',
+        details: (minutes: number) =>
+          `If you arrive on a regional bus, the city bus is included for the next ${minutes} min at no extra charge. More than 41 regional trips a month earns 15% of the spend back.`,
+      },
+    },
     alertsTitle: 'Official service notices for Lugo',
     alertsSubtitle:
       'Checked automatically every hour against the operator’s own portal, buslugo.com',
