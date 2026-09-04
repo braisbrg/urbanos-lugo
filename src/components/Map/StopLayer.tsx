@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { escapeHtml } from './escapeHtml';
-import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
-import { BusStop, BusLine } from '../../types';
+import { BusStop } from '../../types';
 import { poleCode } from '../../data/transitData';
-import { getNearbyLines } from '../../utils/transitEngine';
 import { useIsDark } from '../../hooks/useIsDark';
 import { mapColors } from './palette';
 
@@ -15,7 +13,6 @@ import { mapColors } from './palette';
 interface StopLayerProps {
   map: L.Map | null;
   stops: BusStop[];
-  lines: BusLine[];
   /** Lines to draw; null means every line. */
   visibleLineIds: string[] | null;
   /** The one line to emphasise, if any. */
@@ -23,7 +20,6 @@ interface StopLayerProps {
   showStops: boolean;
   /** A stop was tapped. The board for it rises over the map; this layer only reports it. */
   onTapStop: (stop: BusStop) => void;
-  lang: Lang;
 }
 
 /**
@@ -52,25 +48,16 @@ const ZOOM_LADDER: { from: number; minLines: number; radius: number; label: bool
 
 const rungFor = (zoom: number) => ZOOM_LADDER.find((r) => zoom >= r.from) ?? ZOOM_LADDER[ZOOM_LADDER.length - 1];
 
-/** How many lines a stop needs to stay on screen when zoomed out. */
-/** Matches the board: near enough to walk when the wait is long. */
-const NEARBY_LINE_RADIUS_M = 400;
-const NEARBY_LINE_LIMIT = 6;
-
-const INTERCHANGE_MIN_LINES = 6;
-
-/* Canvas markers sit on CARTO's tiles, which stay light whatever theme the app is in,
-   and Leaflet bakes the colour when the layer is built rather than re-reading it. Both
-   reasons say: fixed values here, tokens only in the popup HTML, which is real DOM. */
+/* Canvas markers are drawn into the map's shared canvas, and Leaflet bakes the colour in
+   when the layer is built rather than re-reading it, so these are fixed values read from
+   the theme at build time rather than CSS tokens. */
 export const StopLayer: React.FC<StopLayerProps> = ({
   map,
   stops,
-  lines,
   visibleLineIds,
   selectedStop,
   showStops,
   onTapStop,
-  lang,
 }) => {
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
   const colors = mapColors(useIsDark());
@@ -111,10 +98,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         // heavier ring — and it did not read: two pixels of radius between dots that are
         // four to seven pixels wide is a difference nobody sees, and the thing it was
         // signalling is not what anybody comes to this screen to find. Every stop is drawn
-        // the same now; the code still appears in the popup, where it is a fact you can
-        // act on rather than a hint you have to decode.
-        //
-        // `code` itself stays: it is what the popup and the hover label print.
+        // the same now; the code still appears in the sheet and in the hover label, where
+        // it is a fact you can act on rather than a hint you have to decode.
 
         // circleMarker draws into the map's shared canvas. divIcon, used here before,
         // creates one DOM node per stop — 417 of them on the overview.
@@ -175,7 +160,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       group.remove();
       markersRef.current = {};
     };
-  }, [map, stops, lines, visibleLineIds, showStops, lang, zoom, selectedStop?.id]);
+  }, [map, stops, visibleLineIds, showStops, zoom, selectedStop?.id]);
 
   // Selection restyles one marker rather than rebuilding the layer.
   useEffect(() => {

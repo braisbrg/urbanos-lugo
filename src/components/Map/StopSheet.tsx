@@ -69,10 +69,6 @@ export const StopSheet: React.FC<StopSheetProps> = ({
   );
 
   const code = poleCode(stop);
-  const servingLines = stop.lines
-    .map((id) => lines.find((l) => l.id === id))
-    .filter((l): l is BusLine => Boolean(l));
-
   /**
    * Where the time came from — the one thing this app must never blur.
    *
@@ -173,24 +169,16 @@ export const StopSheet: React.FC<StopSheetProps> = ({
         )}
       </div>
 
-      {servingLines.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 border-t border-line px-3.5 py-2.5">
-          {servingLines.map((line) => (
-            <button
-              key={line.id}
-              type="button"
-              onClick={() => onOpenLine(line)}
-              title={line.name}
-              aria-label={line.name}
-              className="flex h-8 min-w-8 items-center justify-center rounded px-2 text-label font-black text-white"
-              style={{ backgroundColor: line.color }}
-            >
-              {line.number}
-            </button>
-          ))}
-        </div>
-      )}
-
+      {/* No row of every line that serves this stop.
+          It was the one part of the sheet whose height nobody could predict — nine badges
+          here, fourteen at Rda. da Muralla, wrapping to as many rows as it took — and it
+          was the part that pushed the sheet into scrolling. Measured at 462 px against a
+          476 px cap with nine of them: fitting by fourteen pixels, and not fitting at the
+          next stop along.
+          It was also saying something already on screen: every departure below carries
+          its line's badge, and the lines with nothing due in the next hour are what the
+          full board is for. Cutting it makes the sheet's height a function of a fixed
+          number of rows, which is what "never scrolls" actually requires. */}
       <div className="flex flex-col gap-1.5 border-t border-line p-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
         <button
           type="button"

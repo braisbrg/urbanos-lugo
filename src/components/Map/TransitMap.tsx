@@ -55,18 +55,19 @@ const NEARBY_RADIUS_M = 750;
  */
 const NEARBY_SCOPE_LIMIT = 6;
 
-/**
- * Whether this page load has already decided how the map opens.
- *
- * Module scope on purpose: a ref resets with the component, and the map unmounts every
- * time somebody visits another tab. Opening on the nearby lines is a thing that happens
- * once, when the app is opened — not something that reasserts itself over a line the
- * reader chose two taps ago.
- */
+/** Whether this page load has already decided how the map opens. Once means once. */
 let openedOnNearby = false;
 
+/**
+ * Where each shortcut takes you, and it has to be where the buses stop.
+ *
+ * HULA's was 1209 m from the stop called "HULA (Ent. Principal)" — 818 m on foot from any
+ * stop at all. So the button panned the map to a field near the hospital and, once these
+ * presets started filtering by what is within walking distance, matched nothing and fell
+ * back to showing all twenty-four lines. It is the hospital's own main-entrance stop now.
+ */
 const PRESET_CENTERS: Record<'hula' | 'campus' | 'ceao', [number, number]> = {
-  hula: [43.0298, -7.5274],
+  hula: [43.01965, -7.53274],
   campus: [42.9935, -7.5538],
   ceao: [43.044, -7.5692],
 };
@@ -118,20 +119,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const [showStops, setShowStops] = useState(true);
   const [showBuses, setShowBuses] = useState(true);
   /**
-   * Every line at once is not a map of a network, it is a picture of string.
-   *
-   * Twenty-four routes over one small city means the centre is a knot of overlapping
-   * polylines, and the stops underneath — the thing this screen exists to show — get read
-   * through it.
-   *
-   * What stops that happening is not this flag. The app always has a line selected — it
-   * starts on the first one — so `selectedLine` is set on a cold open and this is `true`
-   * every time in practice; the guard only earns its keep if a caller ever passes null.
-   * The map is quiet because of how the routes are drawn: the chosen line in full, the
-   * rest of the network as thin faint threads behind it, which is context rather than
-   * competition. Twenty-four equal traces is what was wrong, not twenty-four traces.
+   * The map stays readable with the routes on because of how RouteLayer draws them: the
+   * chosen line in full, the rest of the network as thin faint threads behind it.
+   * Twenty-four equal traces was the problem, not twenty-four traces.
    */
-  const [showRoutes, setShowRoutes] = useState(Boolean(selectedLine));
+  const [showRoutes, setShowRoutes] = useState(true);
   const [liveBuses, setScheduledBuses] = useState<ScheduledBus[]>([]);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyLinesList, setNearbyLinesList] = useState<{ line: BusLine; nearestStop: BusStop; walkMeters: number }[]>([]);
@@ -217,12 +209,37 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * Kept apart from `visibleLineIds` because picking one line should narrow the map
    * without emptying the list you picked it from.
    */
+  /**
+   * The lines that actually reach HULA, the campus or O Ceao.
+   *
+   * These three buttons did not filter anything. They moved the map to the place and
+   * stopped there, while the scope below fell through to null — every line — so the
+   * "filter" left all twenty-four drawn and every chip selected. The handler's own
+   * comment claimed it kept "every line that reaches it"; nothing computed that set.
+   *
+   * Measured through the engine, which counts walking distance and not a straight line —
+   * the difference is what hid the broken HULA coordinate, since 750 m of pavement is
+   * about 470 m of crow. At 750 m the three come out at 9, 7 and 4 lines of the 24, which
+   * is a filter in each case. Same radius the nearby panel uses, so one number, not two.
+   *
+   * No count cap here, unlike "near me". That cap exists because standing in the centre
+   * puts you near almost everything; a destination is different, and nine lines really do
+   * serve the hospital. Trimming that to six would be hiding three buses that go there.
+   */
+  const presetAreaLineIds = useMemo(() => {
+    if (filterPreset !== 'hula' && filterPreset !== 'campus' && filterPreset !== 'ceao') return [];
+    const [lat, lng] = PRESET_CENTERS[filterPreset];
+    return getNearbyLines(lat, lng, NEARBY_RADIUS_M).map((n) => n.line.id);
+  }, [filterPreset]);
+
   const scopeLineIds =
     filterPreset === 'stop' && aroundStopLineIds.length
       ? aroundStopLineIds
       : filterPreset === 'nearby' && nearbyLinesList.length
         ? nearbyLinesList.slice(0, NEARBY_SCOPE_LIMIT).map((n) => n.line.id)
-        : null;
+        : presetAreaLineIds.length
+          ? presetAreaLineIds
+          : null;
 
   const visibleLineIds = activeLineId !== 'all' ? [activeLineId] : scopeLineIds;
   // Street geometry arrives as its own chunk; until then the stop layer still works.
@@ -498,6 +515,14 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           // Show them all. Picking nearby[0] made "preto de min" display a single line
           // and hide the other seven you could equally walk to.
           setActiveLineId('all');
+          // If this fix is the one the screen opened on, this is the moment the lines to
+          // draw exist. Drawing them any earlier would put all twenty-four on the map for
+          // as long as the GPS took to answer. Nothing to guard against a reader outside
+          // Lugo: that returns above, before any of this.
+          if (drawNearbyWhenReady.current) {
+            drawNearbyWhenReady.current = false;
+            setShowRoutes(true);
+          }
         }
       },
       () => {
@@ -582,41 +607,26 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    */
   const drawNearbyWhenReady = useRef(false);
   useEffect(() => {
-    if (openedOnNearby || !navigator.geolocation || !navigator.permissions?.query) return;
-    openedOnNearby = true;
-    let cancelled = false;
+    if (openedOnNearby || !navigator.permissions?.query) return;
     navigator.permissions
       .query({ name: 'geolocation' as PermissionName })
       .then((status) => {
-        if (cancelled || status.state !== 'granted') return;
+        // Claimed on success, not before. Setting it up front looked like the way to run
+        // once and instead ran never: StrictMode mounts, tears down and mounts again, so
+        // the first pass claimed the flag and the second bailed on it, and in development
+        // the map never opened on anything. Claiming it here lets both passes ask and the
+        // first answer win.
+        if (openedOnNearby || status.state !== 'granted') return;
+        openedOnNearby = true;
         drawNearbyWhenReady.current = true;
         handlePresetFilter('nearby');
       })
       // Firefox once threw for an unknown descriptor rather than resolving. A map that
-      // opens quiet is the fallback, which is exactly what happens if this never runs.
+      // opens on its usual line is the fallback, which is what happens if this never runs.
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
     // Once, on mount: this is about how the screen opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /**
-   * Draw them, once there is actually something to draw.
-   *
-   * Turning the trazados on at the same time as asking for the fix would draw all
-   * twenty-four for as long as the GPS took to answer — and for good, if it answered from
-   * outside Lugo, where the nearby list comes back empty and the scope falls back to every
-   * line. So routes wait for the list.
-   */
-  useEffect(() => {
-    if (!drawNearbyWhenReady.current) return;
-    if (filterPreset === 'nearby' && nearbyLinesList.length) {
-      setShowRoutes(true);
-      drawNearbyWhenReady.current = false;
-    }
-  }, [filterPreset, nearbyLinesList.length]);
 
   return (
     /* No page padding on a phone: the map is the screen there, edge to edge. The padded
@@ -734,14 +744,15 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.quickFilters}
             </span>
-            {/* One scrolling row, not a three-row grid.
-                Five 44 px buttons stacked two across took about 150 px out of a sheet
-                whose entire job is to not cover the map; the row does the same work in
-                44. It is also the shape the reader has already met once — the line chips
-                over the map scroll exactly like this — rather than a second, different
-                arrangement of the same idea. Five near-identical button blocks collapse
-                into the list they always were. */}
-            <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
+            {/* A scrolling row on a phone, a wrapped set on a desktop.
+                On a phone these live in a sheet whose entire job is to not cover the map,
+                and five 44 px buttons stacked two across took about 150 px of it; the row
+                does the same work in 44, in the shape the reader just met in the chips
+                over the map. None of that is true in a 400 px sidebar with the whole page
+                height to spend: there, a row that scrolls sideways hides four of the five
+                behind a gesture nobody makes with a mouse, to save height that was not
+                short. So it wraps instead, and every filter is visible at once. */}
+            <div className="no-scrollbar flex gap-1.5 overflow-x-auto lg:flex-wrap lg:overflow-x-visible">
               {(
                 [
                   ['all', t.map.allLines],
@@ -958,11 +969,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               map={map}
               visibleLineIds={visibleLineIds}
               stops={stops}
-              lines={lines}
               selectedStop={selectedStop}
               showStops={showStops}
               onTapStop={setTappedStop}
-              lang={lang}
             />
 
             {/* The stop, opened where it was tapped, with the map still behind it. */}

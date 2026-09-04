@@ -240,18 +240,10 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   const tuneStyle = () => {
     const gl = layer.getMaplibreMap();
     if (!gl?.getLayer) return;
-    // Density first, and for both styles.
-    for (const [id, property, value] of LABEL_TUNING) {
-      try {
-        if (gl.getLayer(id)) {
-          (gl.setPaintProperty as (l: string, p: string, v: unknown) => void)(id, property, value);
-        }
-      } catch {
-        /* upstream renamed or dropped it; the published labels stand. */
-      }
-    }
-    if (!darkStyle) return;
-    for (const [id, property, value] of DARK_TUNING) {
+    // Label density applies to both styles; the colours only to the dark one.
+    for (const [id, property, value] of darkStyle
+      ? [...LABEL_TUNING, ...DARK_TUNING]
+      : LABEL_TUNING) {
       try {
         // The renderer types the property name as a union of every paint property it
         // knows, keyed to the layer's type, which it cannot check for a name held in a

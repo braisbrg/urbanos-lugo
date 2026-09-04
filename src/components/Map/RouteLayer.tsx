@@ -240,19 +240,17 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
             { sticky: true, className: 'transit-map-tooltip' },
           );
 
-          // A 3px line is hard to grab; an invisible fat line underneath widens the hit area.
-          // A 3 px line is hard to grab; an invisible fat one underneath widens it.
-          /* No click handler on the route itself, deliberately.
-             It used to have one on both the line and this grab area, and that is what
-             made stops unreachable: layer handlers run before the map's, these two are
-             added before the stop layer's, so they fired and opened the route popup
-             before the stop had any chance to say the click was its. The map-level
-             handler below runs last, after every layer has had its say, which is exactly
-             where this decision belongs. The grab area still earns its place — it widens
-             what counts as "on the line" for hover and the tooltip. */
-          const hitArea = L.polyline(path, { color: line.color, weight: 14, opacity: 0 });
-
-          group.addLayer(hitArea);
+          /* No click handler on the route, and no invisible fat line under it either.
+             Both used to be here. The handlers are what made stops unreachable — layer
+             handlers run before the map's, and these were added before the stop layer's,
+             so they answered the click before the stop could say it was its. Answering
+             only from the map-level handler below fixed that.
+             Which left the grab area doing nothing at all: no handler, and the tooltip is
+             bound to the visible line, not to it. It was one inert 14 px polyline per
+             route, and the comment beside it claimed it widened hover. What actually
+             makes a 3 px line easy to hit is HIT_PX up top: the map handler measures the
+             distance from the click to every route in pixels and takes anything within
+             twenty, which is wider than the invisible line ever was. */
           group.addLayer(polyline);
           drawn.push({ line, dir, path });
         });

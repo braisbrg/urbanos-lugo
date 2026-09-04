@@ -249,7 +249,6 @@ export const gl = {
     liveBusesCount: 'buses en servizo',
     centerLugo: 'Centrar Lugo',
     myLocation: 'A miña localización',
-    stop: 'Parada con código QR',
     viewStopDepartures: 'Ver tempos de chegada',
     nearbyTitle: (metres: number) => `Liñas a menos de ${metres} m`,
     nearbyFilter: 'Preto de min',
@@ -278,7 +277,6 @@ export const gl = {
     expandLines: 'Ver todas as liñas dunha vez',
     collapseLines: 'Amosar as liñas nunha fila',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',
-    yourPosition: 'A túa posición actual',
     /* Coa precisión dentro: un punto só di «estás aquí» coa mesma seguridade viñas do GPS
        na rúa ou do wifi dentro dun edificio, onde pode errar centos de metros. */
     yourPositionAccurate: (metres: number) => `A túa posición, con precisión de ±${metres} m`,
