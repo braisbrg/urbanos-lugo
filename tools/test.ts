@@ -23,6 +23,7 @@ import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/uti
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
+import { plainText } from '../src/utils/html';
 import { PATHS } from '../src/routes';
 import { walkHopsOf } from '../src/services/walkingPath';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
@@ -2290,6 +2291,27 @@ ok('the address the app calls for /api is the one the policy admits', () => {
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '');
   assert(!csp.includes('import.meta.env'), 'csp.ts reads import.meta.env, which is undefined in Node');
+});
+
+ok('a hidden HTML comment does not come out as visible text', () => {
+  // The same `replace(/<[^>]+>/g, '')` lived in five files, and a comment ends at its
+  // first `>` rather than at `-->` — so everything a page author deliberately hid was
+  // being read out as text. Found by code scanning, then reproduced before believing it:
+  // one pass leaves "x --> visible" where this leaves "visible".
+  assert.strictEqual(plainText('<!-- <p>x</p> --> visible'), 'visible');
+  assert.strictEqual(plainText('<script>alert(1)</script>keep'), 'keep');
+  assert.strictEqual(plainText('<style>a{}</style>keep'), 'keep');
+
+  // An attribute may carry a quoted `>`, and the whole tag still goes.
+  assert.strictEqual(plainText('<img src=x onerror="a>b">text'), 'text');
+
+  // The replacement is a parameter because two callers want the words joined and the
+  // rest want them spaced; both must still collapse and trim.
+  assert.strictEqual(plainText('<b>a</b> <i>b</i>'), 'a b');
+  assert.strictEqual(plainText('<b>a</b><i>b</i>', ''), 'ab');
+
+  // And nothing that is already text is touched.
+  assert.strictEqual(plainText('Rda. Muralla 56 (Sindicatos)'), 'Rda. Muralla 56 (Sindicatos)');
 });
 
 console.log(`\n${checks} checks passed\n`);

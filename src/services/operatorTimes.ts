@@ -1,5 +1,6 @@
 /** Server-side only: the operator sends no CORS header, so a browser cannot ask directly. */
 import { REPO_URL } from '../project';
+import { plainText } from '../utils/html';
 
 /**
  * What the operator says is coming, stop by stop.
@@ -56,7 +57,7 @@ export interface OperatorTimes {
 export function parseOperatorTimes(html: string): OperatorDeparture[] {
   const text = (block: string, cls: string): string => {
     const m = new RegExp(`class="${cls}"[\\s\\S]*?<p>([\\s\\S]*?)</p>`, 'i').exec(block);
-    return m ? m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+    return m ? plainText(m[1], '') : '';
   };
 
   // ponytail: this scan is quadratic on markup whose blocks never close -- 101 ms for

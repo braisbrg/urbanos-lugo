@@ -305,7 +305,11 @@ async function startServer() {
 
   // Anything that still throws returns JSON, not Express's HTML stack trace page.
   app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error(`${req.method} ${req.originalUrl}:`, err);
+    // The method and the URL as arguments, not interpolated into the first one. A URL is
+    // whatever the caller typed, and `console.error` treats its first argument as a
+    // format string -- a request for `/%s` would swallow the error object that follows
+    // and log the path in its place, which is a log nobody can trust.
+    console.error('request failed:', req.method, req.originalUrl, err);
     if (!res.headersSent) res.status(500).json({ error: 'Internal error' });
   });
 

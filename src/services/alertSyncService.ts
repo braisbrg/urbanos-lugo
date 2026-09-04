@@ -1,5 +1,6 @@
 /** Server-side only: the browser cannot fetch buslugo.com because of CORS. */
 import { readCapped } from './readCapped';
+import { plainText } from '../utils/html';
 import { ServiceAlert } from '../types';
 import { REPO_URL } from '../project';
 
@@ -83,7 +84,7 @@ const ABOUT_GETTING_AROUND =
  *
  * Rendered as text by React, never as HTML, so decoding introduces nothing.
  */
-function plainText(raw: string): string {
+function decodedText(raw: string): string {
   const decoded = raw
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -93,10 +94,7 @@ function plainText(raw: string): string {
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     // Last, so an escaped `&amp;lt;` does not become a tag on the way through.
     .replace(/&amp;/g, '&');
-  return decoded
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return plainText(decoded);
 }
 
 /** A press release runs for pages; a card wants the first thought. */
@@ -129,7 +127,7 @@ function* blocks(text: string, lower: string, open: string, close: string): Gene
 export function extractConcelloNotices(xml: string, alwaysRelevant = false): ServiceAlert[] {
   const field = (block: string, name: string): string => {
     const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
-    return m ? plainText(m[1]) : '';
+    return m ? decodedText(m[1]) : '';
   };
 
   const notices: ServiceAlert[] = [];
@@ -235,10 +233,7 @@ function extractNavNotices(html: string): ServiceAlert[] {
   const notices: ServiceAlert[] = [];
   const inner = list[1];
   for (const item of blocks(inner, inner.toLowerCase(), '<li', '</li>')) {
-    const text = item
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const text = plainText(item);
     // The dropdown holds a bare "no notices" item on a quiet day in some templates, and
     // an empty <li> in others. Neither is an incident.
     if (text.length < 6) continue;
@@ -268,13 +263,13 @@ export function extractAlertsFromHtml(html: string): ServiceAlert[] {
 
   for (let i = 0; i < matches.length; i++) {
     const block = matches[i];
-    const cleanText = block.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const cleanText = plainText(block);
     
     // Check if it contains alert keywords
     if (/desv[ií]o|corte|obras|reforzo|aviso|modificaci[oó]n|parada/i.test(cleanText) && cleanText.length > 20) {
       // Extract title if possible
       const titleMatch = block.match(/<h[234][^>]*>(.*?)<\/h[234]>/i);
-      const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : `Aviso de servizo en Lugo`;
+      const title = titleMatch ? plainText(titleMatch[1], '') : `Aviso de servizo en Lugo`;
       
       const linesFound = linesNamedIn(cleanText);
 

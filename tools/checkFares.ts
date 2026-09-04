@@ -16,6 +16,7 @@
  * and edit the file: a price is not something to update automatically from a scrape.
  */
 import { FARES } from '../src/data/transitData';
+import { stripTags } from '../src/utils/html';
 
 const URL = 'https://buslugo.com/tarifas/';
 const UA = 'Mozilla/5.0 (compatible; UrbanosLugoOpenData/1.0)';
@@ -37,9 +38,7 @@ const WATCHED: { label: string; ours: number; name: string }[] = [
 
 /** Tags out, entities decoded, whitespace collapsed. */
 function plainText(html: string): string {
-  const withoutCode = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ');
-  const decoded = withoutCode
-    .replace(/<[^>]+>/g, ' ')
+  const decoded = stripTags(html)
     .replace(/&nbsp;/g, ' ')
     .replace(/&euro;/g, '€')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))

@@ -12,6 +12,7 @@ import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { pathToFileURL } from 'url';
 import { fileURLToPath } from 'url';
+import { plainText } from '../src/utils/html';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '../src/data');
@@ -36,15 +37,19 @@ async function get(url: string, key: string): Promise<string> {
   return text;
 }
 
-const strip = (s: string) => s.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const strip = (s: string) => plainText(s.replace(/&nbsp;/g, ' '), '');
 
 function decode(s: string): string {
   return s
-    .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;/g, String.fromCharCode(39))
     .replace(/&ordm;/g, 'o')
-    .replace(/&([aeiou])acute;/g, (_m, v) => ({ a: 'a', e: 'e', i: 'i', o: 'o', u: 'u' } as any)[v]);
+    .replace(/&([aeiou])acute;/g, (_m, v) => ({ a: 'a', e: 'e', i: 'i', o: 'o', u: 'u' } as any)[v])
+    // Last, and this order is the whole point: `&amp;` first turns `&amp;quot;` into
+    // `&quot;` and the next line then turns that into a quote mark the source never
+    // wrote. Decoding an ampersand before the entities it can hide is how one round of
+    // escaping becomes none.
+    .replace(/&amp;/g, '&');
 }
 
 interface RawStop {

@@ -36,6 +36,15 @@ So the interesting surface is small:
 - **A stop in the wrong place.** That is a data issue and there is a form for it.
 - **Rate limits being reachable.** 120 requests a minute per address is deliberate, and
   the counter is per process. `src/security/rateLimit.ts` says so in as many words.
+- **Static files being served without a rate limit.** Code scanning flags the two handlers
+  in `server.ts` that touch the filesystem — the pre-compressed asset lookup and the
+  single-page fallback — because an unauthenticated caller can make them stat and read
+  files. That is what serving a website is. Putting a limiter in front of them would
+  throttle an ordinary page load, which fetches about ten files at once, in exchange for
+  nothing: the work per request is one `existsSync` and one `sendFile`, both answered from
+  the operating system's cache. The published site is on GitHub Pages and never reaches
+  this code at all; anyone self-hosting it on the open internet wants a reverse proxy or a
+  CDN in front, which is where request flooding is actually handled.
 - **buslugo.com being scraped.** It is a public timetable, fetched at most once a minute
   behind a thirty-minute cache, with an honest User-Agent. `DATA.md` covers the terms.
 
