@@ -841,7 +841,14 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             {/* Route, Stop, and Vehicle Layers */}
             <RouteLayer
               map={geometryReady ? map : null}
-              visibleLineIds={visibleLineIds}
+              /* The scope, not the one line picked out of it. Choosing a line used to
+                 leave the map holding a single route and nothing else, which answers
+                 "where does the 6 go" and destroys the answer to "and where does that
+                 leave me". The layer keeps the rest faint underneath and paints the
+                 chosen one over them. The stops still narrow to `visibleLineIds`: a
+                 backdrop of routes is context, 417 dots is clutter. */
+              visibleLineIds={scopeLineIds}
+              emphasisLineId={activeLineId !== 'all' ? activeLineId : null}
               lines={lines}
               showRoutes={showRoutes}
               lang={lang}

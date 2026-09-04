@@ -11,6 +11,15 @@ interface RouteLayerProps {
   lines: BusLine[];
   /** Lines to draw; null means every line. */
   visibleLineIds: string[] | null;
+  /**
+   * The one line being looked at, drawn in full over the rest.
+   *
+   * Picking a line used to remove every other route from the map, which answered the
+   * question "where does the 6 go" and destroyed the answer to "and where does that leave
+   * me" — a route with nothing around it is a shape, not a place. The others stay, thin
+   * and faint, so the chosen one is read against the network it belongs to.
+   */
+  emphasisLineId?: string | null;
   showRoutes: boolean;
   lang: Lang;
   onSelectLine: (line: BusLine) => void;
@@ -27,6 +36,79 @@ interface RouteLayerProps {
  * only lengthens the list, and the nearest route is always first.
  */
 const HIT_PX = 20;
+
+/**
+ * How far apart to run routes that share a street, in metres on the ground.
+ *
+ * Lugo's lines converge on the same handful of corridors — Rda. da Muralla, Avda. da
+ * Coruña — and drawn on their true geometry they are not close together, they are
+ * *identical*, one polyline hiding five. Whichever Leaflet painted last was the only one
+ * anybody could see.
+ *
+ * So each route is shifted sideways off the centreline by a fixed distance on the ground,
+ * which is how a transit map has always done this. Metres and not pixels because a ground
+ * offset scales with the map for free: separate at the zoom where you are reading street
+ * names, merged back into one corridor when you are looking at the whole city, which is
+ * the right answer at both ends and needs no redraw on zoom.
+ *
+ * Six metres is about half a lane. A route drawn that far off the centreline still reads
+ * as being on its street — city streets are 10 to 20 m wide — while five of them side by
+ * side span 30 m and are plainly five.
+ */
+const LANE_METRES = 6;
+
+/**
+ * How many distinct lanes there are before they start being reused.
+ *
+ * Twenty-four lines cannot each have their own lane: at six metres that would spread a
+ * shared corridor across 144 m, which is no longer a street. Nine lanes span 48 m, which
+ * is a wide avenue, and no real corridor here carries nine lines anyway — so in practice
+ * the reuse never shows, and where it did the two sharing a lane would be no worse off
+ * than every line was before.
+ */
+const LANES = 9;
+
+/**
+ * Shift a path sideways by `metres`, perpendicular to its own direction.
+ *
+ * Each vertex moves along the average of the perpendiculars of the segments meeting
+ * there, which keeps corners joined instead of opening a wedge on every turn.
+ *
+ * Degrees per metre are not constant, so the maths is done in a local metric frame:
+ * latitude is a flat 111,320 m per degree, longitude is that times the cosine of where
+ * you are. At Lugo's 43°N that cosine is 0.731, so dropping it would draw east-west
+ * offsets 1.37 times too wide — checked by measuring a due-north and a due-east street,
+ * which both come back at 6.00 m.
+ */
+function offsetPath(coords: [number, number][], metres: number): [number, number][] {
+  if (metres === 0 || coords.length < 2) return coords;
+  const M_PER_DEG_LAT = 111_320;
+  const perpendiculars: [number, number][] = [];
+
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lat1, lng1] = coords[i];
+    const [lat2, lng2] = coords[i + 1];
+    const cos = Math.cos(((lat1 + lat2) / 2) * (Math.PI / 180));
+    const dx = (lng2 - lng1) * cos * M_PER_DEG_LAT;
+    const dy = (lat2 - lat1) * M_PER_DEG_LAT;
+    const len = Math.hypot(dx, dy);
+    // A repeated coordinate has no direction to be perpendicular to; carry the last one.
+    perpendiculars.push(len === 0 ? (perpendiculars[i - 1] ?? [0, 0]) : [dy / len, -dx / len]);
+  }
+
+  return coords.map(([lat, lng], i) => {
+    const before = perpendiculars[i - 1];
+    const after = perpendiculars[i];
+    const px = ((before?.[0] ?? after?.[0] ?? 0) + (after?.[0] ?? before?.[0] ?? 0)) / 2;
+    const py = ((before?.[1] ?? after?.[1] ?? 0) + (after?.[1] ?? before?.[1] ?? 0)) / 2;
+    const norm = Math.hypot(px, py) || 1;
+    const cos = Math.cos(lat * (Math.PI / 180)) || 1;
+    return [
+      lat + ((py / norm) * metres) / M_PER_DEG_LAT,
+      lng + ((px / norm) * metres) / (M_PER_DEG_LAT * cos),
+    ];
+  });
+}
 
 /**
  * The routes under a click, as a node so the buttons can carry real handlers.
@@ -76,6 +158,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   map,
   lines,
   visibleLineIds,
+  emphasisLineId,
   showRoutes,
   lang,
   onSelectLine,
@@ -96,28 +179,57 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     const group = L.layerGroup().addTo(map);
     groupRef.current = group;
 
-    const drawn: { line: BusLine; dir: BusLine['directions'][number] }[] = [];
+    // The path as drawn, not as stored: a click has to be measured against the line the
+    // reader can see, which is the offset one.
+    const drawn: {
+      line: BusLine;
+      dir: BusLine['directions'][number];
+      path: [number, number][];
+    }[] = [];
 
     if (showRoutes) {
       const showingAll = visibleLineIds === null;
-      const linesToRender = showingAll ? lines : lines.filter((l) => visibleLineIds.includes(l.id));
-      // Both directions only when a single line is on screen; otherwise they stack.
+      const inScope = showingAll ? lines : lines.filter((l) => visibleLineIds.includes(l.id));
+      const emphasised = emphasisLineId ? inScope.find((l) => l.id === emphasisLineId) : undefined;
+      // Emphasised last, so it is painted over the network rather than under it.
+      const linesToRender = emphasised
+        ? [...inScope.filter((l) => l.id !== emphasised.id), emphasised]
+        : inScope;
+      // Both directions only when there is one line and nothing else competing for the
+      // corridor; otherwise ida and volta are two more traces in an already busy street.
       const singleLine = linesToRender.length === 1;
 
-      linesToRender.forEach((line) => {
+      linesToRender.forEach((line, lineIndex) => {
+        const isEmphasised = line.id === emphasisLineId;
+        // A backdrop, not a second subject: thin enough to read the chosen line over, dark
+        // enough to still say a street carries a bus.
+        const muted = Boolean(emphasised) && !isEmphasised;
         // Ida and volta run the same corridor, so drawing both at once just stacks
         // one polyline on top of the other. Show the outbound trace in the overview
         // and only split the two apart once a single line is selected.
-        const directions = singleLine ? line.directions : line.directions.slice(0, 1);
+        const directions = isEmphasised || singleLine ? line.directions : line.directions.slice(0, 1);
 
         directions.forEach((dir, dirIndex) => {
           if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) return;
 
           const isReturn = dirIndex === 1;
-          const polyline = L.polyline(dir.pathCoordinates, {
+
+          /* Which lane this trace runs in.
+             With one line on screen the two lanes are its own directions, half a lane
+             either side of the centreline — ida and volta share the whole corridor, which
+             is why the return had to be dashed to be told apart at all. With several
+             lines it is one lane each, dealt out around the centre so the group stays
+             centred on the street rather than drifting off one side of it. */
+          const laneMetres =
+            isEmphasised || singleLine
+              ? (isReturn ? 1 : -1) * (LANE_METRES / 2)
+              : ((lineIndex % LANES) - Math.floor(LANES / 2)) * LANE_METRES;
+          const path = offsetPath(dir.pathCoordinates as [number, number][], laneMetres);
+
+          const polyline = L.polyline(path, {
             color: line.color,
-            weight: singleLine ? 5 : 3.5,
-            opacity: singleLine ? 0.9 : 0.7,
+            weight: muted ? 2 : isEmphasised || singleLine ? 5 : 3.5,
+            opacity: muted ? 0.35 : isEmphasised || singleLine ? 0.95 : 0.7,
             dashArray: isReturn ? '10 7' : undefined,
             lineJoin: 'round',
             lineCap: 'round',
@@ -130,13 +242,13 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
 
           // A 3px line is hard to grab; an invisible fat line underneath widens the hit area.
           // A 3 px line is hard to grab; an invisible fat one underneath widens it.
-          const hitArea = L.polyline(dir.pathCoordinates, { color: line.color, weight: 14, opacity: 0 });
+          const hitArea = L.polyline(path, { color: line.color, weight: 14, opacity: 0 });
           hitArea.on('click', (e) => openLinesHere(e as L.LeafletMouseEvent));
           polyline.on('click', (e) => openLinesHere(e as L.LeafletMouseEvent));
 
           group.addLayer(hitArea);
           group.addLayer(polyline);
-          drawn.push({ line, dir });
+          drawn.push({ line, dir, path });
         });
       });
     }
@@ -144,9 +256,9 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     const openLinesHere = (e: L.LeafletMouseEvent) => {
       const click = map.latLngToContainerPoint(e.latlng);
       const hits = drawn
-        .map(({ line, dir }) => {
+        .map(({ line, dir, path }) => {
           let nearest = Infinity;
-          const pts = dir.pathCoordinates.map((c) => map.latLngToContainerPoint(c as L.LatLngTuple));
+          const pts = path.map((c) => map.latLngToContainerPoint(c as L.LatLngTuple));
           for (let i = 1; i < pts.length; i++) {
             const d = L.LineUtil.pointToSegmentDistance(click, pts[i - 1], pts[i]);
             if (d < nearest) nearest = d;
@@ -172,7 +284,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       group.remove();
       groupRef.current = null;
     };
-  }, [map, lines, visibleLineIds, showRoutes, lang]);
+  }, [map, lines, visibleLineIds, emphasisLineId, showRoutes, lang]);
 
   return null;
 };
