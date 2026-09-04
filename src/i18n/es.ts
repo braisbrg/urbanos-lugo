@@ -255,6 +255,8 @@ export const es: Dict = {
     documentTitle: 'Urbanos de Lugo | Líneas, horarios y paradas',
     layers: 'Capas visibles',
     linesList: 'Seleccionar línea',
+    controls: 'Filtros y capas',
+    closeControls: 'Cerrar filtros y capas',
     geolocationUnavailable: 'La geolocalización no está disponible.',
     yourPosition: 'Tu ubicación actual',
     yourPositionAccurate: (metres: number) => `Tu posición, con precisión de ±${metres} m`,

@@ -2,7 +2,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Bus, MapPin, Navigation, Layers, LocateFixed, ChevronRight } from 'lucide-react';
+import {
+  Bus,
+  MapPin,
+  Navigation,
+  Layers,
+  LocateFixed,
+  ChevronRight,
+  ChevronDown,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
 import {
@@ -16,6 +25,7 @@ import { getDistanceMeters } from '../../utils/geo';
 /** Matches the stop board: what somebody standing there could reasonably walk to. */
 const AROUND_STOP_RADIUS_M = 400;
 import { useIsDark } from '../../hooks/useIsDark';
+import { useDialog } from '../../hooks/useDialog';
 import { useMapChrome } from '../../hooks/useMapChrome';
 import { createBasemap, type BasemapLayer } from './basemap';
 import { mapColors } from './palette';
@@ -94,6 +104,25 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const [nearbyLinesList, setNearbyLinesList] = useState<{ line: BusLine; nearestStop: BusStop; walkMeters: number }[]>([]);
   const [isLocating, setIsLocating] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  /**
+   * Whether the controls are pulled up over the map.
+   *
+   * Only means anything below `lg`. Making the map the whole screen on a phone had a
+   * consequence I had not paid for: the quick filters, the layer switches, the line list
+   * and the telemetry all still lived in the column beside the map, and on a phone that
+   * column is *under* the map — a full viewport of scrolling away, past a element that
+   * swallows the gesture. Reachable in principle and unreachable in practice.
+   *
+   * So on a phone that column is a sheet you pull up over the map instead of a column you
+   * scroll to. It is the same markup either way: at `lg` the classes below hand it back to
+   * being an ordinary sidebar and this state stops mattering.
+   */
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const closeSheet = useCallback(() => setSheetOpen(false), []);
+  // Escape closes it and focus moves into it, the same as the menu and the QR reader.
+  // The hook no-ops while `sheetOpen` is false, which is what it always is at `lg`, where
+  // this is a column and not a dialog at all.
+  const sheetRef = useDialog(sheetOpen, closeSheet);
 
   const stops = BUS_STOPS;
   /**
@@ -399,6 +428,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     // Asking for a line is asking to see it. The map opens with no trazados drawn, so
     // without this the first pick would frame the route and then draw nothing in it.
     setShowRoutes(true);
+    // And asking to see it is asking for the sheet to get out of the way of it.
+    setSheetOpen(false);
 
     if (map && line.directions[0]?.pathCoordinates?.length) {
       const bounds = L.polyline(line.directions[0].pathCoordinates).getBounds();
@@ -410,6 +441,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
   const handlePresetFilter = (preset: 'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao') => {
     setFilterPreset(preset);
+    // Every one of these moves or redraws the map, which is behind the sheet.
+    setSheetOpen(false);
     if (preset !== 'stop') setLinesHereStop(null);
     if (preset === 'all') {
       setActiveLineId('all');
@@ -431,10 +464,50 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     <div className="max-w-7xl mx-auto px-0 py-0 sm:px-6 sm:py-5 lg:px-8">
       {/* 2-Column Responsive Layout: Options on Left, Map on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* The scrim, so it is obvious the map is behind and not gone, and so tapping
+            anywhere off the sheet closes it. A button and not a div: closing is an action,
+            and this is the target most people reach for first. */}
+        {sheetOpen && (
+          <button
+            type="button"
+            aria-label={t.map.closeControls}
+            onClick={() => setSheetOpen(false)}
+            className="fixed inset-0 z-[500] bg-scrim lg:hidden"
+          />
+        )}
+
         {/* Left Column: Controls & Filters (Geometric Balance Sidebar).
-            Second on a phone: the map is what the tab is for, and it used to open
-            below a screenful of panels. Unchanged from `lg` up. */}
-        <div className="order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4">
+            A sheet over the map below `lg`, an ordinary sidebar from `lg` up — one set of
+            markup, because two would drift apart the first time either was edited.
+            `invisible` when closed and not merely translated off: a panel parked below the
+            fold still takes keyboard focus, so tabbing would walk into a list of
+            twenty-four lines nobody can see. */}
+        <div
+          ref={sheetRef}
+          role={sheetOpen ? 'dialog' : undefined}
+          aria-modal={sheetOpen ? true : undefined}
+          aria-label={sheetOpen ? t.map.controls : undefined}
+          className={`order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4 fixed inset-x-0 bottom-0 z-[510] max-h-[78dvh] overflow-y-auto rounded-t-2xl border-t border-edge bg-surface p-3.5 shadow-2xl transition-transform duration-200 motion-reduce:transition-none lg:static lg:z-auto lg:max-h-none lg:overflow-visible lg:visible lg:translate-y-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
+            sheetOpen ? 'translate-y-0' : 'invisible translate-y-full'
+          }`}
+        >
+          {/* The handle. It says which way the sheet goes and gives the sheet its own way
+              out, for anyone who does not think to tap the map behind it. Gone at `lg`,
+              where the sheet is a column and closing it means nothing. */}
+          <div className="-mt-1 flex items-center justify-between gap-2 lg:hidden">
+            <span className="text-label font-bold uppercase tracking-widest text-ink-3">
+              {t.map.controls}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSheetOpen(false)}
+              aria-label={t.map.closeControls}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-ink-2"
+            >
+              <ChevronDown className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+
           {/* Header Card with Telemetry */}
           <div className="bg-bg rounded-xl p-4 shadow-sm border border-edge">
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-line">
@@ -821,6 +894,21 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               }`}
             >
               <LocateFixed className="h-5 w-5" aria-hidden="true" />
+            </button>
+
+            {/* The way to everything the sidebar holds — the quick filters, the layer
+                switches, the whole line list, the telemetry — without leaving the map.
+                Centre-bottom, because the two corners are already taken by locate and
+                zoom, and because it is the widest target of the three and this is the one
+                with a word on it. */}
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              aria-expanded={sheetOpen}
+              className="pointer-events-auto absolute bottom-5 left-1/2 z-[400] flex h-12 -translate-x-1/2 items-center gap-2 rounded-full border border-edge bg-bg/95 px-4 text-label font-bold text-ink shadow-md backdrop-blur-xs lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4 text-accent" aria-hidden="true" />
+              {t.map.controls}
             </button>
           </div>
         </div>

@@ -266,6 +266,8 @@ export const en: Dict = {
     documentTitle: 'Urbanos de Lugo | Lines, timetables and stops',
     layers: 'Visible layers',
     linesList: 'Choose a line',
+    controls: 'Filters and layers',
+    closeControls: 'Close filters and layers',
     geolocationUnavailable: 'Geolocation is not available.',
     yourPosition: 'Your current position',
     yourPositionAccurate: (metres: number) => `Your position, accurate to ±${metres} m`,

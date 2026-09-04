@@ -358,13 +358,47 @@
   }
 
   /* Leaflet draws its own controls at 30 px, which is under the tap floor everything
-     else in this app clears. Widen them rather than hiding them. */
+     else in this app clears. Widen them rather than hiding them.
+
+     And theme them. Leaflet paints these from its own sheet — white plate, near-black
+     glyph, a grey plate for the disabled end of the range — so at night the zoom sat on
+     the map as a white brick two inches from a locate button that was themed properly.
+     Same surface, same border, same ink, same corner radius as that button: they are two
+     halves of one set of map controls and they should look it.
+
+     !important throughout because Leaflet ships its CSS unlayered, and an unlayered rule
+     beats anything in @layer base however late it comes. */
+  .leaflet-bar,
+  .leaflet-touch .leaflet-bar {
+    border: 1px solid var(--c-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 12px oklch(0 0 0 / 0.16) !important;
+    /* So the children's square corners are cut by the rounded container instead of
+       poking out of it. */
+    overflow: hidden;
+  }
   .leaflet-touch .leaflet-bar a,
   .leaflet-bar a {
-    /* Leaflet's own sheet is unlayered, so a layered rule would lose the cascade. */
     width: 44px !important;
     height: 44px !important;
     line-height: 44px !important;
+    background: var(--c-bg) !important;
+    color: var(--c-ink-2) !important;
+    border-bottom: 1px solid var(--c-line) !important;
+  }
+  .leaflet-bar a:last-child {
+    border-bottom: none !important;
+  }
+  .leaflet-bar a:hover,
+  .leaflet-bar a:focus {
+    background: var(--c-surface) !important;
+    color: var(--c-ink) !important;
+  }
+  /* The end of the range: still readable, plainly not pressable. */
+  .leaflet-bar a.leaflet-disabled {
+    background: var(--c-bg) !important;
+    color: var(--c-ink-3) !important;
+    opacity: 0.45;
   }
 
   /* A row tinted with its own line colour, mixed against whatever the background

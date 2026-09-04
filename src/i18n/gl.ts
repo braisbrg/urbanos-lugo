@@ -272,6 +272,8 @@ export const gl = {
     documentTitle: 'Urbanos de Lugo | Liñas, horarios e paradas',
     layers: 'Capas visibles',
     linesList: 'Seleccionar liña',
+    controls: 'Filtros e capas',
+    closeControls: 'Pechar filtros e capas',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',
     yourPosition: 'A túa posición actual',
     /* Coa precisión dentro: un punto só di «estás aquí» coa mesma seguridade viñas do GPS
