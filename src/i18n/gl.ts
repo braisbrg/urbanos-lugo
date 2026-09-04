@@ -274,6 +274,7 @@ export const gl = {
     linesList: 'Seleccionar liña',
     controls: 'Filtros e capas',
     closeControls: 'Pechar filtros e capas',
+    closeStop: 'Pechar esta parada',
     expandLines: 'Ver todas as liñas dunha vez',
     collapseLines: 'Amosar as liñas nunha fila',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',

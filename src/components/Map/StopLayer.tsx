@@ -21,11 +21,8 @@ interface StopLayerProps {
   /** The one line to emphasise, if any. */
   selectedStop?: BusStop;
   showStops: boolean;
-  onSelectStop: (stop: BusStop) => void;
-  /** Open a line's own page. The badges in a stop popup are the shortest way there. */
-  onOpenLine: (line: BusLine) => void;
-  /** Narrow the map to the lines that serve this stop, without leaving the map. */
-  onShowLinesHere: (stop: BusStop) => void;
+  /** A stop was tapped. The board for it rises over the map; this layer only reports it. */
+  onTapStop: (stop: BusStop) => void;
   lang: Lang;
 }
 
@@ -72,19 +69,14 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   visibleLineIds,
   selectedStop,
   showStops,
-  onSelectStop,
-  onOpenLine,
-  onShowLinesHere,
+  onTapStop,
   lang,
 }) => {
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
   const colors = mapColors(useIsDark());
-  const onSelectStopRef = useRef(onSelectStop);
-  onSelectStopRef.current = onSelectStop;
-  const onOpenLineRef = useRef(onOpenLine);
-  onOpenLineRef.current = onOpenLine;
-  const onShowLinesHereRef = useRef(onShowLinesHere);
-  onShowLinesHereRef.current = onShowLinesHere;
+  // Held in a ref so a fresh arrow from the parent does not rebuild every marker.
+  const onTapStopRef = useRef(onTapStop);
+  onTapStopRef.current = onTapStop;
 
   const [zoom, setZoom] = useState<number>(() => map?.getZoom() ?? 14);
   useEffect(() => {
@@ -158,74 +150,22 @@ export const StopLayer: React.FC<StopLayerProps> = ({
           );
         }
 
-        const servingLines = stop.lines
-          .map((l) => lines.find((li) => li.id === l))
-          .filter((l): l is BusLine => Boolean(l));
+        /* Tapping a stop opens the stop, in a sheet over the map.
+           It used to open a Leaflet popup built here as an HTML string, whose only real
+           content was a button that switched tabs — so the question that brings people to
+           this screen, "that stop there, when does it come", was answered by leaving the
+           screen. The board rises over the map instead, and building it as a component
+           takes fifty lines of innerHTML and escaping out of this file with it.
 
-        // Buttons, not spans: a badge is the obvious thing to press to read that line.
-        const linesBadges = servingLines
-          .map(
-            (l) =>
-              `<button type="button" data-line-id="${escapeHtml(l.id)}" title="${escapeHtml(l.name)}" style="background-color: ${escapeHtml(l.color)}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; margin-right: 4px; border: none; cursor: pointer;">${escapeHtml(l.number)}</button>`,
-          )
-          .join('');
-
-        const viewText = translations(lang).map.viewStopDepartures;
-
-        // Lines that pass within a short walk without calling here.
-        const nearby = getNearbyLines(stop.lat, stop.lng, NEARBY_LINE_RADIUS_M)
-          .filter((n) => !stop.lines.includes(n.line.id))
-          .sort((a, b) => a.walkMeters - b.walkMeters)
-          .slice(0, NEARBY_LINE_LIMIT);
-        const nearbyBadges = nearby
-          .map(
-            (n) =>
-              `<button type="button" data-line-id="${escapeHtml(n.line.id)}" title="${escapeHtml(n.line.name)} — ~${Math.round(n.walkMeters)} m" style="background-color: ${escapeHtml(n.line.color)}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; opacity: 0.75;">${escapeHtml(n.line.number)}</button>`,
-          )
-          .join('');
-
-        const popup = document.createElement('div');
-        popup.className = 'p-1 min-w-[200px] font-sans';
-        popup.innerHTML = `
-          <div style="font-weight: 600; font-size: 15px; color: var(--c-ink); margin-bottom: 3px;">${escapeHtml(stop.name)}</div>
-          <div style="font-size: 12px; color: var(--c-ink-3); margin-bottom: 8px;">${code ? `${escapeHtml(translations(lang).map.stopCode)}: <b>${escapeHtml(code)}</b> &bull; ` : ''}${escapeHtml(stop.zone)}</div>
-          <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px;">${linesBadges}</div>
-          ${nearby.length ? `<div style="margin-bottom: 10px;">
-            <div style="font-size: 12px; color: var(--c-ink-3); margin-bottom: 4px;">${escapeHtml(translations(lang).arrivals.nearbyLinesTitle)}</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 4px;">${nearbyBadges}</div>
-          </div>` : ''}
-          <button data-stop-times="1" style="width: 100%; min-height: 44px; background-color: var(--c-accent); color: var(--c-on-accent); border: none; border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
-            ${viewText} &rarr;
-          </button>
-          <button data-lines-here="1" style="width: 100%; min-height: 44px; margin-top: 6px; background: transparent; color: var(--c-ink-2); border: 1px solid var(--c-border); border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
-            ${escapeHtml(translations(lang).map.onlyLinesHere)}
-          </button>
-        `;
-        // Wire the button by reference. Building a querySelector from stop.id used to
-        // throw for any id that is not a valid CSS identifier.
-        popup.querySelector('button[data-stop-times]')?.addEventListener('click', () => onSelectStopRef.current(stop));
-        // Acts on the map behind the popup, so the popup gets out of the way first.
-        popup.querySelector('button[data-lines-here]')?.addEventListener('click', () => {
-          marker.closePopup();
-          onShowLinesHereRef.current(stop);
-        });
-        popup.querySelectorAll<HTMLButtonElement>('button[data-line-id]').forEach((badge) => {
-          const line = servingLines.find((l) => l.id === badge.dataset.lineId);
-          if (line) badge.addEventListener('click', () => onOpenLineRef.current(line));
-        });
-
-        marker.bindPopup(popup);
-        /* Claim the click for the stop.
-           Nearly every stop stands on a route, and the route layer answers map clicks
-           anywhere within twenty pixels of a line. Both fired: this popup opened, and the
-           route layer's replaced it a moment later. So tapping a stop produced the list of
-           lines passing through instead of the stop itself — its times, its code, its own
-           lines — and there was no way to ask for the stop at all. Leaflet runs layer
-           handlers before the map's own, so marking the DOM event here is enough for the
-           route layer to stand down. */
+           Claim the click while we are at it. Nearly every stop stands on a route, and the
+           route layer answers map clicks within twenty pixels of a line; both fired, and
+           the route layer's answer replaced this one. Leaflet runs layer handlers before
+           the map's own, so the mark is always set by the time it looks. */
         marker.on('click', (e: L.LeafletMouseEvent) => {
           (e.originalEvent as MouseEvent & { _stopClaimed?: boolean })._stopClaimed = true;
+          onTapStopRef.current(stop);
         });
+
         group.addLayer(marker);
         markersRef.current[stop.id] = marker;
       });

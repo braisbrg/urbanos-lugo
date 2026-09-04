@@ -32,6 +32,7 @@ import { mapColors } from './palette';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { RouteLayer } from './RouteLayer';
 import { StopLayer } from './StopLayer';
+import { StopSheet } from './StopSheet';
 import { VehicleLayer } from './VehicleLayer';
 
 /** How far someone will walk to a different line. Also used by the nearby-lines panel. */
@@ -132,6 +133,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * to the one you can recognise by its badge.
    */
   const [linesExpanded, setLinesExpanded] = useState(false);
+  /** The stop whose board is open over the map. Null when nobody has tapped one. */
+  const [tappedStop, setTappedStop] = useState<BusStop | null>(null);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
   // Escape closes it and focus moves into it, the same as the menu and the QR reader.
   // The hook no-ops while `sheetOpen` is false, which is what it always is at `lg`, where
@@ -866,11 +869,31 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               lines={lines}
               selectedStop={selectedStop}
               showStops={showStops}
-              onSelectStop={onSelectStop}
-              onOpenLine={onOpenLine}
-              onShowLinesHere={showLinesHere}
+              onTapStop={setTappedStop}
               lang={lang}
             />
+
+            {/* The stop, opened where it was tapped, with the map still behind it. */}
+            {tappedStop && (
+              <StopSheet
+                stop={tappedStop}
+                lines={lines}
+                lang={lang}
+                onClose={() => setTappedStop(null)}
+                onOpenLine={(line) => {
+                  setTappedStop(null);
+                  onOpenLine(line);
+                }}
+                onShowLinesHere={(stop) => {
+                  setTappedStop(null);
+                  showLinesHere(stop);
+                }}
+                onOpenFullBoard={(stop) => {
+                  setTappedStop(null);
+                  onSelectStop(stop);
+                }}
+              />
+            )}
 
             <VehicleLayer
               map={geometryReady ? map : null}

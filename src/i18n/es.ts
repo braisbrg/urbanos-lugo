@@ -257,6 +257,7 @@ export const es: Dict = {
     linesList: 'Seleccionar línea',
     controls: 'Filtros y capas',
     closeControls: 'Cerrar filtros y capas',
+    closeStop: 'Cerrar esta parada',
     expandLines: 'Ver todas las líneas de una vez',
     collapseLines: 'Mostrar las líneas en una fila',
     geolocationUnavailable: 'La geolocalización no está disponible.',
