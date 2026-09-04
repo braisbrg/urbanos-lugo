@@ -59,6 +59,7 @@ export const es: Dict = {
     scan: 'Escanear código del poste',
     denied: 'No se pudo acceder a la ubicación. Revisa los permisos del navegador.',
     unavailable: 'Tu navegador no permite la geolocalización.',
+    outOfArea: 'No hay ninguna parada a menos de 2 km de donde estás. Esta web solo cubre la red urbana de Lugo.',
     walk: (minutes: number) => `${minutes} min a pie`,
   },
 
@@ -79,6 +80,7 @@ export const es: Dict = {
       'Comprobación automatizada cada hora desde el portal del operador, buslugo.com',
     faresTitle: 'Tarifas y Tarjeta Ciudadana',
     faresSubtitle: 'Precios oficiales y títulos de transporte en Lugo (Monbus)',
+    notAffiliated: 'Web no oficial, sin relación con Monbus ni con el Ayuntamiento de Lugo.',
     faqTitle: 'Preguntas frecuentes',
     contactTitle: 'Atención a la ciudadanía y contacto',
     refreshBtn: 'Comprobar avisos',

@@ -44,6 +44,7 @@ import {
   getScheduledBuses,
   getDistanceMeters,
   getNearbyStops,
+  NEARBY_STOP_LIMIT_METRES,
   timingPointStopCount,
   getNearestStopToCoords,
   findStop,
@@ -2312,6 +2313,26 @@ ok('a hidden HTML comment does not come out as visible text', () => {
 
   // And nothing that is already text is touched.
   assert.strictEqual(plainText('Rda. Muralla 56 (Sindicatos)'), 'Rda. Muralla 56 (Sindicatos)');
+});
+
+ok('"stops near me" answers nothing when you are not near any', () => {
+  // getNearbyStops ranks every stop and returns them all, which is what the planner and
+  // the line lists want. Read as an answer to a person it is nonsense outside Lugo: from
+  // Madrid the first result is Santa Comba, 423 km away, and a list of five stops reads
+  // as five options to anybody who does not check the units.
+  const madrid = getNearbyStops(40.4168, -3.7038).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
+  assert.strictEqual(madrid.length, 0, 'a phone in Madrid is being offered stops in Lugo');
+
+  const coruna = getNearbyStops(43.3623, -8.4115).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
+  assert.strictEqual(coruna.length, 0, 'a phone in A Coruña is being offered stops in Lugo');
+
+  // And the limit has to leave the network itself intact, including its loneliest corner.
+  // The widest gap between a stop and its nearest neighbour is about 3.5 km, so standing
+  // at any stop must still find that stop and standing between two must find one of them.
+  for (const stop of BUS_STOPS) {
+    const here = getNearbyStops(stop.lat, stop.lng).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
+    assert(here.length > 0, `standing at ${stop.name} finds no stop within the limit`);
+  }
 });
 
 console.log(`\n${checks} checks passed\n`);

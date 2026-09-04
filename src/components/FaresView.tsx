@@ -43,6 +43,11 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
             {t.fares.faresTitle}
           </h2>
           <p className="text-label text-ink-3 mt-0.5">{t.fares.faresSubtitle}</p>
+          {/* Right under the line that names the operator and calls the prices official,
+              because that is the sentence somebody could read as "this is their app". */}
+          <p className="text-label text-ink-3 mt-1 border-l-2 border-edge pl-2">
+            {t.fares.notAffiliated}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

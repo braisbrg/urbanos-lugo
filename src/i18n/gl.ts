@@ -73,6 +73,7 @@ export const gl = {
     scan: 'Escanear código do poste',
     denied: 'Non se puido acceder á localización. Revisa os permisos do navegador.',
     unavailable: 'O teu navegador non permite a xeolocalización.',
+    outOfArea: 'Non hai ningunha parada a menos de 2 km de onde estás. Esta web só cobre a rede urbana de Lugo.',
     walk: (minutes: number) => `${minutes} min a pé`,
   },
 
@@ -93,6 +94,10 @@ export const gl = {
       'Comprobación automatizada cada hora dende o portal do operador, buslugo.com',
     faresTitle: 'Tarifas e Tarxeta Cidadá',
     faresSubtitle: 'Prezos oficiais e títulos de transporte en Lugo (Monbus)',
+    /* Dito nas dúas pantallas que citan o operador polo seu nome, que son onde alguén
+       podería crer que está na súa app. Curto a propósito: unha advertencia longa
+       deixa de lerse á segunda vez que a ves. */
+    notAffiliated: 'Web non oficial, sen relación con Monbus nin co Concello de Lugo.',
     faqTitle: 'Preguntas frecuentes',
     contactTitle: 'Atención á cidadanía e contacto',
     refreshBtn: 'Comprobar avisos',

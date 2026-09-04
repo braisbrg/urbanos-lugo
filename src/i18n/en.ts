@@ -70,6 +70,7 @@ export const en: Dict = {
     scan: 'Scan the code on the pole',
     denied: 'Could not get your location. Check your browser permissions.',
     unavailable: 'Your browser does not support geolocation.',
+    outOfArea: 'No stop within 2 km of where you are. This site only covers Lugo’s urban network.',
     walk: (minutes: number) => `${minutes} min walk`,
   },
 
@@ -90,6 +91,7 @@ export const en: Dict = {
       'Checked automatically every hour against the operator’s own portal, buslugo.com',
     faresTitle: 'Fares and the Tarxeta Cidadá',
     faresSubtitle: 'Official prices and travel passes in Lugo (Monbus)',
+    notAffiliated: 'Unofficial site, not connected to Monbus or Lugo city council.',
     faqTitle: 'Frequently asked questions',
     contactTitle: 'Contact and passenger information',
     refreshBtn: 'Check for notices',

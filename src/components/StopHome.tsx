@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Compass, History, QrCode, Route, Search, Star } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS } from '../data/transitData';
-import { getArrivalsForStop, getNearbyStops } from '../utils/transitEngine';
+import { NEARBY_STOP_LIMIT_METRES, getArrivalsForStop, getNearbyStops } from '../utils/transitEngine';
 import { Lang, translations } from '../i18n';
 
 interface StopHomeProps {
@@ -63,8 +63,17 @@ export const StopHome: React.FC<StopHomeProps> = ({
     setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setNearby(getNearbyStops(pos.coords.latitude, pos.coords.longitude).slice(0, 5));
-        setLocatedAt([pos.coords.latitude, pos.coords.longitude]);
+        // Within walking distance, not merely nearest. The network is one city: rank
+        // every stop against a phone in Madrid and the first answer is 423 km away, which
+        // reads as a list of five stops to anybody who does not check the units.
+        const near = getNearbyStops(pos.coords.latitude, pos.coords.longitude).filter(
+          (s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES,
+        );
+        setNearby(near.slice(0, 5));
+        // Only move the map to somewhere the network is. Outside it there is nothing to
+        // look at, and flying to another province would suggest otherwise.
+        setLocatedAt(near.length ? [pos.coords.latitude, pos.coords.longitude] : null);
+        setLocationError(near.length ? null : t.stopHome.outOfArea);
         setLocating(false);
       },
       () => {

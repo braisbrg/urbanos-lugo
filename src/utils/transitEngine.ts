@@ -1501,6 +1501,21 @@ export function planRouteBetweenStops(fromStopId: string, toStopId: string): Rou
 }
 
 /** Stops sorted by walking distance — an estimate, see getNearestStopToCoords. */
+/**
+ * How far away a stop can be and still answer "which stops are near me".
+ *
+ * The function below sorts every stop by distance and returns all of them, which is what
+ * the planner and the line lists want. What it must not be is an answer to a person: from
+ * Madrid it ranks Santa Comba first, 423 km away, and a list is a list — somebody reading
+ * quickly sees five stops and not the units.
+ *
+ * Two kilometres, and the number comes from the network rather than from taste: the widest
+ * gap between any stop and its nearest neighbour is 3.5 km, so nobody standing anywhere the
+ * buses actually reach is more than about 1.8 km from one. Anything past that is not a walk
+ * somebody is going to take to catch a bus, and saying so is more useful than ranking it.
+ */
+export const NEARBY_STOP_LIMIT_METRES = 2000;
+
 export function getNearbyStops(lat: number, lng: number): (BusStop & { walkMeters: number; walkMinutes: number })[] {
   return BUS_STOPS.map((stop) => {
     const walk = estimateWalk(getDistanceMeters(lat, lng, stop.lat, stop.lng));
