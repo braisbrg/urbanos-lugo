@@ -1,14 +1,61 @@
-# Urbanos de Lugo — Liñas, paradas e tempos de paso
+# Urbanos de Lugo
 
-Aplicación web para consultar a rede de autobús urbano de Lugo (concesión de AULUSA /
-Grupo Monbus): liñas, paradas, tempos de paso, planificador de traxectos e mapa da rede.
+### 👉 [**braisbrg.github.io/urbanos-lugo**](https://braisbrg.github.io/urbanos-lugo/)
 
-> **Proxecto non oficial.** Non está feito, revisado nin respaldado por AULUSA, Grupo
+**Cando pasa o teu bus en Lugo.** Todas as liñas, todas as paradas e a hora á que
+pasan, nunha web que se abre nun segundo e funciona sen cobertura.
+
+> **Non é a app oficial.** Non está feita, revisada nin respaldada por AULUSA, Grupo
 > Monbus nin o Concello de Lugo. Le os horarios que o operador publica en
-> <https://buslugo.com> e amosa de onde vén cada hora. Para calquera cousa que dependa
-> dun horario, a fonte oficial manda.
+> <https://buslugo.com>. Se algo depende dun horario, manda a fonte oficial.
 
 ---
+
+## Para que serve
+
+**Chegas a unha parada e queres saber canto falta.** Escaneas o código do poste co
+móbil, ou buscas a parada polo nome, e tes a lista do que vén: a liña, a onde vai e
+os minutos.
+
+**Non sabes que bus coller.** Escribes de onde saes e a onde vas —unha rúa, unha praza,
+o hospital— e dá o traxecto: canto camiñas, que liña colles, onde baixas e a que hora
+chegas.
+
+**Queres ver por onde pasan.** O mapa amosa as 24 liñas cos seus percorridos reais polas
+rúas, as 417 paradas, e a túa posición se lla dás.
+
+**Vaste baixar nunha parada que non coñeces.** Pon unha alarma e o móbil avísate cando
+estás preto, para non ir mirando pola ventá.
+
+**Non tes datos no móbil.** Unha vez aberta, funciona sen conexión. Os horarios van
+dentro; non fai falta rede para consultalos. Que é o normal nunha marquesiña.
+
+### Instálaa como unha app
+
+Ábrea no móbil e dálle a **«Engadir á pantalla de inicio»**. Queda cunha icona coma
+calquera outra aplicación, abre a pantalla completa e arranca sen conexión.
+
+### O que esta app NON pode facer
+
+**Non sabe onde está o bus.** Ninguén o publica: esta rede non emite a posición dos
+vehículos, nin en aberto nin en pechado. Así que **ningunha hora desta web é unha
+medición**; ou é a que o operador imprime no seu cadro, ou é un cálculo feito a partir
+dela. E cada hora na pantalla di cal das dúas é:
+
+| | |
+| :--- | :--- |
+| `HORARIO OFICIAL` | O operador publica esa hora para esa parada. |
+| `~ ESTIMADO` | Saída de cabeceira publicada, máis o tempo de percorrido medido por estrada. |
+
+Chega á parada uns minutos antes. É o consello que dá a propia app, e a razón pola que
+existe esa segunda etiqueta en vez de finxir que o sabe todo.
+
+---
+
+# Documentación técnica
+
+Como está feito, de onde saen os datos, como se verifica e como se despregar. Se só
+querías consultar o bus, o enlace está arriba.
 
 ## Índice
 
@@ -101,6 +148,19 @@ que se fai desde a parada; como filtro solto nunha fila de zonas non se entendí
 respondía pola parada equivocada. Redúcelle a lista a algo máis pequeno nas 417
 paradas: catro liñas das 24 en As Termas, unha en Nadela, dezaoito en Rda. Muralla 56,
 que é o máis concorrido que hai en Lugo.
+
+**A túa posición segue ao teu móbil**, non queda onde estabas ao premer. Un só
+`getCurrentPosition` deixaba caer un punto e xa non se movía nunca máis; camiñabas
+douscentos metros cara á parada e o mapa seguía amosándote onde saíras, na única pantalla
+que existe para dicirche se chegas. Agora hai un `watchPosition`, e o botón é un
+interruptor: prémelo outra vez e apaga o GPS.
+
+O punto leva **un círculo do tamaño da precisión que informa o propio arreglo**. Un punto
+só afirma «estás aquí» coa mesma seguridade viñese do GPS na rúa ou do wifi dentro dun
+edificio, onde pode errar centos de metros: a mesma clase de afirmación que esta app se
+nega a facer coas horas. E o mapa centra no primeiro arreglo e despois queda onde o
+deixes —un que se recentra cada poucos segundos non se pode mover, e movelo é como miras
+a parada á que vas—, agás cando o punto se ía saír da vista.
 
 O filtro **"preto de min"** amosa todas as liñas a menos de 750 m, cun panel lateral que
 lista cada unha coa distancia á súa parada máis próxima. Antes calculaba as oito liñas

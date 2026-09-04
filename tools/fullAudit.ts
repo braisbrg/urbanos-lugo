@@ -12,26 +12,8 @@ import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { getDistanceMeters, getScheduledBuses, getArrivalsForStop } from '../src/utils/transitEngine';
 import { buildRuns, dayKind, isWithinServiceWindow } from '../src/utils/schedule';
+import { hydrateGeometry } from './hydrateGeometry';
 
-/**
- * Node has no lazy chunk loading, and the geometry test below would silently pass on an
- * empty dataset otherwise. Hydrate the same way the browser does.
- */
-function hydrateGeometry(): void {
-  const file = join(dirname(fileURLToPath(import.meta.url)), '../src/data/route-geometry.json');
-  const geometry = JSON.parse(readFileSync(file, 'utf8')) as Record<
-    string,
-    { path: [number, number][]; stopPathIndex: number[] }
-  >;
-  for (const line of BUS_LINES) {
-    for (const direction of line.directions) {
-      const entry = geometry[`${line.id}|${direction.id}`];
-      if (!entry) continue;
-      direction.pathCoordinates = entry.path;
-      direction.stopPathIndex = entry.stopPathIndex;
-    }
-  }
-}
 
 hydrateGeometry();
 

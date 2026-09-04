@@ -74,7 +74,7 @@ export async function overpass(query: string, attempts = 3): Promise<any | null>
 }
 
 /** Every way used by those relations, with its tags, for the access survey. */
-export const WAY_TAG_QUERY = `[out:json][timeout:180];
+const WAY_TAG_QUERY = `[out:json][timeout:180];
 relation["type"="route"]["route"="bus"]["network"~"Lugo"](${BBOX})->.r;
 way(r.r);
 out tags geom;`;
@@ -87,7 +87,7 @@ out tags geom;`;
  * disagree. Nothing in open data resolves it, so it is measured and reported rather than
  * decided.
  */
-export function closedToBuses(tags: any): boolean {
+function closedToBuses(tags: any): boolean {
   if (['yes', 'designated'].includes(tags.bus) || ['yes', 'designated'].includes(tags.psv)) return false;
   return (
     ['pedestrian', 'footway', 'path', 'steps', 'cycleway', 'track'].includes(tags.highway) ||

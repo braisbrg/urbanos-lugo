@@ -28,7 +28,7 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -42,6 +42,20 @@ jobs:
 
       - run: pnpm run lint
       - run: pnpm test
+
+      # The checks that were written and then never run by anything.
+      #
+      # Three tools under tools/ walk the whole dataset rather than a sample — 180,144
+      # boards and 401,109 departures for the invariants, 630 origin/destination pairs and
+      # 27,348 journeys for the planner — and each sets a failing exit code when something
+      # does not hold. None of them was referenced by a script, a workflow or another file,
+      # so nothing had run them since they were written, and a check nobody runs is a file.
+      # Twenty-four seconds, measured, for coverage `pnpm test` cannot reach.
+      #
+      # Two more stay out on purpose: stressHttp needs a server listening, and
+      # compareOperatorTimes reads the operator's own site — which is not a thing to do to
+      # somebody else's server on every push. Both have scripts instead.
+      - run: pnpm run check:deep
 
       # A dependency bump that breaks the build is the failure this is here to catch, and
       # `pnpm test` does not compile anything.

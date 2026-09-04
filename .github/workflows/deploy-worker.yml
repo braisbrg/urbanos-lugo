@@ -23,7 +23,7 @@ on:
 
 permissions:
   contents: read
-  # deployctl exchanges this for a short-lived credential; nothing long-lived is stored.
+  # Exchanged for a short-lived credential at deploy time; nothing long-lived is stored.
   id-token: write
 
 concurrency:
@@ -39,7 +39,7 @@ jobs:
       # skip the deploy on a repository that had configured one.
       HAS_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -66,11 +66,139 @@ jobs:
         with:
           deno-version: v2.x
 
+      # `deno deploy`, not deployctl. Deploy Classic — the dash.deno.com generation this
+      # workflow was first written against — was shut down on 20 July 2026, and deployctl
+      # along with it. The new platform calls the unit an *app* rather than a project, so
+      # `--project` is gone and `--app` replaces it, with `--org` naming the organisation.
+      #
+      # It uploads a directory, which is why the step below stages the single bundled file
+      # somewhere of its own rather than pointing at the repository.
+      #
+      # `--json --non-interactive` are not decoration. The CLI's own help is explicit:
+      # "For non-interactive use (CI, AI agents), authenticate via the DENO_DEPLOY_TOKEN
+      # env var (or --token) and pass --json --non-interactive to every subcommand."
+      # Without them it tries to prompt, finds no terminal, and fails.
+      #
+      # Invoked through `deno run` and not the `deno deploy` wrapper, because on 2.9.6 the
+      # wrapper cannot pass flags to the tool at all. Both ways of trying are wrong:
+      #
+      #   deno deploy --json …     every flag arrives twice — deno's parser takes them and
+      #                            forwards them — and the tool rejects the duplicate:
+      #                            {"code":"VALIDATION_ERROR","message":"Option \"--json\"
+      #                            can only occur once"}. Not specific to --json; --org and
+      #                            --app duplicate identically.
+      #   deno deploy -- --json …  no duplicate, but nothing reaches the tool either: with
+      #                            a valid token it gets past auth and then reports "Use
+      #                            --app to specify the application" for a line that plainly
+      #                            has one.
+      #
+      # Running the tool directly skips the wrapper's argument handling entirely. That it
+      # receives the flags is visible rather than assumed: without a token it answers with
+      # its own JSON envelope, {"error":{"code":"NON_INTERACTIVE_REQUIRED",…}}, which is a
+      # shape it only emits when --json got through.
       - name: Deploy
         if: env.HAS_TOKEN == 'true'
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-        run: deno run -A jsr:@deno/deployctl deploy --project=urbanos-lugo-api --prod worker/dist/worker.js
+          # Required, and it is the *slug*, not the name in the dashboard header. Those
+          # differ here — the header reads "brais" and the slug is "braisbrg" — and a
+          # mismatch comes back as NOT_FOUND with no hint as to what was expected. Leaving
+          # it out is not an option either: the organisation resolves to '' and the tool
+          # reports that an organisation called '' does not exist. `orgs list` below is
+          # what prints the real slug.
+          DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
+        run: |
+          # Stage the bundle outside the repository before uploading it.
+          #
+          # The deploy tool honours .gitignore, and .gitignore excludes worker/dist/ —
+          # deliberately, because the bundle is build output and nothing else built is
+          # committed here. So uploading that directory uploaded nothing at all, and the
+          # build failed with "Entrypoint at '/tmp/build/src/worker.js' not found": not a
+          # wrong path, an empty upload. Copying the one file somewhere no .gitignore
+          # reaches is the fix that does not require un-ignoring build output.
+          #
+          # Deno itself also runs from the temp directory rather than the workspace: in
+          # the workspace it resolves this repository's package.json and fails on npm
+          # dependencies that have nothing to do with the worker. And --node-modules-dir
+          # writes node_modules into the working directory, which is why that is the temp
+          # root and not the upload directory.
+          STAGE="$RUNNER_TEMP/worker-upload"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          cp worker/dist/worker.js "$STAGE/worker.js"
+          cd "$RUNNER_TEMP"
+
+          DEPLOY="deno run -A --node-modules-dir=auto jsr:@deno/deploy"
+
+          # Create the app if it is not there, with a build configuration that suits what
+          # this actually uploads: one already-bundled file.
+          #
+          # An app created through the dashboard wizard keeps the build config the wizard
+          # detected — for this repository, `pnpm install` — and disconnecting the GitHub
+          # repository afterwards does not clear it. It then runs that install command
+          # against worker/dist, which has no package.json and is not supposed to have
+          # one, and the revision dies with ERR_PNPM_NO_PKG_MANIFEST. There is no
+          # `apps update`, so the configuration can only be set at creation.
+          if ! $DEPLOY apps get --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api >/dev/null 2>&1; then
+            $DEPLOY create \
+              --json --non-interactive \
+              --org "$DENO_DEPLOY_ORG" \
+              --app urbanos-lugo-api \
+              --source local \
+              --runtime-mode dynamic \
+              --entrypoint worker.js \
+              --do-not-use-detected-build-config \
+              --region eu \
+              "$STAGE"
+          fi
+
+          # The one thing the worker cannot work without, set here rather than by hand.
+          #
+          # It goes into access-control-allow-origin verbatim, so an app without it
+          # answers 200 with an empty origin header and every browser throws the response
+          # away — a failure that looks like the API being down and is not. It lived on
+          # the app, which meant deleting the app took it with it and the next deploy came
+          # back silently broken. Deriving it from the repository owner also keeps it
+          # correct in a fork, where a hardcoded braisbrg would not be.
+          ORIGIN="https://${{ github.repository_owner }}.github.io"
+          $DEPLOY env add ALLOWED_ORIGIN "$ORIGIN" \
+              --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api \
+            || $DEPLOY env update-value ALLOWED_ORIGIN "$ORIGIN" \
+              --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api
+
+          $DEPLOY \
+            --json --non-interactive \
+            --org "$DENO_DEPLOY_ORG" \
+            --app urbanos-lugo-api \
+            --prod \
+            "$STAGE"
+
+      # The address the site has to be built against. It is not derivable from the app
+      # name — Deno picks the host — so the run prints it rather than leaving somebody to
+      # copy it out of the dashboard into the API_ORIGIN variable from memory.
+      - name: Say where it landed
+        if: success() && env.HAS_TOKEN == 'true'
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+          DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
+        run: |
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy apps get \
+            --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api || true
+
+      # A NOT_FOUND on the organisation says what was not found and nothing about what
+      # would have been. This turns the next red run into an answer instead of a guess.
+      - name: Show what the token can actually reach
+        if: failure() && env.HAS_TOKEN == 'true'
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+        run: |
+          # Same route as the deploy above, for the same reason. This is what printed the
+          # slug when --org was wrong: the dashboard header says "brais", the API wants
+          # "braisbrg", and nothing else in the failure said so.
+          echo "--- organisations this token can see ---"
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy orgs list || true
+          echo "--- who the token belongs to ---"
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy whoami || true
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'

@@ -70,6 +70,7 @@ export const en: Dict = {
     scan: 'Scan the code on the pole',
     denied: 'Could not get your location. Check your browser permissions.',
     unavailable: 'Your browser does not support geolocation.',
+    outOfArea: 'No stop within 2 km of where you are. This site only covers Lugo’s urban network.',
     walk: (minutes: number) => `${minutes} min walk`,
   },
 
@@ -85,11 +86,39 @@ export const en: Dict = {
 
   fares: {
     priceNotPublished: 'Price not published',
+    cards: {
+      single: {
+        badge: 'Standard',
+        title: 'Single ticket',
+        subtitle: 'Paid on board',
+        details: 'Valid for one trip on any line of the Lugo city network.',
+      },
+      citizenCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Standard travel card fare',
+        subtitle: (minutes: number) => `Free transfer (${minutes} min)`,
+        details: 'Requires the Tarxeta Cidadá issued by Lugo city council.',
+      },
+      socialCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Concession fare',
+        subtitle: 'Young people, students, pensioners, unemployed and disabled passengers',
+        details: 'Transfers are free on this fare too. Ask about eligibility on 010.',
+      },
+      tmg: {
+        badge: 'Xunta de Galicia',
+        title: 'Galician public transport card (TMG)',
+        subtitle: 'Valid on the Lugo city network',
+        details: (minutes: number) =>
+          `If you arrive on a regional bus, the city bus is included for the next ${minutes} min at no extra charge. More than 41 regional trips a month earns 15% of the spend back.`,
+      },
+    },
     alertsTitle: 'Official service notices for Lugo',
     alertsSubtitle:
       'Checked automatically every hour against the operator’s own portal, buslugo.com',
     faresTitle: 'Fares and the Tarxeta Cidadá',
     faresSubtitle: 'Official prices and travel passes in Lugo (Monbus)',
+    notAffiliated: 'Unofficial site, not connected to Monbus or Lugo city council.',
     faqTitle: 'Frequently asked questions',
     contactTitle: 'Contact and passenger information',
     refreshBtn: 'Check for notices',
@@ -241,10 +270,6 @@ export const en: Dict = {
     liveBusesCount: 'buses running',
     centerLugo: 'Centre on Lugo',
     myLocation: 'My location',
-    legend: 'Key',
-    stop: 'Stop with a QR code',
-    busLive: 'Bus (position estimated from the timetable)',
-    route: 'Line route',
     viewStopDepartures: 'See arrival times',
     nearbyTitle: (metres: number) => `Lines within ${metres} m`,
     nearbyFilter: 'Near me',
@@ -267,8 +292,15 @@ export const en: Dict = {
     documentTitle: 'Urbanos de Lugo | Lines, timetables and stops',
     layers: 'Visible layers',
     linesList: 'Choose a line',
+    controls: 'Filters and layers',
+    closeControls: 'Close filters and layers',
+    closeStop: 'Close this stop',
+    expandLines: 'See every line at once',
+    collapseLines: 'Show the lines in one row',
     geolocationUnavailable: 'Geolocation is not available.',
-    yourPosition: 'Your current position',
+    yourPositionAccurate: (metres: number) => `Your position, accurate to ±${metres} m`,
+    stopFollowing: 'Stop following me',
+    outOfArea: 'No stop near you. This site only covers Lugo’s urban network.',
     stopsCount: (total: number, withQr: number) =>
       `${total} stops, ${withQr} with a QR code`,
   },

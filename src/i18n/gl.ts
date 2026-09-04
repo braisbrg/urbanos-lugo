@@ -73,6 +73,7 @@ export const gl = {
     scan: 'Escanear código do poste',
     denied: 'Non se puido acceder á localización. Revisa os permisos do navegador.',
     unavailable: 'O teu navegador non permite a xeolocalización.',
+    outOfArea: 'Non hai ningunha parada a menos de 2 km de onde estás. Esta web só cobre a rede urbana de Lugo.',
     walk: (minutes: number) => `${minutes} min a pé`,
   },
 
@@ -88,11 +89,54 @@ export const gl = {
 
   fares: {
     priceNotPublished: 'Prezo non publicado',
+    /**
+     * The four fare cards.
+     *
+     * The words were in `src/data/transitData.ts`, three languages deep, which put
+     * thirty-six strings of interface text outside the dictionaries — where nothing
+     * translating this app could see them, and where the check that catches Galician
+     * typed into a view happens not to look. What stays in the data is what is not
+     * language: the price, and where to go and read it.
+     *
+     * Only the two that interpolate a number are functions, which is the rule the rest of
+     * this file already follows.
+     */
+    cards: {
+      single: {
+        badge: 'Xeral',
+        title: 'Billete ordinario',
+        subtitle: 'Pago a bordo',
+        details: 'Válido para unha viaxe en calquera liña da rede urbana de Lugo.',
+      },
+      citizenCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Bono ordinario',
+        subtitle: (minutes: number) => `Transbordo gratuíto (${minutes} min)`,
+        details: 'Require ter a Tarxeta Cidadá do Concello de Lugo.',
+      },
+      socialCard: {
+        badge: 'Tarxeta Cidadá',
+        title: 'Bono social',
+        subtitle: 'Mocidade, universitario, pensionista, desemprego e discapacidade',
+        details: 'Transbordo social tamén gratuíto. Consulta as condicións no teléfono 010.',
+      },
+      tmg: {
+        badge: 'Xunta de Galicia',
+        title: 'Tarxeta do transporte público de Galicia (TMG)',
+        subtitle: 'Válida na rede urbana de Lugo',
+        details: (minutes: number) =>
+          `Se chegas nun bus metropolitano, o urbano vai incluído dentro dos ${minutes} min seguintes sen pagar de novo. Máis de 41 viaxes metropolitanas ao mes devolven o 15% do gasto.`,
+      },
+    },
     alertsTitle: 'Avisos oficiais e incidencias en Lugo',
     alertsSubtitle:
       'Comprobación automatizada cada hora dende o portal do operador, buslugo.com',
     faresTitle: 'Tarifas e Tarxeta Cidadá',
     faresSubtitle: 'Prezos oficiais e títulos de transporte en Lugo (Monbus)',
+    /* Dito nas dúas pantallas que citan o operador polo seu nome, que son onde alguén
+       podería crer que está na súa app. Curto a propósito: unha advertencia longa
+       deixa de lerse á segunda vez que a ves. */
+    notAffiliated: 'Web non oficial, sen relación con Monbus nin co Concello de Lugo.',
     faqTitle: 'Preguntas frecuentes',
     contactTitle: 'Atención á cidadanía e contacto',
     refreshBtn: 'Comprobar avisos',
@@ -244,10 +288,6 @@ export const gl = {
     liveBusesCount: 'buses en servizo',
     centerLugo: 'Centrar Lugo',
     myLocation: 'A miña localización',
-    legend: 'Lenda',
-    stop: 'Parada con código QR',
-    busLive: 'Bus (posición estimada do horario)',
-    route: 'Trazado da liña',
     viewStopDepartures: 'Ver tempos de chegada',
     nearbyTitle: (metres: number) => `Liñas a menos de ${metres} m`,
     nearbyFilter: 'Preto de min',
@@ -270,8 +310,17 @@ export const gl = {
     documentTitle: 'Urbanos de Lugo | Liñas, horarios e paradas',
     layers: 'Capas visibles',
     linesList: 'Seleccionar liña',
+    controls: 'Filtros e capas',
+    closeControls: 'Pechar filtros e capas',
+    closeStop: 'Pechar esta parada',
+    expandLines: 'Ver todas as liñas dunha vez',
+    collapseLines: 'Amosar as liñas nunha fila',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',
-    yourPosition: 'A túa posición actual',
+    /* Coa precisión dentro: un punto só di «estás aquí» coa mesma seguridade viñas do GPS
+       na rúa ou do wifi dentro dun edificio, onde pode errar centos de metros. */
+    yourPositionAccurate: (metres: number) => `A túa posición, con precisión de ±${metres} m`,
+    stopFollowing: 'Deixar de seguirme',
+    outOfArea: 'Non hai ningunha parada preto de ti. Esta web só cobre a rede urbana de Lugo.',
     stopsCount: (total: number, withQr: number) =>
       `${total} paradas, ${withQr} con código QR`,
   },

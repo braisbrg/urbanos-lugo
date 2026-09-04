@@ -1,28 +1,73 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Bus, MapPin, Navigation, Layers, LocateFixed, ChevronRight } from 'lucide-react';
+import {
+  Bus,
+  MapPin,
+  Navigation,
+  Layers,
+  LocateFixed,
+  ChevronRight,
+  ChevronDown,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
-import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
+import {
+  getScheduledBuses,
+  getNearbyLines,
+  getNearbyStops,
+  NEARBY_STOP_LIMIT_METRES,
+} from '../../utils/transitEngine';
+import { getDistanceMeters } from '../../utils/geo';
 
 /** Matches the stop board: what somebody standing there could reasonably walk to. */
 const AROUND_STOP_RADIUS_M = 400;
 import { useIsDark } from '../../hooks/useIsDark';
+import { useDialog } from '../../hooks/useDialog';
 import { useMapChrome } from '../../hooks/useMapChrome';
 import { createBasemap, type BasemapLayer } from './basemap';
 import { mapColors } from './palette';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { RouteLayer } from './RouteLayer';
 import { StopLayer } from './StopLayer';
+import { StopSheet } from './StopSheet';
 import { VehicleLayer } from './VehicleLayer';
 
 /** How far someone will walk to a different line. Also used by the nearby-lines panel. */
 const NEARBY_RADIUS_M = 750;
 
+/**
+ * How many of the nearby lines the *map* draws. The panel still lists them all.
+ *
+ * "Near me" narrows nothing in the middle of Lugo, and the numbers are stark. Counting
+ * distinct lines with a stop inside a radius: from the walled centre it is 14 within
+ * 200 m and 23 of the 24 within 750 m. From O Ceao it is 1 and 4; from the campus, 1 and
+ * 17. The network converges on the muralla, so anybody standing there is near almost
+ * every line, and a radius — any radius — cannot separate them.
+ *
+ * A count can. The list arrives sorted by how far you would walk to reach each line, so
+ * the first six are the six you could actually catch: all of them out in O Ceao, the
+ * nearest six of twenty-three in the centre. Without this the "nearby" filter would draw
+ * the whole network for a reader in the middle of town, which is the exact thing the
+ * filter exists to prevent.
+ */
+const NEARBY_SCOPE_LIMIT = 6;
+
+/** Whether this page load has already decided how the map opens. Once means once. */
+let openedOnNearby = false;
+
+/**
+ * Where each shortcut takes you, and it has to be where the buses stop.
+ *
+ * HULA's was 1209 m from the stop called "HULA (Ent. Principal)" — 818 m on foot from any
+ * stop at all. So the button panned the map to a field near the hospital and, once these
+ * presets started filtering by what is within walking distance, matched nothing and fell
+ * back to showing all twenty-four lines. It is the hospital's own main-entrance stop now.
+ */
 const PRESET_CENTERS: Record<'hula' | 'campus' | 'ceao', [number, number]> = {
-  hula: [43.0298, -7.5274],
+  hula: [43.01965, -7.53274],
   campus: [42.9935, -7.5538],
   ceao: [43.044, -7.5692],
 };
@@ -54,6 +99,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const isDark = useIsDark();
   const colors = mapColors(isDark);
   const userMarkerRef = useRef<L.CircleMarker | null>(null);
+  /**
+   * The circle showing how sure the phone is.
+   *
+   * A dot on its own says "you are here" with the same confidence whether the fix came
+   * from GPS outdoors or from wifi indoors, where it can be five hundred metres out. On a
+   * map whose whole job is telling you if you can make the stop, that is the same kind of
+   * claim this app refuses to make about times.
+   */
+  const accuracyRef = useRef<L.Circle | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  /** Where the nearby-lines list was last computed, so walking a few metres does not redo it. */
+  const lastFixRef = useRef<[number, number] | null>(null);
 
   const [activeLineId, setActiveLineId] = useState<string>(selectedLine?.id || 'all');
   const [filterPreset, setFilterPreset] = useState<
@@ -61,11 +118,52 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   >('all');
   const [showStops, setShowStops] = useState(true);
   const [showBuses, setShowBuses] = useState(true);
+  /**
+   * The map stays readable with the routes on because of how RouteLayer draws them: the
+   * chosen line in full, the rest of the network as thin faint threads behind it.
+   * Twenty-four equal traces was the problem, not twenty-four traces.
+   */
   const [showRoutes, setShowRoutes] = useState(true);
   const [liveBuses, setScheduledBuses] = useState<ScheduledBus[]>([]);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyLinesList, setNearbyLinesList] = useState<{ line: BusLine; nearestStop: BusStop; walkMeters: number }[]>([]);
   const [isLocating, setIsLocating] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  /**
+   * Whether the controls are pulled up over the map.
+   *
+   * Only means anything below `lg`. Making the map the whole screen on a phone had a
+   * consequence I had not paid for: the quick filters, the layer switches, the line list
+   * and the telemetry all still lived in the column beside the map, and on a phone that
+   * column is *under* the map — a full viewport of scrolling away, past a element that
+   * swallows the gesture. Reachable in principle and unreachable in practice.
+   *
+   * So on a phone that column is a sheet you pull up over the map instead of a column you
+   * scroll to. It is the same markup either way: at `lg` the classes below hand it back to
+   * being an ordinary sidebar and this state stops mattering.
+   */
+  const [sheetOpen, setSheetOpen] = useState(false);
+  /**
+   * Whether the line chips are unfolded into a grid.
+   *
+   * A single row that scrolls sideways is the wrong shape for twenty-four things you
+   * are trying to *find*: about five fit on a 375 px screen, the other nineteen are
+   * reached by swiping blind, and that swipe is the same gesture the map underneath
+   * wants for panning. It is a fine shape for the two or three you switch between,
+   * which is what it stays until you ask for the rest.
+   *
+   * Unfolded it wraps into a grid — every line visible at once, scannable, no gesture
+   * needed. The full list with names still lives in the sheet; this is the quick way
+   * to the one you can recognise by its badge.
+   */
+  const [linesExpanded, setLinesExpanded] = useState(false);
+  /** The stop whose board is open over the map. Null when nobody has tapped one. */
+  const [tappedStop, setTappedStop] = useState<BusStop | null>(null);
+  const closeSheet = useCallback(() => setSheetOpen(false), []);
+  // Escape closes it and focus moves into it, the same as the menu and the QR reader.
+  // The hook no-ops while `sheetOpen` is false, which is what it always is at `lg`, where
+  // this is a column and not a dialog at all.
+  const sheetRef = useDialog(sheetOpen, closeSheet);
 
   const stops = BUS_STOPS;
   /**
@@ -111,12 +209,37 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * Kept apart from `visibleLineIds` because picking one line should narrow the map
    * without emptying the list you picked it from.
    */
+  /**
+   * The lines that actually reach HULA, the campus or O Ceao.
+   *
+   * These three buttons did not filter anything. They moved the map to the place and
+   * stopped there, while the scope below fell through to null — every line — so the
+   * "filter" left all twenty-four drawn and every chip selected. The handler's own
+   * comment claimed it kept "every line that reaches it"; nothing computed that set.
+   *
+   * Measured through the engine, which counts walking distance and not a straight line —
+   * the difference is what hid the broken HULA coordinate, since 750 m of pavement is
+   * about 470 m of crow. At 750 m the three come out at 9, 7 and 4 lines of the 24, which
+   * is a filter in each case. Same radius the nearby panel uses, so one number, not two.
+   *
+   * No count cap here, unlike "near me". That cap exists because standing in the centre
+   * puts you near almost everything; a destination is different, and nine lines really do
+   * serve the hospital. Trimming that to six would be hiding three buses that go there.
+   */
+  const presetAreaLineIds = useMemo(() => {
+    if (filterPreset !== 'hula' && filterPreset !== 'campus' && filterPreset !== 'ceao') return [];
+    const [lat, lng] = PRESET_CENTERS[filterPreset];
+    return getNearbyLines(lat, lng, NEARBY_RADIUS_M).map((n) => n.line.id);
+  }, [filterPreset]);
+
   const scopeLineIds =
     filterPreset === 'stop' && aroundStopLineIds.length
       ? aroundStopLineIds
       : filterPreset === 'nearby' && nearbyLinesList.length
-        ? nearbyLinesList.map((n) => n.line.id)
-        : null;
+        ? nearbyLinesList.slice(0, NEARBY_SCOPE_LIMIT).map((n) => n.line.id)
+        : presetAreaLineIds.length
+          ? presetAreaLineIds
+          : null;
 
   const visibleLineIds = activeLineId !== 'all' ? [activeLineId] : scopeLineIds;
   // Street geometry arrives as its own chunk; until then the stop layer still works.
@@ -138,11 +261,46 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     `flex min-h-11 items-center justify-center rounded-[9px] px-2.5 py-1.5 text-center text-label font-semibold ${
       active ? 'bg-accent text-on-accent shadow-xs' : 'border border-edge bg-surface text-ink-2'
     }`;
-  const legendColor =
-    activeLineId !== 'all' ? lines.find((l) => l.id === activeLineId)?.color : undefined;
   // The list has to agree with the banner above it. It used to offer all twenty-four
   // while the map drew four, which read as the filter having done nothing.
   const listedLines = scopeLineIds ? lines.filter((l) => scopeLineIds.includes(l.id)) : lines;
+
+  /**
+   * The numbers that more than one line answers to.
+   *
+   * Four of the twenty-four are numbered 11 — Pías, Igrexa de Bóveda, Calde and Santa
+   * Comba — and the operator paints all four the same brown. In the sidebar rows that
+   * is fine: the row carries the full name beside the badge. On a chip, which is the
+   * badge and nothing else, it came out as four identical brown 11s in a row, asking
+   * the reader to memorise that the third one is Calde.
+   *
+   * Derived rather than written down, so a branch added or dropped upstream keeps up.
+   */
+  const sharedNumbers = useMemo(() => {
+    const seen = new Set<string>();
+    const shared = new Set<string>();
+    for (const line of lines) (seen.has(line.number) ? shared : seen).add(line.number);
+    return shared;
+  }, [lines]);
+
+  /**
+   * The far end of a line's name — "Ramón Ferreiro (Feminino) - Calde (Hospital)" — cut
+   * down to the part that tells one branch from another.
+   *
+   * Two trims, both from what the chips actually rendered. Line 11's own name ends in its
+   * number, so beside a badge that already says 11 it came out as "11 Pías 11". And the
+   * parenthetical names the stop rather than the branch — it is "Calde (Hospital)" because
+   * that is which Calde, not because the branch is the hospital — so it was spending the
+   * chip's width on the one part nobody needs and pushing "Santa Comba (Calfensa)" into
+   * an ellipsis.
+   */
+  const destinationOf = (line: BusLine) => {
+    let end = line.name.split(' - ').pop()?.trim() ?? '';
+    const numberSuffix = ` ${line.number}`;
+    if (end.endsWith(numberSuffix)) end = end.slice(0, -numberSuffix.length).trim();
+    const paren = end.indexOf(' (');
+    return paren > 0 ? end.slice(0, paren) : end;
+  };
 
   const t = translations(lang);
 
@@ -169,6 +327,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
+
+    /**
+     * Drop Leaflet's own "Leaflet" prefix.
+     *
+     * Nobody is owed it: the terms that bind this map are OpenFreeMap's, OpenMapTiles'
+     * and OpenStreetMap's, and all three stay exactly as they are. The prefix is what
+     * made the line too long — measured on a 375 px screen it wrapped to two lines,
+     * 34 px tall, and the second line was cut off by the tab bar below the map while
+     * the first sat under the locate button. An attribution that is covered is not a
+     * visible attribution, so the shortest honest line is also the compliant one.
+     */
+    instance.attributionControl?.setPrefix(false);
 
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
 
@@ -237,22 +407,86 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   }, []);
 
   // Locate user GPS position
+  /** Stop following, and take the dot and its circle off the map. */
+  const stopFollowing = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    if (map) {
+      if (userMarkerRef.current) map.removeLayer(userMarkerRef.current);
+      if (accuracyRef.current) map.removeLayer(accuracyRef.current);
+    }
+    userMarkerRef.current = null;
+    accuracyRef.current = null;
+    lastFixRef.current = null;
+    setIsFollowing(false);
+  }, [map]);
+
+  /**
+   * Follow the phone, rather than photograph it once.
+   *
+   * This used to be `getCurrentPosition`: one reading, a dot dropped where you were at
+   * that moment, and it never moved again. Walk two hundred metres towards the stop and
+   * the map still showed you where you started — on the one screen whose job is telling
+   * you whether you will make it. `watchPosition` keeps it honest, and pressing the
+   * button again stops it, because a watch nobody turned off is a radio nobody turned off.
+   */
   const handleLocateUser = () => {
+    if (isFollowing) {
+      stopFollowing();
+      return;
+    }
     if (!navigator.geolocation) {
-      alert(t.map.geolocationUnavailable);
+      setLocationError(t.map.geolocationUnavailable);
       return;
     }
 
     setIsLocating(true);
     setLocationError(null);
-    navigator.geolocation.getCurrentPosition(
+    let centred = false;
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         setIsLocating(false);
+        setIsFollowing(true);
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        const accuracy = Math.max(pos.coords.accuracy ?? 0, 0);
+
+        // The same courtesy the saved-stops screen learned: outside the network there is
+        // nothing to look at, so do not fly to another province to show an empty map.
+        if (!getNearbyStops(lat, lng).some((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES)) {
+          stopFollowing();
+          setLocationError(t.map.outOfArea);
+          return;
+        }
 
         if (map) {
-          map.setView([lat, lng], 16, { animate: true });
+          // Centre on the first fix, then leave the map where the reader put it — one
+          // that recentres every few seconds cannot be panned, and panning is how you
+          // look at the stop you are walking towards. The exception is walking off the
+          // edge: losing your own dot is worse than a map that moved.
+          if (!centred) {
+            map.setView([lat, lng], 16, { animate: true });
+            centred = true;
+          } else if (!map.getBounds().pad(-0.15).contains([lat, lng])) {
+            map.panTo([lat, lng], { animate: true });
+          }
+
+          if (accuracyRef.current) {
+            accuracyRef.current.setLatLng([lat, lng]).setRadius(accuracy);
+          } else {
+            accuracyRef.current = L.circle([lat, lng], {
+              radius: accuracy,
+              color: colors.userStroke,
+              fillColor: colors.userFill,
+              weight: 1,
+              opacity: 0.35,
+              fillOpacity: 0.12,
+              interactive: false,
+            }).addTo(map);
+          }
 
           if (userMarkerRef.current) {
             userMarkerRef.current.setLatLng([lat, lng]);
@@ -264,30 +498,48 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               weight: 3,
               opacity: 1,
               fillOpacity: 0.95,
-            })
-              .addTo(map)
-              .bindPopup(t.map.yourPosition);
+            }).addTo(map);
           }
+          userMarkerRef.current.bindPopup(t.map.yourPositionAccurate(Math.round(accuracy)));
         }
 
-        const nearby = getNearbyLines(lat, lng, NEARBY_RADIUS_M);
-        setNearbyLinesList(nearby);
-        setFilterPreset('nearby');
-        // Show them all. Picking nearby[0] made "preto de min" display a single line
-        // and hide the other seven you could equally walk to.
-        setActiveLineId('all');
+        // Recomputing the nearby list on every tick would redo it for a metre of drift.
+        // Fifty metres is about when a different stop starts being the closest one.
+        const moved =
+          !lastFixRef.current ||
+          getDistanceMeters(lastFixRef.current[0], lastFixRef.current[1], lat, lng) > 50;
+        if (moved) {
+          lastFixRef.current = [lat, lng];
+          setNearbyLinesList(getNearbyLines(lat, lng, NEARBY_RADIUS_M));
+          setFilterPreset('nearby');
+          // Show them all. Picking nearby[0] made "preto de min" display a single line
+          // and hide the other seven you could equally walk to.
+          setActiveLineId('all');
+          // If this fix is the one the screen opened on, this is the moment the lines to
+          // draw exist. Drawing them any earlier would put all twenty-four on the map for
+          // as long as the GPS took to answer. Nothing to guard against a reader outside
+          // Lugo: that returns above, before any of this.
+          if (drawNearbyWhenReady.current) {
+            drawNearbyWhenReady.current = false;
+            setShowRoutes(true);
+          }
+        }
       },
       () => {
         // Refused or unavailable. This used to fall back to the centre of Lugo and then
         // show "lines near me" measured from there — distances from a place the phone
         // never reported, presented as if they were the reader's. Say what happened
         // instead; the same fallback was removed from the saved-stops screen.
+        stopFollowing();
         setIsLocating(false);
         setLocationError(t.map.locationDenied);
       },
-      { timeout: 8000 }
+      { timeout: 8000, enableHighAccuracy: true, maximumAge: 5000 },
     );
   };
+
+  // A watch outlives the screen unless somebody stops it, and this one is reading the GPS.
+  useEffect(() => stopFollowing, [stopFollowing]);
 
   const handleCenterLugo = () => {
     map?.setView(LUGO_CENTER, 14, { animate: true });
@@ -296,6 +548,13 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const handleSelectLine = (line: BusLine) => {
     setActiveLineId(line.id);
     onSelectLine(line);
+    // Asking for a line is asking to see it. The map opens with no trazados drawn, so
+    // without this the first pick would frame the route and then draw nothing in it.
+    setShowRoutes(true);
+    // And asking to see it is asking for whatever is covering the map to get out of the
+    // way of it — the sheet, and the unfolded grid of chips.
+    setSheetOpen(false);
+    setLinesExpanded(false);
 
     if (map && line.directions[0]?.pathCoordinates?.length) {
       const bounds = L.polyline(line.directions[0].pathCoordinates).getBounds();
@@ -307,6 +566,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
   const handlePresetFilter = (preset: 'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao') => {
     setFilterPreset(preset);
+    // Every one of these moves or redraws the map, which is behind the sheet.
+    setSheetOpen(false);
     if (preset !== 'stop') setLinesHereStop(null);
     if (preset === 'all') {
       setActiveLineId('all');
@@ -322,14 +583,105 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     }
   };
 
+  /**
+   * Open on the lines that pass near you — but only for someone who has already agreed
+   * to be located.
+   *
+   * The map used to open with all twenty-four routes over the city, which is a picture of
+   * string; it now opens with none, which is quiet but tells you nothing. What was agreed
+   * is neither: the lines near you, with the rest added when you ask for them.
+   *
+   * The catch is that "near you" needs the GPS, and asking for it the instant a screen
+   * loads is the permission prompt everybody refuses on reflex — and refusing it here
+   * would cost the locate button too, for the whole origin. So the Permissions API is
+   * asked first, and this only runs on `granted`: a reader who has already said yes, on
+   * this site, gets the map they agreed to. Everybody else gets the quiet one and an
+   * obvious button. `prompt` and `denied` both mean "do not ask now".
+   *
+   * Once per page load, not once per mount, and the difference is the whole rule. This
+   * is about how the screen *opens*; coming back to it after choosing a line must not
+   * throw that choice away. The first attempt guarded on `selectedLine` being unset
+   * instead, which never fires at all: the app starts with the first line selected, so
+   * that condition is true on the coldest of opens and the whole thing was dead code.
+   * Testing found that; the compiler could not.
+   */
+  const drawNearbyWhenReady = useRef(false);
+  useEffect(() => {
+    if (openedOnNearby || !navigator.permissions?.query) return;
+    navigator.permissions
+      .query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        // Claimed on success, not before. Setting it up front looked like the way to run
+        // once and instead ran never: StrictMode mounts, tears down and mounts again, so
+        // the first pass claimed the flag and the second bailed on it, and in development
+        // the map never opened on anything. Claiming it here lets both passes ask and the
+        // first answer win.
+        if (openedOnNearby || status.state !== 'granted') return;
+        openedOnNearby = true;
+        drawNearbyWhenReady.current = true;
+        handlePresetFilter('nearby');
+      })
+      // Firefox once threw for an unknown descriptor rather than resolving. A map that
+      // opens on its usual line is the fallback, which is what happens if this never runs.
+      .catch(() => {});
+    // Once, on mount: this is about how the screen opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+    /* No page padding on a phone: the map is the screen there, edge to edge. The padded
+       page comes back at `sm`, where the two-column layout starts to make sense. */
+    <div className="max-w-7xl mx-auto px-0 py-0 sm:px-6 sm:py-5 lg:px-8">
       {/* 2-Column Responsive Layout: Options on Left, Map on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* The scrim, so it is obvious the map is behind and not gone, and so tapping
+            anywhere off the sheet closes it. A button and not a div: closing is an action,
+            and this is the target most people reach for first. */}
+        {sheetOpen && (
+          <button
+            type="button"
+            aria-label={t.map.closeControls}
+            onClick={() => setSheetOpen(false)}
+            className="fixed inset-0 z-[500] bg-scrim lg:hidden"
+          />
+        )}
+
         {/* Left Column: Controls & Filters (Geometric Balance Sidebar).
-            Second on a phone: the map is what the tab is for, and it used to open
-            below a screenful of panels. Unchanged from `lg` up. */}
-        <div className="order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4">
+            A sheet over the map below `lg`, an ordinary sidebar from `lg` up — one set of
+            markup, because two would drift apart the first time either was edited.
+            `invisible` when closed and not merely translated off: a panel parked below the
+            fold still takes keyboard focus, so tabbing would walk into a list of
+            twenty-four lines nobody can see. */}
+        <div
+          ref={sheetRef}
+          role={sheetOpen ? 'dialog' : undefined}
+          aria-modal={sheetOpen ? true : undefined}
+          aria-label={sheetOpen ? t.map.controls : undefined}
+          className={`order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4 fixed inset-x-0 bottom-0 z-[510] max-h-[78dvh] overflow-y-auto rounded-t-2xl border-t border-edge bg-surface p-3.5 shadow-2xl transition-transform duration-200 motion-reduce:transition-none lg:static lg:z-auto lg:max-h-none lg:overflow-visible lg:visible lg:translate-y-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
+            sheetOpen ? 'translate-y-0' : 'invisible translate-y-full'
+          }`}
+        >
+          {/* The handle. It says which way the sheet goes and gives the sheet its own way
+              out, for anyone who does not think to tap the map behind it. Gone at `lg`,
+              where the sheet is a column and closing it means nothing. */}
+          {/* `order-first` as well, because the quick-filters panel below carries it and
+              would otherwise sit above the sheet's own title and close button. Two
+              children with the same order fall back to document order, and this one is
+              written first. */}
+          <div className="order-first -mt-1 flex items-center justify-between gap-2 lg:hidden">
+            <span className="text-label font-bold uppercase tracking-widest text-ink-3">
+              {t.map.controls}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSheetOpen(false)}
+              aria-label={t.map.closeControls}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-ink-2"
+            >
+              <ChevronDown className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+
           {/* Header Card with Telemetry */}
           <div className="bg-bg rounded-xl p-4 shadow-sm border border-edge">
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-line">
@@ -358,10 +710,17 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 id="btn-map-locate"
                 onClick={handleLocateUser}
                 disabled={isLocating}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-[9px] px-3.5 bg-accent text-label font-bold text-on-accent shadow-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                aria-pressed={isFollowing}
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-[9px] px-3.5 text-label font-bold shadow-xs transition-colors disabled:opacity-50 ${
+                  isFollowing ? 'bg-surface text-ink border border-accent' : 'bg-accent text-on-accent'
+                }`}
               >
                 <LocateFixed className="w-3.5 h-3.5" />
-                <span>{isLocating ? t.map.locating : t.map.myLocation}</span>
+                {/* Three states, because it is a switch now and not a one-shot: asking,
+                    following — where pressing again turns the GPS off — and idle. */}
+                <span>
+                  {isLocating ? t.map.locating : isFollowing ? t.map.stopFollowing : t.map.myLocation}
+                </span>
               </button>
 
               <button
@@ -385,46 +744,33 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.quickFilters}
             </span>
-            {/* Two columns, and "all" across the top: five buttons in three columns left
-                one row short and one of them stretched to fill the gap, which is the
-                lopsidedness you see before you can name it. Across the top also puts the
-                way back to everything above the four places rather than among them. */}
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                onClick={() => handlePresetFilter('all')}
-                aria-pressed={filterPreset === 'all'}
-                className={`col-span-2 ${presetButtonClass(filterPreset === 'all')}`}
-              >
-                {t.map.allLines}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('nearby')}
-                aria-pressed={filterPreset === 'nearby'}
-                className={presetButtonClass(filterPreset === 'nearby')}
-              >
-                {t.map.nearbyFilter}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('hula')}
-                aria-pressed={filterPreset === 'hula'}
-                className={presetButtonClass(filterPreset === 'hula')}
-              >
-                {t.map.filterHula}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('campus')}
-                aria-pressed={filterPreset === 'campus'}
-                className={presetButtonClass(filterPreset === 'campus')}
-              >
-                {t.map.filterCampus}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('ceao')}
-                aria-pressed={filterPreset === 'ceao'}
-                className={presetButtonClass(filterPreset === 'ceao')}
-              >
-                {t.map.filterCeao}
-              </button>
+            {/* A scrolling row on a phone, a wrapped set on a desktop.
+                On a phone these live in a sheet whose entire job is to not cover the map,
+                and five 44 px buttons stacked two across took about 150 px of it; the row
+                does the same work in 44, in the shape the reader just met in the chips
+                over the map. None of that is true in a 400 px sidebar with the whole page
+                height to spend: there, a row that scrolls sideways hides four of the five
+                behind a gesture nobody makes with a mouse, to save height that was not
+                short. So it wraps instead, and every filter is visible at once. */}
+            <div className="no-scrollbar flex gap-1.5 overflow-x-auto lg:flex-wrap lg:overflow-x-visible">
+              {(
+                [
+                  ['all', t.map.allLines],
+                  ['nearby', t.map.nearbyFilter],
+                  ['hula', t.map.filterHula],
+                  ['campus', t.map.filterCampus],
+                  ['ceao', t.map.filterCeao],
+                ] as const
+              ).map(([preset, label]) => (
+                <button
+                  key={preset}
+                  onClick={() => handlePresetFilter(preset)}
+                  aria-pressed={filterPreset === preset}
+                  className={`shrink-0 whitespace-nowrap ${presetButtonClass(filterPreset === preset)}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
             {filterPreset === 'stop' && linesHereStop && (
               <div className="mt-2.5 rounded-[10px] border border-accent bg-accent/10 p-3">
@@ -585,15 +931,30 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
         {/* Right Column: Interactive Map Canvas */}
         <div className="order-1 lg:order-none lg:col-span-8">
-          {/* Tall enough to be the page on a phone, short enough that the filter row
-              below it peeks in and says there is more. */}
-          <div className="relative z-0 w-full h-[62vh] min-h-[380px] rounded-xl overflow-hidden shadow-sm border border-edge bg-surface lg:h-[540px]">
+          {/* The map is the screen on a phone.
+              It used to be a 62vh card with a filter row peeking underneath, which meant
+              the tab called "Mapa" showed rather less than half a map, and the half it
+              showed was in a rounded box with a border and a shadow — three devices that
+              say "this is one object among several on a page". It is not: it is the page.
+              Everything else on this screen floats over it or waits below the fold.
+              `dvh` and not `vh` so a phone's collapsing address bar does not cut it, with
+              a `vh` line first for anything too old to know the unit. The card, the
+              border and the fixed height all come back at `lg`, where there is room for
+              a genuine two-column layout. */}
+          <div className="h-map-viewport relative z-0 w-full overflow-hidden bg-surface sm:rounded-xl sm:border sm:border-edge sm:shadow-sm">
             <div ref={mapContainerRef} className="w-full h-full" />
 
             {/* Route, Stop, and Vehicle Layers */}
             <RouteLayer
               map={geometryReady ? map : null}
-              visibleLineIds={visibleLineIds}
+              /* The scope, not the one line picked out of it. Choosing a line used to
+                 leave the map holding a single route and nothing else, which answers
+                 "where does the 6 go" and destroys the answer to "and where does that
+                 leave me". The layer keeps the rest faint underneath and paints the
+                 chosen one over them. The stops still narrow to `visibleLineIds`: a
+                 backdrop of routes is context, 417 dots is clutter. */
+              visibleLineIds={scopeLineIds}
+              emphasisLineId={activeLineId !== 'all' ? activeLineId : null}
               lines={lines}
               showRoutes={showRoutes}
               lang={lang}
@@ -608,14 +969,32 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               map={map}
               visibleLineIds={visibleLineIds}
               stops={stops}
-              lines={lines}
               selectedStop={selectedStop}
               showStops={showStops}
-              onSelectStop={onSelectStop}
-              onOpenLine={onOpenLine}
-              onShowLinesHere={showLinesHere}
-              lang={lang}
+              onTapStop={setTappedStop}
             />
+
+            {/* The stop, opened where it was tapped, with the map still behind it. */}
+            {tappedStop && (
+              <StopSheet
+                stop={tappedStop}
+                lines={lines}
+                lang={lang}
+                onClose={() => setTappedStop(null)}
+                onOpenLine={(line) => {
+                  setTappedStop(null);
+                  onOpenLine(line);
+                }}
+                onShowLinesHere={(stop) => {
+                  setTappedStop(null);
+                  showLinesHere(stop);
+                }}
+                onOpenFullBoard={(stop) => {
+                  setTappedStop(null);
+                  onSelectStop(stop);
+                }}
+              />
+            )}
 
             <VehicleLayer
               map={geometryReady ? map : null}
@@ -629,37 +1008,123 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               }}
             />
 
-            {/* Floating Map Legend */}
-            <div className="absolute bottom-3 left-3 z-[400] bg-bg/95 backdrop-blur-xs p-2.5 rounded-lg shadow-md border border-edge text-label space-y-1 pointer-events-auto font-medium">
-              {/* 9 px and 7 px were below the floor this app sets for itself, and a legend
-                  is exactly the thing someone squints at. The swatch carries the meaning;
-                  the letter inside it was never legible anyway.
+            {/* The map is the whole screen on a phone now, and that put every control in
+                the column below it a full viewport out of reach. Two of them cannot wait
+                that long: which line you are looking at, and where you are standing. They
+                ride over the map below `lg` and hand back to the sidebar above it.
 
-                  The bus and route swatches used the accent, which was only ever right by
-                  accident: the old accent happened to be line 1.1's blue. Buses and routes
-                  are drawn in each line's own colour, so the legend follows that. */}
-              <div className="mb-1 text-label font-semibold uppercase tracking-[0.08em] text-ink">
-                {t.map.legend}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3.5 w-3.5 rounded bg-ink ring-1 ring-bg"></div>
-                <span className="text-ink-2">{t.map.stop}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3.5 h-3.5 rounded ring-2 ring-white"
-                  style={{ backgroundColor: legendColor ?? 'var(--c-ink-3)' }}
-                ></div>
-                <span className="text-ink-2">{t.map.busLive}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3.5 h-1 rounded-full"
-                  style={{ backgroundColor: legendColor ?? 'var(--c-ink-3)' }}
-                ></div>
-                <span className="text-ink-2">{t.map.route}</span>
+                This corner is where the legend used to float, and the legend is not
+                coming back: it named stops, buses and trazados, which is exactly what the
+                three layer buttons in the sidebar already name, each with its own icon in
+                its own colour. A second copy of those three words, sitting on top of the
+                map and covering it, was the redundant one. */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] lg:hidden">
+              <div
+                className={`no-scrollbar flex gap-1.5 px-3 py-2.5 ${
+                  linesExpanded ? 'max-h-[45dvh] flex-wrap overflow-y-auto' : 'overflow-x-auto'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handlePresetFilter('all')}
+                  aria-pressed={activeLineId === 'all'}
+                  className={`pointer-events-auto flex h-11 shrink-0 items-center rounded-full border px-4 text-label font-semibold shadow-sm backdrop-blur-xs ${
+                    activeLineId === 'all'
+                      ? 'border-accent bg-accent text-on-accent'
+                      : 'border-edge bg-bg/95 text-ink-2'
+                  }`}
+                >
+                  {t.map.allLines}
+                </button>
+
+                {/* Second, not last. At the end of a row that scrolls, the control for
+                    "stop making me scroll" is itself only reachable by scrolling. */}
+                <button
+                  type="button"
+                  onClick={() => setLinesExpanded((v) => !v)}
+                  aria-expanded={linesExpanded}
+                  aria-label={linesExpanded ? t.map.collapseLines : t.map.expandLines}
+                  title={linesExpanded ? t.map.collapseLines : t.map.expandLines}
+                  className="pointer-events-auto flex h-11 shrink-0 items-center gap-1 rounded-full border border-edge bg-bg/95 px-3.5 text-label font-bold text-ink-2 shadow-sm backdrop-blur-xs"
+                >
+                  <span className="tnum">{listedLines.length}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
+                      linesExpanded ? 'rotate-180' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {/* The number is the chip. A line's colour is how it is drawn on the map
+                    and printed on the pole, so a coloured badge is the shortest thing that
+                    still says which line it is — and twenty-four of them scroll in a strip
+                    where twenty-four names would not fit at all. The name goes to the
+                    accessible name, since the badge alone reads as a bare number. */}
+                {listedLines.map((line) => {
+                  const isSelected = activeLineId === line.id;
+                  // Only where the number cannot stand alone, so twenty of the chips stay
+                  // the width of their number and only the four 11s pay for the ambiguity.
+                  const branch = sharedNumbers.has(line.number) ? destinationOf(line) : '';
+                  return (
+                    <button
+                      key={line.id}
+                      type="button"
+                      onClick={() => handleSelectLine(line)}
+                      aria-pressed={isSelected}
+                      aria-label={line.name}
+                      title={line.name}
+                      className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-label font-black text-white shadow-sm ${
+                        isSelected ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''
+                      }`}
+                      style={{ backgroundColor: line.color }}
+                    >
+                      <span>{line.number}</span>
+                      {branch && (
+                        <span className="max-w-28 truncate font-semibold opacity-90">{branch}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Orientation is the one thing a map owes you before anything else, and on a
+                phone it is one thumb's reach from the bottom corner. Left, because the
+                zoom control has the right one. No `id` here: the sidebar's own locate
+                button keeps `btn-map-locate`, and both are in the DOM at once. */}
+            <button
+              type="button"
+              onClick={handleLocateUser}
+              disabled={isLocating}
+              aria-pressed={isFollowing}
+              aria-label={
+                isLocating ? t.map.locating : isFollowing ? t.map.stopFollowing : t.map.myLocation
+              }
+              title={
+                isLocating ? t.map.locating : isFollowing ? t.map.stopFollowing : t.map.myLocation
+              }
+              className={`pointer-events-auto absolute bottom-5 left-3 z-[400] flex h-12 w-12 items-center justify-center rounded-full border shadow-md backdrop-blur-xs disabled:opacity-50 lg:hidden ${
+                isFollowing ? 'border-accent bg-bg/95 text-accent' : 'border-edge bg-bg/95 text-ink-2'
+              }`}
+            >
+              <LocateFixed className="h-5 w-5" aria-hidden="true" />
+            </button>
+
+            {/* The way to everything the sidebar holds — the quick filters, the layer
+                switches, the whole line list, the telemetry — without leaving the map.
+                Centre-bottom, because the two corners are already taken by locate and
+                zoom, and because it is the widest target of the three and this is the one
+                with a word on it. */}
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              aria-expanded={sheetOpen}
+              className="pointer-events-auto absolute bottom-5 left-1/2 z-[400] flex h-12 -translate-x-1/2 items-center gap-2 rounded-full border border-edge bg-bg/95 px-4 text-label font-bold text-ink shadow-md backdrop-blur-xs lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4 text-accent" aria-hidden="true" />
+              {t.map.controls}
+            </button>
           </div>
         </div>
       </div>

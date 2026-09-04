@@ -28,7 +28,7 @@ jobs:
     steps:
       # Without this the token stays in .git/config for every later step, where a
       # compromised dependency's install script could read it. Nothing here pushes.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -101,4 +101,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

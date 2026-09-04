@@ -155,85 +155,98 @@ const injectCsp = {
   },
 };
 
-export default defineConfig(() => {
-  return {
-    base,
-    // The map renderer’s worker is an ES module. Vite’s default worker format is iife,
-    // which would strip the imports it needs.
-    worker: { format: 'es' as const },
-    plugins: [
-      injectCsp,
-      injectSeoTags,
-      emitSeoFiles,
-      emitSpaFallback,
-      emitCompressedAssets,
-      react(),
-      tailwindcss(),
-      // Everything the app computes — timetables, arrivals, route planning — runs from
-      // bundled data, so once the shell is cached it works with no connection at all.
-      // That is the normal case at a bus stop: signal is worst exactly where you need
-      // the departure time.
-      VitePWA({
-        registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg'],
-        manifest: {
-          name: 'Urbanos de Lugo',
-          short_name: 'Bus Lugo',
-          description: 'Liñas, paradas e tempos de paso do bus urbano de Lugo',
-          lang: 'gl',
-          theme_color: '#d81f26',
-          // Dark is the default theme, so the splash has to be dark too -- this was
-          // still the light surface and flashed white on every cold start.
-          background_color: '#0d0e11',
-          display: 'standalone',
-          start_url: base,
-          scope: base,
-          icons: [
-            // PNG for the install prompt, SVG for everything that scales.
-            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' },
-            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
-          ],
-        },
-        workbox: {
-          // The geometry chunk is ~490 KB; the default 2 MB cap would drop it silently.
-          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-          globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-          navigateFallback: `${base}index.html`,
-          navigateFallbackDenylist: [/\/api\//],
-          runtimeCaching: [
-            // The typeface had a rule here, because it came from Google's CDN and was
-            // the one asset the service worker did not precache — so a second visit with
-            // no signal fell back to the system sans, losing the face chosen for
-            // legibility exactly where it matters. It is served from this origin now, so
-            // `globPatterns` above precaches the woff2 files with everything else and a
-            // runtime rule for them would be a rule for something already in the cache.
-            {
-              // Map data: show what was seen before rather than grey squares offline.
-              // Covers the vector tiles, the glyphs and the sprites, which all come from
-              // the one host, and the raster fallback for a device with no WebGL2.
-              urlPattern: /^https:\/\/(tiles\.openfreemap\.org|tile\.openstreetmap\.org)\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'map-tiles',
-                expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 30 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
+export default defineConfig({
+  base,
+  // The map renderer’s worker is an ES module. Vite’s default worker format is iife,
+  // which would strip the imports it needs.
+  worker: { format: 'es' as const },
+  plugins: [
+    injectCsp,
+    injectSeoTags,
+    emitSeoFiles,
+    emitSpaFallback,
+    emitCompressedAssets,
+    react(),
+    tailwindcss(),
+    // Everything the app computes — timetables, arrivals, route planning — runs from
+    // bundled data, so once the shell is cached it works with no connection at all.
+    // That is the normal case at a bus stop: signal is worst exactly where you need
+    // the departure time.
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'Urbanos de Lugo',
+        short_name: 'Bus Lugo',
+        description: 'Liñas, paradas e tempos de paso do bus urbano de Lugo',
+        lang: 'gl',
+        theme_color: '#d81f26',
+        // Dark is the default theme, so the splash has to be dark too -- this was
+        // still the light surface and flashed white on every cold start.
+        background_color: '#0d0e11',
+        display: 'standalone',
+        start_url: base,
+        scope: base,
+        icons: [
+          // 192 for the launcher, 512 for the splash screen Android draws while the app
+          // starts. With only the 192 it upscales that one and the splash is soft.
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          // Maskable has to be a PNG, and a different drawing.
+          //
+          // A launcher crops this to its own shape and only the middle 80% is
+          // guaranteed to survive; favicon.svg puts the wheel hard against the edge, so
+          // a circular mask bit into it. This one is the same mark scaled into the safe
+          // zone on full-bleed red -- a transparent corner would show as a notch. SVG
+          // was declared here before, which Android does not handle dependably.
+          {
+            src: 'icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          // Kept for the browser tab and anything that scales.
+          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+        ],
+      },
+      workbox: {
+        // The geometry chunk is ~490 KB; the default 2 MB cap would drop it silently.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        navigateFallback: `${base}index.html`,
+        navigateFallbackDenylist: [/\/api\//],
+        runtimeCaching: [
+          // The typeface had a rule here, because it came from Google's CDN and was
+          // the one asset the service worker did not precache — so a second visit with
+          // no signal fell back to the system sans, losing the face chosen for
+          // legibility exactly where it matters. It is served from this origin now, so
+          // `globPatterns` above precaches the woff2 files with everything else and a
+          // runtime rule for them would be a rule for something already in the cache.
+          {
+            // Map data: show what was seen before rather than grey squares offline.
+            // Covers the vector tiles, the glyphs and the sprites, which all come from
+            // the one host, and the raster fallback for a device with no WebGL2.
+            urlPattern: /^https:\/\/(tiles\.openfreemap\.org|tile\.openstreetmap\.org)\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-tiles',
+              expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
-            {
-              // Service alerts are the only genuinely live data; prefer the network but
-              // fall back to the last answer instead of an error.
-              urlPattern: /\/api\/alerts/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'service-alerts',
-                networkTimeoutSeconds: 5,
-                expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 6 },
-              },
+          },
+          {
+            // Service alerts are the only genuinely live data; prefer the network but
+            // fall back to the last answer instead of an error.
+            urlPattern: /\/api\/alerts/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'service-alerts',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 6 },
             },
-          ],
-        },
-      }),
-    ],
-  };
+          },
+        ],
+      },
+    }),
+  ],
 });

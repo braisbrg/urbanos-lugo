@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { escapeHtml } from './escapeHtml';
-import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
-import { BusStop, BusLine } from '../../types';
+import { BusStop } from '../../types';
 import { poleCode } from '../../data/transitData';
-import { getNearbyLines } from '../../utils/transitEngine';
 import { useIsDark } from '../../hooks/useIsDark';
 import { mapColors } from './palette';
 
@@ -15,56 +13,57 @@ import { mapColors } from './palette';
 interface StopLayerProps {
   map: L.Map | null;
   stops: BusStop[];
-  lines: BusLine[];
   /** Lines to draw; null means every line. */
   visibleLineIds: string[] | null;
   /** The one line to emphasise, if any. */
   selectedStop?: BusStop;
   showStops: boolean;
-  onSelectStop: (stop: BusStop) => void;
-  /** Open a line's own page. The badges in a stop popup are the shortest way there. */
-  onOpenLine: (line: BusLine) => void;
-  /** Narrow the map to the lines that serve this stop, without leaving the map. */
-  onShowLinesHere: (stop: BusStop) => void;
-  lang: Lang;
+  /** A stop was tapped. The board for it rises over the map; this layer only reports it. */
+  onTapStop: (stop: BusStop) => void;
 }
 
 /**
- * Below this zoom only interchanges are drawn. Every serious transit map declutters this
- * way: 417 dots over a city-wide view hide the very lines they belong to, and none of
- * them can carry a label at that scale anyway.
+ * How much of the network appears as you come in, and how big it is drawn.
+ *
+ * This was a cliff, not a ladder: below zoom 15 only stops with six lines or more were
+ * drawn — 46 of the 417 — and at 15 all 417 arrived at once, every one of them a 5px dot
+ * whatever the zoom. Coming in one step went from eleven per cent of the network to all
+ * of it, and going further in made nothing easier to hit or to read.
+ *
+ * The rungs are cut by how many lines a stop serves, because that is what makes one worth
+ * seeing from far away: 46 stops serve six lines or more, 109 serve four or more, 233
+ * serve two or more, and the remaining 184 are the single-line long tail that only means
+ * anything once you are looking at your own street.
+ *
+ * `label` is the change that matters on a phone. Names lived in a hover tooltip, and a
+ * phone has no hover — so no matter how far you zoomed, no stop ever told you its name,
+ * on the one screen meant for working out where you are.
  */
-const ALL_STOPS_FROM_ZOOM = 15;
-/** How many lines a stop needs to stay on screen when zoomed out. */
-/** Matches the board: near enough to walk when the wait is long. */
-const NEARBY_LINE_RADIUS_M = 400;
-const NEARBY_LINE_LIMIT = 6;
+const ZOOM_LADDER: { from: number; minLines: number; radius: number; label: boolean }[] = [
+  { from: 16, minLines: 0, radius: 7, label: true },
+  { from: 15, minLines: 2, radius: 6, label: false },
+  { from: 14, minLines: 4, radius: 5, label: false },
+  { from: 0, minLines: 6, radius: 4, label: false },
+];
 
-const INTERCHANGE_MIN_LINES = 6;
+const rungFor = (zoom: number) => ZOOM_LADDER.find((r) => zoom >= r.from) ?? ZOOM_LADDER[ZOOM_LADDER.length - 1];
 
-/* Canvas markers sit on CARTO's tiles, which stay light whatever theme the app is in,
-   and Leaflet bakes the colour when the layer is built rather than re-reading it. Both
-   reasons say: fixed values here, tokens only in the popup HTML, which is real DOM. */
+/* Canvas markers are drawn into the map's shared canvas, and Leaflet bakes the colour in
+   when the layer is built rather than re-reading it, so these are fixed values read from
+   the theme at build time rather than CSS tokens. */
 export const StopLayer: React.FC<StopLayerProps> = ({
   map,
   stops,
-  lines,
   visibleLineIds,
   selectedStop,
   showStops,
-  onSelectStop,
-  onOpenLine,
-  onShowLinesHere,
-  lang,
+  onTapStop,
 }) => {
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
   const colors = mapColors(useIsDark());
-  const onSelectStopRef = useRef(onSelectStop);
-  onSelectStopRef.current = onSelectStop;
-  const onOpenLineRef = useRef(onOpenLine);
-  onOpenLineRef.current = onOpenLine;
-  const onShowLinesHereRef = useRef(onShowLinesHere);
-  onShowLinesHereRef.current = onShowLinesHere;
+  // Held in a ref so a fresh arrow from the parent does not rebuild every marker.
+  const onTapStopRef = useRef(onTapStop);
+  onTapStopRef.current = onTapStop;
 
   const [zoom, setZoom] = useState<number>(() => map?.getZoom() ?? 14);
   useEffect(() => {
@@ -86,89 +85,72 @@ export const StopLayer: React.FC<StopLayerProps> = ({
     if (showStops) {
       const onLine =
         visibleLineIds === null ? stops : stops.filter((s) => s.lines.some((l) => visibleLineIds.includes(l)));
+      const rung = rungFor(zoom);
       // A filtered set is sparse enough to show whole at any zoom.
-      const detailed = zoom >= ALL_STOPS_FROM_ZOOM || visibleLineIds !== null;
+      const detailed = visibleLineIds !== null;
       const visible = detailed
         ? onLine
-        : onLine.filter((s) => s.lines.length >= INTERCHANGE_MIN_LINES || s.id === selectedStop?.id);
+        : onLine.filter((s) => s.lines.length >= rung.minLines || s.id === selectedStop?.id);
 
       visible.forEach((stop) => {
+        const code = poleCode(stop);
+        // 271 of the 417 carry a code on the pole. That used to be drawn — a size up and a
+        // heavier ring — and it did not read: two pixels of radius between dots that are
+        // four to seven pixels wide is a difference nobody sees, and the thing it was
+        // signalling is not what anybody comes to this screen to find. Every stop is drawn
+        // the same now; the code still appears in the sheet and in the hover label, where
+        // it is a fact you can act on rather than a hint you have to decode.
+
         // circleMarker draws into the map's shared canvas. divIcon, used here before,
         // creates one DOM node per stop — 417 of them on the overview.
         const marker = L.circleMarker([stop.lat, stop.lng], {
-          radius: 5,
+          radius: rung.radius,
           color: colors.stopStroke,
           weight: 2,
           fillColor: colors.stopFill,
           fillOpacity: 1,
         });
 
-        const code = poleCode(stop);
+        // One tooltip per marker: binding twice replaces the first, so this is either the
+        // name written beside the dot and left there, or the one that opens on hover —
+        // never both. Close in the name is already on screen, which is the point of it.
+        if (rung.label) {
+          // `auto` and not `right`: a name is written beside its dot, and a dot near the
+          // right edge of a 375 px phone put the name off the screen — measured, three of
+          // the thirteen on view at zoom 16, the widest of them 157 px. Leaflet's own
+          // `auto` flips the side once the marker passes the middle of the map, which is
+          // the whole of the fix and none of the arithmetic.
+          marker.bindTooltip(escapeHtml(stop.name), {
+            permanent: true,
+            direction: 'auto',
+            offset: [rung.radius + 2, 0],
+            className: 'stop-name-label',
+          });
+        } else {
+          marker.bindTooltip(
+            `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
+              ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
+            </div>`,
+            { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
+          );
+        }
 
-        marker.bindTooltip(
-          `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
-            ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
-          </div>`,
-          { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
-        );
+        /* Tapping a stop opens the stop, in a sheet over the map.
+           It used to open a Leaflet popup built here as an HTML string, whose only real
+           content was a button that switched tabs — so the question that brings people to
+           this screen, "that stop there, when does it come", was answered by leaving the
+           screen. The board rises over the map instead, and building it as a component
+           takes fifty lines of innerHTML and escaping out of this file with it.
 
-        const servingLines = stop.lines
-          .map((l) => lines.find((li) => li.id === l))
-          .filter((l): l is BusLine => Boolean(l));
-
-        // Buttons, not spans: a badge is the obvious thing to press to read that line.
-        const linesBadges = servingLines
-          .map(
-            (l) =>
-              `<button type="button" data-line-id="${escapeHtml(l.id)}" title="${escapeHtml(l.name)}" style="background-color: ${escapeHtml(l.color)}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; margin-right: 4px; border: none; cursor: pointer;">${escapeHtml(l.number)}</button>`,
-          )
-          .join('');
-
-        const viewText = translations(lang).map.viewStopDepartures;
-
-        // Lines that pass within a short walk without calling here.
-        const nearby = getNearbyLines(stop.lat, stop.lng, NEARBY_LINE_RADIUS_M)
-          .filter((n) => !stop.lines.includes(n.line.id))
-          .sort((a, b) => a.walkMeters - b.walkMeters)
-          .slice(0, NEARBY_LINE_LIMIT);
-        const nearbyBadges = nearby
-          .map(
-            (n) =>
-              `<button type="button" data-line-id="${escapeHtml(n.line.id)}" title="${escapeHtml(n.line.name)} — ~${Math.round(n.walkMeters)} m" style="background-color: ${escapeHtml(n.line.color)}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; opacity: 0.75;">${escapeHtml(n.line.number)}</button>`,
-          )
-          .join('');
-
-        const popup = document.createElement('div');
-        popup.className = 'p-1 min-w-[200px] font-sans';
-        popup.innerHTML = `
-          <div style="font-weight: 600; font-size: 15px; color: var(--c-ink); margin-bottom: 3px;">${escapeHtml(stop.name)}</div>
-          <div style="font-size: 12px; color: var(--c-ink-3); margin-bottom: 8px;">${code ? `${escapeHtml(translations(lang).map.stopCode)}: <b>${escapeHtml(code)}</b> &bull; ` : ''}${escapeHtml(stop.zone)}</div>
-          <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px;">${linesBadges}</div>
-          ${nearby.length ? `<div style="margin-bottom: 10px;">
-            <div style="font-size: 12px; color: var(--c-ink-3); margin-bottom: 4px;">${escapeHtml(translations(lang).arrivals.nearbyLinesTitle)}</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 4px;">${nearbyBadges}</div>
-          </div>` : ''}
-          <button data-stop-times="1" style="width: 100%; min-height: 44px; background-color: var(--c-accent); color: var(--c-on-accent); border: none; border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
-            ${viewText} &rarr;
-          </button>
-          <button data-lines-here="1" style="width: 100%; min-height: 44px; margin-top: 6px; background: transparent; color: var(--c-ink-2); border: 1px solid var(--c-border); border-radius: 9px; padding: 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;">
-            ${escapeHtml(translations(lang).map.onlyLinesHere)}
-          </button>
-        `;
-        // Wire the button by reference. Building a querySelector from stop.id used to
-        // throw for any id that is not a valid CSS identifier.
-        popup.querySelector('button[data-stop-times]')?.addEventListener('click', () => onSelectStopRef.current(stop));
-        // Acts on the map behind the popup, so the popup gets out of the way first.
-        popup.querySelector('button[data-lines-here]')?.addEventListener('click', () => {
-          marker.closePopup();
-          onShowLinesHereRef.current(stop);
-        });
-        popup.querySelectorAll<HTMLButtonElement>('button[data-line-id]').forEach((badge) => {
-          const line = servingLines.find((l) => l.id === badge.dataset.lineId);
-          if (line) badge.addEventListener('click', () => onOpenLineRef.current(line));
+           Claim the click while we are at it. Nearly every stop stands on a route, and the
+           route layer answers map clicks within twenty pixels of a line; both fired, and
+           the route layer's answer replaced this one. Leaflet runs layer handlers before
+           the map's own, so the mark is always set by the time it looks. */
+        marker.on('click', (e: L.LeafletMouseEvent) => {
+          (e.originalEvent as MouseEvent & { _stopClaimed?: boolean })._stopClaimed = true;
+          onTapStopRef.current(stop);
         });
 
-        marker.bindPopup(popup);
         group.addLayer(marker);
         markersRef.current[stop.id] = marker;
       });
@@ -178,7 +160,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       group.remove();
       markersRef.current = {};
     };
-  }, [map, stops, lines, visibleLineIds, showStops, lang, zoom, selectedStop?.id]);
+  }, [map, stops, visibleLineIds, showStops, zoom, selectedStop?.id]);
 
   // Selection restyles one marker rather than rebuilding the layer.
   useEffect(() => {

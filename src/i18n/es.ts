@@ -59,6 +59,7 @@ export const es: Dict = {
     scan: 'Escanear código del poste',
     denied: 'No se pudo acceder a la ubicación. Revisa los permisos del navegador.',
     unavailable: 'Tu navegador no permite la geolocalización.',
+    outOfArea: 'No hay ninguna parada a menos de 2 km de donde estás. Esta web solo cubre la red urbana de Lugo.',
     walk: (minutes: number) => `${minutes} min a pie`,
   },
 
@@ -74,11 +75,39 @@ export const es: Dict = {
 
   fares: {
     priceNotPublished: 'Precio no publicado',
+    cards: {
+      single: {
+        badge: 'General',
+        title: 'Billete ordinario',
+        subtitle: 'Pago a bordo',
+        details: 'Válido para un viaje en cualquier línea de la red urbana de Lugo.',
+      },
+      citizenCard: {
+        badge: 'Tarjeta Ciudadana',
+        title: 'Bono ordinario',
+        subtitle: (minutes: number) => `Transbordo gratuito (${minutes} min)`,
+        details: 'Requiere tener la Tarjeta Ciudadana del Ayuntamiento de Lugo.',
+      },
+      socialCard: {
+        badge: 'Tarjeta Ciudadana',
+        title: 'Bono social',
+        subtitle: 'Juvenil, universitario, pensionista, desempleo y discapacidad',
+        details: 'El transbordo social también es gratuito. Consulta las condiciones en el teléfono 010.',
+      },
+      tmg: {
+        badge: 'Xunta de Galicia',
+        title: 'Tarjeta del transporte público de Galicia (TMG)',
+        subtitle: 'Válida en la red urbana de Lugo',
+        details: (minutes: number) =>
+          `Si llegas en un bus metropolitano, el urbano va incluido dentro de los ${minutes} min siguientes sin volver a pagar. Más de 41 viajes metropolitanos al mes devuelven el 15% del gasto.`,
+      },
+    },
     alertsTitle: 'Avisos oficiales e incidencias en Lugo',
     alertsSubtitle:
       'Comprobación automatizada cada hora desde el portal del operador, buslugo.com',
     faresTitle: 'Tarifas y Tarjeta Ciudadana',
     faresSubtitle: 'Precios oficiales y títulos de transporte en Lugo (Monbus)',
+    notAffiliated: 'Web no oficial, sin relación con Monbus ni con el Ayuntamiento de Lugo.',
     faqTitle: 'Preguntas frecuentes',
     contactTitle: 'Atención a la ciudadanía y contacto',
     refreshBtn: 'Comprobar avisos',
@@ -230,10 +259,6 @@ export const es: Dict = {
     liveBusesCount: 'buses en servicio',
     centerLugo: 'Centrar Lugo',
     myLocation: 'Mi ubicación',
-    legend: 'Leyenda',
-    stop: 'Parada con código QR',
-    busLive: 'Bus (posición estimada del horario)',
-    route: 'Trazado de la línea',
     viewStopDepartures: 'Ver tiempos de llegada',
     nearbyTitle: (metres: number) => `Líneas a menos de ${metres} m`,
     nearbyFilter: 'Cerca de mí',
@@ -256,8 +281,15 @@ export const es: Dict = {
     documentTitle: 'Urbanos de Lugo | Líneas, horarios y paradas',
     layers: 'Capas visibles',
     linesList: 'Seleccionar línea',
+    controls: 'Filtros y capas',
+    closeControls: 'Cerrar filtros y capas',
+    closeStop: 'Cerrar esta parada',
+    expandLines: 'Ver todas las líneas de una vez',
+    collapseLines: 'Mostrar las líneas en una fila',
     geolocationUnavailable: 'La geolocalización no está disponible.',
-    yourPosition: 'Tu ubicación actual',
+    yourPositionAccurate: (metres: number) => `Tu posición, con precisión de ±${metres} m`,
+    stopFollowing: 'Dejar de seguirme',
+    outOfArea: 'No hay ninguna parada cerca de ti. Esta web solo cubre la red urbana de Lugo.',
     stopsCount: (total: number, withQr: number) =>
       `${total} paradas, ${withQr} con código QR`,
   },

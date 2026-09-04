@@ -2,10 +2,10 @@ import express from 'express';
 import { existsSync } from 'fs';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { BUS_STOPS, BUS_LINES, FARE_INFO, poleCode } from './src/data/transitData';
-import { findStop, getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
+import { BUS_STOPS, BUS_LINES, FARE_INFO } from './src/data/transitData';
+import { getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
 import { syncOfficialAlerts } from './src/services/alertSyncService';
-import { operatorTimesForStop } from './src/services/operatorTimes';
+import { operatorTimesResponse } from './src/services/operatorTimesRoute';
 // The same cap the search inputs enforce, imported rather than repeated: two numbers
 // that must agree are one number.
 import { MAX_QUERY_LENGTH } from './src/utils/searchUtils';
@@ -197,18 +197,11 @@ async function startServer() {
    * degraded one.
    */
   app.get('/api/paradas/:code/agora', async (req, res) => {
-    // Only stops this app knows. queryString narrows the type and nothing more, and
-    // encodeURIComponent keeps the request inside their one path -- but without this
-    // anybody could use this server to fire arbitrary codes at theirs, which is both
-    // rude and pointless. A code we cannot resolve is a code they cannot either.
-    const stop = findStop(queryString(req.params.code));
-    if (!stop) return res.status(404).json({ error: 'Unknown stop' });
-    const code = poleCode(stop);
-    if (!code) return res.status(404).json({ error: 'That stop has no operator code' });
-    const times = await operatorTimesForStop(code);
-    // Null means the page could not be read, which is not the same as no buses coming.
-    if (!times) return res.status(502).json({ error: 'The operator could not be read' });
-    return res.json(times);
+    // Shared with the Deno worker, which serves the same endpoint: see
+    // src/services/operatorTimesRoute.ts for why the stop is resolved before the
+    // operator's site is touched at all.
+    const { status, body } = await operatorTimesResponse(queryString(req.params.code));
+    return res.status(status).json(body);
   });
 
   app.post('/api/alerts/sync', async (_req, res) => {
@@ -261,6 +254,13 @@ async function startServer() {
      *
      * Vary matters even on the misses: without it a shared cache could hand a brotli body
      * to a client that never asked for one.
+     */
+    /*
+     * Written out rather than left to `res.type(extname)`, which is the obvious
+     * replacement and is not equivalent. Checked against express: six of these eight come
+     * back byte-identical, and .svg and .xml come back without the `; charset=utf-8`,
+     * because express only appends a charset for the types its mime table calls text.
+     * Restoring it for those two costs more lines than the table does.
      */
     const TYPES: Record<string, string> = {
       '.js': 'text/javascript; charset=utf-8',
@@ -315,26 +315,33 @@ async function startServer() {
 
   const defaultPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
-  function listenOnPort(portToTry: number) {
-    const server = app.listen(portToTry, '0.0.0.0', () => {
-      console.log(`\n======================================================`);
-      console.log(` Urbanos Lugo Web App dispoñible en:`);
-      console.log(` 👉 http://localhost:${portToTry}`);
-      console.log(` 👉 http://127.0.0.1:${portToTry}`);
-      console.log(`======================================================\n`);
-    });
+  /*
+   * Fails on a busy port rather than quietly moving to the next one.
+   *
+   * It used to recurse: 3001 taken, try 3002, and on. That turns "the port is in use" —
+   * which you can fix in a second — into a server answering somewhere you did not ask
+   * for, while the line that told you scrolls off the terminal. Everything that has to
+   * find it afterwards is then pointing at the wrong number: a browser tab, a preview
+   * config, a note in the README. PORT already exists for choosing another on purpose.
+   */
+  const server = app.listen(defaultPort, '0.0.0.0', () => {
+    console.log(`\n======================================================`);
+    console.log(` Urbanos Lugo Web App dispoñible en:`);
+    console.log(` 👉 http://localhost:${defaultPort}`);
+    console.log(` 👉 http://127.0.0.1:${defaultPort}`);
+    console.log(`======================================================\n`);
+  });
 
-    server.on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE') {
-        console.warn(`⚠️ O porto ${portToTry} está ocupado. Probando no porto ${portToTry + 1}...`);
-        listenOnPort(portToTry + 1);
-      } else {
-        console.error('Error starting server:', err);
-      }
-    });
-  }
-
-  listenOnPort(defaultPort);
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `O porto ${defaultPort} está ocupado. Libérao, ou escolle outro con PORT=${defaultPort + 1}.`,
+      );
+    } else {
+      console.error('Error starting server:', err);
+    }
+    process.exitCode = 1;
+  });
 }
 
 startServer();

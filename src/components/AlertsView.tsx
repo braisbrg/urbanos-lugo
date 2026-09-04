@@ -103,6 +103,11 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
               {t.fares.alertsTitle}
             </h2>
             <p className="text-label text-ink-3 mt-0.5">{t.fares.alertsSubtitle}</p>
+            {/* The other screen that quotes the operator by name. A notice here reads as
+                theirs unless something says otherwise. */}
+            <p className="text-label text-ink-3 mt-1 border-l-2 border-edge pl-2">
+              {t.fares.notAffiliated}
+            </p>
           </div>
 
           <button
