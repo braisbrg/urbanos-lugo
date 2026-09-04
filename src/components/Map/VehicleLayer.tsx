@@ -48,10 +48,19 @@ function busIcon(bus: ScheduledBus): L.DivIcon {
              style="background-color: ${escapeHtml(bus.lineColor)}">
           <span class="text-label font-bold tracking-tight">${bus.lineNumber}</span>
         </div>
-        <div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-0 h-0"
-             style="transform: translateX(-50%) rotate(${bus.bearing}deg) translateY(-15px);
-                    border-left: 4px solid transparent; border-right: 4px solid transparent;
-                    border-bottom: 7px solid ${escapeHtml(bus.lineColor)};"></div>
+        <!-- Which way it is going.
+             This was here and could not be seen, for three reasons at once. It orbited
+             15 px from the centre of a 32 px badge, so it sat *inside* the square rather
+             than beside it; it was drawn in the line's colour, which is the colour of the
+             badge it was sitting on; and it was 8 px across. Now it orbits clear of both
+             the badge and the dashed ring, and carries a white halo so it reads against a
+             pale street or a dark one. Centre first, then rotate, then push outwards — so
+             the distance is along the bearing rather than added to it. -->
+        <div class="absolute left-1/2 top-1/2 h-0 w-0"
+             style="transform: translate(-50%, -50%) rotate(${bus.bearing}deg) translateY(-27px);
+                    border-left: 5px solid transparent; border-right: 5px solid transparent;
+                    border-bottom: 10px solid ${escapeHtml(bus.lineColor)};
+                    filter: drop-shadow(0 0 1.5px rgba(255,255,255,0.95));"></div>
       </div>
     `,
     iconSize: [32, 32],
