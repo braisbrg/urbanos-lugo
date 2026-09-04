@@ -79,15 +79,23 @@ jobs:
       # env var (or --token) and pass --json --non-interactive to every subcommand."
       # Without them it tries to prompt, finds no terminal, and fails.
       #
-      # The `--` is load-bearing, and cost a red run to find. `deno deploy --json …` puts
-      # every flag through twice — deno's own parser takes them and forwards them as well
-      # — and the deploy tool rejects the duplicate before it does anything else:
-      # {"code":"VALIDATION_ERROR","message":"Option \"--json\" can only occur once"}.
-      # It is not specific to --json; --org and --non-interactive duplicate the same way.
-      # After `--`, deno stops reading and hands the rest over untouched.
+      # Invoked through `deno run` and not the `deno deploy` wrapper, because on 2.9.6 the
+      # wrapper cannot pass flags to the tool at all. Both ways of trying are wrong:
       #
-      # Checked against deno 2.9.6 by running this exact line with no token: it now gets
-      # as far as asking for one, which is the furthest it can go without credentials.
+      #   deno deploy --json …     every flag arrives twice — deno's parser takes them and
+      #                            forwards them — and the tool rejects the duplicate:
+      #                            {"code":"VALIDATION_ERROR","message":"Option \"--json\"
+      #                            can only occur once"}. Not specific to --json; --org and
+      #                            --app duplicate identically.
+      #   deno deploy -- --json …  no duplicate, but nothing reaches the tool either: with
+      #                            a valid token it gets past auth and then reports "Use
+      #                            --app to specify the application" for a line that plainly
+      #                            has one.
+      #
+      # Running the tool directly skips the wrapper's argument handling entirely. That it
+      # receives the flags is visible rather than assumed: without a token it answers with
+      # its own JSON envelope, {"error":{"code":"NON_INTERACTIVE_REQUIRED",…}}, which is a
+      # shape it only emits when --json got through.
       - name: Deploy
         if: env.HAS_TOKEN == 'true'
         working-directory: worker/dist
@@ -104,7 +112,11 @@ jobs:
         # what the shell had built; this makes the next one say.
         run: |
           set -x
-          deno deploy -- --json --non-interactive --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api --prod
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy \
+            --json --non-interactive \
+            --org "$DENO_DEPLOY_ORG" \
+            --app urbanos-lugo-api \
+            --prod
 
       # A NOT_FOUND on the organisation says what was not found and nothing about what
       # would have been. This turns the next red run into an answer instead of a guess.
@@ -113,13 +125,13 @@ jobs:
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
         run: |
-          # The subcommand goes BEFORE the separator: everything after `--` is an argument
-          # to `deploy` itself, so `deploy -- orgs` asked it to deploy a directory named
-          # orgs. And `orgs` is a group, so the leaf is `orgs list`.
+          # Same route as the deploy above, for the same reason. This is what printed the
+          # slug when --org was wrong: the dashboard header says "brais", the API wants
+          # "braisbrg", and nothing else in the failure said so.
           echo "--- organisations this token can see ---"
-          deno deploy orgs list -- --json || true
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy orgs list || true
           echo "--- who the token belongs to ---"
-          deno deploy whoami -- --json || true
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy whoami || true
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'
