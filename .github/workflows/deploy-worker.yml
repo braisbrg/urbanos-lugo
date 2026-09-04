@@ -98,7 +98,6 @@ jobs:
       # shape it only emits when --json got through.
       - name: Deploy
         if: env.HAS_TOKEN == 'true'
-        working-directory: worker/dist
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
           # Required, and it is the *slug*, not the name in the dashboard header. Those
@@ -112,6 +111,27 @@ jobs:
         # what the shell had built; this makes the next one say.
         run: |
           set -x
+
+          # Stage the bundle outside the repository before uploading it.
+          #
+          # The deploy tool honours .gitignore, and .gitignore excludes worker/dist/ —
+          # deliberately, because the bundle is build output and nothing else built is
+          # committed here. So uploading that directory uploaded nothing at all, and the
+          # build failed with "Entrypoint at '/tmp/build/src/worker.js' not found": not a
+          # wrong path, an empty upload. Copying the one file somewhere no .gitignore
+          # reaches is the fix that does not require un-ignoring build output.
+          #
+          # Deno itself also runs from the temp directory rather than the workspace: in
+          # the workspace it resolves this repository's package.json and fails on npm
+          # dependencies that have nothing to do with the worker. And --node-modules-dir
+          # writes node_modules into the working directory, which is why that is the temp
+          # root and not the upload directory.
+          STAGE="$RUNNER_TEMP/worker-upload"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          cp worker/dist/worker.js "$STAGE/worker.js"
+          cd "$RUNNER_TEMP"
+
           DEPLOY="deno run -A --node-modules-dir=auto jsr:@deno/deploy"
 
           # Create the app if it is not there, with a build configuration that suits what
@@ -132,14 +152,16 @@ jobs:
               --runtime-mode dynamic \
               --entrypoint worker.js \
               --do-not-use-detected-build-config \
-              --region eu
+              --region eu \
+              "$STAGE"
           fi
 
           $DEPLOY \
             --json --non-interactive \
             --org "$DENO_DEPLOY_ORG" \
             --app urbanos-lugo-api \
-            --prod
+            --prod \
+            "$STAGE"
 
       # The address the site has to be built against. It is not derivable from the app
       # name — Deno picks the host — so the run prints it rather than leaving somebody to
