@@ -66,11 +66,27 @@ jobs:
         with:
           deno-version: v2.x
 
+      # `deno deploy`, not deployctl. Deploy Classic — the dash.deno.com generation this
+      # workflow was first written against — was shut down on 20 July 2026, and deployctl
+      # along with it. The new platform calls the unit an *app* rather than a project, so
+      # `--project` is gone and `--app` replaces it, with `--org` naming the organisation
+      # the app lives in. Passing any of these flags is what puts the command in
+      # non-interactive mode, which is the only mode a runner can use.
+      #
+      # It deploys the working directory, so it runs from worker/dist — the one file
+      # `worker:build` emits — rather than pushing the whole repository at it.
+      #
+      # Flags taken from docs.deno.com, not from a run: nobody has deployed this yet, so
+      # the first green run on a real account is what confirms it.
       - name: Deploy
         if: env.HAS_TOKEN == 'true'
+        working-directory: worker/dist
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-        run: deno run -A jsr:@deno/deployctl deploy --project=urbanos-lugo-api --prod worker/dist/worker.js
+          # Named here rather than hardcoded: the organisation is whatever the account
+          # that owns the app called itself, and this repository cannot know that.
+          DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
+        run: deno deploy --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api --prod
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'

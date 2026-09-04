@@ -225,6 +225,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
 
+    /**
+     * Drop Leaflet's own "Leaflet" prefix.
+     *
+     * Nobody is owed it: the terms that bind this map are OpenFreeMap's, OpenMapTiles'
+     * and OpenStreetMap's, and all three stay exactly as they are. The prefix is what
+     * made the line too long — measured on a 375 px screen it wrapped to two lines,
+     * 34 px tall, and the second line was cut off by the tab bar below the map while
+     * the first sat under the locate button. An attribution that is covered is not a
+     * visible attribution, so the shortest honest line is also the compliant one.
+     */
+    instance.attributionControl?.setPrefix(false);
+
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
 
     setMap(instance);
@@ -494,7 +506,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           {/* The handle. It says which way the sheet goes and gives the sheet its own way
               out, for anyone who does not think to tap the map behind it. Gone at `lg`,
               where the sheet is a column and closing it means nothing. */}
-          <div className="-mt-1 flex items-center justify-between gap-2 lg:hidden">
+          {/* `order-first` as well, because the quick-filters panel below carries it and
+              would otherwise sit above the sheet's own title and close button. Two
+              children with the same order fall back to document order, and this one is
+              written first. */}
+          <div className="order-first -mt-1 flex items-center justify-between gap-2 lg:hidden">
             <span className="text-label font-bold uppercase tracking-widest text-ink-3">
               {t.map.controls}
             </span>
