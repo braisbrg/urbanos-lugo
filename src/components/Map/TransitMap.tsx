@@ -38,6 +38,33 @@ import { VehicleLayer } from './VehicleLayer';
 /** How far someone will walk to a different line. Also used by the nearby-lines panel. */
 const NEARBY_RADIUS_M = 750;
 
+/**
+ * How many of the nearby lines the *map* draws. The panel still lists them all.
+ *
+ * "Near me" narrows nothing in the middle of Lugo, and the numbers are stark. Counting
+ * distinct lines with a stop inside a radius: from the walled centre it is 14 within
+ * 200 m and 23 of the 24 within 750 m. From O Ceao it is 1 and 4; from the campus, 1 and
+ * 17. The network converges on the muralla, so anybody standing there is near almost
+ * every line, and a radius — any radius — cannot separate them.
+ *
+ * A count can. The list arrives sorted by how far you would walk to reach each line, so
+ * the first six are the six you could actually catch: all of them out in O Ceao, the
+ * nearest six of twenty-three in the centre. Without this the "nearby" filter would draw
+ * the whole network for a reader in the middle of town, which is the exact thing the
+ * filter exists to prevent.
+ */
+const NEARBY_SCOPE_LIMIT = 6;
+
+/**
+ * Whether this page load has already decided how the map opens.
+ *
+ * Module scope on purpose: a ref resets with the component, and the map unmounts every
+ * time somebody visits another tab. Opening on the nearby lines is a thing that happens
+ * once, when the app is opened — not something that reasserts itself over a line the
+ * reader chose two taps ago.
+ */
+let openedOnNearby = false;
+
 const PRESET_CENTERS: Record<'hula' | 'campus' | 'ceao', [number, number]> = {
   hula: [43.0298, -7.5274],
   campus: [42.9935, -7.5538],
@@ -94,10 +121,15 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * Every line at once is not a map of a network, it is a picture of string.
    *
    * Twenty-four routes over one small city means the centre is a knot of overlapping
-   * polylines, and the stops underneath — the thing this screen exists to show — get
-   * read through it. So the map opens with the stops and the buses and no trazados, and
-   * draws one the moment somebody asks: a chip, a row in the list, or arriving from a
-   * line's own page, which is what `selectedLine` already means.
+   * polylines, and the stops underneath — the thing this screen exists to show — get read
+   * through it.
+   *
+   * What stops that happening is not this flag. The app always has a line selected — it
+   * starts on the first one — so `selectedLine` is set on a cold open and this is `true`
+   * every time in practice; the guard only earns its keep if a caller ever passes null.
+   * The map is quiet because of how the routes are drawn: the chosen line in full, the
+   * rest of the network as thin faint threads behind it, which is context rather than
+   * competition. Twenty-four equal traces is what was wrong, not twenty-four traces.
    */
   const [showRoutes, setShowRoutes] = useState(Boolean(selectedLine));
   const [liveBuses, setScheduledBuses] = useState<ScheduledBus[]>([]);
@@ -189,7 +221,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     filterPreset === 'stop' && aroundStopLineIds.length
       ? aroundStopLineIds
       : filterPreset === 'nearby' && nearbyLinesList.length
-        ? nearbyLinesList.map((n) => n.line.id)
+        ? nearbyLinesList.slice(0, NEARBY_SCOPE_LIMIT).map((n) => n.line.id)
         : null;
 
   const visibleLineIds = activeLineId !== 'all' ? [activeLineId] : scopeLineIds;
@@ -525,6 +557,66 @@ export const TransitMap: React.FC<TransitMapProps> = ({
       if (!nearbyLinesList.length) handleLocateUser();
     }
   };
+
+  /**
+   * Open on the lines that pass near you — but only for someone who has already agreed
+   * to be located.
+   *
+   * The map used to open with all twenty-four routes over the city, which is a picture of
+   * string; it now opens with none, which is quiet but tells you nothing. What was agreed
+   * is neither: the lines near you, with the rest added when you ask for them.
+   *
+   * The catch is that "near you" needs the GPS, and asking for it the instant a screen
+   * loads is the permission prompt everybody refuses on reflex — and refusing it here
+   * would cost the locate button too, for the whole origin. So the Permissions API is
+   * asked first, and this only runs on `granted`: a reader who has already said yes, on
+   * this site, gets the map they agreed to. Everybody else gets the quiet one and an
+   * obvious button. `prompt` and `denied` both mean "do not ask now".
+   *
+   * Once per page load, not once per mount, and the difference is the whole rule. This
+   * is about how the screen *opens*; coming back to it after choosing a line must not
+   * throw that choice away. The first attempt guarded on `selectedLine` being unset
+   * instead, which never fires at all: the app starts with the first line selected, so
+   * that condition is true on the coldest of opens and the whole thing was dead code.
+   * Testing found that; the compiler could not.
+   */
+  const drawNearbyWhenReady = useRef(false);
+  useEffect(() => {
+    if (openedOnNearby || !navigator.geolocation || !navigator.permissions?.query) return;
+    openedOnNearby = true;
+    let cancelled = false;
+    navigator.permissions
+      .query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        if (cancelled || status.state !== 'granted') return;
+        drawNearbyWhenReady.current = true;
+        handlePresetFilter('nearby');
+      })
+      // Firefox once threw for an unknown descriptor rather than resolving. A map that
+      // opens quiet is the fallback, which is exactly what happens if this never runs.
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // Once, on mount: this is about how the screen opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Draw them, once there is actually something to draw.
+   *
+   * Turning the trazados on at the same time as asking for the fix would draw all
+   * twenty-four for as long as the GPS took to answer — and for good, if it answered from
+   * outside Lugo, where the nearby list comes back empty and the scope falls back to every
+   * line. So routes wait for the list.
+   */
+  useEffect(() => {
+    if (!drawNearbyWhenReady.current) return;
+    if (filterPreset === 'nearby' && nearbyLinesList.length) {
+      setShowRoutes(true);
+      drawNearbyWhenReady.current = false;
+    }
+  }, [filterPreset, nearbyLinesList.length]);
 
   return (
     /* No page padding on a phone: the map is the screen there, edge to edge. The padded
