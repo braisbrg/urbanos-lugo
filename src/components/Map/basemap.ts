@@ -46,6 +46,24 @@ const STYLES = {
 // in src/security/csp.ts down to a single extra origin.
 
 /**
+ * Fewer labels where our own take over.
+ *
+ * From zoom 16 the map writes a name beside every stop — a dozen on a phone screen — and
+ * the basemap is writing street names into the same space at the same time. Two sets of
+ * text competing is how a map stops being readable, and only one of them answers the
+ * question this screen is for.
+ *
+ * So the street names fade out exactly where the stop names arrive, rather than being
+ * removed outright: below 15 they are the only thing telling you where you are, and there
+ * are no stop labels yet to take over. Applies to both styles — this is about density,
+ * not about the dark one being dark.
+ */
+const LABEL_TUNING: readonly [layer: string, property: string, value: unknown][] = [
+  ['highway_name_other', 'text-opacity', ['interpolate', ['linear'], ['zoom'], 15, 1, 16.5, 0]],
+  ['highway_name_motorway', 'text-opacity', ['interpolate', ['linear'], ['zoom'], 15, 1, 16.5, 0]],
+];
+
+/**
  * Give the dark map somewhere to be.
  *
  * As published it puts everything inside seventeen levels of black: the ground is
@@ -219,10 +237,20 @@ export function createBasemap(isDark: boolean): BasemapLayer {
    * somebody else's style, and a rename upstream should cost that one adjustment, not the
    * map.
    */
-  const tuneDark = () => {
-    if (!darkStyle) return;
+  const tuneStyle = () => {
     const gl = layer.getMaplibreMap();
     if (!gl?.getLayer) return;
+    // Density first, and for both styles.
+    for (const [id, property, value] of LABEL_TUNING) {
+      try {
+        if (gl.getLayer(id)) {
+          (gl.setPaintProperty as (l: string, p: string, v: unknown) => void)(id, property, value);
+        }
+      } catch {
+        /* upstream renamed or dropped it; the published labels stand. */
+      }
+    }
+    if (!darkStyle) return;
     for (const [id, property, value] of DARK_TUNING) {
       try {
         // The renderer types the property name as a union of every paint property it
@@ -241,7 +269,7 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   layer.onAdd = (map: L.Map) => {
     const added = baseOnAdd(map);
     attached = map;
-    layer.getMaplibreMap()?.on('styledata', tuneDark);
+    layer.getMaplibreMap()?.on('styledata', tuneStyle);
 
     // The first paint is its own case. The layer is built inside a container that is still
     // settling, and the renderer works out what to draw before the style has arrived, so
