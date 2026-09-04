@@ -36,6 +36,13 @@ const occupancyLabel = (
  * wider than the badge, because that is what a map means by "somewhere around here" —
  * the same idea as the accuracy circle drawn around the reader's own position, which is
  * also a claim about uncertainty rather than a point.
+ *
+ * Neutral, not the line's colour. It began as the line's colour at 55% and was invisible
+ * on the dark basemap, which is the failure that matters most for the one element whose
+ * whole job is to qualify a claim. Neutral is also the truer colour: the ring means
+ * "uncertain", not "line 1.1" — the badge already says which line. `--c-ink-2` reads on
+ * both basemaps because it flips with the theme, and the hairline of `--c-bg` on either
+ * side of the dash keeps it off whatever it happens to be crossing.
  */
 function busIcon(bus: ScheduledBus): L.DivIcon {
   return L.divIcon({
@@ -43,24 +50,31 @@ function busIcon(bus: ScheduledBus): L.DivIcon {
     html: `
       <div class="relative cursor-pointer">
         <div class="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full"
-             style="border: 2px dashed ${escapeHtml(bus.lineColor)}; opacity: 0.55;"></div>
+             style="border: 2px dashed var(--c-ink-2); opacity: 0.8;
+                    box-shadow: 0 0 0 1px var(--c-bg), inset 0 0 0 1px var(--c-bg);"></div>
         <div class="w-8 h-8 rounded-lg shadow-md flex items-center justify-center text-white ring-2 ring-white"
              style="background-color: ${escapeHtml(bus.lineColor)}">
           <span class="text-label font-bold tracking-tight">${bus.lineNumber}</span>
         </div>
         <!-- Which way it is going.
-             This was here and could not be seen, for three reasons at once. It orbited
-             15 px from the centre of a 32 px badge, so it sat *inside* the square rather
-             than beside it; it was drawn in the line's colour, which is the colour of the
-             badge it was sitting on; and it was 8 px across. Now it orbits clear of both
-             the badge and the dashed ring, and carries a white halo so it reads against a
-             pale street or a dark one. Centre first, then rotate, then push outwards — so
-             the distance is along the bearing rather than added to it. -->
-        <div class="absolute left-1/2 top-1/2 h-0 w-0"
-             style="transform: translate(-50%, -50%) rotate(${bus.bearing}deg) translateY(-27px);
-                    border-left: 5px solid transparent; border-right: 5px solid transparent;
-                    border-bottom: 10px solid ${escapeHtml(bus.lineColor)};
-                    filter: drop-shadow(0 0 1.5px rgba(255,255,255,0.95));"></div>
+             Three goes at this. It began as a CSS border triangle orbiting 15 px from the
+             centre of a 32 px badge — so it sat inside the square — drawn in the same
+             colour as that square, 8 px across. Moving it out and adding a drop-shadow
+             was still not enough to see: a 1.5 px shadow is not an outline, and a small
+             shape in the line's own colour disappears next to a large shape in the line's
+             own colour.
+             So: SVG, with a real 2.5 px white stroke drawn behind the fill
+             (paint-order), a dart rather than a plain triangle because the notch reads as
+             direction at a glance, and pushed to 32 px so it clears the dashed ring
+             instead of crossing it. Centre, rotate, then push out, so the distance
+             follows the bearing rather than adding to it. -->
+        <svg class="pointer-events-none absolute left-1/2 top-1/2" width="20" height="20"
+             viewBox="0 0 20 20" aria-hidden="true"
+             style="overflow: visible; transform: translate(-50%, -50%) rotate(${bus.bearing}deg) translateY(-32px);">
+          <path d="M10 0.5 L18 19 L10 14.5 L2 19 Z"
+                fill="${escapeHtml(bus.lineColor)}" stroke="#ffffff" stroke-width="2.5"
+                stroke-linejoin="round" paint-order="stroke"></path>
+        </svg>
       </div>
     `,
     iconSize: [32, 32],
