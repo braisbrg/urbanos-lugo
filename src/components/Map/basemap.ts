@@ -46,6 +46,41 @@ const STYLES = {
 // in src/security/csp.ts down to a single extra origin.
 
 /**
+ * Give the dark map somewhere to be.
+ *
+ * As published it puts everything inside seventeen levels of black: the ground is
+ * rgb(12,12,12), water is rgb(27,27,29) and buildings are rgb(10,10,10) — darker than the
+ * ground they stand on. Nothing has a hierarchy, and the app's own background is #110d0d,
+ * so the map does not even separate from the chrome around it. That flatness is what
+ * reads as cheap; it is not the absence of detail, the detail is all there and all the
+ * same colour.
+ *
+ * The order matters more than any single value. A night map works by being darker than
+ * the things drawn on it: ground at the bottom, buildings a step up so blocks read as
+ * blocks, streets brightest of all. Raising only the ground inverts that — the published
+ * streets are #181818, and against a #171a1f ground they stop being bright lines and
+ * become dark ones. So everything above the ground moves with it.
+ *
+ * Water goes the other way, darker and actually blue, so the Miño reads as a river
+ * instead of a slightly different rectangle.
+ *
+ * The light style is left alone. Positron's rgb(242,243,240) already separates from the
+ * app's #fefdfd and its layers already differ from one another.
+ *
+ * Tried and rejected: swapping the whole style for `fiord`, OpenFreeMap's designed dark.
+ * Its ground is #45516E, which rendered as a pale blue slab inside a near-black app —
+ * the route line dissolved into it and the white stop dots disappeared.
+ */
+const DARK_TUNING: readonly [layer: string, property: string, value: string][] = [
+  ['background', 'background-color', '#171a1f'],
+  ['water', 'fill-color', '#0e151d'],
+  ['building', 'fill-color', '#1c2027'],
+  ['highway_minor', 'line-color', '#2b3038'],
+  ['highway_major_inner', 'line-color', '#39404b'],
+  ['highway_motorway_inner', 'line-color', '#39404b'],
+];
+
+/**
  * Three parties are owed a credit here, and on a phone they have one line to share.
  *
  * "OpenStreetMap contributors" spelled out made the line 347 px wide on a 375 px phone,
@@ -138,6 +173,8 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   const baseOnRemove = layer.onRemove.bind(layer);
   let observer: ResizeObserver | null = null;
   let attached: L.Map | null = null;
+  /** Which of the two styles is loaded. Asked by the tuning below, which only fits one. */
+  let darkStyle = isDark;
 
   /**
    * Put the renderer back in step with Leaflet.
@@ -162,9 +199,40 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     requestAnimationFrame(() => attached?.fire('move'));
   };
 
+  /**
+   * Apply the tuning above, every time a style finishes loading.
+   *
+   * On `styledata` rather than `load`, because switching theme calls setStyle and the new
+   * style arrives with the published colours again — a one-shot on first load would be
+   * correct until the first time somebody changed theme.
+   *
+   * Each property is set on its own and forgiven on its own: these are layer ids in
+   * somebody else's style, and a rename upstream should cost that one adjustment, not the
+   * map.
+   */
+  const tuneDark = () => {
+    if (!darkStyle) return;
+    const gl = layer.getMaplibreMap();
+    if (!gl?.getLayer) return;
+    for (const [id, property, value] of DARK_TUNING) {
+      try {
+        // The renderer types the property name as a union of every paint property it
+        // knows, keyed to the layer's type, which it cannot check for a name held in a
+        // variable. The pairs in the table above are checked by eye against the published
+        // style and by the map in front of you; this cast is the loop, not the values.
+        if (gl.getLayer(id)) {
+          (gl.setPaintProperty as (l: string, p: string, v: unknown) => void)(id, property, value);
+        }
+      } catch {
+        /* upstream renamed or dropped it; the published colour stands. */
+      }
+    }
+  };
+
   layer.onAdd = (map: L.Map) => {
     const added = baseOnAdd(map);
     attached = map;
+    layer.getMaplibreMap()?.on('styledata', tuneDark);
 
     // The first paint is its own case. The layer is built inside a container that is still
     // settling, and the renderer works out what to draw before the style has arrived, so
@@ -189,6 +257,9 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   };
 
   layer.setBasemapTheme = (dark: boolean) => {
+    // Recorded before the style is asked for, so the styledata handler that fires when it
+    // arrives already knows which of the two it is looking at.
+    darkStyle = dark;
     // Restyling in place rather than rebuilding the layer, so the view stays where the
     // reader left it instead of snapping back to Lugo centre.
     layer.getMaplibreMap()?.setStyle(dark ? STYLES.dark : STYLES.light);

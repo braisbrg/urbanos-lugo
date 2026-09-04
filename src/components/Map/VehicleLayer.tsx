@@ -24,61 +24,53 @@ const occupancyLabel = (
   ({ low: t.map.occupancyLow, medium: t.map.occupancyMedium, high: t.map.occupancyHigh })[occupancy];
 
 /**
- * The bus, and how sure the map is about where it is.
+ * The bus: one object, not three.
  *
- * Not sure at all, is the answer. Every position here is computed from the timetable —
- * where a bus that left on time would be by now — and the operator publishes no live
- * feed for anyone to check it against. The popup has always said so in words. The marker
- * said the opposite: a crisp square pin, drawn exactly like the stops around it, which
- * are surveyed coordinates that do not move.
+ * It was a square badge, a triangle floating some distance off it, and a dashed ring
+ * around both — three separate things that had to be assembled by eye into a single bus,
+ * and each of which had to be fixed separately to be visible at all. That is what made it
+ * read as dated: not the colours, the assembly.
  *
- * The dashed ring is that sentence in the marker itself. Dashed rather than solid, and
- * wider than the badge, because that is what a map means by "somewhere around here" —
- * the same idea as the accuracy circle drawn around the reader's own position, which is
- * also a claim about uncertainty rather than a point.
+ * It is one SVG now. A round chip in the line's colour carrying the number, with a nose
+ * that turns to face the way the bus is going. The nose belongs to the chip rather than
+ * orbiting it, so there is nothing to line up and nothing to collide with, and the number
+ * sits outside the rotating group so it stays upright at every bearing — a rotated label
+ * is the usual way this goes wrong.
  *
- * Neutral, not the line's colour. It began as the line's colour at 55% and was invisible
- * on the dark basemap, which is the failure that matters most for the one element whose
- * whole job is to qualify a claim. Neutral is also the truer colour: the ring means
- * "uncertain", not "line 1.1" — the badge already says which line. `--c-ink-2` reads on
- * both basemaps because it flips with the theme, and the hairline of `--c-bg` on either
- * side of the dash keeps it off whatever it happens to be crossing.
+ * The dashed "estimated" ring is gone. Every position here is computed from the timetable
+ * and the popup says so in words, which is where that belongs: the ring took two attempts
+ * merely to become visible and still did not say what it meant, and a symbol nobody reads
+ * as uncertainty is not a caveat, it is clutter.
  */
+const busIconSvg = (bus: ScheduledBus): string => {
+  const colour = escapeHtml(bus.lineColor);
+  const number = escapeHtml(bus.lineNumber);
+  // "1.1" and "11" are both common here; the longer ones step down so they still fit the
+  // chip rather than overflowing it.
+  const fontSize = number.length > 2 ? 10 : 12.5;
+  return `
+    <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"
+         style="display:block; overflow:visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));">
+      <g transform="rotate(${bus.bearing} 23 23)">
+        <path d="M23 2.5 L30 14 L16 14 Z" fill="${colour}"
+              stroke="var(--c-bg)" stroke-width="2.5" stroke-linejoin="round"
+              paint-order="stroke"></path>
+      </g>
+      <circle cx="23" cy="23" r="13" fill="${colour}"
+              stroke="var(--c-bg)" stroke-width="2.5"></circle>
+      <text x="23" y="23" text-anchor="middle" dominant-baseline="central"
+            fill="#ffffff" font-family="var(--font-sans)" font-weight="700"
+            font-size="${fontSize}" letter-spacing="-0.2">${number}</text>
+    </svg>
+  `;
+};
+
 function busIcon(bus: ScheduledBus): L.DivIcon {
   return L.divIcon({
     className: 'custom-bus-marker',
-    html: `
-      <div class="relative cursor-pointer">
-        <div class="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full"
-             style="border: 2px dashed var(--c-ink-2); opacity: 0.8;
-                    box-shadow: 0 0 0 1px var(--c-bg), inset 0 0 0 1px var(--c-bg);"></div>
-        <div class="w-8 h-8 rounded-lg shadow-md flex items-center justify-center text-white ring-2 ring-white"
-             style="background-color: ${escapeHtml(bus.lineColor)}">
-          <span class="text-label font-bold tracking-tight">${bus.lineNumber}</span>
-        </div>
-        <!-- Which way it is going.
-             Three goes at this. It began as a CSS border triangle orbiting 15 px from the
-             centre of a 32 px badge — so it sat inside the square — drawn in the same
-             colour as that square, 8 px across. Moving it out and adding a drop-shadow
-             was still not enough to see: a 1.5 px shadow is not an outline, and a small
-             shape in the line's own colour disappears next to a large shape in the line's
-             own colour.
-             So: SVG, with a real 2.5 px white stroke drawn behind the fill
-             (paint-order), a dart rather than a plain triangle because the notch reads as
-             direction at a glance, and pushed to 32 px so it clears the dashed ring
-             instead of crossing it. Centre, rotate, then push out, so the distance
-             follows the bearing rather than adding to it. -->
-        <svg class="pointer-events-none absolute left-1/2 top-1/2" width="20" height="20"
-             viewBox="0 0 20 20" aria-hidden="true"
-             style="overflow: visible; transform: translate(-50%, -50%) rotate(${bus.bearing}deg) translateY(-32px);">
-          <path d="M10 0.5 L18 19 L10 14.5 L2 19 Z"
-                fill="${escapeHtml(bus.lineColor)}" stroke="#ffffff" stroke-width="2.5"
-                stroke-linejoin="round" paint-order="stroke"></path>
-        </svg>
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    html: `<div class="cursor-pointer">${busIconSvg(bus)}</div>`,
+    iconSize: [46, 46],
+    iconAnchor: [23, 23],
   });
 }
 
