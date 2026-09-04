@@ -1,11 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lang, translations } from '../../i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Bus, MapPin, Navigation, Layers, LocateFixed, ChevronRight } from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
-import { getScheduledBuses, getNearbyLines } from '../../utils/transitEngine';
+import {
+  getScheduledBuses,
+  getNearbyLines,
+  getNearbyStops,
+  NEARBY_STOP_LIMIT_METRES,
+} from '../../utils/transitEngine';
+import { getDistanceMeters } from '../../utils/geo';
 
 /** Matches the stop board: what somebody standing there could reasonably walk to. */
 const AROUND_STOP_RADIUS_M = 400;
@@ -54,6 +60,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const isDark = useIsDark();
   const colors = mapColors(isDark);
   const userMarkerRef = useRef<L.CircleMarker | null>(null);
+  /**
+   * The circle showing how sure the phone is.
+   *
+   * A dot on its own says "you are here" with the same confidence whether the fix came
+   * from GPS outdoors or from wifi indoors, where it can be five hundred metres out. On a
+   * map whose whole job is telling you if you can make the stop, that is the same kind of
+   * claim this app refuses to make about times.
+   */
+  const accuracyRef = useRef<L.Circle | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  /** Where the nearby-lines list was last computed, so walking a few metres does not redo it. */
+  const lastFixRef = useRef<[number, number] | null>(null);
 
   const [activeLineId, setActiveLineId] = useState<string>(selectedLine?.id || 'all');
   const [filterPreset, setFilterPreset] = useState<
@@ -66,6 +84,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyLinesList, setNearbyLinesList] = useState<{ line: BusLine; nearestStop: BusStop; walkMeters: number }[]>([]);
   const [isLocating, setIsLocating] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const stops = BUS_STOPS;
   /**
@@ -237,22 +256,86 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   }, []);
 
   // Locate user GPS position
+  /** Stop following, and take the dot and its circle off the map. */
+  const stopFollowing = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    if (map) {
+      if (userMarkerRef.current) map.removeLayer(userMarkerRef.current);
+      if (accuracyRef.current) map.removeLayer(accuracyRef.current);
+    }
+    userMarkerRef.current = null;
+    accuracyRef.current = null;
+    lastFixRef.current = null;
+    setIsFollowing(false);
+  }, [map]);
+
+  /**
+   * Follow the phone, rather than photograph it once.
+   *
+   * This used to be `getCurrentPosition`: one reading, a dot dropped where you were at
+   * that moment, and it never moved again. Walk two hundred metres towards the stop and
+   * the map still showed you where you started — on the one screen whose job is telling
+   * you whether you will make it. `watchPosition` keeps it honest, and pressing the
+   * button again stops it, because a watch nobody turned off is a radio nobody turned off.
+   */
   const handleLocateUser = () => {
+    if (isFollowing) {
+      stopFollowing();
+      return;
+    }
     if (!navigator.geolocation) {
-      alert(t.map.geolocationUnavailable);
+      setLocationError(t.map.geolocationUnavailable);
       return;
     }
 
     setIsLocating(true);
     setLocationError(null);
-    navigator.geolocation.getCurrentPosition(
+    let centred = false;
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         setIsLocating(false);
+        setIsFollowing(true);
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        const accuracy = Math.max(pos.coords.accuracy ?? 0, 0);
+
+        // The same courtesy the saved-stops screen learned: outside the network there is
+        // nothing to look at, so do not fly to another province to show an empty map.
+        if (!getNearbyStops(lat, lng).some((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES)) {
+          stopFollowing();
+          setLocationError(t.map.outOfArea);
+          return;
+        }
 
         if (map) {
-          map.setView([lat, lng], 16, { animate: true });
+          // Centre on the first fix, then leave the map where the reader put it — one
+          // that recentres every few seconds cannot be panned, and panning is how you
+          // look at the stop you are walking towards. The exception is walking off the
+          // edge: losing your own dot is worse than a map that moved.
+          if (!centred) {
+            map.setView([lat, lng], 16, { animate: true });
+            centred = true;
+          } else if (!map.getBounds().pad(-0.15).contains([lat, lng])) {
+            map.panTo([lat, lng], { animate: true });
+          }
+
+          if (accuracyRef.current) {
+            accuracyRef.current.setLatLng([lat, lng]).setRadius(accuracy);
+          } else {
+            accuracyRef.current = L.circle([lat, lng], {
+              radius: accuracy,
+              color: colors.userStroke,
+              fillColor: colors.userFill,
+              weight: 1,
+              opacity: 0.35,
+              fillOpacity: 0.12,
+              interactive: false,
+            }).addTo(map);
+          }
 
           if (userMarkerRef.current) {
             userMarkerRef.current.setLatLng([lat, lng]);
@@ -264,30 +347,40 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               weight: 3,
               opacity: 1,
               fillOpacity: 0.95,
-            })
-              .addTo(map)
-              .bindPopup(t.map.yourPosition);
+            }).addTo(map);
           }
+          userMarkerRef.current.bindPopup(t.map.yourPositionAccurate(Math.round(accuracy)));
         }
 
-        const nearby = getNearbyLines(lat, lng, NEARBY_RADIUS_M);
-        setNearbyLinesList(nearby);
-        setFilterPreset('nearby');
-        // Show them all. Picking nearby[0] made "preto de min" display a single line
-        // and hide the other seven you could equally walk to.
-        setActiveLineId('all');
+        // Recomputing the nearby list on every tick would redo it for a metre of drift.
+        // Fifty metres is about when a different stop starts being the closest one.
+        const moved =
+          !lastFixRef.current ||
+          getDistanceMeters(lastFixRef.current[0], lastFixRef.current[1], lat, lng) > 50;
+        if (moved) {
+          lastFixRef.current = [lat, lng];
+          setNearbyLinesList(getNearbyLines(lat, lng, NEARBY_RADIUS_M));
+          setFilterPreset('nearby');
+          // Show them all. Picking nearby[0] made "preto de min" display a single line
+          // and hide the other seven you could equally walk to.
+          setActiveLineId('all');
+        }
       },
       () => {
         // Refused or unavailable. This used to fall back to the centre of Lugo and then
         // show "lines near me" measured from there — distances from a place the phone
         // never reported, presented as if they were the reader's. Say what happened
         // instead; the same fallback was removed from the saved-stops screen.
+        stopFollowing();
         setIsLocating(false);
         setLocationError(t.map.locationDenied);
       },
-      { timeout: 8000 }
+      { timeout: 8000, enableHighAccuracy: true, maximumAge: 5000 },
     );
   };
+
+  // A watch outlives the screen unless somebody stops it, and this one is reading the GPS.
+  useEffect(() => stopFollowing, [stopFollowing]);
 
   const handleCenterLugo = () => {
     map?.setView(LUGO_CENTER, 14, { animate: true });
@@ -358,10 +451,17 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 id="btn-map-locate"
                 onClick={handleLocateUser}
                 disabled={isLocating}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-[9px] px-3.5 bg-accent text-label font-bold text-on-accent shadow-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                aria-pressed={isFollowing}
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-[9px] px-3.5 text-label font-bold shadow-xs transition-colors disabled:opacity-50 ${
+                  isFollowing ? 'bg-surface text-ink border border-accent' : 'bg-accent text-on-accent'
+                }`}
               >
                 <LocateFixed className="w-3.5 h-3.5" />
-                <span>{isLocating ? t.map.locating : t.map.myLocation}</span>
+                {/* Three states, because it is a switch now and not a one-shot: asking,
+                    following — where pressing again turns the GPS off — and idle. */}
+                <span>
+                  {isLocating ? t.map.locating : isFollowing ? t.map.stopFollowing : t.map.myLocation}
+                </span>
               </button>
 
               <button

@@ -277,6 +277,11 @@ export const gl = {
     linesList: 'Seleccionar liña',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',
     yourPosition: 'A túa posición actual',
+    /* Coa precisión dentro: un punto só di «estás aquí» coa mesma seguridade viñas do GPS
+       na rúa ou do wifi dentro dun edificio, onde pode errar centos de metros. */
+    yourPositionAccurate: (metres: number) => `A túa posición, con precisión de ±${metres} m`,
+    stopFollowing: 'Deixar de seguirme',
+    outOfArea: 'Non hai ningunha parada preto de ti. Esta web só cobre a rede urbana de Lugo.',
     stopsCount: (total: number, withQr: number) =>
       `${total} paradas, ${withQr} con código QR`,
   },

@@ -260,6 +260,9 @@ export const es: Dict = {
     linesList: 'Seleccionar línea',
     geolocationUnavailable: 'La geolocalización no está disponible.',
     yourPosition: 'Tu ubicación actual',
+    yourPositionAccurate: (metres: number) => `Tu posición, con precisión de ±${metres} m`,
+    stopFollowing: 'Dejar de seguirme',
+    outOfArea: 'No hay ninguna parada cerca de ti. Esta web solo cubre la red urbana de Lugo.',
     stopsCount: (total: number, withQr: number) =>
       `${total} paradas, ${withQr} con código QR`,
   },

@@ -271,6 +271,9 @@ export const en: Dict = {
     linesList: 'Choose a line',
     geolocationUnavailable: 'Geolocation is not available.',
     yourPosition: 'Your current position',
+    yourPositionAccurate: (metres: number) => `Your position, accurate to ±${metres} m`,
+    stopFollowing: 'Stop following me',
+    outOfArea: 'No stop near you. This site only covers Lugo’s urban network.',
     stopsCount: (total: number, withQr: number) =>
       `${total} stops, ${withQr} with a QR code`,
   },
