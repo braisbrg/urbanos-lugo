@@ -88,30 +88,35 @@ jobs:
       #
       # Checked against deno 2.9.6 by running this exact line with no token: it now gets
       # as far as asking for one, which is the furthest it can go without credentials.
-      # A token without an organisation gets you a CLI error about interactive mode, which
-      # is a long way from "you forgot to set a variable". Say the actual thing.
-      - name: Check the deploy is configured
-        if: env.HAS_TOKEN == 'true' && vars.DENO_DEPLOY_ORG == ''
-        run: |
-          echo "::error::DENO_DEPLOY_TOKEN is set but the DENO_DEPLOY_ORG repository variable is not."
-          echo "::error::Settings -> Secrets and variables -> Actions -> Variables -> New repository variable."
-          echo "::error::Its value is the Deno Deploy organisation that owns the urbanos-lugo-api app."
-          exit 1
-
       - name: Deploy
         if: env.HAS_TOKEN == 'true'
         working-directory: worker/dist
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-          # Named here rather than hardcoded: the organisation is whatever the account
-          # that owns the app called itself, and this repository cannot know that.
+          # Optional, and named here rather than hardcoded. An organisation token already
+          # belongs to one organisation, so it can say which on its own; setting this is
+          # only needed for a user token that can reach several. Passing it wrong is worse
+          # than not passing it — the name shown in the dashboard header is not necessarily
+          # the slug the API answers to, and a mismatch is a NOT_FOUND, not a hint.
           DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
         run: |
-          deno deploy -- \
-            --json --non-interactive \
-            --org "$DENO_DEPLOY_ORG" \
-            --app urbanos-lugo-api \
-            --prod
+          set -- --json --non-interactive --app urbanos-lugo-api --prod
+          if [ -n "$DENO_DEPLOY_ORG" ]; then
+            set -- --org "$DENO_DEPLOY_ORG" "$@"
+          fi
+          deno deploy -- "$@"
+
+      # A NOT_FOUND on the organisation says what was not found and nothing about what
+      # would have been. This turns the next red run into an answer instead of a guess.
+      - name: Show what the token can actually reach
+        if: failure() && env.HAS_TOKEN == 'true'
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+        run: |
+          echo "--- organisations this token can see ---"
+          deno deploy -- orgs --json || true
+          echo "--- who the token belongs to ---"
+          deno deploy -- whoami --json || true
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'
