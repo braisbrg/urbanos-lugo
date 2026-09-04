@@ -45,10 +45,23 @@ const STYLES = {
 // Tiles, glyphs and sprites all come from that one host, which is what keeps the policy
 // in src/security/csp.ts down to a single extra origin.
 
+/**
+ * Three parties are owed a credit here, and on a phone they have one line to share.
+ *
+ * "OpenStreetMap contributors" spelled out made the line 347 px wide on a 375 px phone,
+ * which fits and then wraps to two lines on anything narrower — a 320 px screen broke it
+ * again, and the second line lands under the tab bar where nobody reads it.
+ *
+ * The OSMF attribution guidelines settle it: "The historical forms of attribution
+ * '© OpenStreetMap contributors' or '© OSM' are acceptable." So OSM is abbreviated and
+ * keeps its link to the copyright page, which is where the licence itself lives; the
+ * other two names stay whole, because their terms ask for those names and neither is
+ * what made the line too long.
+ */
 const OPENFREEMAP_ATTRIBUTION =
   '<a href="https://openfreemap.org/">OpenFreeMap</a> ' +
   '&copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> ' +
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>';
 
 /**
  * The fallback, for a device with no WebGL2.

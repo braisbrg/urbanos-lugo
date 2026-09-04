@@ -78,6 +78,16 @@ jobs:
       #
       # Flags taken from docs.deno.com, not from a run: nobody has deployed this yet, so
       # the first green run on a real account is what confirms it.
+      # A token without an organisation gets you a CLI error about interactive mode, which
+      # is a long way from "you forgot to set a variable". Say the actual thing.
+      - name: Check the deploy is configured
+        if: env.HAS_TOKEN == 'true' && vars.DENO_DEPLOY_ORG == ''
+        run: |
+          echo "::error::DENO_DEPLOY_TOKEN is set but the DENO_DEPLOY_ORG repository variable is not."
+          echo "::error::Settings -> Secrets and variables -> Actions -> Variables -> New repository variable."
+          echo "::error::Its value is the Deno Deploy organisation that owns the urbanos-lugo-api app."
+          exit 1
+
       - name: Deploy
         if: env.HAS_TOKEN == 'true'
         working-directory: worker/dist

@@ -37,7 +37,7 @@
     "express": "^5.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.40.0",
-    "maplibre-gl": "^6.6.0",
+    "maplibre-gl": "^6.7.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1"
   },
@@ -47,7 +47,7 @@
     "@types/leaflet": "^1.9.22",
     "@types/node": "^26.4.1",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "esbuild": "^0.28.2",
     "tailwindcss": "^4.1.14",
