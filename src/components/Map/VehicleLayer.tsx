@@ -23,11 +23,27 @@ const occupancyLabel = (
 ): string =>
   ({ low: t.map.occupancyLow, medium: t.map.occupancyMedium, high: t.map.occupancyHigh })[occupancy];
 
+/**
+ * The bus, and how sure the map is about where it is.
+ *
+ * Not sure at all, is the answer. Every position here is computed from the timetable —
+ * where a bus that left on time would be by now — and the operator publishes no live
+ * feed for anyone to check it against. The popup has always said so in words. The marker
+ * said the opposite: a crisp square pin, drawn exactly like the stops around it, which
+ * are surveyed coordinates that do not move.
+ *
+ * The dashed ring is that sentence in the marker itself. Dashed rather than solid, and
+ * wider than the badge, because that is what a map means by "somewhere around here" —
+ * the same idea as the accuracy circle drawn around the reader's own position, which is
+ * also a claim about uncertainty rather than a point.
+ */
 function busIcon(bus: ScheduledBus): L.DivIcon {
   return L.divIcon({
     className: 'custom-bus-marker',
     html: `
       <div class="relative cursor-pointer">
+        <div class="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full"
+             style="border: 2px dashed ${escapeHtml(bus.lineColor)}; opacity: 0.55;"></div>
         <div class="w-8 h-8 rounded-lg shadow-md flex items-center justify-center text-white ring-2 ring-white"
              style="background-color: ${escapeHtml(bus.lineColor)}">
           <span class="text-label font-bold tracking-tight">${bus.lineNumber}</span>
