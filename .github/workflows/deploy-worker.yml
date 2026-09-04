@@ -118,6 +118,18 @@ jobs:
             --app urbanos-lugo-api \
             --prod
 
+      # The address the site has to be built against. It is not derivable from the app
+      # name — Deno picks the host — so the run prints it rather than leaving somebody to
+      # copy it out of the dashboard into the API_ORIGIN variable from memory.
+      - name: Say where it landed
+        if: success() && env.HAS_TOKEN == 'true'
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+          DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
+        run: |
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy apps get \
+            --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api || true
+
       # A NOT_FOUND on the organisation says what was not found and nothing about what
       # would have been. This turns the next red run into an answer instead of a guess.
       - name: Show what the token can actually reach
