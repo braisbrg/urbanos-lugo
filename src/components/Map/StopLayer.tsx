@@ -115,17 +115,21 @@ export const StopLayer: React.FC<StopLayerProps> = ({
 
       visible.forEach((stop) => {
         const code = poleCode(stop);
-        // 271 of the 417 carry a code on the pole: those are the ones you can scan, and
-        // the ones the operator's own page knows about. Drawn a size up with a heavier
-        // ring so the difference is visible before you tap, rather than only after.
-        const scannable = Boolean(code);
+        // 271 of the 417 carry a code on the pole. That used to be drawn — a size up and a
+        // heavier ring — and it did not read: two pixels of radius between dots that are
+        // four to seven pixels wide is a difference nobody sees, and the thing it was
+        // signalling is not what anybody comes to this screen to find. Every stop is drawn
+        // the same now; the code still appears in the popup, where it is a fact you can
+        // act on rather than a hint you have to decode.
+        //
+        // `code` itself stays: it is what the popup and the hover label print.
 
         // circleMarker draws into the map's shared canvas. divIcon, used here before,
         // creates one DOM node per stop — 417 of them on the overview.
         const marker = L.circleMarker([stop.lat, stop.lng], {
-          radius: scannable ? rung.radius : Math.max(3, rung.radius - 2),
+          radius: rung.radius,
           color: colors.stopStroke,
-          weight: scannable ? 2.5 : 1.5,
+          weight: 2,
           fillColor: colors.stopFill,
           fillOpacity: 1,
         });

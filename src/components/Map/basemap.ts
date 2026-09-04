@@ -55,14 +55,22 @@ const STYLES = {
  * reads as cheap; it is not the absence of detail, the detail is all there and all the
  * same colour.
  *
- * The order matters more than any single value. A night map works by being darker than
- * the things drawn on it: ground at the bottom, buildings a step up so blocks read as
- * blocks, streets brightest of all. Raising only the ground inverts that — the published
- * streets are #181818, and against a #171a1f ground they stop being bright lines and
- * become dark ones. So everything above the ground moves with it.
+ * The order matters more than any single value: ground at the bottom, blocks a step up,
+ * streets brightest of all. Raising only the ground inverts that — the published streets
+ * are #181818, and against a #171a1f ground they stop being bright lines and become dark
+ * ones. So everything above the ground moves with it.
+ *
+ * Contrast is set for a phone in daylight, not for a dark room. Dark mode here is a
+ * preference, not a time of day: somebody reads this at a sunlit shelter at two in the
+ * afternoon, and seventeen levels of near-black is unreadable long before the screen is.
  *
  * Water goes the other way, darker and actually blue, so the Miño reads as a river
  * instead of a slightly different rectangle.
+ *
+ * Buildings keep their mass and lose their linework. Every building outlined individually
+ * is detail a bus app never uses — nobody is navigating by the shape of a block — and it
+ * is drawn underneath the thing the screen is actually for. Matching the outline to the
+ * fill leaves a soft mass that still says "built up here" without drawing each one.
  *
  * The light style is left alone. Positron's rgb(242,243,240) already separates from the
  * app's #fefdfd and its layers already differ from one another.
@@ -75,6 +83,7 @@ const DARK_TUNING: readonly [layer: string, property: string, value: string][] =
   ['background', 'background-color', '#171a1f'],
   ['water', 'fill-color', '#0e151d'],
   ['building', 'fill-color', '#1c2027'],
+  ['building', 'fill-outline-color', '#1c2027'],
   ['highway_minor', 'line-color', '#2b3038'],
   ['highway_major_inner', 'line-color', '#39404b'],
   ['highway_motorway_inner', 'line-color', '#39404b'],
