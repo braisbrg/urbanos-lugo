@@ -221,7 +221,10 @@ export function parseLine(html: string): RawLine | null {
   if (!idMatch) return null;
   const number = idMatch[1];
 
-  const text = strip(html.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' '));
+  // `strip` takes script and style out with their contents, and does it with a closing
+  // pattern that tolerates `</script >`. The hand-rolled pair that used to be here did
+  // not, and having both meant the weaker one ran first.
+  const text = strip(html);
   const freq = text.match(/Cada\s+(\d+)\s*min/i);
   const days =
     (text.match(/De lunes a viernes \(laborables\)|Todos los d[ií]as|S[aá]bados[^|]{0,24}|Domingos y festivos/i) || [])[0] ||
