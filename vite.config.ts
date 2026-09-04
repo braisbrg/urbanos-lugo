@@ -189,10 +189,25 @@ export default defineConfig(() => {
           start_url: base,
           scope: base,
           icons: [
-            // PNG for the install prompt, SVG for everything that scales.
-            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' },
-            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+            // 192 for the launcher, 512 for the splash screen Android draws while the app
+            // starts. With only the 192 it upscales that one and the splash is soft.
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            // Maskable has to be a PNG, and a different drawing.
+            //
+            // A launcher crops this to its own shape and only the middle 80% is
+            // guaranteed to survive; favicon.svg puts the wheel hard against the edge, so
+            // a circular mask bit into it. This one is the same mark scaled into the safe
+            // zone on full-bleed red -- a transparent corner would show as a notch. SVG
+            // was declared here before, which Android does not handle dependably.
+            {
+              src: 'icon-maskable-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+            // Kept for the browser tab and anything that scales.
+            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           ],
         },
         workbox: {
