@@ -112,7 +112,29 @@ jobs:
         # what the shell had built; this makes the next one say.
         run: |
           set -x
-          deno run -A --node-modules-dir=auto jsr:@deno/deploy \
+          DEPLOY="deno run -A --node-modules-dir=auto jsr:@deno/deploy"
+
+          # Create the app if it is not there, with a build configuration that suits what
+          # this actually uploads: one already-bundled file.
+          #
+          # An app created through the dashboard wizard keeps the build config the wizard
+          # detected — for this repository, `pnpm install` — and disconnecting the GitHub
+          # repository afterwards does not clear it. It then runs that install command
+          # against worker/dist, which has no package.json and is not supposed to have
+          # one, and the revision dies with ERR_PNPM_NO_PKG_MANIFEST. There is no
+          # `apps update`, so the configuration can only be set at creation.
+          if ! $DEPLOY apps get --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api >/dev/null 2>&1; then
+            $DEPLOY create \
+              --json --non-interactive \
+              --org "$DENO_DEPLOY_ORG" \
+              --app urbanos-lugo-api \
+              --source local \
+              --runtime-mode dynamic \
+              --entrypoint worker.js \
+              --do-not-use-detected-build-config
+          fi
+
+          $DEPLOY \
             --json --non-interactive \
             --org "$DENO_DEPLOY_ORG" \
             --app urbanos-lugo-api \
