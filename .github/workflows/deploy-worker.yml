@@ -77,8 +77,17 @@ jobs:
       # `--json --non-interactive` are not decoration. The CLI's own help is explicit:
       # "For non-interactive use (CI, AI agents), authenticate via the DENO_DEPLOY_TOKEN
       # env var (or --token) and pass --json --non-interactive to every subcommand."
-      # Without them it tries to prompt, finds no terminal, and fails. Flags read off
-      # `deno deploy --help` on 2.9.6 rather than off the documentation site.
+      # Without them it tries to prompt, finds no terminal, and fails.
+      #
+      # The `--` is load-bearing, and cost a red run to find. `deno deploy --json …` puts
+      # every flag through twice — deno's own parser takes them and forwards them as well
+      # — and the deploy tool rejects the duplicate before it does anything else:
+      # {"code":"VALIDATION_ERROR","message":"Option \"--json\" can only occur once"}.
+      # It is not specific to --json; --org and --non-interactive duplicate the same way.
+      # After `--`, deno stops reading and hands the rest over untouched.
+      #
+      # Checked against deno 2.9.6 by running this exact line with no token: it now gets
+      # as far as asking for one, which is the furthest it can go without credentials.
       # A token without an organisation gets you a CLI error about interactive mode, which
       # is a long way from "you forgot to set a variable". Say the actual thing.
       - name: Check the deploy is configured
@@ -98,7 +107,7 @@ jobs:
           # that owns the app called itself, and this repository cannot know that.
           DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
         run: |
-          deno deploy \
+          deno deploy -- \
             --json --non-interactive \
             --org "$DENO_DEPLOY_ORG" \
             --app urbanos-lugo-api \
