@@ -69,15 +69,16 @@ jobs:
       # `deno deploy`, not deployctl. Deploy Classic — the dash.deno.com generation this
       # workflow was first written against — was shut down on 20 July 2026, and deployctl
       # along with it. The new platform calls the unit an *app* rather than a project, so
-      # `--project` is gone and `--app` replaces it, with `--org` naming the organisation
-      # the app lives in. Passing any of these flags is what puts the command in
-      # non-interactive mode, which is the only mode a runner can use.
+      # `--project` is gone and `--app` replaces it, with `--org` naming the organisation.
       #
       # It deploys the working directory, so it runs from worker/dist — the one file
       # `worker:build` emits — rather than pushing the whole repository at it.
       #
-      # Flags taken from docs.deno.com, not from a run: nobody has deployed this yet, so
-      # the first green run on a real account is what confirms it.
+      # `--json --non-interactive` are not decoration. The CLI's own help is explicit:
+      # "For non-interactive use (CI, AI agents), authenticate via the DENO_DEPLOY_TOKEN
+      # env var (or --token) and pass --json --non-interactive to every subcommand."
+      # Without them it tries to prompt, finds no terminal, and fails. Flags read off
+      # `deno deploy --help` on 2.9.6 rather than off the documentation site.
       # A token without an organisation gets you a CLI error about interactive mode, which
       # is a long way from "you forgot to set a variable". Say the actual thing.
       - name: Check the deploy is configured
@@ -96,7 +97,12 @@ jobs:
           # Named here rather than hardcoded: the organisation is whatever the account
           # that owns the app called itself, and this repository cannot know that.
           DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
-        run: deno deploy --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api --prod
+        run: |
+          deno deploy \
+            --json --non-interactive \
+            --org "$DENO_DEPLOY_ORG" \
+            --app urbanos-lugo-api \
+            --prod
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'
