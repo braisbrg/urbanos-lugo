@@ -79,7 +79,16 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   >('all');
   const [showStops, setShowStops] = useState(true);
   const [showBuses, setShowBuses] = useState(true);
-  const [showRoutes, setShowRoutes] = useState(true);
+  /**
+   * Every line at once is not a map of a network, it is a picture of string.
+   *
+   * Twenty-four routes over one small city means the centre is a knot of overlapping
+   * polylines, and the stops underneath — the thing this screen exists to show — get
+   * read through it. So the map opens with the stops and the buses and no trazados, and
+   * draws one the moment somebody asks: a chip, a row in the list, or arriving from a
+   * line's own page, which is what `selectedLine` already means.
+   */
+  const [showRoutes, setShowRoutes] = useState(Boolean(selectedLine));
   const [liveBuses, setScheduledBuses] = useState<ScheduledBus[]>([]);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyLinesList, setNearbyLinesList] = useState<{ line: BusLine; nearestStop: BusStop; walkMeters: number }[]>([]);
@@ -157,8 +166,6 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     `flex min-h-11 items-center justify-center rounded-[9px] px-2.5 py-1.5 text-center text-label font-semibold ${
       active ? 'bg-accent text-on-accent shadow-xs' : 'border border-edge bg-surface text-ink-2'
     }`;
-  const legendColor =
-    activeLineId !== 'all' ? lines.find((l) => l.id === activeLineId)?.color : undefined;
   // The list has to agree with the banner above it. It used to offer all twenty-four
   // while the map drew four, which read as the filter having done nothing.
   const listedLines = scopeLineIds ? lines.filter((l) => scopeLineIds.includes(l.id)) : lines;
@@ -389,6 +396,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const handleSelectLine = (line: BusLine) => {
     setActiveLineId(line.id);
     onSelectLine(line);
+    // Asking for a line is asking to see it. The map opens with no trazados drawn, so
+    // without this the first pick would frame the route and then draw nothing in it.
+    setShowRoutes(true);
 
     if (map && line.directions[0]?.pathCoordinates?.length) {
       const bounds = L.polyline(line.directions[0].pathCoordinates).getBounds();
@@ -416,7 +426,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+    /* No page padding on a phone: the map is the screen there, edge to edge. The padded
+       page comes back at `sm`, where the two-column layout starts to make sense. */
+    <div className="max-w-7xl mx-auto px-0 py-0 sm:px-6 sm:py-5 lg:px-8">
       {/* 2-Column Responsive Layout: Options on Left, Map on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Column: Controls & Filters (Geometric Balance Sidebar).
@@ -685,9 +697,17 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
         {/* Right Column: Interactive Map Canvas */}
         <div className="order-1 lg:order-none lg:col-span-8">
-          {/* Tall enough to be the page on a phone, short enough that the filter row
-              below it peeks in and says there is more. */}
-          <div className="relative z-0 w-full h-[62vh] min-h-[380px] rounded-xl overflow-hidden shadow-sm border border-edge bg-surface lg:h-[540px]">
+          {/* The map is the screen on a phone.
+              It used to be a 62vh card with a filter row peeking underneath, which meant
+              the tab called "Mapa" showed rather less than half a map, and the half it
+              showed was in a rounded box with a border and a shadow — three devices that
+              say "this is one object among several on a page". It is not: it is the page.
+              Everything else on this screen floats over it or waits below the fold.
+              `dvh` and not `vh` so a phone's collapsing address bar does not cut it, with
+              a `vh` line first for anything too old to know the unit. The card, the
+              border and the fixed height all come back at `lg`, where there is room for
+              a genuine two-column layout. */}
+          <div className="h-map-viewport relative z-0 w-full overflow-hidden bg-surface sm:rounded-xl sm:border sm:border-edge sm:shadow-sm">
             <div ref={mapContainerRef} className="w-full h-full" />
 
             {/* Route, Stop, and Vehicle Layers */}
@@ -729,37 +749,79 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               }}
             />
 
-            {/* Floating Map Legend */}
-            <div className="absolute bottom-3 left-3 z-[400] bg-bg/95 backdrop-blur-xs p-2.5 rounded-lg shadow-md border border-edge text-label space-y-1 pointer-events-auto font-medium">
-              {/* 9 px and 7 px were below the floor this app sets for itself, and a legend
-                  is exactly the thing someone squints at. The swatch carries the meaning;
-                  the letter inside it was never legible anyway.
+            {/* The map is the whole screen on a phone now, and that put every control in
+                the column below it a full viewport out of reach. Two of them cannot wait
+                that long: which line you are looking at, and where you are standing. They
+                ride over the map below `lg` and hand back to the sidebar above it.
 
-                  The bus and route swatches used the accent, which was only ever right by
-                  accident: the old accent happened to be line 1.1's blue. Buses and routes
-                  are drawn in each line's own colour, so the legend follows that. */}
-              <div className="mb-1 text-label font-semibold uppercase tracking-[0.08em] text-ink">
-                {t.map.legend}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3.5 w-3.5 rounded bg-ink ring-1 ring-bg"></div>
-                <span className="text-ink-2">{t.map.stop}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3.5 h-3.5 rounded ring-2 ring-white"
-                  style={{ backgroundColor: legendColor ?? 'var(--c-ink-3)' }}
-                ></div>
-                <span className="text-ink-2">{t.map.busLive}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3.5 h-1 rounded-full"
-                  style={{ backgroundColor: legendColor ?? 'var(--c-ink-3)' }}
-                ></div>
-                <span className="text-ink-2">{t.map.route}</span>
+                This corner is where the legend used to float, and the legend is not
+                coming back: it named stops, buses and trazados, which is exactly what the
+                three layer buttons in the sidebar already name, each with its own icon in
+                its own colour. A second copy of those three words, sitting on top of the
+                map and covering it, was the redundant one. */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] lg:hidden">
+              <div className="no-scrollbar flex gap-1.5 overflow-x-auto px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => handlePresetFilter('all')}
+                  aria-pressed={activeLineId === 'all'}
+                  className={`pointer-events-auto flex h-11 shrink-0 items-center rounded-full border px-4 text-label font-semibold shadow-sm backdrop-blur-xs ${
+                    activeLineId === 'all'
+                      ? 'border-accent bg-accent text-on-accent'
+                      : 'border-edge bg-bg/95 text-ink-2'
+                  }`}
+                >
+                  {t.map.allLines}
+                </button>
+
+                {/* The number is the chip. A line's colour is how it is drawn on the map
+                    and printed on the pole, so a coloured badge is the shortest thing that
+                    still says which line it is — and twenty-four of them scroll in a strip
+                    where twenty-four names would not fit at all. The name goes to the
+                    accessible name, since the badge alone reads as a bare number. */}
+                {listedLines.map((line) => {
+                  const isSelected = activeLineId === line.id;
+                  return (
+                    <button
+                      key={line.id}
+                      type="button"
+                      onClick={() => handleSelectLine(line)}
+                      aria-pressed={isSelected}
+                      aria-label={line.name}
+                      title={line.name}
+                      className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-3.5 text-label font-black text-white shadow-sm ${
+                        isSelected ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''
+                      }`}
+                      style={{ backgroundColor: line.color }}
+                    >
+                      {line.number}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Orientation is the one thing a map owes you before anything else, and on a
+                phone it is one thumb's reach from the bottom corner. Left, because the
+                zoom control has the right one. No `id` here: the sidebar's own locate
+                button keeps `btn-map-locate`, and both are in the DOM at once. */}
+            <button
+              type="button"
+              onClick={handleLocateUser}
+              disabled={isLocating}
+              aria-pressed={isFollowing}
+              aria-label={
+                isLocating ? t.map.locating : isFollowing ? t.map.stopFollowing : t.map.myLocation
+              }
+              title={
+                isLocating ? t.map.locating : isFollowing ? t.map.stopFollowing : t.map.myLocation
+              }
+              className={`pointer-events-auto absolute bottom-5 left-3 z-[400] flex h-12 w-12 items-center justify-center rounded-full border shadow-md backdrop-blur-xs disabled:opacity-50 lg:hidden ${
+                isFollowing ? 'border-accent bg-bg/95 text-accent' : 'border-edge bg-bg/95 text-ink-2'
+              }`}
+            >
+              <LocateFixed className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>

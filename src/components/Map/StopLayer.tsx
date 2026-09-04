@@ -30,11 +30,31 @@ interface StopLayerProps {
 }
 
 /**
- * Below this zoom only interchanges are drawn. Every serious transit map declutters this
- * way: 417 dots over a city-wide view hide the very lines they belong to, and none of
- * them can carry a label at that scale anyway.
+ * How much of the network appears as you come in, and how big it is drawn.
+ *
+ * This was a cliff, not a ladder: below zoom 15 only stops with six lines or more were
+ * drawn — 46 of the 417 — and at 15 all 417 arrived at once, every one of them a 5px dot
+ * whatever the zoom. Coming in one step went from eleven per cent of the network to all
+ * of it, and going further in made nothing easier to hit or to read.
+ *
+ * The rungs are cut by how many lines a stop serves, because that is what makes one worth
+ * seeing from far away: 46 stops serve six lines or more, 109 serve four or more, 233
+ * serve two or more, and the remaining 184 are the single-line long tail that only means
+ * anything once you are looking at your own street.
+ *
+ * `label` is the change that matters on a phone. Names lived in a hover tooltip, and a
+ * phone has no hover — so no matter how far you zoomed, no stop ever told you its name,
+ * on the one screen meant for working out where you are.
  */
-const ALL_STOPS_FROM_ZOOM = 15;
+const ZOOM_LADDER: { from: number; minLines: number; radius: number; label: boolean }[] = [
+  { from: 16, minLines: 0, radius: 7, label: true },
+  { from: 15, minLines: 2, radius: 6, label: false },
+  { from: 14, minLines: 4, radius: 5, label: false },
+  { from: 0, minLines: 6, radius: 4, label: false },
+];
+
+const rungFor = (zoom: number) => ZOOM_LADDER.find((r) => zoom >= r.from) ?? ZOOM_LADDER[ZOOM_LADDER.length - 1];
+
 /** How many lines a stop needs to stay on screen when zoomed out. */
 /** Matches the board: near enough to walk when the wait is long. */
 const NEARBY_LINE_RADIUS_M = 400;
@@ -86,31 +106,53 @@ export const StopLayer: React.FC<StopLayerProps> = ({
     if (showStops) {
       const onLine =
         visibleLineIds === null ? stops : stops.filter((s) => s.lines.some((l) => visibleLineIds.includes(l)));
+      const rung = rungFor(zoom);
       // A filtered set is sparse enough to show whole at any zoom.
-      const detailed = zoom >= ALL_STOPS_FROM_ZOOM || visibleLineIds !== null;
+      const detailed = visibleLineIds !== null;
       const visible = detailed
         ? onLine
-        : onLine.filter((s) => s.lines.length >= INTERCHANGE_MIN_LINES || s.id === selectedStop?.id);
+        : onLine.filter((s) => s.lines.length >= rung.minLines || s.id === selectedStop?.id);
 
       visible.forEach((stop) => {
+        const code = poleCode(stop);
+        // 271 of the 417 carry a code on the pole: those are the ones you can scan, and
+        // the ones the operator's own page knows about. Drawn a size up with a heavier
+        // ring so the difference is visible before you tap, rather than only after.
+        const scannable = Boolean(code);
+
         // circleMarker draws into the map's shared canvas. divIcon, used here before,
         // creates one DOM node per stop — 417 of them on the overview.
         const marker = L.circleMarker([stop.lat, stop.lng], {
-          radius: 5,
+          radius: scannable ? rung.radius : Math.max(3, rung.radius - 2),
           color: colors.stopStroke,
-          weight: 2,
+          weight: scannable ? 2.5 : 1.5,
           fillColor: colors.stopFill,
           fillOpacity: 1,
         });
 
-        const code = poleCode(stop);
-
-        marker.bindTooltip(
-          `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
-            ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
-          </div>`,
-          { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
-        );
+        // One tooltip per marker: binding twice replaces the first, so this is either the
+        // name written beside the dot and left there, or the one that opens on hover —
+        // never both. Close in the name is already on screen, which is the point of it.
+        if (rung.label) {
+          // `auto` and not `right`: a name is written beside its dot, and a dot near the
+          // right edge of a 375 px phone put the name off the screen — measured, three of
+          // the thirteen on view at zoom 16, the widest of them 157 px. Leaflet's own
+          // `auto` flips the side once the marker passes the middle of the map, which is
+          // the whole of the fix and none of the arithmetic.
+          marker.bindTooltip(escapeHtml(stop.name), {
+            permanent: true,
+            direction: 'auto',
+            offset: [rung.radius + 2, 0],
+            className: 'stop-name-label',
+          });
+        } else {
+          marker.bindTooltip(
+            `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
+              ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
+            </div>`,
+            { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
+          );
+        }
 
         const servingLines = stop.lines
           .map((l) => lines.find((li) => li.id === l))

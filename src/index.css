@@ -238,6 +238,50 @@
     }
   }
 
+  /**
+   * The map, filling what is left of a phone screen: everything but the search bar above
+   * it and the tab bar below. Same reasoning and same shape as the rule above — vh first,
+   * dvh in a @supports — and for the same reason it cannot be two Tailwind height
+   * utilities on one element.
+   *
+   * It stops at `sm`, where the map goes back to being a card in a two-column page.
+   */
+  .h-map-viewport {
+    height: calc(100vh - 8.25rem);
+  }
+  @supports (height: 100dvh) {
+    .h-map-viewport {
+      height: calc(100dvh - 8.25rem);
+    }
+  }
+  @media (min-width: 40rem) {
+    .h-map-viewport {
+      height: 62vh;
+      min-height: 380px;
+    }
+  }
+  @media (min-width: 64rem) {
+    .h-map-viewport {
+      height: 540px;
+      min-height: 0;
+    }
+  }
+
+  /**
+   * A row that scrolls sideways without saying so with a bar.
+   *
+   * The class was already being asked for on the line-category chips and was defined
+   * nowhere, so it did nothing and the bar showed under them. It is worth having for
+   * real now that the map's line chips need the same thing, and one rule covers both.
+   */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .leaflet-container {
     /* !important because Leaflet ships its CSS unlayered, and an unlayered rule beats
        anything in @layer base however late it comes — the same reason the popup and
@@ -275,6 +319,31 @@
   }
   .leaflet-tooltip-right::before {
     border-right-color: var(--c-border) !important;
+  }
+
+  /* Stop names, written on the map from zoom 16 in.
+     Not the card above: that treatment is right for one label you asked for by hovering,
+     and wrong for every stop at once — a hundred bordered boxes with shadows read as
+     objects sitting on the city rather than as its labels. This is what a map label is:
+     type with a halo, no box, no arrow, and nothing to click through. */
+  .leaflet-tooltip.stop-name-label {
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    color: var(--c-ink) !important;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    /* A halo in the map's own ground colour, so it holds over roads, parks and water in
+       either theme without a plate behind it. */
+    text-shadow:
+      0 0 3px var(--c-bg), 0 0 3px var(--c-bg), 0 0 3px var(--c-bg),
+      1px 1px 2px var(--c-bg), -1px -1px 2px var(--c-bg);
+  }
+  .leaflet-tooltip.stop-name-label::before {
+    display: none !important;
   }
 
   /* Leaflet's attribution is required, and at its default 11 px grey on a translucent
