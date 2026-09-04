@@ -676,7 +676,6 @@ function getNextLineDeparture(
 ): {
   departureMinutes: number;
   waitMinutes: number;
-  delayMinutes: number;
   isServiceActive: boolean;
   serviceNotice?: string;
   /** 'published' when the operator prints this time for this stop. */
@@ -720,7 +719,6 @@ function getNextLineDeparture(
     return {
       departureMinutes: Math.round(departureMinutes),
       waitMinutes: Math.max(0, Math.round(departureMinutes - targetMinutes)),
-      delayMinutes: 0,
       isServiceActive: !rolled,
       serviceNotice: rolled
         ? `Servizo finalizado por hoxe (última saída ás ${line.lastDeparture}). Primeira saída ás ${line.firstDeparture}.`
@@ -740,7 +738,6 @@ function getNextLineDeparture(
   return {
     departureMinutes: Math.round(fallback),
     waitMinutes: Math.max(0, Math.round(fallback - targetMinutes)),
-    delayMinutes: 0,
     isServiceActive: false,
     serviceNotice: translations(lang).engine.notRunningToday(line.number, daysLabel(line, lang)),
     precision: published ? 'published' : 'estimated',
@@ -912,7 +909,6 @@ function buildLeg(
     stopsCount: ride.stopsCount,
     departureTime: formatMinutes(boardTime),
     arrivalTime: formatMinutes(arriveTime),
-    delayMinutes: departure.delayMinutes,
     instruction: translations(lang).engine.board(
       line.number,
       directionLabel(direction, lang),

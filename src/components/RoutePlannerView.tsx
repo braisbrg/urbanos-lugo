@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { BUS_STOPS } from '../data/transitData';
+import { formatMinutes, parseTimeToMinutes } from '../utils/schedule';
 import { planTrips, resolveLocationQuery, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 // Same reason as the map tab: Leaflet loads with the map, not with the app.
@@ -41,10 +42,10 @@ const LONG_WAIT_MIN = 90;
 /** Move an "HH:MM" label by a signed number of minutes, wrapping past midnight. */
 function shiftClock(hhmm: string, deltaMinutes: number): string {
   if (!deltaMinutes) return hhmm;
-  const [h, m] = hhmm.split(':').map(Number);
-  if (!Number.isFinite(h) || !Number.isFinite(m)) return hhmm;
-  const total = (((h * 60 + m + deltaMinutes) % 1440) + 1440) % 1440;
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  // The wrap past midnight and the zero padding both already live in formatMinutes —
+  // same `((n % 1440) + 1440) % 1440`, same padStart — and parsing is what
+  // parseTimeToMinutes is for. This had its own copy of all three.
+  return formatMinutes(parseTimeToMinutes(hhmm) + deltaMinutes);
 }
 
 const MAX_OPTIONS = 4;

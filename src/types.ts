@@ -196,6 +196,5 @@ export interface RoutePlanResult {
     stopsCount?: number;
     departureTime?: string;
     arrivalTime?: string;
-    delayMinutes?: number;
   }[];
 }

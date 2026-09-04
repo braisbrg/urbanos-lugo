@@ -53,6 +53,7 @@ import {
   QUICK_DESTINATIONS,
   LUGO_LANDMARKS,
 } from '../src/utils/transitEngine';
+import { hydrateGeometry } from './hydrateGeometry';
 
 
 /** Every .ts/.tsx under a directory, for checks that read the source rather than run it. */
@@ -66,25 +67,6 @@ function listSourceFiles(dir: string): string[] {
   return out;
 }
 
-/**
- * Node has no lazy chunk loading, and the geometry test below would silently pass on an
- * empty dataset otherwise. Hydrate the same way the browser does.
- */
-function hydrateGeometry(): void {
-  const file = join(dirname(fileURLToPath(import.meta.url)), '../src/data/route-geometry.json');
-  const geometry = JSON.parse(readFileSync(file, 'utf8')) as Record<
-    string,
-    { path: [number, number][]; stopPathIndex: number[] }
-  >;
-  for (const line of BUS_LINES) {
-    for (const direction of line.directions) {
-      const entry = geometry[`${line.id}|${direction.id}`];
-      if (!entry) continue;
-      direction.pathCoordinates = entry.path;
-      direction.stopPathIndex = entry.stopPathIndex;
-    }
-  }
-}
 
 hydrateGeometry();
 
@@ -1066,12 +1048,21 @@ ok('no translated key is left with nothing reading it', () => {
     .map((file) => readFileSync(file, 'utf8'))
     .join('\n');
 
-  const dead = keys.filter(
-    ({ ns: namespace, key }) =>
-      !sources.includes(`t.${namespace}.${key}`) &&
-      !sources.includes(`.${namespace}.${key}`) &&
-      !new RegExp(`\\bt\\.${key}\\b`).test(sources),
+  // Ends on a word boundary, because `includes` answered this before and a key that is
+  // the prefix of another key was shielded by it: `yourPositionAccurate` contains
+  // `yourPosition`, so the dead one read as used and outlived its screen in all three
+  // languages. Both namespace and key are `[a-zA-Z]+` by the parser above, so neither
+  // can carry a regex metacharacter into here.
+  const used = (haystack: string, namespace: string, key: string) =>
+    new RegExp(`\\.${namespace}\\.${key}\\b`).test(haystack) ||
+    new RegExp(`\\bt\\.${key}\\b`).test(haystack);
+
+  assert(
+    !used('t.map.yourPositionAccurate(3)', 'map', 'yourPosition'),
+    'a key that only appears as another key’s prefix is still counting as used',
   );
+
+  const dead = keys.filter(({ ns: namespace, key }) => !used(sources, namespace, key));
 
   assert(
     dead.length === 0,
