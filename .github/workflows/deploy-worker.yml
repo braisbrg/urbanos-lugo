@@ -113,10 +113,13 @@ jobs:
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
         run: |
+          # The subcommand goes BEFORE the separator: everything after `--` is an argument
+          # to `deploy` itself, so `deploy -- orgs` asked it to deploy a directory named
+          # orgs. And `orgs` is a group, so the leaf is `orgs list`.
           echo "--- organisations this token can see ---"
-          deno deploy -- orgs --json || true
+          deno deploy orgs list -- --json || true
           echo "--- who the token belongs to ---"
-          deno deploy -- whoami --json || true
+          deno deploy whoami -- --json || true
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'
