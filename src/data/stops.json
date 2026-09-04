@@ -26,8 +26,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s2",
@@ -51,8 +50,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s3",
@@ -76,8 +74,7 @@
     ],
     "zone": "Campus USC",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s4",
@@ -99,8 +96,7 @@
     ],
     "zone": "Campus USC",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s5",
@@ -122,8 +118,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s6",
@@ -149,8 +144,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s7",
@@ -178,8 +172,7 @@
     ],
     "zone": "Campus USC",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s8",
@@ -205,8 +198,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s9",
@@ -230,8 +222,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s10",
@@ -255,8 +246,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s11",
@@ -280,8 +270,7 @@
     ],
     "zone": "Fingoi",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s12",
@@ -303,8 +292,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s13",
@@ -334,8 +322,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s14",
@@ -367,8 +354,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s15",
@@ -400,8 +386,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s16",
@@ -433,8 +418,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s17",
@@ -470,8 +454,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": false,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s18",
@@ -501,8 +484,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s19",
@@ -552,8 +534,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s20",
@@ -581,8 +562,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s21",
@@ -616,8 +596,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s22",
@@ -649,8 +628,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s23",
@@ -682,8 +660,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s24",
@@ -717,8 +694,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s25",
@@ -750,8 +726,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s26",
@@ -779,8 +754,7 @@
     ],
     "zone": "Garabolos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s27",
@@ -810,8 +784,7 @@
     ],
     "zone": "Garabolos",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s28",
@@ -837,8 +810,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s29",
@@ -864,8 +836,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s30",
@@ -887,8 +858,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s31",
@@ -908,8 +878,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s32",
@@ -929,8 +898,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s33",
@@ -955,8 +923,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s34",
@@ -980,8 +947,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s35",
@@ -1005,8 +971,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s36",
@@ -1030,8 +995,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s37",
@@ -1053,8 +1017,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s38",
@@ -1080,8 +1043,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s39",
@@ -1103,8 +1065,7 @@
     ],
     "zone": "O Ceao",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s41",
@@ -1124,8 +1085,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s42",
@@ -1145,8 +1105,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s43",
@@ -1166,8 +1125,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s44",
@@ -1187,8 +1145,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s45",
@@ -1208,8 +1165,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s46",
@@ -1229,8 +1185,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s47",
@@ -1250,8 +1205,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s48",
@@ -1271,8 +1225,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s49",
@@ -1292,8 +1245,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s51",
@@ -1313,8 +1265,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s52",
@@ -1334,8 +1285,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s53",
@@ -1357,8 +1307,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s54",
@@ -1380,8 +1329,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s55",
@@ -1403,8 +1351,7 @@
     ],
     "zone": "Garabolos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s56",
@@ -1434,8 +1381,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s57",
@@ -1463,8 +1409,7 @@
     ],
     "zone": "Garabolos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s58",
@@ -1492,8 +1437,7 @@
     ],
     "zone": "Garabolos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s59",
@@ -1523,8 +1467,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s60",
@@ -1552,8 +1495,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s61",
@@ -1585,8 +1527,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s62",
@@ -1616,8 +1557,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s63",
@@ -1647,8 +1587,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s64",
@@ -1678,8 +1617,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s65",
@@ -1717,8 +1655,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s66",
@@ -1756,8 +1693,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s67",
@@ -1795,8 +1731,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s68",
@@ -1832,8 +1767,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s69",
@@ -1869,8 +1803,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s70",
@@ -1908,8 +1841,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s71",
@@ -1956,8 +1888,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s72",
@@ -1995,8 +1926,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s73",
@@ -2026,8 +1956,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s74",
@@ -2051,8 +1980,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s75",
@@ -2076,8 +2004,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s76",
@@ -2101,8 +2028,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s77",
@@ -2126,8 +2052,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s78",
@@ -2153,8 +2078,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s79",
@@ -2176,8 +2100,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s80",
@@ -2199,8 +2122,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s81",
@@ -2222,8 +2144,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s82",
@@ -2245,8 +2166,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s120",
@@ -2266,8 +2186,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s121",
@@ -2290,8 +2209,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s122",
@@ -2313,8 +2231,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s123",
@@ -2334,8 +2251,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s124",
@@ -2359,8 +2275,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s125",
@@ -2405,8 +2320,7 @@
     ],
     "zone": "HULA",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s127",
@@ -2443,8 +2357,7 @@
     ],
     "zone": "HULA",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s128",
@@ -2469,8 +2382,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s129",
@@ -2490,8 +2402,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s130",
@@ -2513,8 +2424,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s131",
@@ -2536,8 +2446,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s133",
@@ -2557,8 +2466,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s134",
@@ -2578,8 +2486,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s168",
@@ -2602,8 +2509,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s172",
@@ -2623,8 +2529,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s173",
@@ -2647,8 +2552,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s174",
@@ -2670,8 +2574,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s175",
@@ -2693,8 +2596,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s176",
@@ -2720,8 +2622,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s177",
@@ -2745,8 +2646,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s178",
@@ -2772,8 +2672,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s179",
@@ -2799,8 +2698,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s180",
@@ -2826,8 +2724,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s181",
@@ -2853,8 +2750,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s182",
@@ -2880,8 +2776,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s183",
@@ -2909,8 +2804,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s184",
@@ -2932,8 +2826,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s185",
@@ -2961,8 +2854,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s197",
@@ -2982,8 +2874,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s198",
@@ -3003,8 +2894,7 @@
     ],
     "zone": "O Ceao",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s216",
@@ -3024,8 +2914,7 @@
     ],
     "zone": "O Ceao",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s217",
@@ -3045,8 +2934,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s218",
@@ -3066,8 +2954,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s219",
@@ -3087,8 +2974,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s239",
@@ -3110,8 +2996,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s240",
@@ -3135,8 +3020,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s241",
@@ -3164,8 +3048,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s242",
@@ -3193,8 +3076,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s243",
@@ -3222,8 +3104,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s244",
@@ -3251,8 +3132,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s245",
@@ -3280,8 +3160,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s246",
@@ -3312,8 +3191,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s247",
@@ -3342,8 +3220,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s248",
@@ -3367,8 +3244,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s249",
@@ -3392,8 +3268,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s250",
@@ -3417,8 +3292,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s335",
@@ -3439,8 +3313,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s336",
@@ -3468,8 +3341,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s337",
@@ -3489,8 +3361,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s338",
@@ -3510,8 +3381,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s353",
@@ -3529,8 +3399,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s354",
@@ -3548,8 +3417,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s355",
@@ -3567,8 +3435,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s356",
@@ -3586,8 +3453,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s357",
@@ -3605,8 +3471,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s358",
@@ -3624,8 +3489,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s359",
@@ -3644,8 +3508,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s361",
@@ -3663,8 +3526,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s362",
@@ -3682,8 +3544,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s363",
@@ -3701,8 +3562,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s364",
@@ -3720,8 +3580,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s365",
@@ -3739,8 +3598,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s366",
@@ -3758,8 +3616,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s367",
@@ -3777,8 +3634,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s368",
@@ -3796,8 +3652,7 @@
     ],
     "zone": "Cemiterio",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s390",
@@ -3821,8 +3676,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s391",
@@ -3846,8 +3700,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s392",
@@ -3865,8 +3718,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s395",
@@ -3890,8 +3742,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s396",
@@ -3915,8 +3766,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s397",
@@ -3936,8 +3786,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s398",
@@ -3957,8 +3806,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s399",
@@ -3978,8 +3826,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s402",
@@ -3997,8 +3844,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s405",
@@ -4016,8 +3862,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s406",
@@ -4035,8 +3880,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s407",
@@ -4058,8 +3902,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s415",
@@ -4080,8 +3923,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s416",
@@ -4102,8 +3944,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s417",
@@ -4125,8 +3966,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s418",
@@ -4148,8 +3988,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s419",
@@ -4171,8 +4010,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s424",
@@ -4194,8 +4032,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s426",
@@ -4217,8 +4054,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s427",
@@ -4242,8 +4078,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s428",
@@ -4265,8 +4100,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s429",
@@ -4291,8 +4125,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s431",
@@ -4314,8 +4147,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s432",
@@ -4337,8 +4169,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s435",
@@ -4360,8 +4191,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s436",
@@ -4383,8 +4213,7 @@
     ],
     "zone": "Fingoi",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s438",
@@ -4402,8 +4231,7 @@
     ],
     "zone": "Fingoi",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s445",
@@ -4427,8 +4255,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s479",
@@ -4448,8 +4275,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s480",
@@ -4469,8 +4295,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s481",
@@ -4490,8 +4315,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s482",
@@ -4512,8 +4336,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s484",
@@ -4531,8 +4354,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s485",
@@ -4550,8 +4372,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s486",
@@ -4569,8 +4390,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s487",
@@ -4588,8 +4408,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s524",
@@ -4609,8 +4428,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s525",
@@ -4628,8 +4446,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s526",
@@ -4647,8 +4464,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s527",
@@ -4666,8 +4482,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s528",
@@ -4685,8 +4500,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s529",
@@ -4704,8 +4518,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s530",
@@ -4723,8 +4536,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s531",
@@ -4742,8 +4554,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s532",
@@ -4762,8 +4573,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s533",
@@ -4782,8 +4592,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s534",
@@ -4802,8 +4611,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s535",
@@ -4822,8 +4630,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s536",
@@ -4842,8 +4649,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s537",
@@ -4862,8 +4668,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s538",
@@ -4882,8 +4687,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s539",
@@ -4902,8 +4706,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s550",
@@ -4921,8 +4724,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s551",
@@ -4940,8 +4742,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s552",
@@ -4959,8 +4760,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s553",
@@ -4978,8 +4778,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s554",
@@ -4997,8 +4796,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s559",
@@ -5016,8 +4814,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s560",
@@ -5035,8 +4832,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s561",
@@ -5054,8 +4850,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s562",
@@ -5073,8 +4868,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s563",
@@ -5092,8 +4886,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s564",
@@ -5111,8 +4904,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s565",
@@ -5130,8 +4922,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s566",
@@ -5151,8 +4942,7 @@
     ],
     "zone": "Estación",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s567",
@@ -5174,8 +4964,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s583",
@@ -5193,8 +4982,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s584",
@@ -5212,8 +5000,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s585",
@@ -5231,8 +5018,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s586",
@@ -5250,8 +5036,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s587",
@@ -5271,8 +5056,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s588",
@@ -5292,8 +5076,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s589",
@@ -5311,8 +5094,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s595",
@@ -5333,8 +5115,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s596",
@@ -5354,8 +5135,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s597",
@@ -5375,8 +5155,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s598",
@@ -5396,8 +5175,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s599",
@@ -5415,8 +5193,7 @@
     ],
     "zone": "Estación",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s600",
@@ -5434,8 +5211,7 @@
     ],
     "zone": "Estación",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s601",
@@ -5453,8 +5229,7 @@
     ],
     "zone": "Estación",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s605",
@@ -5483,8 +5258,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s606",
@@ -5510,8 +5284,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s607",
@@ -5533,8 +5306,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s608",
@@ -5556,8 +5328,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s609",
@@ -5579,8 +5350,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s610",
@@ -5602,8 +5372,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s611",
@@ -5625,8 +5394,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s612",
@@ -5648,8 +5416,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s613",
@@ -5672,8 +5439,7 @@
     ],
     "zone": "Campus USC",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s630",
@@ -5697,8 +5463,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s631",
@@ -5722,8 +5487,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s632",
@@ -5747,8 +5511,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s633",
@@ -5772,8 +5535,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s634",
@@ -5797,8 +5559,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s635",
@@ -5822,8 +5583,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s636",
@@ -5847,8 +5607,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s637",
@@ -5872,8 +5631,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s641",
@@ -5897,8 +5655,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s642",
@@ -5922,8 +5679,7 @@
     ],
     "zone": "HULA",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s643",
@@ -5945,8 +5701,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s644",
@@ -5970,8 +5725,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s645",
@@ -5995,8 +5749,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s646",
@@ -6020,8 +5773,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s647",
@@ -6045,8 +5797,7 @@
     ],
     "zone": "Fontiñas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s648",
@@ -6070,8 +5821,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s668",
@@ -6091,8 +5841,7 @@
     ],
     "zone": "Campus USC",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s669",
@@ -6114,8 +5863,7 @@
     ],
     "zone": "Campus USC",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s670",
@@ -6137,8 +5885,7 @@
     ],
     "zone": "A Ponte",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s671",
@@ -6160,8 +5907,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s672",
@@ -6185,8 +5931,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s673",
@@ -6210,8 +5955,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s674",
@@ -6233,8 +5977,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s675",
@@ -6263,8 +6006,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s676",
@@ -6291,8 +6033,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s680",
@@ -6312,8 +6053,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s681",
@@ -6333,8 +6073,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s682",
@@ -6354,8 +6093,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s683",
@@ -6375,8 +6113,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s684",
@@ -6396,8 +6133,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s685",
@@ -6415,8 +6151,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s699",
@@ -6436,8 +6171,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s700",
@@ -6457,8 +6191,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s701",
@@ -6478,8 +6211,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s702",
@@ -6499,8 +6231,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s703",
@@ -6520,8 +6251,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s704",
@@ -6541,8 +6271,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s705",
@@ -6562,8 +6291,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s706",
@@ -6583,8 +6311,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s707",
@@ -6605,8 +6332,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s738",
@@ -6626,8 +6352,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s712",
@@ -6651,8 +6376,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s713",
@@ -6676,8 +6400,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s767",
@@ -6699,8 +6422,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s824",
@@ -6724,8 +6446,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s825",
@@ -6743,8 +6464,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s836",
@@ -6763,8 +6483,7 @@
     ],
     "zone": "Garabolos",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s837",
@@ -6782,8 +6501,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s838",
@@ -6801,8 +6519,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s839",
@@ -6820,8 +6537,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s840",
@@ -6839,8 +6555,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s841",
@@ -6858,8 +6573,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s842",
@@ -6877,8 +6591,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s843",
@@ -6896,8 +6609,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s844",
@@ -6915,8 +6627,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s845",
@@ -6934,8 +6645,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s846",
@@ -6953,8 +6663,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s857",
@@ -6972,8 +6681,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s858",
@@ -6991,8 +6699,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s859",
@@ -7010,8 +6717,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s860",
@@ -7029,8 +6735,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s862",
@@ -7048,8 +6753,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s866",
@@ -7067,8 +6771,7 @@
     ],
     "zone": "Fingoi",
     "shelter": true,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s867",
@@ -7086,8 +6789,7 @@
     ],
     "zone": "Campus USC",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s868",
@@ -7105,8 +6807,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s869",
@@ -7124,8 +6825,7 @@
     ],
     "zone": "Campus USC",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s874",
@@ -7143,8 +6843,7 @@
     ],
     "zone": "Sur / Ramón Ferreiro",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s887",
@@ -7162,8 +6861,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s888",
@@ -7181,8 +6879,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s889",
@@ -7200,8 +6897,7 @@
     ],
     "zone": "Garabolos",
     "shelter": false,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s891",
@@ -7228,8 +6924,7 @@
     ],
     "zone": "Centro / Muralla",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s899",
@@ -7249,8 +6944,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s900",
@@ -7272,8 +6966,7 @@
     ],
     "zone": "A Ponte",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s901",
@@ -7293,8 +6986,7 @@
     ],
     "zone": "A Cheda",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s902",
@@ -7312,8 +7004,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s903",
@@ -7331,8 +7022,7 @@
     ],
     "zone": "A Ponte",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s904",
@@ -7350,8 +7040,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s905",
@@ -7369,8 +7058,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s906",
@@ -7389,8 +7077,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s908",
@@ -7408,8 +7095,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s909",
@@ -7427,8 +7113,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s910",
@@ -7448,8 +7133,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": true,
-    "hasScreen": false
+    "bench": true
   },
   {
     "id": "s911",
@@ -7469,8 +7153,7 @@
     ],
     "zone": "A Cheda",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s917",
@@ -7494,8 +7177,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s921",
@@ -7513,8 +7195,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s922",
@@ -7532,8 +7213,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s923",
@@ -7551,8 +7231,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s928",
@@ -7572,8 +7251,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s929",
@@ -7591,8 +7269,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s930",
@@ -7610,8 +7287,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s931",
@@ -7629,8 +7305,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s932",
@@ -7648,8 +7323,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s933",
@@ -7668,8 +7342,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": null,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s935",
@@ -7687,8 +7360,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s936",
@@ -7706,8 +7378,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s937",
@@ -7725,8 +7396,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s938",
@@ -7746,8 +7416,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s939",
@@ -7767,8 +7436,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s959",
@@ -7786,8 +7454,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s960",
@@ -7805,8 +7472,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s966",
@@ -7824,8 +7490,7 @@
     ],
     "zone": "Fonte dos Ranchos",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s976",
@@ -7843,8 +7508,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s977",
@@ -7862,8 +7526,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s978",
@@ -7881,8 +7544,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s979",
@@ -7900,8 +7562,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s980",
@@ -7921,8 +7582,7 @@
     ],
     "zone": "A Cheda",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s981",
@@ -7942,8 +7602,7 @@
     ],
     "zone": "A Cheda",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s982",
@@ -7961,8 +7620,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s983",
@@ -7980,8 +7638,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s984",
@@ -8000,8 +7657,7 @@
     ],
     "zone": "A Cheda",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s986",
@@ -8021,8 +7677,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s987",
@@ -8042,8 +7697,7 @@
     ],
     "zone": "A Cheda",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s988",
@@ -8061,8 +7715,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s989",
@@ -8080,8 +7733,7 @@
     ],
     "zone": "A Cheda",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s990",
@@ -8099,8 +7751,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s993",
@@ -8118,8 +7769,7 @@
     ],
     "zone": "A Ponte",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s994",
@@ -8137,8 +7787,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s995",
@@ -8156,8 +7805,7 @@
     ],
     "zone": "Casco Histórico",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1003",
@@ -8175,8 +7823,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1004",
@@ -8194,8 +7841,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1005",
@@ -8213,8 +7859,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1006",
@@ -8232,8 +7877,7 @@
     ],
     "zone": "O Ceao",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1007",
@@ -8251,8 +7895,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1008",
@@ -8270,8 +7913,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1009",
@@ -8289,8 +7931,7 @@
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1010",
@@ -8308,8 +7949,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1011",
@@ -8327,8 +7967,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1012",
@@ -8347,8 +7986,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1014",
@@ -8366,8 +8004,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1038",
@@ -8385,8 +8022,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1039",
@@ -8404,8 +8040,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1040",
@@ -8424,8 +8059,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1042",
@@ -8443,8 +8077,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1043",
@@ -8462,8 +8095,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1044",
@@ -8481,8 +8113,7 @@
     ],
     "zone": "HULA",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1065",
@@ -8501,8 +8132,7 @@
     ],
     "zone": "Oeste / Américas",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1066",
@@ -8521,8 +8151,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1067",
@@ -8540,8 +8169,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1068",
@@ -8560,8 +8188,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1078",
@@ -8579,8 +8206,7 @@
     ],
     "zone": "A Cheda",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1107",
@@ -8598,8 +8224,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1108",
@@ -8617,8 +8242,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1109",
@@ -8636,8 +8260,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1110",
@@ -8655,8 +8278,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": false,
-    "hasScreen": false
+    "bench": false
   },
   {
     "id": "s1111",
@@ -8674,8 +8296,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1112",
@@ -8693,8 +8314,7 @@
     ],
     "zone": "Rural",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1113",
@@ -8713,8 +8333,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1115",
@@ -8732,8 +8351,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1116",
@@ -8751,8 +8369,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s1117",
@@ -8770,8 +8387,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1118",
@@ -8789,8 +8405,7 @@
     ],
     "zone": "Rural",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1119",
@@ -8808,8 +8423,7 @@
     ],
     "zone": "Rural",
     "shelter": null,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1120",
@@ -8827,8 +8441,7 @@
     ],
     "zone": "Rural",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1121",
@@ -8846,8 +8459,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1122",
@@ -8865,8 +8477,7 @@
     ],
     "zone": "A Tolda / Montirón",
     "shelter": true,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1125",
@@ -8884,8 +8495,7 @@
     ],
     "zone": "Acea de Olga",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1140",
@@ -8903,8 +8513,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s1141",
@@ -8922,8 +8531,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1142",
@@ -8941,8 +8549,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1143",
@@ -8960,8 +8567,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s1144",
@@ -8979,8 +8585,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1145",
@@ -8998,8 +8603,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1146",
@@ -9017,8 +8621,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1147",
@@ -9036,8 +8639,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1148",
@@ -9055,8 +8657,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1149",
@@ -9074,8 +8675,7 @@
     ],
     "zone": "O Ceao",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1151",
@@ -9093,8 +8693,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1152",
@@ -9112,8 +8711,7 @@
     ],
     "zone": "As Gándaras",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1156",
@@ -9131,8 +8729,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1157",
@@ -9150,8 +8747,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1158",
@@ -9169,8 +8765,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1159",
@@ -9188,8 +8783,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1160",
@@ -9207,8 +8801,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1161",
@@ -9226,8 +8819,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1162",
@@ -9245,8 +8837,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1163",
@@ -9264,8 +8855,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1164",
@@ -9283,8 +8873,7 @@
     ],
     "zone": "Casás / Abella",
     "shelter": false,
-    "bench": false,
-    "hasScreen": true
+    "bench": false
   },
   {
     "id": "s1180",
@@ -9302,8 +8891,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1181",
@@ -9321,8 +8909,7 @@
     ],
     "zone": "A Milagrosa",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1182",
@@ -9340,8 +8927,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": true,
-    "hasScreen": true
+    "bench": true
   },
   {
     "id": "s1183",
@@ -9359,8 +8945,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": false
+    "bench": null
   },
   {
     "id": "s1184",
@@ -9378,8 +8963,7 @@
     ],
     "zone": "A Piringalla",
     "shelter": false,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   },
   {
     "id": "s1185",
@@ -9397,7 +8981,6 @@
     ],
     "zone": "A Piringalla",
     "shelter": true,
-    "bench": null,
-    "hasScreen": true
+    "bench": null
   }
 ]

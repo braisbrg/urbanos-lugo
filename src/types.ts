@@ -25,7 +25,6 @@ export interface BusStop {
    */
   shelter: boolean | null; // Marquesina
   bench: boolean | null;
-  hasScreen: boolean; // Panel electrónico do operador
 }
 
 export interface BusLine {

@@ -330,7 +330,6 @@ for (const s of located) {
       // access and no shelter, both invented.
       shelter: null as boolean | null,
       bench: null as boolean | null,
-      hasScreen: Boolean(s.token),
     };
     clusters.push(stop);
     if (s.token) byToken.set(s.token, stop);
@@ -344,7 +343,6 @@ for (const s of located) {
     stop.code = s.token;
     if (stop.name !== s.name) stop.aliases.push(stop.name);
     stop.name = s.name;
-    stop.hasScreen = true;
     byToken.set(s.token, stop);
   }
 
