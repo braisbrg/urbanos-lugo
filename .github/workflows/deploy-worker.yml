@@ -23,7 +23,7 @@ on:
 
 permissions:
   contents: read
-  # deployctl exchanges this for a short-lived credential; nothing long-lived is stored.
+  # Exchanged for a short-lived credential at deploy time; nothing long-lived is stored.
   id-token: write
 
 concurrency:
@@ -39,7 +39,7 @@ jobs:
       # skip the deploy on a repository that had configured one.
       HAS_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

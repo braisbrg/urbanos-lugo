@@ -274,6 +274,8 @@ export const gl = {
     linesList: 'Seleccionar liña',
     controls: 'Filtros e capas',
     closeControls: 'Pechar filtros e capas',
+    expandLines: 'Ver todas as liñas dunha vez',
+    collapseLines: 'Amosar as liñas nunha fila',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',
     yourPosition: 'A túa posición actual',
     /* Coa precisión dentro: un punto só di «estás aquí» coa mesma seguridade viñas do GPS

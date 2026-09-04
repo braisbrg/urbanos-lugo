@@ -36,7 +36,7 @@ jobs:
     steps:
       # As in the deploy workflow: without this the token stays in .git/config for every
       # later step, where a compromised dependency's install script could read it.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

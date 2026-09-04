@@ -118,6 +118,20 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * being an ordinary sidebar and this state stops mattering.
    */
   const [sheetOpen, setSheetOpen] = useState(false);
+  /**
+   * Whether the line chips are unfolded into a grid.
+   *
+   * A single row that scrolls sideways is the wrong shape for twenty-four things you
+   * are trying to *find*: about five fit on a 375 px screen, the other nineteen are
+   * reached by swiping blind, and that swipe is the same gesture the map underneath
+   * wants for panning. It is a fine shape for the two or three you switch between,
+   * which is what it stays until you ask for the rest.
+   *
+   * Unfolded it wraps into a grid — every line visible at once, scannable, no gesture
+   * needed. The full list with names still lives in the sheet; this is the quick way
+   * to the one you can recognise by its badge.
+   */
+  const [linesExpanded, setLinesExpanded] = useState(false);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
   // Escape closes it and focus moves into it, the same as the menu and the QR reader.
   // The hook no-ops while `sheetOpen` is false, which is what it always is at `lg`, where
@@ -198,6 +212,43 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   // The list has to agree with the banner above it. It used to offer all twenty-four
   // while the map drew four, which read as the filter having done nothing.
   const listedLines = scopeLineIds ? lines.filter((l) => scopeLineIds.includes(l.id)) : lines;
+
+  /**
+   * The numbers that more than one line answers to.
+   *
+   * Four of the twenty-four are numbered 11 — Pías, Igrexa de Bóveda, Calde and Santa
+   * Comba — and the operator paints all four the same brown. In the sidebar rows that
+   * is fine: the row carries the full name beside the badge. On a chip, which is the
+   * badge and nothing else, it came out as four identical brown 11s in a row, asking
+   * the reader to memorise that the third one is Calde.
+   *
+   * Derived rather than written down, so a branch added or dropped upstream keeps up.
+   */
+  const sharedNumbers = useMemo(() => {
+    const seen = new Set<string>();
+    const shared = new Set<string>();
+    for (const line of lines) (seen.has(line.number) ? shared : seen).add(line.number);
+    return shared;
+  }, [lines]);
+
+  /**
+   * The far end of a line's name — "Ramón Ferreiro (Feminino) - Calde (Hospital)" — cut
+   * down to the part that tells one branch from another.
+   *
+   * Two trims, both from what the chips actually rendered. Line 11's own name ends in its
+   * number, so beside a badge that already says 11 it came out as "11 Pías 11". And the
+   * parenthetical names the stop rather than the branch — it is "Calde (Hospital)" because
+   * that is which Calde, not because the branch is the hospital — so it was spending the
+   * chip's width on the one part nobody needs and pushing "Santa Comba (Calfensa)" into
+   * an ellipsis.
+   */
+  const destinationOf = (line: BusLine) => {
+    let end = line.name.split(' - ').pop()?.trim() ?? '';
+    const numberSuffix = ` ${line.number}`;
+    if (end.endsWith(numberSuffix)) end = end.slice(0, -numberSuffix.length).trim();
+    const paren = end.indexOf(' (');
+    return paren > 0 ? end.slice(0, paren) : end;
+  };
 
   const t = translations(lang);
 
@@ -440,8 +491,10 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     // Asking for a line is asking to see it. The map opens with no trazados drawn, so
     // without this the first pick would frame the route and then draw nothing in it.
     setShowRoutes(true);
-    // And asking to see it is asking for the sheet to get out of the way of it.
+    // And asking to see it is asking for whatever is covering the map to get out of the
+    // way of it — the sheet, and the unfolded grid of chips.
     setSheetOpen(false);
+    setLinesExpanded(false);
 
     if (map && line.directions[0]?.pathCoordinates?.length) {
       const bounds = L.polyline(line.directions[0].pathCoordinates).getBounds();
@@ -586,46 +639,32 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.quickFilters}
             </span>
-            {/* Two columns, and "all" across the top: five buttons in three columns left
-                one row short and one of them stretched to fill the gap, which is the
-                lopsidedness you see before you can name it. Across the top also puts the
-                way back to everything above the four places rather than among them. */}
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                onClick={() => handlePresetFilter('all')}
-                aria-pressed={filterPreset === 'all'}
-                className={`col-span-2 ${presetButtonClass(filterPreset === 'all')}`}
-              >
-                {t.map.allLines}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('nearby')}
-                aria-pressed={filterPreset === 'nearby'}
-                className={presetButtonClass(filterPreset === 'nearby')}
-              >
-                {t.map.nearbyFilter}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('hula')}
-                aria-pressed={filterPreset === 'hula'}
-                className={presetButtonClass(filterPreset === 'hula')}
-              >
-                {t.map.filterHula}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('campus')}
-                aria-pressed={filterPreset === 'campus'}
-                className={presetButtonClass(filterPreset === 'campus')}
-              >
-                {t.map.filterCampus}
-              </button>
-              <button
-                onClick={() => handlePresetFilter('ceao')}
-                aria-pressed={filterPreset === 'ceao'}
-                className={presetButtonClass(filterPreset === 'ceao')}
-              >
-                {t.map.filterCeao}
-              </button>
+            {/* One scrolling row, not a three-row grid.
+                Five 44 px buttons stacked two across took about 150 px out of a sheet
+                whose entire job is to not cover the map; the row does the same work in
+                44. It is also the shape the reader has already met once — the line chips
+                over the map scroll exactly like this — rather than a second, different
+                arrangement of the same idea. Five near-identical button blocks collapse
+                into the list they always were. */}
+            <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
+              {(
+                [
+                  ['all', t.map.allLines],
+                  ['nearby', t.map.nearbyFilter],
+                  ['hula', t.map.filterHula],
+                  ['campus', t.map.filterCampus],
+                  ['ceao', t.map.filterCeao],
+                ] as const
+              ).map(([preset, label]) => (
+                <button
+                  key={preset}
+                  onClick={() => handlePresetFilter(preset)}
+                  aria-pressed={filterPreset === preset}
+                  className={`shrink-0 whitespace-nowrap ${presetButtonClass(filterPreset === preset)}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
             {filterPreset === 'stop' && linesHereStop && (
               <div className="mt-2.5 rounded-[10px] border border-accent bg-accent/10 p-3">
@@ -849,7 +888,11 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 its own colour. A second copy of those three words, sitting on top of the
                 map and covering it, was the redundant one. */}
             <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] lg:hidden">
-              <div className="no-scrollbar flex gap-1.5 overflow-x-auto px-3 py-2.5">
+              <div
+                className={`no-scrollbar flex gap-1.5 px-3 py-2.5 ${
+                  linesExpanded ? 'max-h-[45dvh] flex-wrap overflow-y-auto' : 'overflow-x-auto'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => handlePresetFilter('all')}
@@ -863,6 +906,25 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                   {t.map.allLines}
                 </button>
 
+                {/* Second, not last. At the end of a row that scrolls, the control for
+                    "stop making me scroll" is itself only reachable by scrolling. */}
+                <button
+                  type="button"
+                  onClick={() => setLinesExpanded((v) => !v)}
+                  aria-expanded={linesExpanded}
+                  aria-label={linesExpanded ? t.map.collapseLines : t.map.expandLines}
+                  title={linesExpanded ? t.map.collapseLines : t.map.expandLines}
+                  className="pointer-events-auto flex h-11 shrink-0 items-center gap-1 rounded-full border border-edge bg-bg/95 px-3.5 text-label font-bold text-ink-2 shadow-sm backdrop-blur-xs"
+                >
+                  <span className="tnum">{listedLines.length}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
+                      linesExpanded ? 'rotate-180' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+
                 {/* The number is the chip. A line's colour is how it is drawn on the map
                     and printed on the pole, so a coloured badge is the shortest thing that
                     still says which line it is — and twenty-four of them scroll in a strip
@@ -870,6 +932,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                     accessible name, since the badge alone reads as a bare number. */}
                 {listedLines.map((line) => {
                   const isSelected = activeLineId === line.id;
+                  // Only where the number cannot stand alone, so twenty of the chips stay
+                  // the width of their number and only the four 11s pay for the ambiguity.
+                  const branch = sharedNumbers.has(line.number) ? destinationOf(line) : '';
                   return (
                     <button
                       key={line.id}
@@ -878,12 +943,15 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                       aria-pressed={isSelected}
                       aria-label={line.name}
                       title={line.name}
-                      className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-3.5 text-label font-black text-white shadow-sm ${
+                      className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-label font-black text-white shadow-sm ${
                         isSelected ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''
                       }`}
                       style={{ backgroundColor: line.color }}
                     >
-                      {line.number}
+                      <span>{line.number}</span>
+                      {branch && (
+                        <span className="max-w-28 truncate font-semibold opacity-90">{branch}</span>
+                      )}
                     </button>
                   );
                 })}

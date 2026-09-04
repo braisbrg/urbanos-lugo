@@ -257,6 +257,8 @@ export const es: Dict = {
     linesList: 'Seleccionar línea',
     controls: 'Filtros y capas',
     closeControls: 'Cerrar filtros y capas',
+    expandLines: 'Ver todas las líneas de una vez',
+    collapseLines: 'Mostrar las líneas en una fila',
     geolocationUnavailable: 'La geolocalización no está disponible.',
     yourPosition: 'Tu ubicación actual',
     yourPositionAccurate: (metres: number) => `Tu posición, con precisión de ±${metres} m`,

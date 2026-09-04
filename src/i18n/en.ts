@@ -268,6 +268,8 @@ export const en: Dict = {
     linesList: 'Choose a line',
     controls: 'Filters and layers',
     closeControls: 'Close filters and layers',
+    expandLines: 'See every line at once',
+    collapseLines: 'Show the lines in one row',
     geolocationUnavailable: 'Geolocation is not available.',
     yourPosition: 'Your current position',
     yourPositionAccurate: (metres: number) => `Your position, accurate to ±${metres} m`,
