@@ -131,7 +131,8 @@ jobs:
               --source local \
               --runtime-mode dynamic \
               --entrypoint worker.js \
-              --do-not-use-detected-build-config
+              --do-not-use-detected-build-config \
+              --region eu
           fi
 
           $DEPLOY \
