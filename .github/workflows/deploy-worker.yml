@@ -93,18 +93,18 @@ jobs:
         working-directory: worker/dist
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-          # Optional, and named here rather than hardcoded. An organisation token already
-          # belongs to one organisation, so it can say which on its own; setting this is
-          # only needed for a user token that can reach several. Passing it wrong is worse
-          # than not passing it — the name shown in the dashboard header is not necessarily
-          # the slug the API answers to, and a mismatch is a NOT_FOUND, not a hint.
+          # Required, and it is the *slug*, not the name in the dashboard header. Those
+          # differ here — the header reads "brais" and the slug is "braisbrg" — and a
+          # mismatch comes back as NOT_FOUND with no hint as to what was expected. Leaving
+          # it out is not an option either: the organisation resolves to '' and the tool
+          # reports that an organisation called '' does not exist. `orgs list` below is
+          # what prints the real slug.
           DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
+        # `set -x` so the log shows the exact line that ran. Two red runs went on guessing
+        # what the shell had built; this makes the next one say.
         run: |
-          set -- --json --non-interactive --app urbanos-lugo-api --prod
-          if [ -n "$DENO_DEPLOY_ORG" ]; then
-            set -- --org "$DENO_DEPLOY_ORG" "$@"
-          fi
-          deno deploy -- "$@"
+          set -x
+          deno deploy -- --json --non-interactive --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api --prod
 
       # A NOT_FOUND on the organisation says what was not found and nothing about what
       # would have been. This turns the next red run into an answer instead of a guess.
