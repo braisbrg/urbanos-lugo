@@ -215,6 +215,17 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         });
 
         marker.bindPopup(popup);
+        /* Claim the click for the stop.
+           Nearly every stop stands on a route, and the route layer answers map clicks
+           anywhere within twenty pixels of a line. Both fired: this popup opened, and the
+           route layer's replaced it a moment later. So tapping a stop produced the list of
+           lines passing through instead of the stop itself — its times, its code, its own
+           lines — and there was no way to ask for the stop at all. Leaflet runs layer
+           handlers before the map's own, so marking the DOM event here is enough for the
+           route layer to stand down. */
+        marker.on('click', (e: L.LeafletMouseEvent) => {
+          (e.originalEvent as MouseEvent & { _stopClaimed?: boolean })._stopClaimed = true;
+        });
         group.addLayer(marker);
         markersRef.current[stop.id] = marker;
       });

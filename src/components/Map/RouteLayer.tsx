@@ -242,9 +242,15 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
 
           // A 3px line is hard to grab; an invisible fat line underneath widens the hit area.
           // A 3 px line is hard to grab; an invisible fat one underneath widens it.
+          /* No click handler on the route itself, deliberately.
+             It used to have one on both the line and this grab area, and that is what
+             made stops unreachable: layer handlers run before the map's, these two are
+             added before the stop layer's, so they fired and opened the route popup
+             before the stop had any chance to say the click was its. The map-level
+             handler below runs last, after every layer has had its say, which is exactly
+             where this decision belongs. The grab area still earns its place — it widens
+             what counts as "on the line" for hover and the tooltip. */
           const hitArea = L.polyline(path, { color: line.color, weight: 14, opacity: 0 });
-          hitArea.on('click', (e) => openLinesHere(e as L.LeafletMouseEvent));
-          polyline.on('click', (e) => openLinesHere(e as L.LeafletMouseEvent));
 
           group.addLayer(hitArea);
           group.addLayer(polyline);
@@ -254,6 +260,12 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     }
 
     const openLinesHere = (e: L.LeafletMouseEvent) => {
+      // A stop got there first. Stops sit on routes, so without this the route popup
+      // opened over the stop popup a moment after it and the stop was unreachable —
+      // its times, its code and its lines all behind a click that could not be made.
+      // The stop layer marks the DOM event from its own click handler, and Leaflet runs
+      // every layer handler before the map's, so the mark is always set by now.
+      if ((e.originalEvent as MouseEvent & { _stopClaimed?: boolean })?._stopClaimed) return;
       const click = map.latLngToContainerPoint(e.latlng);
       const hits = drawn
         .map(({ line, dir, path }) => {
@@ -274,9 +286,15 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
         .setContent(linesHerePopup(hits, lang, onSelectLineRef.current, onOpenLineRef.current))
         .openOn(map);
     };
-    // Leaflet hands a click to the topmost interactive layer and stops there, so the
-    // map-level listener never hears about a click that lands on a route. Every route
-    // asks the same question instead, and the map catches whatever falls between them.
+    // The only place a route click is answered.
+    //
+    // The comment that used to be here said the map never hears a click that lands on a
+    // layer, which is why each route also listened for itself. That is true of Leaflet's
+    // SVG renderer and not of the canvas one this map uses: the canvas renderer fires the
+    // layer events and the map's click both, so the per-route handlers were a second
+    // answer to the same click — and, being registered before the stop layer existed, the
+    // first one. Answering only here means every layer has already had its say, including
+    // the stop that was tapped.
     map.on('click', openLinesHere);
 
     return () => {
