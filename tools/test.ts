@@ -2326,4 +2326,45 @@ ok('"stops near me" answers nothing when you are not near any', () => {
   }
 });
 
+ok('a street can be found by any of the names people give it', () => {
+  // The operator writes "Avda. Américas 36". A reader types "Avenida das Américas", or
+  // "Avenida de las Américas", and used to get nothing: the abbreviation was expanded,
+  // the linking words were not, and neither spelling of them is in the data.
+  //
+  // The street types come from counting the dataset, not from guessing. 60 of the 417
+  // stops start with "Avda.", 36 with "Estda." and 10 with "Czda." — and the last two
+  // were missing from the expansion table, so forty-six stops could not be found by
+  // their street type at all. "Rúa" leads 107, more than any other word in the network,
+  // and a Spanish speaker in Lugo types "calle" for it.
+  const best = (query: string) =>
+    BUS_STOPS.map((s) => ({ s, score: calculateRelevanceScore(s.name, s.code, s.id, query, s.address) }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score)[0];
+
+  const cases: [query: string, mustMatch: RegExp][] = [
+    ['Avenida das Américas', /Américas/],
+    ['Avenida de las Américas', /Américas/],
+    ['Avda. Américas', /Américas/],
+    ['Estrada da Fonsagrada', /Fonsagrada/],
+    ['Carretera Fonsagrada', /Fonsagrada/],
+    ['Calzada das Gándaras', /Gándaras/],
+    ['Calle Leiteiras', /Leiteiras/],
+    ['Ronda da Muralla', /Muralla/],
+  ];
+
+  for (const [query, mustMatch] of cases) {
+    const hit = best(query);
+    assert(hit, `"${query}" finds no stop at all`);
+    assert(mustMatch.test(hit.s.name), `"${query}" resolves to ${hit.s.name}`);
+    // The filter and the score have to agree, or one hides what the other ranks.
+    assert(matchesQuery(hit.s.name, query), `"${query}" scores ${hit.s.name} but filters it out`);
+  }
+
+  // Dropping the linking words must not make unrelated names collide.
+  assert(
+    /Fonte dos Ranchos/.test(best('Fonte dos Ranchos')?.s.name ?? ''),
+    'a name made mostly of linking words stopped resolving to itself',
+  );
+});
+
 console.log(`\n${checks} checks passed\n`);
