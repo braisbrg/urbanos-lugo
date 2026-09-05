@@ -149,17 +149,28 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }, [shownOptions, endpoints]);
 
   /**
-   * Fetched whenever there is a connection, not only when the map path is asked for.
+   * The real pedestrian route for each walked hop, fetched only when the reader asks.
    *
-   * Accurate walking times and a drawn walking path were the same switch, which meant
-   * the headline duration was the 1.35 detour estimate unless somebody happened to open
-   * the map — off by up to 14 minutes on the awkward crossings. Those are two different
-   * questions: how long the walk takes should be as good as we can get it every time,
-   * and only the drawing is worth putting behind a toggle.
-   *
-   * Offline the estimate stands and the app keeps working, which is the point of it.
+   * One press buys both things it can buy: the path drawn on the map, and walking times
+   * measured on real pavement instead of the 1.35 detour estimate. Until then the app
+   * answers from its own arithmetic, offline, with nothing leaving the phone.
    */
   useEffect(() => {
+    // Only when asked. PRIVACY.md says, of routing.openstreetmap.de, "only when you ask
+    // for it", and names the button by its label; the menu says your location does not
+    // leave the phone unless you press it. This effect had lost its guard — it ran on
+    // every plan the moment there was a connection, so both ends of every walking leg,
+    // one of which can be the reader's own GPS fix, went to a third party without anybody
+    // pressing anything. A privacy promise the code does not keep is worse than not
+    // making it.
+    //
+    // The guard was removed for a real reason: the headline duration was the 1.35 detour
+    // estimate unless somebody opened the map, and that estimate is off by up to fourteen
+    // minutes on the awkward crossings. That was a fair complaint about the wrong thing.
+    // The button now buys both — the drawn path and the corrected times — and until it is
+    // pressed the app answers from its own estimate, offline and unshared, which is what
+    // it promises.
+    if (!detailedWalking) return;
     if (!allWalkHops.length || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
     const controller = new AbortController();
     Promise.all(
@@ -172,7 +183,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
         // Aborted, or the router is unreachable. The estimate is already on screen.
       });
     return () => controller.abort();
-  }, [allWalkHops]);
+  }, [allWalkHops, detailedWalking]);
 
   /** Real walking totals, once fetched: what the trip actually costs on foot. */
   const measuredWalk = React.useMemo(() => {
@@ -819,7 +830,9 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       lang={lang}
                       origin={endpoints.origin}
                       destination={endpoints.destination}
-                      walkPaths={walkPaths}
+                      /* Empty until asked, so "Ocultar" actually hides. The fetch is
+                         gated too, one screenful above; this is only the drawing. */
+                      walkPaths={detailedWalking ? walkPaths : {}}
                       className="w-full h-[280px] rounded-xl overflow-hidden border border-edge z-0"
                     />
                   </Suspense>
