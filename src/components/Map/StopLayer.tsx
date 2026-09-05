@@ -65,10 +65,23 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   const onTapStopRef = useRef(onTapStop);
   onTapStopRef.current = onTapStop;
 
-  const [zoom, setZoom] = useState<number>(() => map?.getZoom() ?? 14);
+  /*
+   * The rung, not the zoom.
+   *
+   * This kept the zoom level itself in state and listed it as a dependency of the effect
+   * below, so every step of the zoom control tore down all 417 markers and up to eighty
+   * label nodes and built them again — including 16 to 17, where nothing about what is
+   * drawn changes. That is the pause you feel when you try to pan straight after zooming.
+   *
+   * There are four rungs and they only change at four thresholds. rungFor returns the
+   * same object out of ZOOM_LADDER each time, so keeping the rung in state means React
+   * bails out on the identical reference and the rebuild happens on a boundary crossing
+   * rather than on every notch.
+   */
+  const [rung, setRung] = useState(() => rungFor(map?.getZoom() ?? 14));
   useEffect(() => {
     if (!map) return;
-    const sync = () => setZoom(map.getZoom());
+    const sync = () => setRung(rungFor(map.getZoom()));
     sync();
     map.on('zoomend', sync);
     return () => {
@@ -85,7 +98,6 @@ export const StopLayer: React.FC<StopLayerProps> = ({
     if (showStops) {
       const onLine =
         visibleLineIds === null ? stops : stops.filter((s) => s.lines.some((l) => visibleLineIds.includes(l)));
-      const rung = rungFor(zoom);
       // A filtered set is sparse enough to show whole at any zoom.
       const detailed = visibleLineIds !== null;
       const visible = detailed
@@ -160,7 +172,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       group.remove();
       markersRef.current = {};
     };
-  }, [map, stops, visibleLineIds, showStops, zoom, selectedStop?.id]);
+  }, [map, stops, visibleLineIds, showStops, rung, selectedStop?.id]);
 
   // Selection restyles one marker rather than rebuilding the layer.
   useEffect(() => {
@@ -175,7 +187,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       });
       if (isSelected) marker.bringToFront();
     });
-  }, [selectedStop?.id, zoom, colors]);
+  }, [selectedStop?.id, rung, colors]);
 
   return null;
 };

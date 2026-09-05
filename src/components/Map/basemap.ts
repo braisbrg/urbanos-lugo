@@ -199,6 +199,7 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   const baseOnAdd = layer.onAdd.bind(layer);
   const baseOnRemove = layer.onRemove.bind(layer);
   let observer: ResizeObserver | null = null;
+  let onVisible: (() => void) | null = null;
   let attached: L.Map | null = null;
   /** Which of the two styles is loaded. Asked by the tuning below, which only fits one. */
   let darkStyle = isDark;
@@ -223,7 +224,23 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     const box = layer.getContainer();
     if (box && (box.clientWidth === 0 || box.clientHeight === 0)) return;
     gl.resize();
+    /*
+     * Announced twice, on purpose, and this is the whole of a bug that looked like the
+     * tiles failing to load.
+     *
+     * requestAnimationFrame does not run while a page is not being painted — a
+     * backgrounded tab, an occluded window, a phone with the screen locked. So resize()
+     * ran and the move that re-aligns and repaints never did, leaving a map that had
+     * every byte it needed and had drawn none of it: the routes and stops were there on
+     * Leaflet's own canvas and the streets underneath were missing. Measured — six
+     * requests to OpenFreeMap before, six after, and a single resize event painted the
+     * whole basemap without fetching anything.
+     *
+     * The timeout is the half that survives a page nobody is looking at. Firing move
+     * twice costs a re-align Leaflet does constantly anyway.
+     */
     requestAnimationFrame(() => attached?.fire('move'));
+    setTimeout(() => attached?.fire('move'), 0);
   };
 
   /**
@@ -270,17 +287,49 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     // after this the observer below covers every later change.
     layer.getMaplibreMap()?.once('load', resync);
 
-    const container = layer.getContainer();
+    /*
+     * Watch Leaflet's own container, not the renderer's.
+     *
+     * This observed layer.getContainer() — the canvas wrapper the glue owns — and traced
+     * it: two callbacks, both reporting 0x0, both bailing on the zero-size guard, and
+     * never a third. The element is absolutely positioned inside a pane, so it does not
+     * report a size change the observer can see; the net that exists to catch a map that
+     * has not painted was itself never firing after the first frame.
+     *
+     * The map's own container is the div this app renders and sizes, so it is the box
+     * that actually changes when the tab opens, the banner appears or the phone rotates.
+     */
+    const container = map.getContainer();
     if (container && typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(resync);
       observer.observe(container);
     }
+
+    /*
+     * Coming back to a page that was left open.
+     *
+     * A phone locked for a while and unlocked again is the case this is for: nothing
+     * resized, so the observer above has nothing to say, and the page may be restored
+     * straight out of the back/forward cache, where not a single frame was ever rendered
+     * in between. Both events are cheap and resync does nothing when the container has no
+     * size, so asking twice costs nothing and covers the browsers that only send one.
+     */
+    onVisible = () => {
+      if (document.visibilityState === 'visible') resync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('pageshow', onVisible);
     return added;
   };
 
   layer.onRemove = (map: L.Map) => {
     observer?.disconnect();
     observer = null;
+    if (onVisible) {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('pageshow', onVisible);
+      onVisible = null;
+    }
     attached = null;
     return baseOnRemove(map);
   };
