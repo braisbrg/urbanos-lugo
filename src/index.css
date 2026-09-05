@@ -239,20 +239,26 @@
   }
 
   /**
-   * The map, filling what is left of a phone screen: everything but the search bar above
-   * it and the tab bar below. Same reasoning and same shape as the rule above — vh first,
-   * dvh in a @supports — and for the same reason it cannot be two Tailwind height
-   * utilities on one element.
+   * The map, filling what is left of a phone screen.
+   *
+   * It used to subtract a hardcoded 8.25rem from the viewport — the search bar and the tab
+   * bar, measured once and written down. That is a guess about the chrome, and it was
+   * wrong the moment anything else appeared above the map: the out-of-service banner is
+   * about 160 px tall, so at night the map hung 100 px past the bottom of the screen and
+   * took the zoom control, the locate button and the attribution with it. An attribution
+   * behind the tab bar is not a visible attribution, which makes that a licence problem
+   * and not only a layout one.
+   *
+   * Nothing is subtracted now. `main` is already `flex-1` in the shell's column, so it is
+   * exactly the space left over, banner or no banner; the map simply fills it. The three
+   * boxes between the two carry `h-full` so the percentage has an unbroken chain to
+   * resolve against — `display: contents` on the wrapper between them generates no box, so
+   * it does not interrupt it.
    *
    * It stops at `sm`, where the map goes back to being a card in a two-column page.
    */
   .h-map-viewport {
-    height: calc(100vh - 8.25rem);
-  }
-  @supports (height: 100dvh) {
-    .h-map-viewport {
-      height: calc(100dvh - 8.25rem);
-    }
+    height: 100%;
   }
   @media (min-width: 40rem) {
     .h-map-viewport {

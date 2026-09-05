@@ -41,6 +41,27 @@ const EDGE_SECONDS = { alerts: 30 * 60, operator: 20 };
  */
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '';
 
+/**
+ * Never store an answer no browser will accept.
+ *
+ * There are two caches in front of this, and only one of them is ours. The cache below is
+ * keyed with ALLOWED_ORIGIN in the key, precisely so that changing it cannot serve an
+ * answer carrying the old one. Deno's own edge cache is the other, it obeys the
+ * `cache-control` header written here, and it keys on the request URL — which has no
+ * origin in it. So the careful key protected nothing at the layer that mattered.
+ *
+ * It showed up the first time the app went live against this worker: the deployment had
+ * run once with ALLOWED_ORIGIN unset, that answer went out with an empty allow-origin
+ * header, and the edge held it for the full half hour. Measured on the published site —
+ * the plain URL came back `age: 151` with no allow-origin at all, while the same URL with
+ * a cache-buster came back correct.
+ *
+ * `Vary: Origin` does not help: the requests were identical, and what differed was this
+ * deployment's configuration. So the rule is simpler than a cache key — an answer that
+ * cannot be read by the site it is for is not worth keeping, anywhere.
+ */
+const cacheableFor = (maxAge: number): number => (ALLOWED_ORIGIN ? maxAge : 0);
+
 const json = (body: unknown, status: number, maxAge: number): Response =>
   new Response(JSON.stringify(body), {
     status,
@@ -51,7 +72,9 @@ const json = (body: unknown, status: number, maxAge: number): Response =>
       // promises nothing today. It is here for the day somebody echoes the request's
       // Origin instead, when its absence would be a cache-poisoning bug.
       vary: 'Origin',
-      'cache-control': `public, max-age=${maxAge}`,
+      // no-store, not a short max-age: an answer without a usable allow-origin is not
+      // stale, it is unusable, and the point is that nothing keeps it at all.
+      'cache-control': cacheableFor(maxAge) > 0 ? `public, max-age=${cacheableFor(maxAge)}` : 'no-store',
       'x-content-type-options': 'nosniff',
     },
   });
@@ -82,7 +105,7 @@ export async function handle(request: Request): Promise<Response> {
     // same error, and both upstreams fail in ways that pass. Awaited rather than deferred
     // to a runtime-specific waitUntil: it is a local write, and correctness beats the
     // millisecond.
-    if (status === 200 && maxAge > 0) await cache.put(cacheKey, res.clone());
+    if (status === 200 && cacheableFor(maxAge) > 0) await cache.put(cacheKey, res.clone());
     return res;
   };
 

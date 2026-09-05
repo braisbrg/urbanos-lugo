@@ -631,9 +631,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   return (
     /* No page padding on a phone: the map is the screen there, edge to edge. The padded
        page comes back at `sm`, where the two-column layout starts to make sense. */
-    <div className="max-w-7xl mx-auto px-0 py-0 sm:px-6 sm:py-5 lg:px-8">
+    <div className="h-full sm:h-auto max-w-7xl mx-auto px-0 py-0 sm:px-6 sm:py-5 lg:px-8">
       {/* 2-Column Responsive Layout: Options on Left, Map on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="h-full sm:h-auto grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* The scrim, so it is obvious the map is behind and not gone, and so tapping
             anywhere off the sheet closes it. A button and not a div: closing is an action,
             and this is the target most people reach for first. */}
@@ -930,7 +930,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
         </div>
 
         {/* Right Column: Interactive Map Canvas */}
-        <div className="order-1 lg:order-none lg:col-span-8">
+        <div className="h-full sm:h-auto order-1 lg:order-none lg:col-span-8">
           {/* The map is the screen on a phone.
               It used to be a 62vh card with a filter row peeking underneath, which meant
               the tab called "Mapa" showed rather less than half a map, and the half it
