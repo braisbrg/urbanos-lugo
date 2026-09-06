@@ -2547,6 +2547,121 @@ ok('"stops near me" answers nothing when you are not near any', () => {
   }
 });
 
+ok('a line runs on the days the operator says it runs, and on no others', () => {
+  // Sixteen directions produce no expeditions on a Sunday -- 1.1, 1.3, 3.1, 5.1 and the
+  // four variants of the 11, both ways -- and an audit run on a Sunday cannot tell that
+  // apart from buildRuns quietly dropping them. The operator's own sentence settles it:
+  // those eight lines say "De lunes a viernes (laborables)" and the other sixteen say
+  // "Todos los días". So the question is not how many ran, it is whether what we build
+  // matches what the source says, line by line.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const raw = JSON.parse(readFileSync(join(root, 'data/official-raw.json'), 'utf8'));
+  const source = new Map<string, { days: string }>(
+    (raw.lines as { id: string; days: string }[]).map((l) => [l.id, l]),
+  );
+
+  let weekdayOnly = 0;
+  let everyDay = 0;
+  for (const line of BUS_LINES) {
+    const said = source.get(line.id)?.days;
+    assert(said, `${line.number} is in the dataset but not in the scrape`);
+
+    const built = new Set((line.services ?? []).flatMap((s) => s.days));
+    const sundayRuns = line.directions.reduce(
+      (n, _, i) => n + buildRuns(line, i, BUS_STOPS, 'domingo').length,
+      0,
+    );
+    const weekdayRuns = line.directions.reduce(
+      (n, _, i) => n + buildRuns(line, i, BUS_STOPS, 'laborable').length,
+      0,
+    );
+    assert(weekdayRuns > 0, `${line.number} produces no weekday expedition at all`);
+
+    if (/laborable/i.test(said!)) {
+      weekdayOnly++;
+      assert(!built.has('domingo'), `${line.number} is weekdays-only in the source but was built with a Sunday`);
+      assert(sundayRuns === 0, `${line.number} is weekdays-only but produced ${sundayRuns} Sunday expedition(s)`);
+    } else {
+      everyDay++;
+      assert(built.has('domingo'), `${line.number} says "${said}" but no Sunday service was built`);
+      assert(sundayRuns > 0, `${line.number} says "${said}" but produced no Sunday expedition`);
+    }
+  }
+  // Counted from the source, so a line changing its calendar shows up here as a number
+  // rather than as a silently emptier Sunday.
+  assert(weekdayOnly === 8, `${weekdayOnly} lines are weekdays-only in the scrape, not 8`);
+  assert(everyDay === 16, `${everyDay} lines run every day in the scrape, not 16`);
+});
+
+ok('every stop the operator lists is on the route, or dropped for a stated reason', () => {
+  // The audit reported directions whose two halves differ -- 3.1 33/23, 13 15/7 -- with no
+  // way to tell a genuinely one-way itinerary from stops the build had lost. Rebuilding the
+  // itinerary from the scrape answers it: every stop the operator lists is either kept, or
+  // dropped for one of exactly two reasons, and both are countable.
+  //
+  // It found a real loss. Twelve of the 1198 scraped entries carry no coordinates, and one
+  // of them -- ps 1200, token uilP -- is Rda. Muralla 56 (Sindicatos), where fourteen lines
+  // call. Line 13's return direction had it in the operator's itinerary and not in ours.
+  // buildDataset now recovers a tokened pole; the other eleven have no position and no
+  // token any located pole shares, so they cannot be placed from this source at all.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const raw = JSON.parse(readFileSync(join(root, 'data/official-raw.json'), 'utf8'));
+  const source = new Map<string, { directions: { stops: number[] }[] }>(
+    (raw.lines as { id: string; directions: { stops: number[] }[] }[]).map((l) => [l.id, l]),
+  );
+
+  const canonicalByPs = new Map<number, string>();
+  for (const stop of BUS_STOPS) for (const ps of stop.officialIds ?? []) canonicalByPs.set(ps, stop.id);
+
+  let repeatedPole = 0;
+  let unplaceable = 0;
+  for (const line of BUS_LINES) {
+    const src = source.get(line.id);
+    assert(src, `${line.number} is in the dataset but not in the scrape`);
+    line.directions.forEach((direction, i) => {
+      const listed = src!.directions[i]?.stops ?? [];
+      assert(listed.length > 0, `${line.number}/${direction.id} has no itinerary in the scrape`);
+
+      const kept: string[] = [];
+      for (const ps of listed) {
+        const canonical = canonicalByPs.get(ps);
+        if (!canonical) {
+          unplaceable++;
+          continue;
+        }
+        if (kept.includes(canonical)) {
+          repeatedPole++;
+          continue;
+        }
+        kept.push(canonical);
+      }
+
+      // 5.1's return has its order repaired against the surveyed itinerary, so the built
+      // sequence is a permutation of this one rather than this one. Everywhere else the
+      // two must agree exactly, order included.
+      const sameSet = kept.length === direction.stops.length && kept.every((id) => direction.stops.includes(id));
+      assert(
+        sameSet,
+        `${line.number}/${direction.id}: the scrape gives ${kept.length} stops, the dataset has ${direction.stops.length}`,
+      );
+    });
+  }
+
+  // Both numbers are the whole of the asymmetry. Anything else dropping a stop moves one
+  // of them, and a stop that quietly stops being placeable moves the second.
+  assert(repeatedPole === 3, `${repeatedPole} stops were dropped as a repeated pole, not 3`);
+  assert(unplaceable === 11, `${unplaceable} stops could not be placed at all, not 11`);
+
+  // The one the token recovered, named rather than counted: it is the busiest interchange
+  // in the city and it went missing from a line that calls there.
+  const thirteen = BUS_LINES.find((l) => l.number === '13')!;
+  const sindicatos = BUS_STOPS.find((s) => s.officialToken === 'uilP')!;
+  assert(
+    thirteen.directions[1].stops.includes(sindicatos.id),
+    'line 13 no longer calls at Rda. Muralla 56 (Sindicatos) on the way back',
+  );
+});
+
 ok('the bounded edit distance agrees with the matrix it replaced', () => {
   // The fuzzy tier of the search stopped computing a distance and started answering
   // "within this many edits", which let it skip a pair on a length difference alone and
