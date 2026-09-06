@@ -38,6 +38,8 @@ export const es: Dict = {
     qr: 'Escanear código QR del poste',
     clear: 'Limpiar',
     none: 'Nada coincide con esa búsqueda.',
+    places: 'Sitios',
+    nearestStop: (stop: string, metres: number) => `${stop} · a ${metres} m a pie`,
   },
 
   stopHome: {

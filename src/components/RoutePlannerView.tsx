@@ -63,12 +63,15 @@ interface Suggestion {
 interface RoutePlannerViewProps {
   onSelectStop: (stop: BusStop) => void;
   onSelectLine: (line: BusLine) => void;
+  /** A place picked in the search box. The counter makes asking twice two requests. */
+  destinationRequest?: { query: string; nonce: number } | null;
   lang: Lang;
 }
 
 export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   onSelectStop,
   onSelectLine,
+  destinationRequest,
   lang,
 }) => {
   const [originQuery, setOriginQuery] = useState<string>('Fonte dos Ranchos');
@@ -271,6 +274,21 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     });
     setActiveInput(null);
   };
+
+  /**
+   * A place chosen in the search box arrives here as the destination, already planned.
+   *
+   * Landing on the form with the field filled and no answer would make the search feel
+   * like it had lost the thing you asked for, so the trip is calculated on arrival — from
+   * whatever origin is already set, which the reader can then change.
+   */
+  useEffect(() => {
+    if (!destinationRequest) return;
+    setDestQuery(destinationRequest.query);
+    handleCalculate(originQuery, destinationRequest.query);
+    // Only when a new request arrives: `originQuery` changing is the reader typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destinationRequest?.nonce]);
 
   const handleSwap = () => {
     const temp = originQuery;

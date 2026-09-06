@@ -125,6 +125,13 @@ export default function App() {
   }, [activeTab]);
 
   const [lineRequest, setLineRequest] = useState(0);
+  /**
+   * A place chosen in the search box, on its way to the planner as a destination.
+   *
+   * The counter is the same trick `lineRequest` uses: asking for the same place twice in
+   * a row has to be two requests, or the second tap does nothing.
+   */
+  const [placeRequest, setPlaceRequest] = useState<{ query: string; nonce: number } | null>(null);
   const openLine = (line: BusLine) => {
     setSelectedLine(line);
     setLineRequest((n) => n + 1);
@@ -301,6 +308,10 @@ export default function App() {
         onSelectLine={(line) => {
           openLine(line);
         }}
+        onSelectPlace={(query) => {
+          setPlaceRequest((prev) => ({ query, nonce: (prev?.nonce ?? 0) + 1 }));
+          setActiveTab('plan');
+        }}
         onOpenQrScanner={() => setIsQrModalOpen(true)}
         onOpenMenu={() => setIsMenuOpen(true)}
         lang={lang}
@@ -438,6 +449,7 @@ export default function App() {
             onSelectLine={(line) => {
               openLine(line);
             }}
+            destinationRequest={placeRequest}
             lang={lang}
           />
         )}

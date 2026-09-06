@@ -1007,3 +1007,50 @@ Cero achados.
   disparates todos en 400 ou 404; o limitador refusa 14 de 40.
 
 Cero achados. **Dúas roldas limpas seguidas.**
+
+---
+
+## Rolda 12: os sitios escritos a man, contra OpenStreetMap
+
+A lista de `LUGO_LANDMARKS` en `src/utils/transitEngine.ts` levaba enriba o comentario
+«calibrated». Ninguén o comprobara nunca. Mentres eses 28 puntos só se lían no
+autocompletado do planificador, un erro custaba un paseo lixeiramente mal medido; ao
+poñelos no buscador principal, cada un pasa a ser a resposta a unha pregunta que alguén
+fixo, así que a afirmación ten que ser certa.
+
+`pnpm check:landmarks` (novo, `tools/checkLandmarks.ts`) pregúntalle a Overpass por todo o
+que en Lugo leve as palabras distintivas de cada nome e di a que distancia está o noso
+punto do máis próximo. Non decide: «Praza Maior» é unha praza de cen metros e o seu nó en
+OSM non é o seu centro. Di cales merecen unha ollada, e a raia está nos 150 m — por
+debaixo, os dous describen o mesmo sitio desde esquinas distintas; por riba, un dos dous
+está mal.
+
+**Oito dos 28 estaban mal por riba da raia.** Canto se moveu cada un, medido con
+`metresBetween` entre a coordenada vella e a que dá OSM:
+
+| Movemento | Sitio |
+| ---: | :--- |
+| 841 m | A Piringalla (Rúa Lavandeira) |
+| 608 m | Intercentros Campus Universitario USC |
+| 391 m | Avenida de Magoi |
+| 356 m | Rolda das Fontiñas |
+| 326 m | Polígono Industrial O Ceao (ITV) |
+| 295 m | Parque da Milagrosa |
+| 184 m | Avenida das Américas |
+| 183 m | Avenida da Coruña |
+
+O peor era unha errata de lonxitude: A Piringalla estaba en `-7.5582` cando é `-7.56855`,
+o outro lado da cidade. E dous nomes compartían punto — «Parque da Milagrosa» e «Avenida
+da Coruña» estaban ambos en `43.0205,-7.5606`, así que dous sitios que o lector pode pedir
+eran un só. Iso xa non depende da rede: `pnpm test` comproba que non hai dous sitios
+escritos no mesmo punto.
+
+Para as rúas o punto é un da propia vía, non un medio nocional: unha rúa é longa.
+
+### Dous falsos positivos, e o que os causou
+
+Na primeira execución «Pazo de Feiras e Congresos» apareceu como inexistente en OSM.
+Tiña **todas** as súas palabras na lista de xenéricas, así que a consulta buscaba por nada.
+A lista recortouse: só se descartan as ligazóns, a cidade e os catro tipos de vía que
+encabezan medio mapa. Buscar de máis non fai dano aquí, porque os candidatos ordénanse por
+distancia e só se imprimen os tres máis próximos.

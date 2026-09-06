@@ -35,7 +35,20 @@ export function estimateWalk(straightLineMeters: number): { meters: number; minu
   return { meters, minutes: Math.max(1, Math.round(meters / WALK_METRES_PER_MINUTE)) };
 }
 
-// Calibrated Key Points of Interest / Streets in Lugo for intelligent geocoding like Moovit/Maps
+/**
+ * The places people name instead of a stop, and where they are.
+ *
+ * These are written by hand — the comment here used to say "calibrated", which was a
+ * claim nobody had checked. `pnpm check:landmarks` now checks it, asking Overpass for
+ * anything in Lugo carrying each name and reporting how far our point is from it. The
+ * first run found eight wrong by more than 150 m, the worst by 841 m — a longitude typo
+ * that put A Piringalla the far side of the city — and two entries sharing one point,
+ * so "Parque da Milagrosa" and "Avenida da Coruña" resolved to the same place.
+ *
+ * Each coordinate below is now the one OSM gives for that feature, and the distances are
+ * in `design/REXISTRO-probas.md`. A street is long, so for those it is a point on the
+ * way itself rather than a notional middle.
+ */
 export const LUGO_LANDMARKS = [
   { name: 'Praza Maior / Concello de Lugo', lat: 43.0098, lng: -7.5562, zone: 'Casco Histórico' },
   { name: 'Catedral de Lugo (Porta de Santiago)', lat: 43.0084, lng: -7.5583, zone: 'Casco Histórico' },
@@ -45,24 +58,24 @@ export const LUGO_LANDMARKS = [
   { name: 'Estación de Ferrocarril Adif (Praza Conde Fontao)', lat: 43.0151, lng: -7.55216, zone: 'Estación Tren' },
   { name: 'Centro Comercial As Termas', lat: 43.03682, lng: -7.56956, zone: 'As Termas' },
   { name: 'Parque Rosalía de Castro', lat: 43.00581, lng: -7.55957, zone: 'Sur' },
-  { name: 'Parque da Milagrosa', lat: 43.0205, lng: -7.5606, zone: 'A Milagrosa' },
+  { name: 'Parque da Milagrosa', lat: 43.02229, lng: -7.56328, zone: 'A Milagrosa' },
   { name: 'Pazo de Feiras e Congresos de Lugo', lat: 43.00312, lng: -7.56828, zone: 'Ribeira Miño' },
   { name: 'Complexo Deportivo Palomar / Ancar', lat: 43.00391, lng: -7.57247, zone: 'Oeste' },
   { name: 'Piscina Municipal As Pedreiras', lat: 42.99154, lng: -7.54363, zone: 'Acea de Olga' },
   { name: 'Pazo Provincial dos Deportes (CB Breogán)', lat: 42.99125, lng: -7.54534, zone: 'Acea de Olga' },
   { name: 'Centro Comercial Abella (Antigo)', lat: 43.01502, lng: -7.57388, zone: 'Casás' },
-  { name: 'Intercentros Campus Universitario USC', lat: 42.9935, lng: -7.5538, zone: 'Campus' },
+  { name: 'Intercentros Campus Universitario USC', lat: 42.99256, lng: -7.54643, zone: 'Campus' },
   { name: 'Facultade de Veterinaria USC', lat: 42.9948, lng: -7.5463, zone: 'Campus' },
   { name: 'Hospital Lucus Augusti (HULA)', lat: 43.0197, lng: -7.5327, zone: 'HULA' },
-  { name: 'Rolda das Fontiñas', lat: 43.0065, lng: -7.5428, zone: 'Fontiñas' },
-  { name: 'Avenida da Coruña', lat: 43.0205, lng: -7.5606, zone: 'A Milagrosa' },
+  { name: 'Rolda das Fontiñas', lat: 43.00688, lng: -7.54715, zone: 'Fontiñas' },
+  { name: 'Avenida da Coruña', lat: 43.01974, lng: -7.56259, zone: 'A Milagrosa' },
   { name: 'Avenida Ramón Ferreiro', lat: 43.0048, lng: -7.5528, zone: 'Sur' },
-  { name: 'Avenida de Magoi', lat: 42.9982, lng: -7.5492, zone: 'Fingoi' },
-  { name: 'Avenida das Américas', lat: 43.0118, lng: -7.5696, zone: 'Oeste' },
+  { name: 'Avenida de Magoi', lat: 42.99478, lng: -7.55032, zone: 'Fingoi' },
+  { name: 'Avenida das Américas', lat: 43.01099, lng: -7.56763, zone: 'Oeste' },
   { name: 'Fonte dos Ranchos', lat: 43.0135, lng: -7.5672, zone: 'Oeste' },
   { name: 'Barrio da Ponte / Ponte Romana', lat: 43.0012, lng: -7.5662, zone: 'A Ponte' },
-  { name: 'A Piringalla (Rúa Lavandeira)', lat: 43.0265, lng: -7.5582, zone: 'A Piringalla' },
-  { name: 'Polígono Industrial O Ceao (ITV)', lat: 43.0440, lng: -7.5692, zone: 'O Ceao' },
+  { name: 'A Piringalla (Rúa Lavandeira)', lat: 43.02649, lng: -7.56855, zone: 'A Piringalla' },
+  { name: 'Polígono Industrial O Ceao (ITV)', lat: 43.04672, lng: -7.56771, zone: 'O Ceao' },
   { name: 'Polígono As Gándaras', lat: 43.0340, lng: -7.5551, zone: 'As Gándaras' },
   { name: 'Cemiterio Municipal San Froilán', lat: 42.9855, lng: -7.5807, zone: 'Cemiterio' },
 ];

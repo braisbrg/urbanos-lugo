@@ -694,6 +694,21 @@ ok('every quick destination points at a real, distinct place', () => {
   }
 });
 
+ok('no two landmarks are written at the same point', () => {
+  // "Parque da Milagrosa" and "Avenida da Coruña" both carried 43.0205,-7.5606, so two
+  // places a reader can ask for were one place. The quick-destination check above only
+  // covers the eight on the chips; these 28 are the whole list the search offers, and
+  // they are typed by hand. `pnpm check:landmarks` measures them against OSM, which
+  // needs the network; this only asks that no two of them are literally the same point.
+  const seen = new Map<string, string>();
+  for (const landmark of LUGO_LANDMARKS) {
+    const point = `${landmark.lat},${landmark.lng}`;
+    const already = seen.get(point);
+    assert(!already, `"${landmark.name}" and "${already}" are both at ${point}`);
+    seen.set(point, landmark.name);
+  }
+});
+
 ok('a place the app does not know resolves to nothing, not to a random stop', () => {
   // It used to fall back to BUS_STOPS[0] while keeping the typed text as the name, so a
   // query the app never understood came back as a confident itinerary from somewhere

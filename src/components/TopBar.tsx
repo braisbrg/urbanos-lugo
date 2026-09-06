@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Menu, QrCode, Search, Star, X } from 'lucide-react';
+import { Landmark, MapPin, Menu, QrCode, Search, Star, X } from 'lucide-react';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
+import { LUGO_LANDMARKS, getNearestStopToCoords } from '../utils/transitEngine';
 import { BusLine, BusStop } from '../types';
 import { Lang, translations } from '../i18n';
 
 interface TopBarProps {
   onSelectStop: (stop: BusStop) => void;
   onSelectLine: (line: BusLine) => void;
+  /** A named place, which is not a stop: the planner is where you can do something with it. */
+  onSelectPlace: (query: string) => void;
   onOpenQrScanner: () => void;
   onOpenFavorites: () => void;
   savedCount: number;
@@ -25,6 +28,7 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   onSelectStop,
   onSelectLine,
+  onSelectPlace,
   onOpenQrScanner,
   onOpenFavorites,
   savedCount,
@@ -73,6 +77,29 @@ export const TopBar: React.FC<TopBarProps> = ({
         .sort((a, b) => b.score - a.score)
         .slice(0, 4)
         .map((x) => x.l)
+    : [];
+
+  /**
+   * The places that are not stops: the cathedral, the bus station, the campus.
+   *
+   * The planner knew all 28 of them and this box knew none, so the same word worked in
+   * one field and not the other — and this is the box the placeholder promises will find
+   * a street. Measured before adding them: 24 of the 28 names, and fourteen of the words
+   * people actually type for them ("catedral", "concello", "estación de autobuses",
+   * "praza maior"), returned nothing here at all.
+   *
+   * Each row carries the nearest stop and the walk to it, because a place is not a stop
+   * and the difference matters: As Termas is 417 m from the stop that serves it, the Pazo
+   * de Feiras 421 m. Silently opening that stop's board would answer a question nobody
+   * asked. Tapping goes to the planner, which is the screen that can do something with a
+   * destination.
+   */
+  const places = q
+    ? LUGO_LANDMARKS.map((lm) => ({ lm, score: calculateRelevanceScore(lm.name, '', '', q, lm.zone) }))
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(({ lm }) => ({ lm, ...getNearestStopToCoords(lm.lat, lm.lng) }))
     : [];
 
   return (
@@ -139,7 +166,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {open && q.length > 0 && (
         <div className="absolute inset-x-3.5 top-full z-[1300] mt-1 max-h-[60vh] overflow-y-auto rounded-xl border border-edge bg-bg shadow-lg">
-          {stops.length === 0 && lines.length === 0 && (
+          {stops.length === 0 && lines.length === 0 && places.length === 0 && (
             <p className="px-4 py-4 text-body text-ink-3">{t.search.none}</p>
           )}
 
@@ -198,6 +225,33 @@ export const TopBar: React.FC<TopBarProps> = ({
               </span>
               <span title={line.name} className="min-w-0 flex-1 truncate text-body font-medium">
                 {line.name}
+              </span>
+            </button>
+          ))}
+
+          {places.length > 0 && (
+            <div className="tnum px-4 pb-1.5 pt-3 text-label font-medium tracking-[0.05em] text-ink-3">
+              {t.search.places.toUpperCase()}
+            </div>
+          )}
+          {places.map(({ lm, stop, walkMeters }) => (
+            <button
+              key={lm.name}
+              onClick={() => {
+                onSelectPlace(lm.name);
+                setQuery('');
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-3 border-t border-line-soft px-4 py-3 text-left"
+            >
+              <Landmark className="h-[19px] w-[19px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <span title={lm.name} className="block truncate text-emph font-semibold">
+                  {lm.name}
+                </span>
+                <span className="block truncate text-label text-ink-3">
+                  {t.search.nearestStop(stop.name, walkMeters)}
+                </span>
               </span>
             </button>
           ))}

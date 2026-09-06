@@ -49,6 +49,8 @@ export const en: Dict = {
     qr: 'Scan the QR code on the stop pole',
     clear: 'Clear',
     none: 'Nothing matches that search.',
+    places: 'Places',
+    nearestStop: (stop: string, metres: number) => `${stop} · ${metres} m walk`,
   },
 
   stopHome: {

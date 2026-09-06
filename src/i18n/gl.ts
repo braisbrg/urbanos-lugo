@@ -52,6 +52,9 @@ export const gl = {
     qr: 'Escanear código QR do poste',
     clear: 'Limpar',
     none: 'Nada coincide con esa busca.',
+    places: 'Sitios',
+    /** A place is not a stop, so the row says which stop serves it and how far it is. */
+    nearestStop: (stop: string, metres: number) => `${stop} · a ${metres} m a pé`,
   },
 
   stopHome: {
