@@ -19,7 +19,7 @@ import { REPO_URL } from '../src/project';
 import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable } from '../src/utils/clock';
-import { calculateRelevanceScore, matchesQuery, normalizeText } from '../src/utils/searchUtils';
+import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import { poleCode } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
@@ -1741,7 +1741,7 @@ ok('a query with nothing left in it matches nothing', () => {
     assert(normalizeText(q) === '', `"${q}" does not normalise to empty; wrong test case`);
   }
   for (const q of empties) {
-    const scored = BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, q, s.address) > 0);
+    const scored = BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, q, s.zone) > 0);
     assert(scored.length === 0, `"${q}" scores against ${scored.length} stops, e.g. ${scored[0]?.name}`);
     const matched = BUS_STOPS.filter((s) => matchesQuery(s.name, q));
     assert(matched.length === 0, `"${q}" word-matches ${matched.length} stops, e.g. ${matched[0]?.name}`);
@@ -1750,7 +1750,7 @@ ok('a query with nothing left in it matches nothing', () => {
   // Real searches, unchanged. Accents in both directions and the abbreviation the
   // operator prints ("Rda.") against the word a person types ("Ronda").
   const finds = (q: string) =>
-    BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, q, s.address) > 0).length;
+    BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, q, s.zone) > 0).length;
   for (const q of ['mur', 'muralla', 'Gándaras', 'gandaras', 'Ronda Muralla', 'termas', 'pedrei']) {
     assert(finds(q) > 0, `"${q}" no longer finds anything`);
   }
@@ -2366,6 +2366,90 @@ ok('"stops near me" answers nothing when you are not near any', () => {
   }
 });
 
+ok('the bounded edit distance agrees with the matrix it replaced', () => {
+  // The fuzzy tier of the search stopped computing a distance and started answering
+  // "within this many edits", which let it skip a pair on a length difference alone and
+  // give up on a row that is already over budget. Both shortcuts are exact, and both are
+  // the kind of exact that is easy to get subtly wrong -- a bound that is one too tight
+  // is a search that quietly stops finding the typo it was written for.
+  //
+  // So: the plain matrix, kept here and nowhere else, checked against the shipped
+  // version over every word of every stop name in the network.
+  const matrix = (a: string, b: string): number => {
+    const grid: number[][] = [];
+    for (let i = 0; i <= b.length; i++) grid[i] = [i];
+    for (let j = 0; j <= a.length; j++) grid[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        grid[i][j] =
+          b.charAt(i - 1) === a.charAt(j - 1)
+            ? grid[i - 1][j - 1]
+            : Math.min(grid[i - 1][j - 1] + 1, grid[i][j - 1] + 1, grid[i - 1][j] + 1);
+      }
+    }
+    return grid[b.length][a.length];
+  };
+
+  const words = [...new Set(BUS_STOPS.flatMap((s) => normalizeText(s.name).split(' ')))].filter(Boolean);
+  // Real words against real words, and against the typos somebody actually makes: a
+  // letter dropped, a letter doubled, two letters swapped, and the empty string.
+  const queries = [
+    '',
+    ...words.slice(0, 60).flatMap((w) => [
+      w,
+      w.slice(1),
+      w[0] + w,
+      w.length > 2 ? w[1] + w[0] + w.slice(2) : w,
+    ]),
+  ];
+
+  let pairs = 0;
+  for (const query of queries) {
+    for (const word of words) {
+      for (const max of [1, 2]) {
+        pairs++;
+        const bounded = withinEditDistance(word, query, max);
+        const plain = matrix(word, query) <= max;
+        assert(
+          bounded === plain,
+          `withinEditDistance("${word}", "${query}", ${max}) said ${bounded}, the matrix says ${plain}`,
+        );
+      }
+    }
+  }
+  assert(pairs > 100_000, `only ${pairs} pairs compared, which is not a corpus`);
+
+  // And that it is still answering the bounded question rather than computing a distance.
+  //
+  // A ratio against the matrix above, not a stopwatch: a threshold in milliseconds says
+  // more about the machine running it than about the code, while both halves here do the
+  // same work on the same pairs. The pairs are the shape the app actually asks about --
+  // short words out of stop names against a query somebody has been typing for a while --
+  // because that is where the shortcuts pay: a word cannot be two edits from something
+  // three times its length, and the rows say so within three of them.
+  //
+  // Go back to computing the whole distance and this drops to about one.
+  const time = (run: () => void) => {
+    const started = process.hrtime.bigint();
+    run();
+    return Number(process.hrtime.bigint() - started) / 1e6;
+  };
+  const typed = ['ronda da muralla', 'avenida das americas', 'a'.repeat(MAX_QUERY_LENGTH)];
+  const sweep = (check: (a: string, b: string) => unknown) => () => {
+    for (const query of typed) for (const word of words) check(word, query);
+  };
+  const bounded = sweep((w, q) => withinEditDistance(w, q, 2));
+  const plain = sweep((w, q) => matrix(w, q) <= 2);
+  bounded();
+  plain(); // once each first, so neither side pays for the other's warm-up
+  const fast = time(bounded);
+  const slow = time(plain);
+  assert(
+    slow > fast * 10,
+    `the bounded check is only ${(slow / fast).toFixed(1)}x the matrix (${fast.toFixed(1)} vs ${slow.toFixed(1)} ms); it is computing distances again`,
+  );
+});
+
 ok('a street can be found by any of the names people give it', () => {
   // The operator writes "Avda. Américas 36". A reader types "Avenida das Américas", or
   // "Avenida de las Américas", and used to get nothing: the abbreviation was expanded,
@@ -2377,7 +2461,7 @@ ok('a street can be found by any of the names people give it', () => {
   // their street type at all. "Rúa" leads 107, more than any other word in the network,
   // and a Spanish speaker in Lugo types "calle" for it.
   const best = (query: string) =>
-    BUS_STOPS.map((s) => ({ s, score: calculateRelevanceScore(s.name, s.code, s.id, query, s.address) }))
+    BUS_STOPS.map((s) => ({ s, score: calculateRelevanceScore(s.name, s.code, s.id, query, s.zone) }))
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score)[0];
 
@@ -2390,6 +2474,26 @@ ok('a street can be found by any of the names people give it', () => {
     ['Calzada das Gándaras', /Gándaras/],
     ['Calle Leiteiras', /Leiteiras/],
     ['Ronda da Muralla', /Muralla/],
+    // "C/" is how a street is written in Spanish. The slash normalises to a space, so
+    // this arrived as a bare "c" that expanded to nothing and matched nothing.
+    ['C/ Leiteiras', /Leiteiras/],
+    ['C/ Illas Canarias', /Illas Canarias/],
+    ['c/ industria', /Industria/],
+    // The operator's own shorthand for the same word, inside its own names.
+    ['Rúa Vidro', /Vidro/],
+    // The ordinal sign is in nineteen names and on nobody's keyboard.
+    ['Rúa Armórica n 138', /Armórica/],
+    ['Rúa Armórica Nº 138', /Armórica/],
+    // Two spellings of one roundabout, both in the data.
+    ['Rotonda Avecus', /Avecus/],
+    // Galician and Spanish for the same word. The first three pairs are inconsistent
+    // inside the data itself, so these check it against its own other spelling.
+    ['Cementerio San Froilán', /Cemiterio|Cementerio/],
+    ['Cemiterio San Froilán', /Cemiterio|Cementerio/],
+    ['Fuente dos Ranchos', /Fonte dos Ranchos/],
+    ['Iglesia de Bóveda', /Igrexa de Bóveda/],
+    ['Puente', /Ponte/],  // "Ponte Romana" is a place, not a stop; the stop is A Ponte.
+    ['Estrada Vieja de Santiago', /Vella de Santiago/],
   ];
 
   for (const [query, mustMatch] of cases) {
@@ -2405,6 +2509,44 @@ ok('a street can be found by any of the names people give it', () => {
     /Fonte dos Ranchos/.test(best('Fonte dos Ranchos')?.s.name ?? ''),
     'a name made mostly of linking words stopped resolving to itself',
   );
+
+  // A query of nothing but dropped words used to leave the empty string, and every name
+  // contains the empty string: "de" scored all 417 at the word-boundary tier and handed
+  // back six of them at random.
+  for (const nothing of ['de', 'da', 'de la', 'do', 'linea']) {
+    const hit = best(nothing);
+    assert(
+      !hit || normalizeText(hit.s.name).includes(normalizeText(nothing)),
+      `"${nothing}" resolves to ${hit?.s.name}, which does not contain it`,
+    );
+  }
+
+  // A neighbourhood is how people say where they are, and the stop names do not carry
+  // it: none of the 28 stops in A Piringalla has the word in its name. The stop's zone
+  // is scored below every match on the name itself, so a name still wins.
+  for (const [area, least] of [['Piringalla', 20], ['O Ceao', 30], ['Campus USC', 20]] as const) {
+    const found = BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, area, s.zone) > 0);
+    assert(found.length >= least, `"${area}" finds ${found.length} stops, expected at least ${least}`);
+  }
+});
+
+ok('a line answers to the words people put in front of its number', () => {
+  // A line is stored as a number and its two termini. Nobody types it that way: "linea
+  // 12", "liña 12", "L12" and "bus 12" all returned nothing, because the exact-code test
+  // compares the raw query against "12" and the name has no such word in it. Only the
+  // bare number worked, which is not how anyone asks.
+  for (const line of BUS_LINES) {
+    for (const prefix of ['', 'linea ', 'liña ', 'línea ', 'line ', 'bus ', 'L']) {
+      const query = `${prefix}${line.number}`;
+      const hit = BUS_LINES.map((l) => ({ l, score: calculateRelevanceScore(l.name, l.number, l.id, query, l.description) }))
+        .filter((r) => r.score > 0)
+        .sort((a, b) => b.score - a.score)[0];
+      assert(hit, `"${query}" finds no line at all`);
+      // By number, not by id: four lines are called 11, and nothing in "linea 11" says
+      // which of them the reader meant. The screen disambiguates them by destination.
+      assert(hit.l.number === line.number, `"${query}" resolves to line ${hit.l.number}`);
+    }
+  }
 });
 
 console.log(`\n${checks} checks passed\n`);

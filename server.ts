@@ -89,7 +89,7 @@ async function startServer() {
           s.id.toLowerCase().includes(query) ||
           s.code.toLowerCase().includes(query) ||
           s.name.toLowerCase().includes(query) ||
-          s.address?.toLowerCase().includes(query)
+          s.zone?.toLowerCase().includes(query)
       );
       return res.json(filtered);
     }

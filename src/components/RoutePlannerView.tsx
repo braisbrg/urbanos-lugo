@@ -320,7 +320,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
       code: s.code,
       zone: s.zone,
       type: 'stop' as const,
-      score: calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
+      score: calculateRelevanceScore(s.name, s.code, s.id, q, s.zone),
     })).filter((item) => item.score > 0);
 
     const landmarkMatches = LUGO_LANDMARKS.map((lm, idx) => ({

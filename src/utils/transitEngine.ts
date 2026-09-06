@@ -164,8 +164,8 @@ export function resolveLocationQuery(
   const stopCandidates = BUS_STOPS.map((s) => ({
     stop: s,
     score: Math.max(
-      calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
-      ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.address)),
+      calculateRelevanceScore(s.name, s.code, s.id, q, s.zone),
+      ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.zone)),
     ),
   })).filter((c) => c.score > 0).sort((a, b) => b.score - a.score);
 

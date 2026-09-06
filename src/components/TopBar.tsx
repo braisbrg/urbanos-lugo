@@ -58,8 +58,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         // Aliases are names the operator still prints for this pole, so they have to
         // match here too: searching one used to return only the lines that mention it.
         score: Math.max(
-          calculateRelevanceScore(s.name, s.code, s.id, q, s.address),
-          ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.address)),
+          calculateRelevanceScore(s.name, s.code, s.id, q, s.zone),
+          ...(s.aliases ?? []).map((a) => calculateRelevanceScore(a, s.code, s.id, q, s.zone)),
         ),
       }))
         .filter((x) => x.score > 0)

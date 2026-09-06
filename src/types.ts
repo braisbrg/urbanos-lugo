@@ -14,7 +14,6 @@ export interface BusStop {
    * merging two listings into one pole does not make a published name unfindable.
    */
   aliases?: string[];
-  address?: string;
   lat: number;
   lng: number;
   lines: string[]; // List of line IDs passing by, e.g. ["1.1", "1.2", "3.1", "4.1"]
