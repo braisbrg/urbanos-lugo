@@ -1271,6 +1271,46 @@ ok('the QR count on the map is the number of poles that have one', () => {
   }
 });
 
+ok('a pole with no coordinates is recovered only when its token says which pole it is', () => {
+  // Twelve of the operator's 1198 listings arrive with no coordinates, and dropping all
+  // twelve cost line 13's return direction Rda. Muralla 56 (Sindicatos) — fourteen lines
+  // call there. tools/buildDataset.ts puts one of them back, and only one: a live-panel
+  // token is the pole's own identity, so a listing carrying a token that a located pole
+  // already has is that pole listed again, not a new one. The other eleven have either no
+  // token or one nobody shares, and a listing with neither a position nor a known identity
+  // cannot be placed from this source at all.
+  //
+  // Pinned here so a thirteenth is noticed: a scrape that starts dropping coordinates is
+  // a route quietly losing stops, which is the failure this dataset has.
+  const raw = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'data/official-raw.json'), 'utf8'));
+  const listings = raw.stops as { ps: number; token?: string; coords?: unknown }[];
+  assert(listings.length === 1198, `the operator now lists ${listings.length} poles, not 1198`);
+
+  const placed = new Map(BUS_STOPS.filter((s) => s.officialToken).map((s) => [s.officialToken!, s]));
+  const unplaced = listings.filter((s) => !Array.isArray(s.coords));
+  assert(unplaced.length === 12, `${unplaced.length} listings have no coordinates, not 12`);
+
+  const recovered = unplaced.filter((s) => s.token && placed.has(s.token));
+  assert(recovered.length === 1, `${recovered.length} of them are recoverable by token, not 1`);
+
+  // And the one that is recoverable is actually on the stop it belongs to, by its own
+  // operator number — the whole point of recovering it.
+  for (const listing of recovered) {
+    const stop = placed.get(listing.token!)!;
+    assert(
+      stop.officialIds?.includes(listing.ps),
+      `${stop.name} does not carry the recovered operator number ${listing.ps}`,
+    );
+  }
+
+  // The eleven that stay out must stay out: none of them may have reached a stop.
+  const numbers = new Set(BUS_STOPS.flatMap((s) => s.officialIds ?? []));
+  for (const listing of unplaced) {
+    if (recovered.includes(listing)) continue;
+    assert(!numbers.has(listing.ps), `${listing.ps} was placed with neither coordinates nor a known token`);
+  }
+});
+
 ok('a name the operator still prints is still findable after merging', () => {
   // One pole is listed twice by the operator, once with a live-panel token and once
   // without, sometimes under a different label. Merging them into one stop is right —

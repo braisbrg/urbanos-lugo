@@ -355,6 +355,30 @@ for (const s of located) {
   canonicalByPs.set(s.ps, stop.id);
 }
 
+/**
+ * The poles the operator published with no coordinates but with a live-panel token.
+ *
+ * A token is the pole's own identity, so one that already belongs to a clustered pole is
+ * not a new stop -- it is the same stop, listed again on another line's itinerary without
+ * its position. Twelve of the 1198 scraped entries have no coordinates, and dropping all
+ * twelve cost line 13's return direction Rda. Muralla 56 (Sindicatos): fourteen lines call
+ * there, the operator's own itinerary for the 13 names it, and the app drew a route that
+ * skipped the busiest interchange in the city.
+ *
+ * Only the token match is safe. The other eleven carry either no token or one no located
+ * pole shares, and a stop with neither a position nor a known identity cannot be placed
+ * from this source at all -- tools/test.ts pins that count so a thirteenth is noticed.
+ */
+const RECOVERED_BY_TOKEN = new Set<number>();
+for (const s of raw.stops) {
+  if (Array.isArray(s.coords) || !s.token) continue;
+  const pole = byToken.get(s.token);
+  if (!pole) continue;
+  pole.officialIds.push(s.ps);
+  canonicalByPs.set(s.ps, pole.id);
+  RECOVERED_BY_TOKEN.add(s.ps);
+}
+
 const stops = clusters.map((c) => {
   const { samples, ...rest } = c;
   const surveyed = amenities[c.id];
@@ -414,14 +438,21 @@ const lines = raw.lines.map((line: any) => {
     const kept: number[] = []; // positions in the router's arrays
     let stopIds: string[] = [];
     let geoPos = -1;
+    // A pole recovered by its token was never sent to the router, so it has no position
+    // in those arrays and must not advance the counter -- see RECOVERED_BY_TOKEN above.
+    // It still belongs on the itinerary, and its road times come from the direction's own
+    // average speed, the same stand-in a repaired order already uses.
+    let recovered = false;
     dir.stops.forEach((ps: number) => {
       const canonical = canonicalByPs.get(ps);
       if (!canonical) return; // stop had no coordinates: the router never saw it either
-      geoPos++;
+      const routed = !RECOVERED_BY_TOKEN.has(ps);
+      if (routed) geoPos++;
       // A pole listed twice in one direction (a terminus loop) would break the leg
       // indices and every "how many stops away" count downstream.
       if (stopIds.includes(canonical)) return;
-      kept.push(geoPos);
+      if (routed) kept.push(geoPos);
+      else recovered = true;
       stopIds.push(canonical);
     });
 
@@ -438,7 +469,10 @@ const lines = raw.lines.map((line: any) => {
     // A repaired order changes which stop each of the router's legs belongs to, so those
     // legs are dropped rather than silently mismatched; the direction's own average speed
     // stands in for them.
-    const reordered = Boolean(surveyed && surveyed.order.some((v, k) => v !== k));
+    // `recovered` joins it for the same reason: once a stop sits on the itinerary that the
+    // router never saw, its legs no longer line up one-for-one with the router's, so they
+    // are dropped rather than silently mismatched.
+    const reordered = Boolean(surveyed && surveyed.order.some((v, k) => v !== k)) || recovered;
     if (surveyed && reordered) {
       stopIds = surveyed.order.map((i: number) => stopIds[i]);
       dirStops = surveyed.order.map((i: number) => dirStops[i]);
