@@ -108,6 +108,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-[10px] border border-edge bg-surface pl-3">
           <Search className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           <input
+            // Named so the empty state of the stops screen can send you here — it used
+            // to point at this field in words and do nothing when pressed.
+            id="site-search"
             type="text"
             value={query}
             onChange={(e) => {

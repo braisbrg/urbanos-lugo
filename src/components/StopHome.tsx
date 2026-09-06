@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Compass, History, QrCode, Route, Search, Star } from 'lucide-react';
+import { Compass, History, QrCode, Route, Star } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS } from '../data/transitData';
 import { NEARBY_STOP_LIMIT_METRES, getArrivalsForStop, getNearbyStops } from '../utils/transitEngine';
@@ -132,10 +132,23 @@ export const StopHome: React.FC<StopHomeProps> = ({
               <QrCode className="h-[18px] w-[18px] shrink-0" strokeWidth={2} aria-hidden="true" />
               {t.stopHome.scan}
             </button>
-            <span className="flex h-11 items-center gap-2 rounded-[10px] border border-edge px-4 text-body text-ink-2">
-              <Search className="h-[17px] w-[17px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            {/* A link, not a second chip.
+                It began as an inert span, and the first fix only made it work: it still
+                had a box, a magnifier and grey text, which is the shape of a search
+                field, sat next to a real button. Nothing here is a field — the field is
+                at the top of the screen and this sends you to it, so it is set as the
+                text action it is, in the house style used for "clear recent" below.
+
+                It earns its place because the sentence above names three ways in and
+                this is the only one with no control on this screen — and because on a
+                tall phone the top bar is the hardest thing to reach with a thumb, which
+                is the whole point of a button down here that puts the cursor up there. */}
+            <button
+              onClick={() => document.getElementById('site-search')?.focus()}
+              className="flex h-11 items-center px-1 text-body font-medium text-ink-2 underline"
+            >
               {t.stopHome.orSearchAbove}
-            </span>
+            </button>
           </div>
         </div>
       ) : (
