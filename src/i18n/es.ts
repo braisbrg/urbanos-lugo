@@ -248,6 +248,7 @@ export const es: Dict = {
     zoomOut: 'Alejar el mapa',
     networkRegion: 'Mapa de la red. Los recorridos y las paradas también están en la pestaña de líneas.',
     nearbyRegion: 'Mapa de las paradas cerca de ti. Las mismas paradas están en la lista de abajo.',
+    fixTheMap: 'Corregir el mapa',
     loadingMap: 'Cargando el mapa…',
     subtitle: 'Recorridos, paradas y posición de los autobuses',
     allLines: 'Todas',

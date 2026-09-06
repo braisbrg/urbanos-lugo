@@ -11,7 +11,7 @@ form one from.
 
 ## Kept on your device, and only there
 
-Five things are saved in your browser's `localStorage`. They never leave it: nothing in
+Six things are saved in your browser's `localStorage`. They never leave it: nothing in
 this project reads them and sends them anywhere.
 
 | Key | What it holds |
@@ -21,6 +21,7 @@ this project reads them and sends them anywhere.
 | `urbanos-lugo-recent-stops` | the last stops you opened, as ids |
 | `urbanos-lugo-lang` | Galician, Spanish or English |
 | `urbanos-lugo-theme` | light, dark or automatic |
+| `urbanos-lugo-walking-path` | whether you asked for real walking paths |
 
 Clearing your browser's site data removes all of it. There is no copy anywhere else.
 
@@ -42,6 +43,13 @@ public pedestrian router at `routing.openstreetmap.de` so it can return the real
 along pavements. When the trip starts from your GPS position, that position is one of
 those coordinates. Until you press it, the map draws a straight dashed line and nothing
 is sent. See `src/services/walkingPath.ts`.
+
+**That answer is remembered.** Once you have pressed it, the app keeps asking the router
+for later trips too, without asking you again, because the measured walk is a much better
+answer than the estimate — off by as much as fourteen minutes on the awkward crossings.
+Press *"hide the walking path"* and it stops, in that trip and in every one after. The
+choice lives in `urbanos-lugo-walking-path` above, on your device; a browser that has
+never been told sends nothing.
 
 ## What your browser requests from other people
 

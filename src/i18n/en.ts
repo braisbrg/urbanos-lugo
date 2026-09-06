@@ -259,6 +259,7 @@ export const en: Dict = {
     zoomOut: 'Zoom out',
     networkRegion: 'Network map. The routes and stops are also on the lines tab.',
     nearbyRegion: 'Map of the stops near you. The same stops are in the list below.',
+    fixTheMap: 'Fix the map',
     loadingMap: 'Loading the map…',
     subtitle: 'Routes, stops and where the buses should be',
     allLines: 'All',

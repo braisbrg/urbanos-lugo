@@ -50,6 +50,9 @@ function shiftClock(hhmm: string, deltaMinutes: number): string {
 
 const MAX_OPTIONS = 4;
 
+/** Kept on the device only, and listed as such in PRIVACY.md. */
+const WALKING_KEY = 'urbanos-lugo-walking-path';
+
 /** One row of the origin/destination autocomplete: a real stop, or a named place. */
 interface Suggestion {
   id: string;
@@ -118,9 +121,34 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }));
 
   const [showMap, setShowMap] = useState(true);
-  // Off by default: real pavement routes need a third-party router, and the app is
-  // meant to work with no connection.
-  const [detailedWalking, setDetailedWalking] = useState(false);
+  /**
+   * Whether to ask the pedestrian router — asked once, then remembered.
+   *
+   * Off on a first visit, because a real pavement route needs a third party and the app
+   * is meant to work with no connection at all. But answering once and being asked again
+   * on every trip is the wrong bargain for the reader who wants it: the measured walk
+   * corrects an estimate that is out by up to fourteen minutes on the awkward crossings,
+   * and that is worth having by default once you have said so.
+   *
+   * Safari in private browsing throws from localStorage rather than returning null, so
+   * both ends are guarded; the toggle still works for the session if it cannot be saved.
+   */
+  const [detailedWalking, setDetailedWalking] = useState(() => {
+    try {
+      return localStorage.getItem(WALKING_KEY) === 'on';
+    } catch {
+      return false;
+    }
+  });
+  const toggleDetailedWalking = () =>
+    setDetailedWalking((on) => {
+      try {
+        localStorage.setItem(WALKING_KEY, on ? 'off' : 'on');
+      } catch {
+        // Not remembered for next time; still on for this one.
+      }
+      return !on;
+    });
   const [walkPaths, setWalkPaths] = useState<Record<string, WalkingPath | null>>({});
 
   // Fetch the real pedestrian route for each walked hop of the chosen plan. The times
@@ -176,15 +204,19 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     if (!detailedWalking) return;
     if (!allWalkHops.length || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
     const controller = new AbortController();
-    Promise.all(
-      allWalkHops.map(
-        async ([a, b]) => [walkHopKey(a, b), await fetchWalkingPath(a, b, controller.signal)] as const,
-      ),
-    )
-      .then((entries) => setWalkPaths((prev) => ({ ...prev, ...Object.fromEntries(entries) })))
-      .catch(() => {
-        // Aborted, or the router is unreachable. The estimate is already on screen.
-      });
+    // One at a time, a second apart — the router's own terms. Each leg is drawn as it
+    // arrives rather than the set landing together, because at that rate a four-option
+    // plan would otherwise show nothing for nine seconds.
+    for (const [a, b] of allWalkHops) {
+      fetchWalkingPath(a, b, controller.signal)
+        .then((path) => {
+          if (controller.signal.aborted) return;
+          setWalkPaths((prev) => ({ ...prev, [walkHopKey(a, b)]: path }));
+        })
+        .catch(() => {
+          // Aborted, or the router is unreachable. The estimate is already on screen.
+        });
+    }
     return () => controller.abort();
   }, [allWalkHops, detailedWalking]);
 
@@ -824,7 +856,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   <span className="flex items-center gap-3">
                     {showMap && (
                       <button
-                        onClick={() => setDetailedWalking((v) => !v)}
+                        onClick={toggleDetailedWalking}
                         className="text-label font-semibold text-accent h-11 inline-flex items-center underline"
                         title={t.planner.walkingPathHint}
                       >

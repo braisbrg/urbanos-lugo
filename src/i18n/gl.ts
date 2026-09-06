@@ -278,6 +278,8 @@ export const gl = {
     zoomOut: 'Afastar o mapa',
     networkRegion: 'Mapa da rede. Os percorridos e as paradas tamén están na pestana de liñas.',
     nearbyRegion: 'Mapa das paradas preto de ti. As mesmas paradas están na lista de embaixo.',
+    /** FOSSGIS ask for this link alongside the attribution for their router. */
+    fixTheMap: 'Corrixir o mapa',
     loadingMap: 'Cargando o mapa…',
     subtitle: 'Percorridos, paradas e posición dos autobuses',
     allLines: 'Todas',

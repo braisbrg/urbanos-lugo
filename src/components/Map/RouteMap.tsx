@@ -96,6 +96,28 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     };
   }, []);
 
+  /**
+   * Credit the pedestrian router, on the screens where it was actually used.
+   *
+   * FOSSGIS run it for free and ask for two things in return: the attribution, and a
+   * link to fix the map. The basemap's credit was here from the start and this one was
+   * not, so every drawn pavement route was an uncredited use of somebody's donated
+   * server. It appears only once a real path is on screen, because until then no
+   * request has been made.
+   */
+  const routedWalk = Object.values(walkPaths).some(Boolean);
+  useEffect(() => {
+    if (!map || !routedWalk) return;
+    const credit =
+      '<a href="https://routing.openstreetmap.de/">OSRM</a>/FOSSGIS · <a href="https://www.openstreetmap.org/fixthemap">' +
+      translations(lang).map.fixTheMap +
+      '</a>';
+    map.attributionControl?.addAttribution(credit);
+    return () => {
+      map.attributionControl?.removeAttribution(credit);
+    };
+  }, [map, routedWalk, lang]);
+
   useEffect(() => {
     if (!map || !geometryReady) return;
 

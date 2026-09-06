@@ -40,6 +40,34 @@ export interface WalkingPath {
 
 const cache = new Map<string, WalkingPath | null>();
 
+/**
+ * One request a second, because that is what the people paying for the server ask for.
+ *
+ * FOSSGIS run this router for nothing and state the terms plainly: "One request per
+ * second max. No scraping, no heavy usage." A plan has up to nine walked hops once its
+ * alternatives are counted, and they all went out together in a single `Promise.all`
+ * burst — nine times the rate asked for, from every reader at once. They queue now, a
+ * second apart, and the caller draws each leg as it lands instead of waiting for the
+ * set. Cached hops never reach the queue, which is most of them: the options share
+ * endpoints.
+ */
+const MIN_GAP_MS = 1000;
+let queue: Promise<unknown> = Promise.resolve();
+let lastCall = 0;
+
+function queued<T>(job: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  const run = queue.then(async () => {
+    // Nothing to slow down for if the caller has already walked away.
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const wait = MIN_GAP_MS - (Date.now() - lastCall);
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    lastCall = Date.now();
+    return job();
+  });
+  queue = run.catch(() => undefined);
+  return run;
+}
+
 /** Identifies a walked hop. Both the fetch and the drawing must agree on it. */
 export const walkHopKey = (from: [number, number], to: [number, number]): string =>
   `${from[0].toFixed(5)},${from[1].toFixed(5)}>${to[0].toFixed(5)},${to[1].toFixed(5)}`;
@@ -54,7 +82,10 @@ export async function fetchWalkingPath(
 
   try {
     const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
-    const res = await fetch(`${FOOT_ROUTER}/${coords}?overview=full&geometries=geojson`, { signal });
+    const res = await queued(
+      () => fetch(`${FOOT_ROUTER}/${coords}?overview=full&geometries=geojson`, { signal }),
+      signal,
+    );
     if (!res.ok) throw new Error(String(res.status));
 
     const json = await res.json();
@@ -68,7 +99,11 @@ export async function fetchWalkingPath(
     };
     cache.set(id, result);
     return result;
-  } catch {
+  } catch (error) {
+    // An abort is not an answer. The effect that calls this aborts on every plan change
+    // and twice on mount under StrictMode, and caching null here retired the hop for the
+    // rest of the session — the straight line came back and never left.
+    if ((error as Error)?.name === 'AbortError') throw error;
     // Offline, blocked, or the router is down: the caller keeps its straight line.
     cache.set(id, null);
     return null;
