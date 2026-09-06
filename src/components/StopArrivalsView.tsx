@@ -1,6 +1,9 @@
-import React, { Suspense, lazy, useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, Bell, Check, Clock, Map as MapIcon, Share2, Star } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../types';
+// Leaflet only loads for readers who scroll down to ask where the pole is; the wrapper
+// is what makes that true, since `lazy()` alone fires as soon as the board renders.
+import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { BUS_LINES, poleCode } from '../data/transitData';
 import {
   getArrivalsForStop,
@@ -42,10 +45,6 @@ interface StopArrivalsViewProps {
   lang: Lang;
 }
 
-/** Leaflet only loads for readers who scroll down to ask where the pole is. */
-const NearbyMiniMap = lazy(() =>
-  import('./Map/NearbyMiniMap').then((m) => ({ default: m.NearbyMiniMap })),
-);
 
 /**
  * The operator's own label for a service, set so it does not shout.
@@ -825,20 +824,18 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       <section className="mt-4 border-t border-line pt-3">
         <h2 className="text-label font-semibold text-ink-2">{t.arrivals.stopMapTitle}</h2>
         <div className="mt-2 overflow-hidden rounded-[10px] border border-edge">
-          <Suspense fallback={<div className="h-[240px] w-full bg-surface" />}>
-            <NearbyMiniMap
-              centre={{
-                lat: selectedStop.lat,
-                lng: selectedStop.lng,
-                label: selectedStop.name,
-                kind: 'stop',
-              }}
-              stops={polesNearby}
-              onSelectStop={onSelectStop}
-              lang={lang}
-              regionLabel={t.arrivals.stopMapRegion}
-            />
-          </Suspense>
+          <LazyNearbyMiniMap
+            centre={{
+              lat: selectedStop.lat,
+              lng: selectedStop.lng,
+              label: selectedStop.name,
+              kind: 'stop',
+            }}
+            stops={polesNearby}
+            onSelectStop={onSelectStop}
+            lang={lang}
+            regionLabel={t.arrivals.stopMapRegion}
+          />
         </div>
       </section>
 

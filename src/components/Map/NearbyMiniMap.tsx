@@ -9,7 +9,7 @@ import { useMapChrome } from '../../hooks/useMapChrome';
 import { createBasemap, type BasemapLayer } from './basemap';
 import { mapColors } from './palette';
 
-interface NearbyMiniMapProps {
+export interface NearbyMiniMapProps {
   /**
    * What the map is about. On the stops home that is the reader, as the browser
    * reported it; on a stop's page it is the pole itself, which is a different claim

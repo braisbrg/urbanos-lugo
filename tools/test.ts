@@ -2347,6 +2347,99 @@ ok('the build compresses its assets and the server hands them over', () => {
   );
 });
 
+ok('the entry chunk is announced above the blocking script, not behind it', () => {
+  // theme-init.js is a classic blocking script and it sits above everything Vite injects.
+  // Traced on a throttled phone, the browser did not ask for the entry chunk until that
+  // script had come back: document done at 890 ms, theme-init 954 -> 1538, the chunk at
+  // 1548. A whole round trip of nothing, with the stylesheet waiting behind it too.
+  //
+  // Two link tags ahead of the script let all three start together. The plugin finds them
+  // by reading the finished HTML, so a silent failure looks exactly like the old
+  // behaviour -- it returns the document untouched when the regex stops matching, and
+  // nothing else would notice.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  assert(/preloadEntry/.test(vite), 'the build no longer announces the entry chunk');
+  assert(
+    /rel="modulepreload"/.test(vite) && /rel="preload" as="style"/.test(vite),
+    'the script or the stylesheet lost its head start',
+  );
+  // A preload whose CORS mode differs from the real request is a second download rather
+  // than a head start, so both tags carry `crossorigin` like the ones Vite emits.
+  assert(
+    (vite.match(/crossorigin href=/g) ?? []).length === 2,
+    'a preload tag no longer matches the CORS mode of the request it is meant to start',
+  );
+
+  // And if there is a build to look at, the tags really are in it, ahead of the script.
+  // Skipped rather than failed when there is not, because the suite runs before the
+  // build in CI.
+  const built = join(root, 'dist', 'index.html');
+  if (!existsSync(built)) return;
+  const html = readFileSync(built, 'utf8');
+
+  const script = html.match(/<script type="module"[^>]*\ssrc="([^"]+)"/)?.[1];
+  assert(script, 'the built page has no entry chunk to announce');
+  const preloaded = [...html.matchAll(/<link rel="(?:modulepreload|preload)"[^>]*\shref="([^"]+)"/g)].map((m) => m[1]);
+  assert(
+    preloaded.includes(script!),
+    `the built page preloads ${preloaded.join(', ') || 'nothing'}, which is not the entry chunk ${script}`,
+  );
+  const styles = [...html.matchAll(/<link rel="stylesheet"[^>]*\shref="([^"]+)"/g)].map((m) => m[1]);
+  for (const href of styles) {
+    assert(preloaded.includes(href), `the stylesheet ${href} still waits behind the blocking script`);
+  }
+  // The whole point is the order: behind theme-init.js they are worth nothing. The tag,
+  // not the name -- a comment near the top of the page explains what that script does,
+  // and matching the name found the explanation rather than the script.
+  const blocking = html.search(/<script[^>]*\stheme-init\.js|<script[^>]*src="[^"]*theme-init\.js/);
+  assert(blocking > 0, 'theme-init.js is gone, so this check is about a script that no longer exists');
+  for (const href of preloaded) {
+    assert(html.indexOf(href) < blocking, `${href} is announced below the blocking script`);
+  }
+});
+
+ok('the mini map is deferred once, where it cannot be forgotten', () => {
+  // `lazy()` alone defers the chunk until the component renders, which is not the same as
+  // being seen: below lg the stops tab keeps the board mounted behind `hidden`, so on a
+  // phone the board's map was built inside `display: none` on every cold start -- 255 KB
+  // over the wire and about 700 ms of blocked main thread at 6x CPU on Slow 4G, for a
+  // canvas nobody could see, plus a tile request for a map nobody had opened.
+  //
+  // Both screens used to declare their own `lazy()`. A third call site that imported the
+  // map directly would undo all of it and look perfectly ordinary, so the rule is that
+  // only the wrapper names it.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const wrapper = join('src', 'components', 'Map', 'LazyNearbyMiniMap.tsx');
+  const itself = join('src', 'components', 'Map', 'NearbyMiniMap.tsx');
+
+  const lazy = readFileSync(join(root, wrapper), 'utf8');
+  assert(/IntersectionObserver/.test(lazy), 'the map no longer waits until it is on screen');
+  assert(/h-\[240px\]/.test(lazy), 'the placeholder no longer holds the height the map takes');
+
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.tsx?$/.test(entry.name)) continue;
+      const relative = full.slice(root.length + 1);
+      if (relative === wrapper || relative === itself) continue;
+      const source = readFileSync(full, 'utf8');
+      // A type-only import costs nothing at runtime; a value import is the whole map.
+      if (/^\s*import\s+(?!type\b)[^;]*['"][^'"]*\/NearbyMiniMap['"]/m.test(source)) offenders.push(relative);
+    }
+  };
+  walk(join(root, 'src'));
+  assert(
+    offenders.length === 0,
+    `imports the mini map directly instead of LazyNearbyMiniMap: ${offenders.join(', ')}`,
+  );
+});
+
 ok('src/data holds only what ships, and the build inputs stay out of it', () => {
   // Four files in src/data were build scaffolding the app never imported: the scrape and
   // three intermediates, 1.4 MB between them. They cost nothing at runtime, which is why

@@ -1,9 +1,12 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Compass, History, QrCode, Route, Search, Star } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS } from '../data/transitData';
 import { NEARBY_STOP_LIMIT_METRES, getArrivalsForStop, getNearbyStops } from '../utils/transitEngine';
 import { Lang, translations } from '../i18n';
+// Leaflet is heavy and this screen opens cold: the map arrives only once you ask to be
+// located, and then only once it is actually on screen.
+import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 
 interface StopHomeProps {
   favoriteStopIds: string[];
@@ -19,10 +22,6 @@ interface StopHomeProps {
 /** How many departures to show per saved stop before it becomes a wall of numbers. */
 const PER_STOP = 3;
 
-/** Leaflet is heavy and this screen opens cold: the map arrives only once you ask to be located. */
-const NearbyMiniMap = lazy(() =>
-  import('./Map/NearbyMiniMap').then((m) => ({ default: m.NearbyMiniMap })),
-);
 
 /**
  * The landing screen for the stops tab: the two or three stops a regular traveller
@@ -280,20 +279,18 @@ export const StopHome: React.FC<StopHomeProps> = ({
 
       {locatedAt && (
         <div className="mt-2.5 overflow-hidden rounded-[10px] border border-edge">
-          <Suspense fallback={<div className="h-[240px] w-full bg-surface" />}>
-            <NearbyMiniMap
-              centre={{
-                lat: locatedAt[0],
-                lng: locatedAt[1],
-                label: t.stopHome.youAreHere,
-                kind: 'user',
-              }}
-              stops={nearby}
-              onSelectStop={onSelectStop}
-              lang={lang}
-              regionLabel={t.map.nearbyRegion}
-            />
-          </Suspense>
+          <LazyNearbyMiniMap
+            centre={{
+              lat: locatedAt[0],
+              lng: locatedAt[1],
+              label: t.stopHome.youAreHere,
+              kind: 'user',
+            }}
+            stops={nearby}
+            onSelectStop={onSelectStop}
+            lang={lang}
+            regionLabel={t.map.nearbyRegion}
+          />
         </div>
       )}
 

@@ -143,6 +143,43 @@ const injectSeoTags = {
   },
 };
 
+/**
+ * The entry chunk and its stylesheet, announced at the top of <head>.
+ *
+ * theme-init.js is a classic blocking script and sits above everything Vite injects, and
+ * measured on a throttled phone the browser did not ask for the entry chunk until that
+ * script had come back: document done at 890 ms, theme-init 954 -> 1538, and only then
+ * the chunk at 1548. One whole round trip of nothing, and the stylesheet waited behind it
+ * too. Two link tags ahead of the script let all three start together, which took first
+ * contentful paint from 3760 ms to 3484 ms at 6x CPU on Slow 4G.
+ *
+ * Inlining theme-init.js instead measured 3120 ms -- better again, and not taken: it
+ * needs a hash in `script-src`, and public/theme-init.js explains why that file is a file.
+ * The number is written down in case that trade is ever worth making.
+ *
+ * Read out of the finished HTML rather than out of the bundle, because the finished HTML
+ * is the thing whose order is wrong, and it says which files it means.
+ */
+const preloadEntry = {
+  name: 'preload-entry',
+  apply: 'build' as const,
+  transformIndexHtml: {
+    order: 'post' as const,
+    handler(html: string) {
+      const script = html.match(/<script type="module"[^>]*\ssrc="([^"]+)"/)?.[1];
+      const styles = [...html.matchAll(/<link rel="stylesheet"[^>]*\shref="([^"]+)"/g)].map((m) => m[1]);
+      if (!script) return html;
+      // `crossorigin` on both, matching the tags Vite emits: a preload whose CORS mode
+      // differs from the real request is a second download, not a head start.
+      const links = [
+        `<link rel="modulepreload" crossorigin href="${script}" />`,
+        ...styles.map((href) => `<link rel="preload" as="style" crossorigin href="${href}" />`),
+      ].join('\n    ');
+      return html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${links}`);
+    },
+  },
+};
+
 const injectCsp = {
   name: 'inject-csp',
   apply: 'build' as const,
@@ -161,6 +198,7 @@ export default defineConfig({
   // which would strip the imports it needs.
   worker: { format: 'es' as const },
   plugins: [
+    preloadEntry,
     injectCsp,
     injectSeoTags,
     emitSeoFiles,
