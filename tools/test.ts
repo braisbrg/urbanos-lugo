@@ -2547,6 +2547,54 @@ ok('"stops near me" answers nothing when you are not near any', () => {
   }
 });
 
+ok('the published timing points still anchor as many stops as they can', () => {
+  // Two thirds of the network's passing times are modelled rather than printed, and the
+  // reason is the source, not the code. The operator publishes one table per line for the
+  // whole loop, with two to five timing points in it. So:
+  //
+  //   48 directions have a weekday pattern
+  //   38 of them have two or more printed rows that land on distinct stops of that direction
+  //   18 survive chaining, because the rest pair an outbound row with a return one
+  //
+  // 45 printed rows name no stop of the direction they were printed for, and 43 of those
+  // are genuine -- 1.1/volta runs Rúa Mercadorías to As Pedreiras and never passes
+  // Sindicatos, so the "Sindicatos" row is not its row. A one-edit fuzzy tier on the name
+  // matcher was tried against exactly this measurement and moved 18/48 to 18/48, so it was
+  // reverted rather than kept for the two spellings it did resolve.
+  //
+  // Nothing here can be raised by trying harder; it can only be lowered by a mistake. The
+  // numbers are pinned so that losing an anchor -- which silently turns printed times into
+  // estimates all along a route -- shows up as a failure and not as a quieter app.
+  let directions = 0;
+  let anchored = 0;
+  let bracketed = 0;
+  let extrapolated = 0;
+
+  for (const line of BUS_LINES) {
+    line.directions.forEach((direction, di) => {
+      const runs = buildRuns(line, di, BUS_STOPS, 'laborable');
+      if (!runs.length) return;
+      directions++;
+      const anchors = runs.reduce<number[]>(
+        (best, r) => (r.publishedStopIndices.length > best.length ? r.publishedStopIndices : best),
+        [],
+      );
+      if (anchors.length > 1) anchored++;
+      const first = anchors[0] ?? 0;
+      const last = anchors[anchors.length - 1] ?? 0;
+      direction.stops.forEach((_, i) => {
+        if (anchors.length > 1 && i >= first && i <= last) bracketed++;
+        else extrapolated++;
+      });
+    });
+  }
+
+  assert(directions === 48, `${directions} directions have a weekday pattern, not 48`);
+  assert(anchored === 18, `${anchored} directions are anchored at both ends, not 18 — run pnpm validate:times`);
+  assert(bracketed === 386, `${bracketed} stops have their time pinned at both ends, not 386`);
+  assert(extrapolated === 798, `${extrapolated} stops sit beyond the last published point, not 798`);
+});
+
 ok('a line runs on the days the operator says it runs, and on no others', () => {
   // Sixteen directions produce no expeditions on a Sunday -- 1.1, 1.3, 3.1, 5.1 and the
   // four variants of the 11, both ways -- and an audit run on a Sunday cannot tell that
