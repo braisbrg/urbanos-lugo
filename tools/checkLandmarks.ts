@@ -68,7 +68,41 @@ interface Candidate {
   lat: number;
   lng: number;
   kind: string;
+  wikidata?: string;
   metres: number;
+}
+
+/**
+ * A second reading, from a different database.
+ *
+ * Overpass and Nominatim are the same OpenStreetMap through two doors, so agreeing with
+ * one another proves nothing. Wikidata is a separate record with its own editors and its
+ * own coordinate (P625), and OSM links to it by id where somebody has bothered — which is
+ * most of the notable places in a provincial capital. Where both exist and agree, the
+ * point is confirmed twice; where they disagree, one of the two is wrong and it is worth
+ * a human deciding which.
+ */
+async function wikidataPoints(ids: string[]): Promise<Map<string, [number, number]>> {
+  const found = new Map<string, [number, number]>();
+  // Fifty at a time is what the API takes, and this list is nowhere near that.
+  for (let i = 0; i < ids.length; i += 50) {
+    const batch = ids.slice(i, i + 50);
+    const url = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${batch.join('|')}&props=claims&format=json&origin=*`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'UrbanosLugoOpenData/1.0' } });
+    if (!res.ok) {
+      console.warn(`  ! Wikidata answered ${res.status}`);
+      continue;
+    }
+    const json = (await res.json()) as { entities?: Record<string, { claims?: Record<string, unknown[]> }> };
+    for (const [id, entity] of Object.entries(json.entities ?? {})) {
+      const claim = entity.claims?.P625?.[0] as
+        | { mainsnak?: { datavalue?: { value?: { latitude: number; longitude: number } } } }
+        | undefined;
+      const point = claim?.mainsnak?.datavalue?.value;
+      if (point) found.set(id, [point.latitude, point.longitude]);
+    }
+  }
+  return found;
 }
 
 /** Everything in Lugo whose name contains this word, as nodes, ways and relations. */
@@ -90,7 +124,7 @@ async function candidatesFor(word: string): Promise<Omit<Candidate, 'metres'>[]>
       if (typeof lat !== 'number' || typeof lng !== 'number') return null;
       const kind =
         tags.amenity ?? tags.shop ?? tags.leisure ?? tags.tourism ?? tags.railway ?? tags.highway ?? tags.place ?? tags.building ?? 'way';
-      return { name: tags.name ?? '(unnamed)', lat, lng, kind };
+      return { name: tags.name ?? '(unnamed)', lat, lng, kind, wikidata: tags.wikidata };
     })
     .filter(Boolean) as Omit<Candidate, 'metres'>[];
 }
@@ -109,8 +143,15 @@ async function main() {
     console.log(`${hits.length}`);
   }
 
-  console.log('');
+  // One call for every Wikidata id any candidate carries, before the loop below needs them.
+  const ids = [...new Set([...found.values()].flat().map((c) => c.wikidata).filter(Boolean) as string[])];
+  console.log(`\nAsking Wikidata for ${ids.length} linked entities.`);
+  const secondOpinion = await wikidataPoints(ids);
+  console.log(`  ${secondOpinion.size} carry a coordinate.\n`);
+
   const suspicious: string[] = [];
+  let confirmed = 0;
+  let contradicted = 0;
 
   for (const landmark of LUGO_LANDMARKS) {
     const pool = keywords(landmark.name).flatMap((word) => found.get(word) ?? []);
@@ -134,12 +175,27 @@ async function main() {
     for (const candidate of ranked.slice(0, 3)) {
       console.log(`          ${String(candidate.metres).padStart(5)} m  ${candidate.name} [${candidate.kind}]  ${candidate.lat.toFixed(5)},${candidate.lng.toFixed(5)}`);
     }
+
+    // The second database, where there is one. Distance from OUR point, not from OSM's,
+    // because ours is the one being checked.
+    const linked = ranked.find((c) => c.wikidata && secondOpinion.has(c.wikidata));
+    if (linked) {
+      const [lat, lng] = secondOpinion.get(linked.wikidata!)!;
+      const apart = Math.round(metresBetween(landmark.lat, landmark.lng, lat, lng));
+      const verdict = apart > SUSPICIOUS_METRES ? 'DISAGREES' : 'agrees';
+      if (apart > SUSPICIOUS_METRES) contradicted++;
+      else confirmed++;
+      console.log(`          wikidata ${linked.wikidata} ${verdict}: ${apart} m  (${lat.toFixed(5)},${lng.toFixed(5)})`);
+    }
   }
 
   console.log(
     `\n${suspicious.length} of ${LUGO_LANDMARKS.length} are more than ${SUSPICIOUS_METRES} m from anything OSM calls by that name.`,
   );
   if (suspicious.length) console.log(suspicious.map((name) => `  - ${name}`).join('\n'));
+  console.log(
+    `Wikidata, where it has an opinion: ${confirmed} confirmed, ${contradicted} contradicted, ${LUGO_LANDMARKS.length - confirmed - contradicted} not linked.`,
+  );
 }
 
 main();
