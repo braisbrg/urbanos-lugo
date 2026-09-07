@@ -28,6 +28,8 @@ import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
 import { PATHS } from '../src/routes';
 import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
+import { routeOnFoot } from '../src/utils/walkRouter';
+import { metresBetween } from '../src/utils/geo';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
 import {
   buildRuns,
@@ -3083,6 +3085,54 @@ ok('the pedestrian network is a graph and not a pile of lines', () => {
   }
   const connected = (seen.size / junctionCount) * 100;
   assert(connected > 95, `the largest connected piece holds only ${connected.toFixed(1)}% of the junctions`);
+});
+
+await okAsync('the walking router returns a route you could actually walk', async () => {
+  // A* over the graph above. The failure that matters is not "no answer" -- that is
+  // visible -- but a confident answer that is wrong, so these check the shape of it
+  // rather than trusting a single distance.
+  const muralla = BUS_STOPS.find((s) => s.name.startsWith('Rda. Muralla 56'))!;
+  const ponte = BUS_STOPS.find((s) => s.name.startsWith('A Ponte (cruce'))!;
+  const from: [number, number] = [muralla.lat, muralla.lng];
+  const to: [number, number] = [ponte.lat, ponte.lng];
+
+  const route = await routeOnFoot(from, to);
+  assert(route, 'no route between two stops in the middle of Lugo');
+
+  // Nothing on the ground is shorter than the line through it. A route that beats the
+  // crow means the walk was measured over a shortcut that does not exist -- a slice
+  // taken backwards, or an edge counted from the wrong end.
+  const straight = metresBetween(from[0], from[1], to[0], to[1]);
+  assert(route!.meters >= straight, `${route!.meters} m route over a ${Math.round(straight)} m straight line`);
+  // And not absurdly longer. Measured over 410 stop pairs the median detour is x1.35,
+  // which is the factor the offline estimate has always used.
+  assert(route!.meters < straight * 4, `${route!.meters} m for ${Math.round(straight)} m straight is not a route, it is a tour`);
+
+  // The drawn line has to be the route that was measured, or the map and the number
+  // disagree about the same walk.
+  let drawn = 0;
+  for (let i = 1; i < route!.path.length; i++) {
+    drawn += metresBetween(route!.path[i - 1][0], route!.path[i - 1][1], route!.path[i][0], route!.path[i][1]);
+  }
+  assert(
+    Math.abs(drawn - route!.meters) < route!.meters * 0.02 + 5,
+    `the polyline is ${Math.round(drawn)} m but the route claims ${route!.meters} m`,
+  );
+
+  // It starts where you are and ends where you asked, not at the nearest corner.
+  assert(route!.path[0][0] === from[0] && route!.path[0][1] === from[1], 'the route does not start at the origin');
+  const last = route!.path[route!.path.length - 1];
+  assert(last[0] === to[0] && last[1] === to[1], 'the route does not end at the destination');
+
+  // Same question, same answer.
+  const again = await routeOnFoot(from, to);
+  assert(again!.meters === route!.meters && again!.minutes === route!.minutes, 'the router is not deterministic');
+
+  // Both ends on one street: no junction is involved and the answer is the walk along it.
+  const nudged: [number, number] = [from[0] + 0.0002, from[1]];
+  const short = await routeOnFoot(from, nudged);
+  assert(short, 'no route to a point twenty metres away');
+  assert(short!.meters < 120, `${short!.meters} m to walk twenty metres up the same street`);
 });
 
 console.log(`\n${checks} checks passed\n`);
