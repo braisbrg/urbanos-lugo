@@ -12,9 +12,11 @@ import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { scheduledDuration } from '../src/utils/schedule';
-import { parseOperatorTimes } from '../src/services/operatorTimes';
+import { operatorTimesForStop, parseOperatorTimes } from '../src/services/operatorTimes';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
-import { CSP_HEADER, CSP_META } from '../src/security/csp';
+import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
+import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
+import { createHash } from 'node:crypto';
 import { REPO_URL } from '../src/project';
 import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
@@ -295,6 +297,54 @@ ok('measured leg distances are at least the straight-line distance', () => {
       });
     }
   }
+});
+
+ok('a leg that drives far further than the crow flies is the route, not a bad snap', () => {
+  // The audit flags legs whose road distance is more than four times the straight line,
+  // and calls them "two opposite poles of the same street". That is a guess unless the
+  // stops are shown to sit on the drawn line: a stop snapped to the wrong vertex invents
+  // exactly the same shape, and it would be a real defect rather than a real detour.
+  //
+  // Both survivors were measured, and both are detours:
+  //   3.1/volta  A Tolda (UNED) -> A Tolda (Cruce pista Bosende)   360 m for 70 m,
+  //     osm-surveyed, at vertices 0 -> 37, i.e. the loop out of the terminus, with the two
+  //     stops 6.1 m and 1.4 m off the line.
+  //   3.2/volta  Pza. Conde Fontao (Estda. FFCC) -> Rúa Castelao 53   765 m for 137 m,
+  //     one of the three directions with no surveyed itinerary, so OSRM's way round a
+  //     one-way system, with the stops 4.3 m and 3.6 m off the line.
+  //
+  // So the count is pinned, and each survivor has to keep proving it is a detour.
+  const SNAP_M = 30;
+  const far: string[] = [];
+  for (const line of BUS_LINES) {
+    for (const dir of line.directions) {
+      if (!dir.stopPathIndex?.length) continue;
+      dir.legMeters?.forEach((road, i) => {
+        const a = BUS_STOPS.find((s) => s.id === dir.stops[i]);
+        const b = BUS_STOPS.find((s) => s.id === dir.stops[i + 1]);
+        if (!a || !b) return;
+        const straight = getDistanceMeters(a.lat, a.lng, b.lat, b.lng);
+        if (straight <= 5 || road / straight <= 4) return;
+
+        far.push(`${line.number}/${dir.id} ${a.name} -> ${b.name} (${road} m vs ${Math.round(straight)} m)`);
+        // The detour has to be the drawn line's own doing. If either stop is far from the
+        // vertex it was matched to, the length is measuring a mis-snap instead.
+        for (const [stop, at] of [
+          [a, dir.stopPathIndex[i]],
+          [b, dir.stopPathIndex[i + 1]],
+        ] as [typeof a, number][]) {
+          const vertex = dir.pathCoordinates?.[at];
+          assert(vertex, `${line.number}/${dir.id}: ${stop.name} has no vertex on the drawn line`);
+          const off = getDistanceMeters(vertex![0], vertex![1], stop.lat, stop.lng);
+          assert(
+            off <= SNAP_M,
+            `${line.number}/${dir.id}: ${stop.name} is ${Math.round(off)} m off the line, so its ${road} m leg is a mis-snap and not a detour`,
+          );
+        }
+      });
+    }
+  }
+  assert(far.length === 2, `${far.length} legs drive over four times the straight line, not 2:\n    ${far.join('\n    ')}`);
 });
 
 ok('a line ends each direction where the other one starts', () => {
@@ -1521,8 +1571,51 @@ ok('the content security policy still refuses what it was written to refuse', ()
   // Scripts are the ones that matter: the build has no inline script and no wasm, and
   // the QR scanner uses the browser's own BarcodeDetector, so 'self' is enough and
   // anything looser means something got added without noticing.
+  // script-src is 'self' plus exactly one SHA-256, and that hash is the theme script the
+  // page inlines. It used to be 'self' alone, with the theme script as a file — which cost
+  // a round trip on the critical path, because the browser would not ask for the entry
+  // chunk until it came back (3760 ms to first paint as a file, 3516 ms inlined, at 6x CPU
+  // on Slow 4G).
+  //
+  // A hash is not a relaxation: it admits one byte sequence and nothing else, which is
+  // narrower than the 'self' beside it, and an injected <script> cannot match it. What it
+  // is vulnerable to is drift, so this does not take the policy's word for the digest — it
+  // recomputes it from the script actually inlined in the built page. A hash that no longer
+  // matches the bytes is a page whose theme script is silently refused.
   const script = CSP_HEADER.match(/script-src ([^;]+)/)?.[1] ?? '';
-  assert(script.trim() === "'self'", `script-src is "${script.trim()}", not just 'self'`);
+  const hashes = [...script.matchAll(/'(sha256-[A-Za-z0-9+/=]+)'/g)].map((m) => m[1]);
+  assert(hashes.length === 1, `script-src carries ${hashes.length} hashes, not exactly 1: "${script.trim()}"`);
+  assert(
+    script.trim() === `'self' '${hashes[0]}'`,
+    `script-src is "${script.trim()}", not 'self' plus exactly one hash`,
+  );
+  assert(hashes[0] === THEME_INIT_HASH, 'the policy hash is not the one computed from the theme script');
+  // Spelled out rather than left to the exact match above: a hash and `'unsafe-inline'` are
+  // opposite things, and a browser that sees both ignores the second. Saying so by name
+  // means the failure reads as what it is.
+  assert(!/unsafe-inline/.test(script), "script-src has taken 'unsafe-inline', which is not what a hash is for");
+  assert(
+    THEME_INIT_HASH === `sha256-${createHash('sha256').update(THEME_INIT_SOURCE, 'utf8').digest('base64')}`,
+    'THEME_INIT_HASH is not the digest of THEME_INIT_SOURCE',
+  );
+
+  // And against the page that ships, when there is one to look at. CI runs the suite
+  // before the build, so a missing dist is skipped rather than failed.
+  const built = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'index.html');
+  if (existsSync(built)) {
+    const html = readFileSync(built, 'utf8');
+    const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    assert(inline.length === 1, `the built page has ${inline.length} inline scripts, not exactly 1`);
+    const digest = `sha256-${createHash('sha256').update(inline[0], 'utf8').digest('base64')}`;
+    assert(
+      digest === hashes[0],
+      `the built page inlines a script whose digest is ${digest}, which the policy does not allow`,
+    );
+    assert(
+      html.includes(`'${hashes[0]}'`),
+      'the meta policy in the built page does not carry the hash of its own inline script',
+    );
+  }
 
   // The map renderer does run a worker, and it is bundled as a same-origin module on
   // purpose: handed a cross-origin worker URL it wraps the thing in a blob instead, and
@@ -1551,11 +1644,12 @@ ok('the content security policy still refuses what it was written to refuse', ()
 });
 
 ok('dark is the default, and only a choice is remembered', () => {
-  // The app is read standing at a pole, most often after dark. Two files have to agree
-  // on this: the hook, and public/theme-init.js which runs before the first paint.
+  // The app is read standing at a pole, most often after dark. Two things have to agree on
+  // this: the hook, and the script that runs before the first paint — which used to be
+  // public/theme-init.js and is now inlined from src/security/themeInit.ts, because as a
+  // file it cost a network round trip before the entry chunk was even requested.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const hook = readFileSync(join(root, 'src/hooks/useTheme.ts'), 'utf8');
-  const init = readFileSync(join(root, 'public/theme-init.js'), 'utf8');
   const html = readFileSync(join(root, 'index.html'), 'utf8');
 
   assert(/return 'dark';/.test(hook), 'useTheme no longer falls back to dark');
@@ -1564,12 +1658,20 @@ ok('dark is the default, and only a choice is remembered', () => {
     'the default is being written to storage, so clearing site data would not return to it',
   );
   assert(/class="dark"/.test(html), 'index.html no longer ships the dark class');
-  assert(/theme-init\.js/.test(html), 'the pre-paint theme script is not loaded');
 
-  // Both files read the same key, and nothing catches it if one of them changes.
+  // Both read the same key, and nothing catches it if one of them changes.
   const key = hook.match(/const KEY = '([^']+)'/)?.[1];
   assert(key, 'useTheme has no storage key');
-  assert(init.includes(`'${key}'`), `theme-init.js does not read ${key}`);
+  assert(THEME_INIT_SOURCE.includes(`'${key}'`), `the pre-paint theme script does not read ${key}`);
+  assert(key === THEME_STORAGE_KEY, `useTheme reads ${key} and themeInit.ts names ${THEME_STORAGE_KEY}`);
+
+  // The script has to survive into the page it is meant to run in, and it only gets there
+  // if the build's replacement still finds its tag.
+  const built = join(root, 'dist', 'index.html');
+  if (!existsSync(built)) return;
+  const page = readFileSync(built, 'utf8');
+  assert(page.includes(THEME_INIT_SOURCE), 'the built page does not carry the pre-paint theme script');
+  assert(!/src="[^"]*theme-init\.js"/.test(page), 'the built page still fetches the theme script as a file');
 });
 
 ok('the repository URL is written in one place', () => {
@@ -2347,56 +2449,39 @@ ok('the build compresses its assets and the server hands them over', () => {
   );
 });
 
-ok('the entry chunk is announced above the blocking script, not behind it', () => {
-  // theme-init.js is a classic blocking script and it sits above everything Vite injects.
-  // Traced on a throttled phone, the browser did not ask for the entry chunk until that
-  // script had come back: document done at 890 ms, theme-init 954 -> 1538, the chunk at
-  // 1548. A whole round trip of nothing, with the stylesheet waiting behind it too.
+ok('nothing on the critical path waits for a script over the network', () => {
+  // The theme script has to run before the first paint, so it blocks the parser wherever it
+  // sits. While it was a file that meant a whole round trip of nothing: traced on a
+  // throttled phone, the document finished at 890 ms, theme-init.js ran 954 -> 1538, and
+  // only then was the entry chunk asked for, at 1548.
   //
-  // Two link tags ahead of the script let all three start together. The plugin finds them
-  // by reading the finished HTML, so a silent failure looks exactly like the old
-  // behaviour -- it returns the document untouched when the regex stops matching, and
-  // nothing else would notice.
+  // Two preload tags ahead of it were the first fix and are gone: once the script is inlined
+  // there is nothing to preload past, and measured against this same build they were 288 ms
+  // *worse* than not having them (3804 ms to first paint with, 3516 ms without, median of
+  // three at 6x CPU on Slow 4G). What replaced both is simply having no external script on
+  // the critical path at all.
+  //
+  // So the property is not "the preloads are above the script" any more. It is that the
+  // browser can reach the entry chunk without waiting for a network round trip first.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
-  assert(/preloadEntry/.test(vite), 'the build no longer announces the entry chunk');
-  assert(
-    /rel="modulepreload"/.test(vite) && /rel="preload" as="style"/.test(vite),
-    'the script or the stylesheet lost its head start',
-  );
-  // A preload whose CORS mode differs from the real request is a second download rather
-  // than a head start, so both tags carry `crossorigin` like the ones Vite emits.
-  assert(
-    (vite.match(/crossorigin href=/g) ?? []).length === 2,
-    'a preload tag no longer matches the CORS mode of the request it is meant to start',
-  );
-
-  // And if there is a build to look at, the tags really are in it, ahead of the script.
-  // Skipped rather than failed when there is not, because the suite runs before the
-  // build in CI.
   const built = join(root, 'dist', 'index.html');
+  // Skipped rather than failed when there is no build, because CI runs the suite first.
   if (!existsSync(built)) return;
   const html = readFileSync(built, 'utf8');
 
-  const script = html.match(/<script type="module"[^>]*\ssrc="([^"]+)"/)?.[1];
-  assert(script, 'the built page has no entry chunk to announce');
-  const preloaded = [...html.matchAll(/<link rel="(?:modulepreload|preload)"[^>]*\shref="([^"]+)"/g)].map((m) => m[1]);
+  const module = html.match(/<script type="module"[^>]*\ssrc="([^"]+)"/);
+  assert(module, 'the built page has no entry chunk');
+  const before = html.slice(0, module!.index);
+
+  // Any `<script src>` above the module is a request the parser stops for. `async` and
+  // `defer` do not stop it, so they are allowed; nothing here uses them today.
+  const blocking = [...before.matchAll(/<script\b([^>]*)\bsrc=/g)]
+    .map((m) => m[1])
+    .filter((attrs) => !/\b(async|defer|type="module")\b/.test(attrs));
   assert(
-    preloaded.includes(script!),
-    `the built page preloads ${preloaded.join(', ') || 'nothing'}, which is not the entry chunk ${script}`,
+    blocking.length === 0,
+    `${blocking.length} external script(s) block the parser before the entry chunk: ${blocking.join(' | ')}`,
   );
-  const styles = [...html.matchAll(/<link rel="stylesheet"[^>]*\shref="([^"]+)"/g)].map((m) => m[1]);
-  for (const href of styles) {
-    assert(preloaded.includes(href), `the stylesheet ${href} still waits behind the blocking script`);
-  }
-  // The whole point is the order: behind theme-init.js they are worth nothing. The tag,
-  // not the name -- a comment near the top of the page explains what that script does,
-  // and matching the name found the explanation rather than the script.
-  const blocking = html.search(/<script[^>]*\stheme-init\.js|<script[^>]*src="[^"]*theme-init\.js/);
-  assert(blocking > 0, 'theme-init.js is gone, so this check is about a script that no longer exists');
-  for (const href of preloaded) {
-    assert(html.indexOf(href) < blocking, `${href} is announced below the blocking script`);
-  }
 });
 
 ok('the mini map is deferred once, where it cannot be forgotten', () => {
@@ -2544,6 +2629,50 @@ ok('"stops near me" answers nothing when you are not near any', () => {
   for (const stop of BUS_STOPS) {
     const here = getNearbyStops(stop.lat, stop.lng).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
     assert(here.length > 0, `standing at ${stop.name} finds no stop within the limit`);
+  }
+});
+
+await okAsync('fifty people at one pole are one request to the operator, not fifty', async () => {
+  // The twenty-second cache only helps once a read has come back. Everything that arrives
+  // while one is still in flight used to miss and open its own connection: measured with
+  // tools/stressHttp.ts, fifty at once on a cold cache were fifty outbound requests, eight
+  // seconds, and a 502 for every one of them.
+  //
+  // That is somebody else's server, and the comment above the cache promises them "one
+  // outbound request a minute however many people are looking". This is that promise.
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    // Long enough that every caller below is waiting on this one at the same time.
+    await new Promise((r) => setTimeout(r, 40));
+    return new Response('<div class="sae-content-info"><div class="sae-content-info-line"><p>13</p></div>' +
+      '<div class="sae-content-info-time"><p>7</p></div></div></div>', { status: 200 });
+  }) as typeof fetch;
+
+  try {
+    const code = `stress-${Date.now()}`; // never cached by anything else in this run
+    const answers = await Promise.all(Array.from({ length: 50 }, () => operatorTimesForStop(code)));
+    assert(calls === 1, `fifty concurrent readers made ${calls} requests to the operator, not 1`);
+    assert(
+      answers.every((a) => a === answers[0]),
+      'the concurrent readers did not all get the same answer',
+    );
+    assert(answers[0]?.departures.length === 1, 'the coalesced answer lost its departures');
+
+    // A failed read must not be remembered as a failure: the next caller has to be allowed
+    // to try again, which is why the in-flight entry is dropped in `finally`.
+    calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      throw new Error('the operator is down');
+    }) as typeof fetch;
+    const failing = `stress-fail-${Date.now()}`;
+    assert((await operatorTimesForStop(failing)) === null, 'a failed read did not answer null');
+    assert((await operatorTimesForStop(failing)) === null, 'a failed read did not answer null the second time');
+    assert(calls === 2, `a failed read was cached instead of retried (${calls} attempts, expected 2)`);
+  } finally {
+    globalThis.fetch = realFetch;
   }
 });
 
@@ -2891,6 +3020,69 @@ ok('a line answers to the words people put in front of its number', () => {
       assert(hit.l.number === line.number, `"${query}" resolves to line ${hit.l.number}`);
     }
   }
+});
+
+ok('the pedestrian network is a graph and not a pile of lines', () => {
+  // Built by tools/buildWalkGraph.ts from what OSM calls a way. The thing that makes it a
+  // graph rather than a drawing is that two ways sharing a node id are joined, and the
+  // way to know that has gone wrong is that the network falls into pieces: a router on a
+  // shattered graph does not fail, it quietly answers "no route" for half the city.
+  const raw = readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8');
+  const graph = JSON.parse(raw) as { scale: number; junctions: number[]; edges: number[] };
+
+  assert(graph.scale === 100_000, `coordinates are stored at 1e-5; found scale ${graph.scale}`);
+  assert(graph.junctions.length % 2 === 0, 'junctions are lat/lng pairs and the array is odd');
+  const junctionCount = graph.junctions.length / 2;
+  assert(junctionCount > 15_000, `only ${junctionCount} junctions; Lugo has more streets than that`);
+
+  // Walk the flat edge runs: a, b, metres, steps, shape length, then that many deltas.
+  const neighbours = new Map<number, number[]>();
+  let i = 0;
+  let edgeCount = 0;
+  let metresTotal = 0;
+  while (i < graph.edges.length) {
+    const a = graph.edges[i];
+    const b = graph.edges[i + 1];
+    const metres = graph.edges[i + 2];
+    const steps = graph.edges[i + 3];
+    const shape = graph.edges[i + 4];
+
+    assert(a >= 0 && a < junctionCount, `edge ${edgeCount} starts at junction ${a}, which does not exist`);
+    assert(b >= 0 && b < junctionCount, `edge ${edgeCount} ends at junction ${b}, which does not exist`);
+    assert(a !== b, `edge ${edgeCount} is a loop from junction ${a} to itself`);
+    assert(steps === 0 || steps === 1, `edge ${edgeCount} has a steps flag of ${steps}`);
+    // Nothing in a city is one edge of eight kilometres. A run that long means two
+    // junctions were joined that should have had the street between them.
+    assert(metres >= 0 && metres < 8000, `edge ${edgeCount} claims ${metres} m`);
+
+    (neighbours.get(a) ?? neighbours.set(a, []).get(a)!).push(b);
+    (neighbours.get(b) ?? neighbours.set(b, []).get(b)!).push(a);
+    metresTotal += metres;
+    edgeCount++;
+    i += 5 + shape * 2;
+  }
+  assert(i === graph.edges.length, 'the edge array does not divide into whole edges');
+  assert(edgeCount > 20_000, `only ${edgeCount} edges`);
+
+  // 2.516 km of walkable way over a municipality of some 330 km2, parishes included.
+  const km = Math.round(metresTotal / 1000);
+  assert(km > 1500 && km < 4000, `${km} km of walkable way is not a plausible total for Lugo`);
+
+  // The measured figure when this was written was 98.7% in one piece; the rest are
+  // rural tracks and ends clipped by the bounding box. Well under that means the node
+  // ids stopped joining anything and every route would be a straight line again.
+  const seen = new Set<number>([0]);
+  const stack = [0];
+  while (stack.length) {
+    const node = stack.pop()!;
+    for (const other of neighbours.get(node) ?? []) {
+      if (seen.has(other)) continue;
+      seen.add(other);
+      stack.push(other);
+    }
+  }
+  const connected = (seen.size / junctionCount) * 100;
+  assert(connected > 95, `the largest connected piece holds only ${connected.toFixed(1)}% of the junctions`);
 });
 
 console.log(`\n${checks} checks passed\n`);

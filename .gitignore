@@ -81,3 +81,7 @@ worker/dist/
 #
 # The underscore is the convention that marks them. Real tools get real names.
 tools/_*.ts
+
+# 4.6 MB of raw Overpass, and `pnpm run data:walk` rebuilds it. The graph it produces,
+# src/data/walk-network.json, is committed because that is what ships.
+data/osm-walk-network.json

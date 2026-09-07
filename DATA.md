@@ -46,6 +46,12 @@ where no surveyed relation exists.
   under ODbL. It is not covered by the MIT licence. That is `src/data/route-geometry.json`,
   which ships, and the snapshots it is built from: `data/osm-routes.json`,
   `data/routes.json` and `data/stop-amenities.json`.
+- **The same applies to the pedestrian network.** `src/data/walk-network.json` — 21.093
+  junctions, 29.489 edges, 2.516 km of walkable way — is built by `tools/buildWalkGraph.ts`
+  from `data/osm-walk-network.json`, which `tools/importWalkNetwork.ts` takes from
+  Overpass. Derivative Database, ODbL, same as the route geometry. It exists so that a
+  walking time is a real route rather than a straight line, and so that no coordinate has
+  to be sent anywhere to work one out.
 
 ## Map tiles — OpenFreeMap
 

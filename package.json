@@ -19,6 +19,8 @@
     "lint": "tsc --noEmit",
     "data:fetch": "tsx tools/importOfficialData.ts",
     "data:osm": "tsx tools/importOsmRoutes.ts",
+    "data:walk": "tsx tools/importWalkNetwork.ts",
+    "data:walkgraph": "tsx tools/buildWalkGraph.ts",
     "data:build": "tsx tools/buildDataset.ts",
     "data:audit": "tsx tools/fullAudit.ts",
     "check:landmarks": "tsx tools/checkLandmarks.ts",
