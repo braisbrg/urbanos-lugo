@@ -71,3 +71,13 @@ docs/diagrams/*.html
 # The worker bundle. esbuild rebuilds it from worker/index.ts in seconds; committing it
 # would be committing build output, which this repository does not do anywhere else.
 worker/dist/
+
+# The scratch probe. `tools/_probe.ts` is whatever a session needs to look at once --
+# the poles with no coordinates, the snap distance from a stop to its drawn line, the
+# ways OSM says a bus may not use. It is rewritten from scratch every time and answers
+# a question that is over by the time it is answered, so it is a scratchpad and not a
+# tool. Tracking one briefly proved the point: every rewrite showed up as a pending
+# change to a file nobody was maintaining.
+#
+# The underscore is the convention that marks them. Real tools get real names.
+tools/_*.ts
