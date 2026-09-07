@@ -197,9 +197,39 @@ de mellorar máis alá de 1,2 km e a media segue baixando ata os 2 km (40 → 37
 se aplana. Ningunha proposta pode ser absurda porque unha parada só se considera se
 camiñar ata ela leva menos que camiñar todo o traxecto.
 
-No mapa, os tramos a pé debúxanse en liña recta punteada. Con **"Ver camiño a pé"**
-trázanse polas beirarrúas reais consultando o enrutador peonil de OpenStreetMap; é
-opcional porque require conexión e o resto da aplicación non.
+**Os tramos a pé van polas beirarrúas reais, e calcúlanse neste móbil.** A aplicación
+leva dentro a rede peonil de Lugo — 21.093 cruces e 29.489 arestas levantadas de
+OpenStreetMap — e resolve cada camiño cun A\* en menos dun milisegundo
+(`src/utils/walkRouter.ts`). Nin conexión nin terceiros.
+
+Antes había un botón, **"Ver camiño a pé"**, porque trazar o camiño significaba mandarlle
+os dous extremos de cada tramo ao enrutador peonil de OpenStreetMap, e un deses extremos
+pode ser a túa posición do GPS. Iso é algo que hai que pedir permiso para facer, así que
+se pedía. Agora non hai nada que consentir: o botón desapareceu e o camiño debúxase
+sempre.
+
+Medido sobre 410 pares de paradas, o rodeo real fronte á liña recta ten unha mediana de
+**×1,35** — exactamente o factor que usaba a estimación, que resulta estar ben de media.
+O que nunca estivo ben é a cola: o p90 é ×3,59 e o peor ×32,5, dous postes a poucas
+decenas de metros cun quilómetro de camiño entre eles porque hai unha vía polo medio.
+
+Cando **non hai camiño peonil**, a opción de ir andando retírase en vez de quedar cunha
+estimación. Nas paradas da N-VI en Ombreiro esa estimación sería un paseo de seis
+quilómetros a campo través, e alí non hai beirarrúa ningunha.
+
+**Substituír algo é afirmar que o teu é igual de bo, así que se comproba.**
+`pnpm run compare:walk` colle 40 traxectos reais e pregúntallos aos dous enrutadores, ao
+noso e ao de FOSSGIS que había antes. Última medición: mediana **−2,0%**, p10 −6,6%, p90
+−0,6%, e **39 dos 40 dentro do 10%**, os 40 dentro do 25%.
+
+O signo importa e é honesto dicilo: os nosos camiños son sistematicamente un chisco máis
+curtos. O noso perfil admite `track`, que é o que fai falta para chegar ás parroquias —
+Bóveda, Muxa, Nadela — e o de OSRM penalízao. A maior discrepancia, −18,4%, é xustamente
+un traxecto rural (Barbaín → Avda. Madrid). Se algún día hai que apertar iso, o mando
+está en `STEPS_SPEED_FACTOR` e nos tipos de vía de `tools/importWalkNetwork.ts`.
+
+Non está en CI nin no `pnpm test`: bate contra un servidor alleo, á súa cadencia dunha
+petición por segundo, e cachea para que repetilo non custe nada.
 
 Amosa tamén **canto custa o traxecto** cos dous títulos, aplicando a regra dos 75 minutos:
 un transbordo dentro da ventá vai incluído coa Tarxeta Cidadá.
@@ -425,6 +455,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── lines.json              XERADO — o que le a app
 │   │   ├── route-geometry.json     XERADO — trazados, baixo demanda
 │   │   ├── alerts.json             INSTANTÁNEA — avisos, refrescada por CI
+│   │   ├── walk-network.json       XERADO — 21.093 cruces, 29.489 arestas
 │   │   ├── routeGeometry.ts        carga os trazados baixo demanda
 │   │   └── transitData.ts          carga dos datos + tarifas
 │   ├── services/
@@ -432,7 +463,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── operatorTimes.ts        os minutos do operador detrás do QR
 │   │   ├── readCapped.ts           teito de 512 KB en cada lectura de fóra
 │   │   ├── stopAlarm.ts            alarma de proximidade á parada
-│   │   └── walkingPath.ts          tramos a pé polo enrutador de OSRM
+│   │   └── walkingPath.ts          onde camiña un plan; a ruta faina walkRouter
 │   ├── hooks/
 │   │   ├── useTabRoute.ts          unha ruta por pestana, para o xesto de atrás
 │   │   ├── useServiceAlerts.ts     avisos, ou a instantánea coa súa data
@@ -445,6 +476,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── transitEngine.ts        chegadas, vehículos e rutas
 │   │   ├── serviceLabels.ts        días, frecuencia e sentido no idioma da IU
 │   │   ├── geo.ts                  a única Haversine
+│   │   ├── walkRouter.ts           A* sobre a rede peonil, no propio móbil
 │   │   ├── snapshotAge.ts          cando unha copia deixa de falar do presente
 │   │   └── searchUtils.ts          buscador
 │   ├── fonts/                      as dúas caras variables + OFL.txt
@@ -466,6 +498,10 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── importStopAmenities.ts      equipamentos de parada desde OSM
 │   ├── buildDataset.ts             xera stops.json e lines.json (rápido)
 │   ├── importOsmRoutes.ts          relacións de ruta desde Overpass
+│   ├── importWalkNetwork.ts        as vías camiñables de Lugo desde Overpass
+│   ├── buildWalkGraph.ts           fainas grafo: cruces, arestas e polilinas
+│   ├── compareWalkRouter.ts        o noso enrutador fronte ao de FOSSGIS
+│   ├── checkLandmarks.ts           onde din OSM e Wikidata que están os sitios
 │   ├── fetchAlerts.ts              refresca a instantánea de avisos (CI)
 │   ├── calibrateWalking.ts         mide o factor de rodeo peonil
 │   ├── validateRideTimes.ts        contrasta os tempos de percorrido
@@ -655,7 +691,8 @@ servizo que cruzan a medianoite.
 5. **Tempos** — cada tramo en bus lese da expedición que se colle, co que respecta todos
    os puntos horarios oficiais do percorrido; os tramos a pé aplican un factor de rodeo
    de 1,35 sobre a distancia en liña recta a 75 m/min, e substitúense polo camiño real
-   en canto o enrutador peonil de OSM responde. **Mídense todas as opcións que se amosan**,
+   que calcula `walkRouter.ts` sobre a rede peonil que vai no propio paquete.
+   **Mídense todas as opcións que se amosan**,
    non só a aberta, ou compararíaslas por estimacións e logo veríaas cambiar ao abrilas.
 
 Regras que evitan suxestións absurdas ou perigosas:
@@ -786,7 +823,8 @@ desenvolvemento. Dependabot revisa semanalmente as dependencias e mais as action
 o build non ten ningún script en liña, nin worker, nin wasm, e o escáner QR usa o
 `BarcodeDetector` do navegador en vez dunha librería. As únicas orixes remotas
 permitidas son as que a app usa de verdade — OpenFreeMap polas teselas vectoriais,
-tile.openstreetmap.org polo respaldo ráster e o enrutador peonil de OSM. `font-src` é
+tile.openstreetmap.org polo respaldo ráster. O enrutador peonil de OSM estivo aquí ata
+que a rede peonil pasou a ir dentro do paquete: unha orixe menos. `font-src` é
 `'self'` a secas: a tipografía viña de Google e agora sérvese desde aquí, así que abrir un
 horario de bus xa non llo conta a Google. buslugo.com tampouco está: só o servidor o
 consulta, nunca o navegador.

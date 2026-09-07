@@ -32,6 +32,7 @@
     "measure:parsers": "tsx tools/stressParsers.ts",
     "stress:http": "tsx tools/stressHttp.ts",
     "compare:operator": "tsx tools/compareOperatorTimes.ts",
+    "compare:walk": "tsx tools/compareWalkRouter.ts",
     "data:amenities": "tsx tools/importStopAmenities.ts",
     "data:alerts": "tsx tools/fetchAlerts.ts",
     "diagrams": "tsx tools/buildDiagrams.ts",
