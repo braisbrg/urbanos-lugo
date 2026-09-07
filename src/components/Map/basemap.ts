@@ -97,7 +97,7 @@ const LABEL_TUNING: readonly [layer: string, property: string, value: unknown][]
  * Its ground is #45516E, which rendered as a pale blue slab inside a near-black app —
  * the route line dissolved into it and the white stop dots disappeared.
  */
-const DARK_TUNING: readonly [layer: string, property: string, value: string][] = [
+const DARK_TUNING: readonly [layer: string, property: string, value: unknown][] = [
   ['background', 'background-color', '#171a1f'],
   ['water', 'fill-color', '#0e151d'],
   ['building', 'fill-color', '#1c2027'],
@@ -105,6 +105,19 @@ const DARK_TUNING: readonly [layer: string, property: string, value: string][] =
   ['highway_minor', 'line-color', '#2b3038'],
   ['highway_major_inner', 'line-color', '#39404b'],
   ['highway_motorway_inner', 'line-color', '#39404b'],
+  /*
+   * A colour instead of a texture that does not exist.
+   *
+   * The published dark style paints woodland with `fill-pattern: "wood-pattern"` and the
+   * sprite it names has no such image — 264 icons and not one pattern among them, so
+   * every load of the dark map logged "Image 'wood-pattern' could not be loaded" and the
+   * woods came out unpainted. Upstream's bug, ours to survive: a flat green in the same
+   * family as the ground keeps the console for real errors and puts something on the
+   * park. `fill-pattern` is cleared alongside it because a pattern, when it is set, wins
+   * over the colour.
+   */
+  ['landcover_wood', 'fill-pattern', undefined],
+  ['landcover_wood', 'fill-color', '#1a2119'],
 ];
 
 /**

@@ -75,6 +75,9 @@ const json = (body: unknown, status: number, maxAge: number): Response =>
       // no-store, not a short max-age: an answer without a usable allow-origin is not
       // stale, it is unusable, and the point is that nothing keeps it at all.
       'cache-control': cacheableFor(maxAge) > 0 ? `public, max-age=${cacheableFor(maxAge)}` : 'no-store',
+      // When this answer was made, so the read above can tell a fresh one from a
+      // three-day-old one without depending on the runtime to compute `age`.
+      'x-stored-at': String(Date.now()),
       'x-content-type-options': 'nosniff',
     },
   });
@@ -96,8 +99,37 @@ export async function handle(request: Request): Promise<Response> {
   const cacheKey = new Request(
     `${url.origin}${url.pathname}${url.search}${url.search ? '&' : '?'}__origin=${encodeURIComponent(ALLOWED_ORIGIN)}`,
   );
+  /*
+   * A stored answer is served only while it is still the answer.
+   *
+   * `cache.match` does not read `cache-control`. It returns whatever was put there, for
+   * as long as the store keeps it, and nothing here was checking. Measured against the
+   * live worker: `age: 259156` on a response that declares `max-age=1800` — three days
+   * on a half-hour answer, a hundred and forty times past its own stated freshness. The
+   * comment below says a bad answer lasts "up to half an hour". It lasted until someone
+   * noticed.
+   *
+   * That is also how a response with no `access-control-allow-origin` came to be served
+   * to the published site three days after whatever deployment produced it, which is the
+   * bug that got reported: the browser refused it, the log said the header was missing,
+   * and nothing upstream was wrong any more.
+   *
+   * So both halves are checked on the way out, not only on the way in. The age comes from
+   * a stamp written at store time rather than from the `age` header, because that header
+   * is the runtime's to set and this file runs in more than one. And an answer whose
+   * allow-origin is not the one this deployment would send is discarded whatever its age:
+   * the same rule `cacheableFor` applies when storing, applied when reading.
+   */
   const hit = await cache.match(cacheKey);
-  if (hit) return hit;
+  if (hit) {
+    const storedAt = Number(hit.headers.get('x-stored-at'));
+    const maxAge = Number(/max-age=(\d+)/.exec(hit.headers.get('cache-control') ?? '')?.[1] ?? 0);
+    const fresh = Number.isFinite(storedAt) && storedAt > 0 && (Date.now() - storedAt) / 1000 < maxAge;
+    const usable = (hit.headers.get('access-control-allow-origin') ?? '') === ALLOWED_ORIGIN;
+    if (fresh && usable) return hit;
+    // Take it out rather than leaving it to be re-read and re-rejected on every request.
+    await cache.delete(cacheKey);
+  }
 
   const respond = async (body: unknown, status: number, maxAge: number): Promise<Response> => {
     const res = json(body, status, maxAge);
