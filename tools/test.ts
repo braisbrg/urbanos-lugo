@@ -1042,6 +1042,53 @@ ok('the three dictionaries have exactly the same shape', () => {
   }
 });
 
+ok('the out-of-service banner still fits on two lines', () => {
+  // It was a panel: measured at 162 px on a 375x812, a fifth of the screen, on every tab.
+  // With the search bar and the bottom nav that left 513 px for the screen itself, and the
+  // route planner's form needs 762. It is two truncating lines now, 55 px, and 619 px left
+  // over — but "truncating" is the catch: a longer translation does not wrap and make the
+  // banner taller, it silently cuts the sentence off, which is the failure this app is
+  // least willing to ship on a stop name or on a service notice.
+  //
+  // So the budget is in characters, because that is what a Node test can see. It is not a
+  // guess: measured in the browser at 375 px, the text column is 279 px wide and the small
+  // line renders at about 5.16 px per character, so 54 characters is the edge. The chevron
+  // the component appends costs two of them.
+  //
+  // The bold line carries a time, so it is measured with one in place.
+  const SMALL_LINE = 52; // 54 minus the " ›" appended in App.tsx
+  const BOLD_LINE = 42;
+
+  for (const lang of LANGS) {
+    const t = translations(lang);
+    const closed = t.nightBanner.closed('07:00');
+    assert(
+      closed.length <= BOLD_LINE,
+      `${lang}: "${closed}" is ${closed.length} characters and the banner's first line fits ${BOLD_LINE}`,
+    );
+    assert(
+      t.nightBanner.festivals.length <= SMALL_LINE,
+      `${lang}: "${t.nightBanner.festivals}" is ${t.nightBanner.festivals.length} characters and the second line fits ${SMALL_LINE}`,
+    );
+    // The festival sentence is what keeps "no service" from being a lie on the night of
+    // San Froilán -- the operator runs extra buses and only ever announces them as a
+    // notice. Shortening it is fine; dropping it is not.
+    assert(
+      /festa|fiesta|festival/i.test(t.nightBanner.festivals),
+      `${lang}: the banner no longer mentions the festival reinforcements`,
+    );
+  }
+
+  // And the row is the link: "see notices" survives as the accessible name of the whole
+  // bar rather than as a 44 px row of its own.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const app = readFileSync(join(root, 'src/App.tsx'), 'utf8');
+  assert(
+    /nightBanner\.seeNotices/.test(app) && /sr-only[^>]*>\s*\{t\.nightBanner\.seeNotices\}/.test(app),
+    'the notices link is no longer the accessible name of the banner row',
+  );
+});
+
 ok('no translated string is blank', () => {
   for (const lang of LANGS) {
     const blanks: string[] = [];
@@ -3100,6 +3147,52 @@ await okAsync('the walking router returns a route you could actually walk', asyn
   const short = await routeOnFoot(from, nudged);
   assert(short, 'no route to a point twenty metres away');
   assert(short!.meters < 120, `${short!.meters} m to walk twenty metres up the same street`);
+});
+
+ok('the three front doors say the same true things', () => {
+  // The Galician README is the whole documentation, near fifteen hundred lines of
+  // measured figures. The Castilian and English ones are deliberately a single screen
+  // each: three copies of every number would be three places for a measurement to go
+  // stale, and this project's whole claim is that its figures are checkable.
+  //
+  // What cannot be in one language only is the honest labelling. So this checks that the
+  // summaries carry the two things a reader is owed whatever they read in — that the app
+  // is not official, and that no time in it is a measurement — and that the counts they
+  // do quote still match the dataset.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const doors = ['README.md', 'README.es.md', 'README.en.md'];
+
+  for (const door of doors) {
+    const text = readFileSync(join(root, door), 'utf8');
+
+    assert(/Monbus/.test(text) && /Concello de Lugo/.test(text), `${door} does not say who it is not`);
+    assert(
+      /HORARIO OFICIAL/.test(text) && /ESTIMADO/.test(text),
+      `${door} does not show the two labels every time carries`,
+    );
+
+    // Every count it states about the network has to be the count the network has.
+    for (const [claimed, what, actual] of [
+      [/\b(\d+) paradas\b/, 'stops', BUS_STOPS.length],
+      [/\b(\d+) stops\b/, 'stops', BUS_STOPS.length],
+      [/\b(?:as |all )?(\d+) (?:liñas|líneas|lines)\b/, 'lines', BUS_LINES.length],
+    ] as const) {
+      const found = claimed.exec(text);
+      if (found) {
+        assert(Number(found[1]) === actual, `${door} says ${found[1]} ${what}; there are ${actual}`);
+      }
+    }
+  }
+
+  // And each summary has to point at the full document, or it is a dead end rather than
+  // a front door.
+  for (const door of ['README.es.md', 'README.en.md']) {
+    const text = readFileSync(join(root, door), 'utf8');
+    assert(/\(README\.md\)/.test(text), `${door} does not link to the full README`);
+    assert(/\(PRIVACY\.md\)/.test(text), `${door} does not link to the privacy page`);
+  }
+  const gl = readFileSync(join(root, 'README.md'), 'utf8');
+  assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
 });
 
 console.log(`\n${checks} checks passed\n`);

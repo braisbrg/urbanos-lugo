@@ -9,6 +9,14 @@ pasan, nunha web que se abre nun segundo e funciona sen cobertura.
 > Monbus nin o Concello de Lugo. Le os horarios que o operador publica en
 > <https://buslugo.com>. Se algo depende dun horario, manda a fonte oficial.
 
+> 🇪🇸 [Castellano](README.es.md) · 🇬🇧 [English](README.en.md)
+>
+> Esas dúas son resumos dunha pantalla, non traducións deste documento. Aquí hai preto de
+> mil cincocentas liñas cheas de cifras medidas, e tres copias delas serían tres sitios
+> onde unha medición pode quedar vella sen que ninguén o note. O que si vai nos tres
+> idiomas é o que non se pode dicir só nun: que isto non é oficial, e que ningunha hora
+> desta web é unha medición.
+
 ---
 
 ## Para que serve

@@ -110,6 +110,33 @@ deliberately left unread.
 
 </important>
 
+<important if="your change makes anything in the README untrue">
+
+**Finish the change in the docs, in the same commit.** The README describes behaviour and
+quotes measured figures, so a change that alters either leaves it lying until someone
+notices. That has happened: it described a "Ver camiño a pé" button for a while after the
+button was deleted, and listed an origin in the security section after the policy had
+stopped allowing it.
+
+There are three front doors and they are not three translations:
+
+| | |
+| :--- | :--- |
+| `README.md` | **Galician, and the whole documentation.** Every measured figure lives here and is updated here. |
+| `README.es.md`, `README.en.md` | One screen each, on purpose. Three copies of every number would be three places for a measurement to go stale. |
+
+So the rule is asymmetric. A change to how something works, or to a figure, goes in
+`README.md` **only**. A change to what the summaries actually carry — that the app is not
+official, that no time in it is a measurement, the counts they quote, the links they
+offer — goes in **all three**, because those are the things a reader is owed whatever
+language they read in. `pnpm test` checks exactly that much and no more.
+
+`PRIVACY.md`, `DATA.md` and `NOTICE.md` are the same kind of promise: if a change alters
+what leaves the device, where a file comes from, or who is owed credit, they are wrong
+until they are updated, and that is a bug like any other.
+
+</important>
+
 <important if="you are editing src/services/ or adding a network call">
 
 `src/services/` is imported by three runtimes: the browser, `server.ts` (Node/Express)
