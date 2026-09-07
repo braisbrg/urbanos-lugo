@@ -27,7 +27,7 @@ export const es: Dict = {
     sourceNoGps: 'Horas calculadas, no medidas',
     sourceShort: 'Horarios oficiales de buslugo.com. Las horas de esta app son calculadas.',
     unofficial: 'Proyecto no oficial: ni AULUSA / Monbus ni el Ayuntamiento de Lugo lo hacen ni lo avalan.',
-    privacy: 'Tu ubicación no sale de este móvil, salvo si pides ver el camino a pie.',
+    privacy: 'Tu ubicación no sale de este móvil. Ni siquiera para trazar el camino a pie.',
     sourceCode: 'Código, licencias y privacidad',
   },
 
@@ -193,10 +193,6 @@ export const es: Dict = {
     tripInfoTitle: 'Información',
     timeProvenanceMeasured:
       'Los tramos a pie están medidos por el enrutador peatonal de OpenStreetMap, no estimados. Las horas de bus siguen viniendo del cuadro horario oficial; las marcadas con ~ se deducen del tiempo de recorrido medido por carretera.',
-    showWalkingPath: 'Ver camino a pie',
-    hideWalkingPath: 'Ocultar camino a pie',
-    walkingPathHint:
-      'Traza los tramos a pie por las aceras reales. Necesita conexión: se consulta el enrutador peatonal de OpenStreetMap.',
     noWaitNoFare: 'sin esperas ni billete',
     waitShort: (minutes: number) => `${minutes} min de espera`,
     serviceNoticeTitle: 'Aviso de horario de servicio',
@@ -248,7 +244,6 @@ export const es: Dict = {
     zoomOut: 'Alejar el mapa',
     networkRegion: 'Mapa de la red. Los recorridos y las paradas también están en la pestaña de líneas.',
     nearbyRegion: 'Mapa de las paradas cerca de ti. Las mismas paradas están en la lista de abajo.',
-    fixTheMap: 'Corregir el mapa',
     loadingMap: 'Cargando el mapa…',
     subtitle: 'Recorridos, paradas y posición de los autobuses',
     allLines: 'Todas',
@@ -473,10 +468,8 @@ export const es: Dict = {
   },
 
   nightBanner: {
-    closed: (firstDeparture: string) =>
-      `Sin servicio ahora. La primera salida es a las ${firstDeparture}.`,
-    festivals:
-      'En fiestas suele haber refuerzos nocturnos. Se publican como aviso, sin horario fijo.',
+    closed: (firstDeparture: string) => `Sin servicio · primer bus a las ${firstDeparture}`,
+    festivals: 'En fiestas puede haber refuerzos, sin horario fijo',
     seeNotices: 'Ver avisos',
     dismiss: 'Ocultar aviso',
   },

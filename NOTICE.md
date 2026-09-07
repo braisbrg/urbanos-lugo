@@ -57,9 +57,9 @@ The full account, with what each source permits, is in `DATA.md`.
 - Route geometry, stop surveys and amenities: **OpenStreetMap contributors**, ODbL 1.0.
   The derived geometry is a Derivative Database and stays under ODbL.
 - Map tiles: **OpenFreeMap**, serving the **OpenMapTiles** schema built from OpenStreetMap.
-- Routing: the **OSRM** project's public demo server, at build time only, and
-  OpenStreetMap's pedestrian router at `routing.openstreetmap.de` when a reader asks to
-  see a walking path.
+- Routing: the **OSRM** project's public demo server, at build time only. The walking
+  network is built from OpenStreetMap at build time as well and routed on the reader's
+  own device, so nothing is asked of anybody while the app is being used.
 - Works and traffic notices: three RSS feeds published by the **Concello de Lugo**.
 
 ## And what this project is not

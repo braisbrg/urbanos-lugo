@@ -12,16 +12,26 @@
  * WebGL2. buslugo.com is deliberately absent — only the server ever reaches it, because
  * CORS blocks the browser.
  *
- * Scripts are same-origin only, which the build allows: no inline script, no wasm, and
- * the QR scanner uses the browser's own BarcodeDetector rather than a library. The map
- * renderer runs a worker, but Vite emits it as a same-origin module, so `worker-src`
- * stays at 'self' rather than opening up to blob:. If that ever stops holding the map
- * goes blank and the console says so — do not widen the directive without checking that
- * the bundler has genuinely stopped emitting a same-origin worker.
+ * Scripts are same-origin only plus exactly one hash: no wasm, and the QR scanner uses the
+ * browser's own BarcodeDetector rather than a library. The map renderer runs a worker, but
+ * Vite emits it as a same-origin module, so `worker-src` stays at 'self' rather than
+ * opening up to blob:. If that ever stops holding the map goes blank and the console says
+ * so — do not widen the directive without checking that the bundler has genuinely stopped
+ * emitting a same-origin worker.
+ *
+ * The hash is the theme script, which has to run before the first paint and cost a whole
+ * round trip while it was a file. `'sha256-…'` is not `'unsafe-inline'`: it admits one byte
+ * sequence, which makes it narrower than the `'self'` beside it, and it is computed here
+ * from the same export the page inlines so the two cannot disagree. Adding a second hash
+ * would be a real widening; adding `'unsafe-inline'` would throw the whole directive away,
+ * and tools/test.ts refuses both.
  *
  * `unsafe-inline` under style-src is load-bearing — stop popups are built as HTML with
  * style attributes — and scripts do not get the same licence.
  */
+import { createHash } from 'node:crypto';
+import { THEME_INIT_SOURCE } from './themeInit';
+
 /**
  * The Worker's address, when the build has one.
  *
@@ -44,12 +54,20 @@ const apiOrigin = (() => {
   }
 })();
 
+/**
+ * The digest of the one inline script, in the form CSP wants.
+ *
+ * Computed from the export the page inlines, at module load, in Node — this file is only
+ * ever imported by vite.config.ts, server.ts and the test suite, never by the browser.
+ */
+export const THEME_INIT_HASH = `sha256-${createHash('sha256').update(THEME_INIT_SOURCE, 'utf8').digest('base64')}`;
+
 const DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "form-action 'self'",
-  "script-src 'self'",
+  `script-src 'self' '${THEME_INIT_HASH}'`,
   "worker-src 'self'",
   "manifest-src 'self'",
   "style-src 'self' 'unsafe-inline'",
@@ -58,7 +76,9 @@ const DIRECTIVES = [
   // blob: because the renderer decodes sprites and glyphs into object URLs before
   // drawing them; it never fetches an image from an origin not named here.
   "img-src 'self' data: blob: https://tiles.openfreemap.org https://tile.openstreetmap.org",
-  `connect-src 'self' https://tiles.openfreemap.org https://routing.openstreetmap.de${apiOrigin}`,
+  // The pedestrian router used to be here too. The app carries the network and routes
+  // on the device now, so the policy is one origin smaller than it was.
+  `connect-src 'self' https://tiles.openfreemap.org${apiOrigin}`,
   'upgrade-insecure-requests',
 ];
 

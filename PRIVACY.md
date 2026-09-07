@@ -11,7 +11,7 @@ form one from.
 
 ## Kept on your device, and only there
 
-Six things are saved in your browser's `localStorage`. They never leave it: nothing in
+Five things are saved in your browser's `localStorage`. They never leave it: nothing in
 this project reads them and sends them anywhere.
 
 | Key | What it holds |
@@ -21,7 +21,6 @@ this project reads them and sends them anywhere.
 | `urbanos-lugo-recent-stops` | the last stops you opened, as ids |
 | `urbanos-lugo-lang` | Galician, Spanish or English |
 | `urbanos-lugo-theme` | light, dark or automatic |
-| `urbanos-lugo-walking-path` | whether you asked for real walking paths |
 
 Clearing your browser's site data removes all of it. There is no copy anywhere else.
 
@@ -37,19 +36,17 @@ Your position is used in the browser to sort stops by distance and to draw a mar
 is **not** sent to this project's server, because there is nothing to send it to: the
 distance arithmetic is `src/utils/geo.ts`, running on your phone.
 
-**One exception, and it is the one worth knowing about.** If you press *"see the walking
-path"* on a planned trip, the two ends of each walking leg are sent to OpenStreetMap's
-public pedestrian router at `routing.openstreetmap.de` so it can return the real path
-along pavements. When the trip starts from your GPS position, that position is one of
-those coordinates. Until you press it, the map draws a straight dashed line and nothing
-is sent. See `src/services/walkingPath.ts`.
+**There used to be an exception here, and there is not any more.** Pressing *"see the
+walking path"* sent both ends of each walking leg — one of which can be your GPS position
+— to OpenStreetMap's public pedestrian router at `routing.openstreetmap.de`. That is why
+it was a button: it was a thing to consent to.
 
-**That answer is remembered.** Once you have pressed it, the app keeps asking the router
-for later trips too, without asking you again, because the measured walk is a much better
-answer than the estimate — off by as much as fourteen minutes on the awkward crossings.
-Press *"hide the walking path"* and it stops, in that trip and in every one after. The
-choice lives in `urbanos-lugo-walking-path` above, on your device; a browser that has
-never been told sends nothing.
+The app now carries the pedestrian network of Lugo itself, 21.093 junctions and 29.489
+edges of real pavement built from OpenStreetMap at build time, and works the route out on
+your device in under a millisecond (`src/utils/walkRouter.ts`). So the button is gone,
+because there is nothing left to agree to, and the walking times you see are measured
+along real streets rather than estimated from a straight line — with no connection needed
+and nothing sent anywhere.
 
 ## What your browser requests from other people
 
@@ -59,7 +56,6 @@ Opening any web page tells the servers it contacts your IP address. This one con
 | :--- | :--- | :--- |
 | `tiles.openfreemap.org` | the map background | when you open a map |
 | `tile.openstreetmap.org` | the map background, on a device with no WebGL2 | when you open a map |
-| `routing.openstreetmap.de` | the real walking path | only when you ask for it |
 | the API, if one is configured | service notices, and the operator's own minutes behind a QR | on the notices screen, and on a stop you reached by scanning |
 
 That is the whole list, and the map is the only one you meet on an ordinary visit. Those

@@ -50,8 +50,7 @@ function shiftClock(hhmm: string, deltaMinutes: number): string {
 
 const MAX_OPTIONS = 4;
 
-/** Kept on the device only, and listed as such in PRIVACY.md. */
-const WALKING_KEY = 'urbanos-lugo-walking-path';
+
 
 /** One row of the origin/destination autocomplete: a real stop, or a named place. */
 interface Suggestion {
@@ -121,34 +120,15 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }));
 
   const [showMap, setShowMap] = useState(true);
-  /**
-   * Whether to ask the pedestrian router — asked once, then remembered.
+  /*
+   * There is no longer a question to ask.
    *
-   * Off on a first visit, because a real pavement route needs a third party and the app
-   * is meant to work with no connection at all. But answering once and being asked again
-   * on every trip is the wrong bargain for the reader who wants it: the measured walk
-   * corrects an estimate that is out by up to fourteen minutes on the awkward crossings,
-   * and that is worth having by default once you have said so.
-   *
-   * Safari in private browsing throws from localStorage rather than returning null, so
-   * both ends are guarded; the toggle still works for the session if it cannot be saved.
+   * This was a button, and before it a promise the code was not keeping. Asking the
+   * reader's permission was right while a walking route meant sending one end of it —
+   * often their own GPS fix — to somebody else's server. The app carries the pedestrian
+   * network of Lugo now and works the route out here, so nothing leaves, nothing is
+   * asked, and every plan is measured rather than estimated.
    */
-  const [detailedWalking, setDetailedWalking] = useState(() => {
-    try {
-      return localStorage.getItem(WALKING_KEY) === 'on';
-    } catch {
-      return false;
-    }
-  });
-  const toggleDetailedWalking = () =>
-    setDetailedWalking((on) => {
-      try {
-        localStorage.setItem(WALKING_KEY, on ? 'off' : 'on');
-      } catch {
-        // Not remembered for next time; still on for this one.
-      }
-      return !on;
-    });
   const [walkPaths, setWalkPaths] = useState<Record<string, WalkingPath | null>>({});
 
   // Fetch the real pedestrian route for each walked hop of the chosen plan. The times
@@ -180,33 +160,18 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }, [shownOptions, endpoints]);
 
   /**
-   * The real pedestrian route for each walked hop, fetched only when the reader asks.
+   * The real pedestrian route for every walked hop of every option on offer.
    *
-   * One press buys both things it can buy: the path drawn on the map, and walking times
-   * measured on real pavement instead of the 1.35 detour estimate. Until then the app
-   * answers from its own arithmetic, offline, with nothing leaving the phone.
+   * No guard and no connection check any more: the router is in the bundle, so this runs
+   * on every plan and works with the radio off. What it can still return is null, and
+   * that means there is no pedestrian route at all — not that the answer is unknown.
    */
   useEffect(() => {
-    // Only when asked. PRIVACY.md says, of routing.openstreetmap.de, "only when you ask
-    // for it", and names the button by its label; the menu says your location does not
-    // leave the phone unless you press it. This effect had lost its guard — it ran on
-    // every plan the moment there was a connection, so both ends of every walking leg,
-    // one of which can be the reader's own GPS fix, went to a third party without anybody
-    // pressing anything. A privacy promise the code does not keep is worse than not
-    // making it.
-    //
-    // The guard was removed for a real reason: the headline duration was the 1.35 detour
-    // estimate unless somebody opened the map, and that estimate is off by up to fourteen
-    // minutes on the awkward crossings. That was a fair complaint about the wrong thing.
-    // The button now buys both — the drawn path and the corrected times — and until it is
-    // pressed the app answers from its own estimate, offline and unshared, which is what
-    // it promises.
-    if (!detailedWalking) return;
-    if (!allWalkHops.length || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    if (!allWalkHops.length) return;
     const controller = new AbortController();
-    // One at a time, a second apart — the router's own terms. Each leg is drawn as it
-    // arrives rather than the set landing together, because at that rate a four-option
-    // plan would otherwise show nothing for nine seconds.
+    // Each leg lands as it is worked out. This was a queue at one request a second,
+    // because that is what FOSSGIS asked of anyone using their server; a four-option
+    // plan took nine seconds to fill in. It now takes about six milliseconds.
     for (const [a, b] of allWalkHops) {
       fetchWalkingPath(a, b, controller.signal)
         .then((path) => {
@@ -218,7 +183,34 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
         });
     }
     return () => controller.abort();
-  }, [allWalkHops, detailedWalking]);
+  }, [allWalkHops]);
+
+  /**
+   * The options worth offering, which is not always all of them.
+   *
+   * "Todo a pé" is built from the straight line between the two ends, and it is ranked on
+   * `durationMinutes` against bus options whose times come from the operator's timetable.
+   * So when it is wrong it does not merely print a wrong number: it can put walking at the
+   * top of the list. Once the router has answered, a walk-only option it could not route
+   * is withdrawn rather than left standing on the estimate — for the N-VI stops out at
+   * Ombreiro that estimate is a six-kilometre stroll across fields, and there is no
+   * pavement there at all. Every other option keeps its bus legs, which were never
+   * estimates, so only this one can disappear.
+   */
+  const offeredOptions = React.useMemo(() => {
+    return shownOptions
+      .map((option, idx) => ({ option, idx }))
+      .filter(({ option }) => {
+        const walksTheWholeWay = !option.segments.some((segment) => segment.type === 'bus');
+        if (!walksTheWholeWay) return true;
+        const hops = walkHopsOf(option, endpoints.origin, endpoints.destination);
+        // Still waiting on the router is not the same as being told there is no route.
+        return hops.every(([a, b]) => {
+          const key = walkHopKey(a, b);
+          return !(key in walkPaths) || walkPaths[key] !== null;
+        });
+      });
+  }, [shownOptions, walkPaths, endpoints]);
 
   /** Real walking totals, once fetched: what the trip actually costs on foot. */
   const measuredWalk = React.useMemo(() => {
@@ -784,7 +776,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     {t.planner.optionsTitle(Math.min(planOptions.length, MAX_OPTIONS), planOptions.length)}
                   </span>
                   <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
-                    {shownOptions.map((option, idx) => {
+                    {offeredOptions.map(({ option, idx }) => {
                       const busLegs = option.segments.filter((seg) => seg.type === 'bus');
                       // Same correction the detail applies, so the card you open agrees
                       // with what opens, and the four are compared like for like.
@@ -854,15 +846,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     {t.planner.routeMap}
                   </span>
                   <span className="flex items-center gap-3">
-                    {showMap && (
-                      <button
-                        onClick={toggleDetailedWalking}
-                        className="text-label font-semibold text-accent h-11 inline-flex items-center underline"
-                        title={t.planner.walkingPathHint}
-                      >
-                        {detailedWalking ? t.planner.hideWalkingPath : t.planner.showWalkingPath}
-                      </button>
-                    )}
+                    {/* "Ver camiño a pé" stood here. It bought a drawn pavement route in
+                        exchange for sending both ends of every walking leg to a third
+                        party, which is why it had to be asked for. The route is worked
+                        out on the device now, so it is simply drawn. */}
                     <button
                       onClick={() => setShowMap((v) => !v)}
                       className="text-label font-semibold text-accent h-11 inline-flex items-center underline"
@@ -880,9 +867,9 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       lang={lang}
                       origin={endpoints.origin}
                       destination={endpoints.destination}
-                      /* Empty until asked, so "Ocultar" actually hides. The fetch is
-                         gated too, one screenful above; this is only the drawing. */
-                      walkPaths={detailedWalking ? walkPaths : {}}
+                      /* Every leg the router answered for; the ones it could not are
+                         drawn as the straight dashed hint they always were. */
+                      walkPaths={walkPaths}
                       className="w-full h-[280px] rounded-xl overflow-hidden border border-edge z-0"
                     />
                   </Suspense>

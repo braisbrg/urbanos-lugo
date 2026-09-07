@@ -81,12 +81,18 @@ sends **two requests a week**. Nothing in the browser ever calls it.
   time and shape between consecutive stops where no surveyed relation exists. **Build
   time only**, cached under `.cache/` and committed as `data/routes.json`, precisely so
   that regenerating the dataset does not go back to it. No reader's browser calls it.
-- **`routing.openstreetmap.de/routed-foot`** draws the real pedestrian path for a walking
-  leg. This one *is* called from the reader's browser, because the endpoints are wherever
-  they asked to go and nothing can precompute that. It is **opt-in**: the map draws a
-  straight dashed line until the reader presses "see the walking path", and answers are
-  kept for the session. Both serve OSM-derived data under ODbL, and both are free services
-  with usage policies of their own — check them before pointing anything heavier at them.
+- **`routing.openstreetmap.de/routed-foot`** used to draw the pedestrian path for a
+  walking leg, and was the only one of these called from a reader's browser — the
+  endpoints are wherever they asked to go, so nothing could precompute it. It is no
+  longer called from anywhere. The app carries the walkable network itself
+  (`src/data/walk-network.json`, above) and routes on the device, which is both faster
+  and the reason no coordinate has to leave it. `tools/calibrateWalking.ts` still names
+  the host, at build time and by hand, because comparing our answers against a second
+  implementation is what tells us ours are right.
+
+  Both serve OSM-derived data under ODbL, and both are free services with usage policies
+  of their own — FOSSGIS ask for one request a second, no scraping and no heavy usage.
+  Check them before pointing anything heavier at them.
 
 ## Service notices — buslugo.com and the Concello de Lugo
 

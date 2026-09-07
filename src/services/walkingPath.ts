@@ -1,17 +1,25 @@
 /**
  * Real pedestrian geometry for a walking leg.
  *
- * We cannot precompute this: the endpoints are wherever the user asked for. It needs a
- * routing engine at request time, and the public OSRM demo only carries the driving
- * profile — it answered a 3.5 km walk in "10 minutes", following one-way streets and
- * ignoring the pedestrianised old town. OSM's own foot router gives the real thing.
+ * This used to be a request to OSM's public foot router at routing.openstreetmap.de. The
+ * app now carries the pedestrian network of Lugo and works the route out itself, in about
+ * 0,7 ms, so what is left here is the shape of a walked leg and where a plan does its
+ * walking — the answering is `src/utils/walkRouter.ts`.
  *
- * So this is opt-in, fetched only when the user asks to see the path, and cached for the
- * session. The map draws a straight dashed line until then, which keeps the app working
- * with no connection at all.
+ * Three things went away with the request, and each was a real cost:
+ *
+ *  - **A coordinate left the device.** One end of the first leg is the reader's own GPS
+ *    fix, and it went to a third party with their IP attached. That was behind a button
+ *    for exactly that reason, and the button is gone because there is nothing left to
+ *    consent to.
+ *  - **It needed a connection**, on a screen whose whole point is working without one.
+ *  - **It needed somebody else's server to be up**, and to keep tolerating us: FOSSGIS
+ *    ask for one request a second, so a four-option plan spent nine seconds trickling
+ *    its legs out one at a time.
+ *
+ * The signature is unchanged so that nothing above here had to be rewritten to notice.
  */
-
-const FOOT_ROUTER = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
+import { routeOnFoot } from '../utils/walkRouter';
 
 /** The hops a plan walks: origin to first stop, between legs, last stop to destination. */
 export function walkHopsOf(
@@ -38,74 +46,34 @@ export interface WalkingPath {
   minutes: number;
 }
 
-const cache = new Map<string, WalkingPath | null>();
-
-/**
- * One request a second, because that is what the people paying for the server ask for.
- *
- * FOSSGIS run this router for nothing and state the terms plainly: "One request per
- * second max. No scraping, no heavy usage." A plan has up to nine walked hops once its
- * alternatives are counted, and they all went out together in a single `Promise.all`
- * burst — nine times the rate asked for, from every reader at once. They queue now, a
- * second apart, and the caller draws each leg as it lands instead of waiting for the
- * set. Cached hops never reach the queue, which is most of them: the options share
- * endpoints.
- */
-const MIN_GAP_MS = 1000;
-let queue: Promise<unknown> = Promise.resolve();
-let lastCall = 0;
-
-function queued<T>(job: () => Promise<T>, signal?: AbortSignal): Promise<T> {
-  const run = queue.then(async () => {
-    // Nothing to slow down for if the caller has already walked away.
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    const wait = MIN_GAP_MS - (Date.now() - lastCall);
-    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
-    lastCall = Date.now();
-    return job();
-  });
-  queue = run.catch(() => undefined);
-  return run;
-}
-
-/** Identifies a walked hop. Both the fetch and the drawing must agree on it. */
+/** Identifies a walked hop. Both the routing and the drawing must agree on it. */
 export const walkHopKey = (from: [number, number], to: [number, number]): string =>
   `${from[0].toFixed(5)},${from[1].toFixed(5)}>${to[0].toFixed(5)},${to[1].toFixed(5)}`;
 
+/**
+ * The walk between two points, along real pavement.
+ *
+ * Null means there is no pedestrian route, which for seven of the 417 stops is the true
+ * answer rather than a failure: the N-VI stops out at Ombreiro and Bagueixos have
+ * walkable ways within tens of metres, and nothing but a trunk road with no pavement
+ * joining them to the city. A caller that turns null back into a straight line is
+ * claiming a six-kilometre stroll across fields, so callers do not.
+ *
+ * The `signal` is kept because the caller aborts on every plan change and it costs
+ * nothing to honour, though there is no longer a request in flight to abort.
+ */
 export async function fetchWalkingPath(
   from: [number, number],
   to: [number, number],
   signal?: AbortSignal,
 ): Promise<WalkingPath | null> {
-  const id = walkHopKey(from, to);
-  if (cache.has(id)) return cache.get(id)!;
-
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   try {
-    const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
-    const res = await queued(
-      () => fetch(`${FOOT_ROUTER}/${coords}?overview=full&geometries=geojson`, { signal }),
-      signal,
-    );
-    if (!res.ok) throw new Error(String(res.status));
-
-    const json = await res.json();
-    if (json.code !== 'Ok' || !json.routes?.length) throw new Error(json.code || 'no route');
-
-    const route = json.routes[0];
-    const result: WalkingPath = {
-      path: route.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng]),
-      meters: Math.round(route.distance),
-      minutes: Math.round(route.duration / 60),
-    };
-    cache.set(id, result);
-    return result;
-  } catch (error) {
-    // An abort is not an answer. The effect that calls this aborts on every plan change
-    // and twice on mount under StrictMode, and caching null here retired the hop for the
-    // rest of the session — the straight line came back and never left.
-    if ((error as Error)?.name === 'AbortError') throw error;
-    // Offline, blocked, or the router is down: the caller keeps its straight line.
-    cache.set(id, null);
+    return await routeOnFoot(from, to);
+  } catch {
+    // The network file failed to load — an offline first visit, or a chunk that never
+    // arrived. The caller keeps its straight line, which is what it did before any of
+    // this existed.
     return null;
   }
 }

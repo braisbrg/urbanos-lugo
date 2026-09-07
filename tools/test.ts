@@ -1270,74 +1270,42 @@ ok('the walked hops of a plan are real walks, and the last one reaches the desti
   );
 });
 
-await okAsync('the pedestrian router is asked once a second, and an abort is not an answer', async () => {
-  // FOSSGIS run that router for nothing and state the terms plainly: one request per
-  // second, no scraping. A plan has up to nine walked hops once its alternatives are
-  // counted, and they all went out together in one Promise.all burst -- nine times the
-  // rate asked for, from every reader at once.
+await okAsync('a walking route asks nobody for anything', async () => {
+  // This used to guard a rate limit. The router it queued for was FOSSGIS's, asked once a
+  // second because that is what they request of anyone using their server, and it was the
+  // reason a walking route had to be a button at all: one end of the first leg is the
+  // reader's own GPS fix, and it went to a third party with their IP attached.
   //
-  // And the abort. The effect that calls this aborts on every plan change and twice on
-  // mount under StrictMode, and an abort was being caught by the same handler as a dead
-  // router: it cached null, which retired that hop for the rest of the session, so the
-  // straight dashed line came back and never left.
+  // The app carries the pedestrian network now and routes on the device, so the rate
+  // limit, the queue and the button are all gone with it. What replaces this check is
+  // stronger than what it replaced -- not "asked politely" but "not asked at all". The
+  // regression it guards against is somebody reaching for fetch again, and the file it
+  // defends is PRIVACY.md, which now says your location does not leave the phone even to
+  // draw the walk.
   const realFetch = globalThis.fetch;
-  const starts: number[] = [];
-  let inFlight = 0;
-  globalThis.fetch = (async () => {
-    starts.push(Date.now());
-    assert(inFlight === 0, 'two requests to the router at once');
-    inFlight++;
-    try {
-      return {
-        ok: true,
-        json: async () => ({
-          code: 'Ok',
-          routes: [{ geometry: { coordinates: [[-7.55, 43.01], [-7.56, 43.02]] }, distance: 400, duration: 300 }],
-        }),
-      } as unknown as Response;
-    } finally {
-      inFlight--;
-    }
+  const reached: string[] = [];
+  globalThis.fetch = (async (input: unknown) => {
+    reached.push(String(input));
+    throw new Error('the walking router made a network request');
   }) as typeof fetch;
 
   try {
-    // Three distinct hops, asked for the way the planner asks: all at once.
-    const hops: [number, number][][] = [
-      [[43.01, -7.55], [43.02, -7.56]],
-      [[43.03, -7.57], [43.04, -7.58]],
-      [[43.05, -7.59], [43.06, -7.6]],
-    ];
-    const paths = await Promise.all(hops.map(([a, b]) => fetchWalkingPath(a, b)));
-    assert(paths.every((p) => p?.meters === 400), 'the queue lost or mangled an answer');
-    assert(starts.length === 3, `${starts.length} requests for 3 hops`);
-    for (let i = 1; i < starts.length; i++) {
-      // 900 rather than 1000: a timer is allowed to fire a few milliseconds early, and
-      // this check is about the rate, not about the clock.
-      const gap = starts[i] - starts[i - 1];
-      assert(gap >= 900, `two requests ${gap} ms apart; the router asks for 1000`);
-    }
+    const muralla = BUS_STOPS.find((s) => s.name.startsWith('Rda. Muralla 56'))!;
+    const ponte = BUS_STOPS.find((s) => s.name.startsWith('A Ponte (cruce'))!;
+    const walk = await fetchWalkingPath([muralla.lat, muralla.lng], [ponte.lat, ponte.lng]);
+    assert(walk, 'no walking route between two stops in the middle of Lugo');
+    assert(walk!.meters > 0 && walk!.minutes > 0, 'a route of no distance and no time');
+    assert(!reached.length, `the walking router called out to ${reached.join(', ')}`);
 
-    // A cached hop never reaches the queue, which is most of them: the options share
-    // endpoints, and waiting a second to answer from memory would be the rate limit
-    // charging for nothing.
-    const before = starts.length;
-    await fetchWalkingPath(hops[0][0], hops[0][1]);
-    assert(starts.length === before, 'a cached hop went back to the router');
-
-    // The abort, on a hop nothing has cached.
+    // An aborted hop throws rather than resolving to null. The effect that calls this
+    // aborts on every plan change, and a null would be read as "there is no route here".
     const aborted = new AbortController();
     aborted.abort();
-    const fresh: [number, number][] = [[43.07, -7.61], [43.08, -7.62]];
     let threw = '';
-    await fetchWalkingPath(fresh[0], fresh[1], aborted.signal).catch((e) => {
+    await fetchWalkingPath([muralla.lat, muralla.lng], [ponte.lat, ponte.lng], aborted.signal).catch((e) => {
       threw = (e as Error).name;
     });
     assert(threw === 'AbortError', `an aborted hop settled as "${threw || 'a value'}" instead of throwing`);
-
-    const afterAbort = starts.length;
-    const retried = await fetchWalkingPath(fresh[0], fresh[1]);
-    assert(starts.length === afterAbort + 1, 'an aborted hop was remembered as unanswerable');
-    assert(retried?.meters === 400, 'the retry after an abort did not get the path');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -1638,7 +1606,6 @@ ok('the content security policy still refuses what it was written to refuse', ()
     'https://fonts.gstatic.com',
     'https://tiles.openfreemap.org',
     'https://tile.openstreetmap.org',
-    'https://routing.openstreetmap.de',
   ];
   for (const origin of allowed) {
     assert(expected.includes(origin), `${origin} is allowed by the policy but nothing uses it`);

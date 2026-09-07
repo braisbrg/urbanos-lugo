@@ -38,7 +38,7 @@ export const en: Dict = {
     sourceNoGps: 'Times computed, not measured',
     sourceShort: "Official timetables from buslugo.com. This app's times are computed.",
     unofficial: 'Unofficial project: not made or endorsed by AULUSA / Monbus or Lugo city council.',
-    privacy: 'Your location stays on this phone, unless you ask to see the walking path.',
+    privacy: 'Your location stays on this phone. Not even to trace the walking route.',
     sourceCode: 'Code, licences and privacy',
   },
 
@@ -204,10 +204,6 @@ export const en: Dict = {
     tripInfoTitle: 'Details',
     timeProvenanceMeasured:
       'The walking legs are measured by the OpenStreetMap pedestrian router, not estimated. Bus times still come from the official timetable; those marked ~ are worked out from the driving time measured along the road.',
-    showWalkingPath: 'Show the walking route',
-    hideWalkingPath: 'Hide the walking route',
-    walkingPathHint:
-      'Traces the walking legs along the real pavements. Needs a connection: it queries the OpenStreetMap pedestrian router.',
     noWaitNoFare: 'no waiting, no fare',
     waitShort: (minutes: number) => `${minutes} min wait`,
     serviceNoticeTitle: 'Service hours notice',
@@ -259,7 +255,6 @@ export const en: Dict = {
     zoomOut: 'Zoom out',
     networkRegion: 'Network map. The routes and stops are also on the lines tab.',
     nearbyRegion: 'Map of the stops near you. The same stops are in the list below.',
-    fixTheMap: 'Fix the map',
     loadingMap: 'Loading the map…',
     subtitle: 'Routes, stops and where the buses should be',
     allLines: 'All',
@@ -484,10 +479,8 @@ export const en: Dict = {
   },
 
   nightBanner: {
-    closed: (firstDeparture: string) =>
-      `No service right now. The first departure is at ${firstDeparture}.`,
-    festivals:
-      'During the city festivals there are usually extra night buses. They are announced as notices and have no fixed timetable.',
+    closed: (firstDeparture: string) => `No service · first bus at ${firstDeparture}`,
+    festivals: 'Extra buses on festival nights, no fixed timetable',
     seeNotices: 'See notices',
     dismiss: 'Hide notice',
   },
