@@ -16,12 +16,17 @@
  * Network, so it is not part of `pnpm test`. Run it when the list changes:
  *   pnpm check:landmarks
  */
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { LUGO_LANDMARKS } from '../src/utils/transitEngine';
 import { metresBetween } from '../src/utils/geo';
 import { BBOX, overpass } from './osm';
 
 /** Over this, the two coordinates are not describing the same place. */
 const SUSPICIOUS_METRES = 150;
+
+/** Alongside the other cached scrapes, and gitignored like them. */
+const CACHE = '.cache/landmarks-osm.json';
 
 /**
  * The words worth searching OSM for.
@@ -134,14 +139,33 @@ async function main() {
 
   // One Overpass call per distinct word rather than per landmark: the list shares words
   // ("Termas", "Gándaras"), and it is a free shared service.
-  const wanted = new Set(LUGO_LANDMARKS.flatMap((landmark) => keywords(landmark.name)));
+  //
+  // And cached to disk, for the same reason. Getting this tool right took four runs of
+  // about fifty queries each against somebody else's server, which is exactly what
+  // CLAUDE.md says not to do. The answers change when Lugo changes, not when this script
+  // does; delete the file to ask again.
+  const wanted = [...new Set(LUGO_LANDMARKS.flatMap((landmark) => keywords(landmark.name)))].sort();
+  const cache: Record<string, Omit<Candidate, 'metres'>[]> = existsSync(CACHE)
+    ? JSON.parse(readFileSync(CACHE, 'utf8'))
+    : {};
+
   const found = new Map<string, Omit<Candidate, 'metres'>[]>();
+  let asked = 0;
   for (const word of wanted) {
+    if (cache[word]) {
+      found.set(word, cache[word]);
+      continue;
+    }
     process.stdout.write(`  ${word}… `);
     const hits = await candidatesFor(word);
+    cache[word] = hits;
     found.set(word, hits);
+    asked++;
     console.log(`${hits.length}`);
   }
+  mkdirSync(dirname(CACHE), { recursive: true });
+  writeFileSync(CACHE, JSON.stringify(cache));
+  console.log(`\n${asked} asked of Overpass, ${wanted.length - asked} read from ${CACHE}.`);
 
   // One call for every Wikidata id any candidate carries, before the loop below needs them.
   const ids = [...new Set([...found.values()].flat().map((c) => c.wikidata).filter(Boolean) as string[])];
@@ -178,7 +202,15 @@ async function main() {
 
     // The second database, where there is one. Distance from OUR point, not from OSM's,
     // because ours is the one being checked.
-    const linked = ranked.find((c) => c.wikidata && secondOpinion.has(c.wikidata));
+    //
+    // Only from a candidate we already believe is the place. Written as a plain `find`
+    // over the whole ranked pool, this took the nearest feature that happened to carry a
+    // Wikidata id — which, when nothing nearby was linked, was something else entirely
+    // sharing one word of the name. It reported sixteen of the twenty-eight as
+    // contradicted, including by 5.9 and 7.6 km, on the same run that found none of them
+    // more than 150 m from OSM. Two checks of the same coordinates cannot both be right,
+    // and the one that disagreed with itself was this one.
+    const linked = ranked.find((c) => c.wikidata && secondOpinion.has(c.wikidata) && c.metres <= SUSPICIOUS_METRES);
     if (linked) {
       const [lat, lng] = secondOpinion.get(linked.wikidata!)!;
       const apart = Math.round(metresBetween(landmark.lat, landmark.lng, lat, lng));
