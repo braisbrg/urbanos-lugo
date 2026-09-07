@@ -87,7 +87,7 @@ out tags geom;`;
  * disagree. Nothing in open data resolves it, so it is measured and reported rather than
  * decided.
  */
-function closedToBuses(tags: any): boolean {
+export function closedToBuses(tags: any): boolean {
   if (['yes', 'designated'].includes(tags.bus) || ['yes', 'designated'].includes(tags.psv)) return false;
   return (
     ['pedestrian', 'footway', 'path', 'steps', 'cycleway', 'track'].includes(tags.highway) ||

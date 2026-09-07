@@ -1,92 +1,75 @@
 /**
- * Does a speed per line category fit the printed times, when one global speed does not?
+ * Which ways, exactly, does OSM say a bus may not use?
  *
- * The residuals of the single-speed fit are not noise: the long rural legs of the 11 run
- * early and the long urban runs to the hospital run late. If that is a real difference in
- * how fast a bus moves on those corridors, a factor per category should collapse it.
+ * checkOsmGeometry reports the total per route -- "9 route(s) still run on ways closed to
+ * buses" -- which is enough to notice a change and not enough to decide anything. Four of
+ * those nine share the same two lengths to the metre (230 m and 385 m on lines 7, 8, 9 and
+ * 12), which says they are the same streets seen from four itineraries rather than nine
+ * separate problems. This names them, so the question "is the route wrong or is the tagging
+ * wrong" can be answered about a street instead of about a number.
+ *
+ * One pair of Overpass requests, run by hand. See the network block in CLAUDE.md.
  */
-import { BUS_LINES, BUS_STOPS } from '../src/data/transitData';
-import { buildRuns } from '../src/utils/schedule';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { ROUTE_QUERY, closedToBuses, fetchWayTags, overpass } from './osm';
+import { getDistanceMeters } from '../src/utils/geo';
 
-const byId = new Map(BUS_STOPS.map((s) => [s.id, s]));
+const RAW = join(dirname(fileURLToPath(import.meta.url)), '../data');
+const committed: { ref: string; name: string; restrictedMeters: number }[] = JSON.parse(
+  readFileSync(join(RAW, 'osm-routes.json'), 'utf8'),
+);
 
-interface Leg {
-  line: string;
-  category: string;
-  printed: number;
-  roadSeconds: number;
-  stops: number;
+const carrying = new Set(committed.filter((r) => r.restrictedMeters > 0).map((r) => `${r.ref} ${r.name}`));
+
+const json = await overpass(ROUTE_QUERY);
+if (!json) {
+  console.log('Overpass would not answer. Nothing checked, nothing claimed.');
+  process.exit(0);
 }
-const legs: Leg[] = [];
-
-for (const line of BUS_LINES) {
-  line.directions.forEach((direction, di) => {
-    const run = buildRuns(line, di, BUS_STOPS, 'laborable').find((r) => r.publishedStopIndices.length > 1);
-    if (!run) return;
-    for (let k = 1; k < run.publishedStopIndices.length; k++) {
-      const a = run.publishedStopIndices[k - 1];
-      const b = run.publishedStopIndices[k];
-      let roadSeconds = 0;
-      for (let i = a; i < b; i++) roadSeconds += direction.legSeconds?.[i] ?? 90;
-      legs.push({
-        line: line.number,
-        category: (line as unknown as { category?: string }).category ?? 'urbano',
-        printed: run.minutesByStopIndex[b] - run.minutesByStopIndex[a],
-        roadSeconds,
-        stops: b - a,
-      });
-    }
-  });
+const wayTags = await fetchWayTags();
+if (!wayTags.size) {
+  console.log('No way tags came back. Nothing checked, nothing claimed.');
+  process.exit(0);
 }
 
-const categories = [...new Set(legs.map((l) => l.category))];
-console.log(`${legs.length} legs across categories: ${categories.join(', ')}`);
-for (const c of categories) console.log(`  ${c.padEnd(10)} ${legs.filter((l) => l.category === c).length} legs`);
+/** way id -> { metres, the routes that use it } */
+const offenders = new Map<number, { metres: number; tags: Record<string, string>; routes: Set<string> }>();
 
-const report = (label: string, speedOf: (l: Leg) => number, dwell: number) => {
-  const errors = legs.map((l) => (l.roadSeconds * speedOf(l) + dwell * l.stops) / 60 - l.printed);
-  const within = errors.filter((e) => Math.abs(e) <= 2).length / errors.length;
-  const worst = Math.max(...errors.map(Math.abs));
-  const sse = errors.reduce((n, e) => n + e * e, 0);
-  console.log(`  ${label.padEnd(42)} within 2 min ${(within * 100).toFixed(0).padStart(3)}%   worst ${worst.toFixed(1).padStart(4)} min   sse ${sse.toFixed(0)}`);
-  return sse;
-};
+for (const relation of json.elements ?? []) {
+  const ref = relation.tags?.ref ?? '';
+  const name = relation.tags?.name ?? '';
+  if (!ref || !carrying.has(`${ref} ${name}`)) continue;
 
-console.log('');
-report('in use: one speed x1.00, dwell 20 s', () => 1, 20);
+  for (const member of relation.members ?? []) {
+    if (member.type !== 'way' || !member.geometry) continue;
+    const tags = wayTags.get(member.ref);
+    if (!tags || !closedToBuses(tags)) continue;
 
-// Best factor per category, with the dwell searched alongside.
-let best = { dwell: 20, byCategory: new Map(categories.map((c) => [c, 1])), sse: Infinity };
-for (let dwell = 0; dwell <= 45; dwell += 1) {
-  const byCategory = new Map<string, number>();
-  for (const c of categories) {
-    const subset = legs.filter((l) => l.category === c);
-    let bestSpeed = 1;
-    let bestSse = Infinity;
-    for (let speed = 0.4; speed <= 2.2; speed += 0.01) {
-      const sse = subset.reduce((n, l) => {
-        const e = (l.roadSeconds * speed + dwell * l.stops) / 60 - l.printed;
-        return n + e * e;
-      }, 0);
-      if (sse < bestSse) {
-        bestSse = sse;
-        bestSpeed = speed;
-      }
+    let metres = 0;
+    for (let i = 1; i < member.geometry.length; i++) {
+      metres += getDistanceMeters(
+        member.geometry[i - 1].lat,
+        member.geometry[i - 1].lon,
+        member.geometry[i].lat,
+        member.geometry[i].lon,
+      );
     }
-    byCategory.set(c, bestSpeed);
+    const found = offenders.get(member.ref) ?? { metres: 0, tags, routes: new Set<string>() };
+    found.metres = Math.round(metres);
+    found.routes.add(`${ref} ${name.slice(0, 34)}`);
+    offenders.set(member.ref, found);
   }
-  const sse = legs.reduce((n, l) => {
-    const e = (l.roadSeconds * byCategory.get(l.category)! + dwell * l.stops) / 60 - l.printed;
-    return n + e * e;
-  }, 0);
-  if (sse < best.sse) best = { dwell, byCategory, sse };
 }
 
-console.log('');
-console.log(`  best per-category fit: dwell ${best.dwell} s, ${[...best.byCategory].map(([c, s]) => `${c} x${s.toFixed(2)}`).join(', ')}`);
-report('per-category speed', (l) => best.byCategory.get(l.category)!, best.dwell);
-
-// How much of the error the operator's own rounding could account for on its own.
-const grid = legs.every((l) => l.printed % 5 === 0);
-console.log(`\n  every printed value a multiple of 5 minutes: ${grid ? 'yes' : 'no'}`);
-console.log(`  so a perfect model still lands up to 2.5 min from the printed figure.`);
+console.log(`${offenders.size} distinct way(s) carry the ${carrying.size} flagged route(s)\n`);
+for (const [id, o] of [...offenders].sort((a, b) => b[1].metres - a[1].metres)) {
+  const relevant = ['highway', 'access', 'motor_vehicle', 'bus', 'psv', 'name', 'oneway']
+    .filter((k) => o.tags[k] !== undefined)
+    .map((k) => `${k}=${o.tags[k]}`)
+    .join('  ');
+  console.log(`  way ${id}   ${String(o.metres).padStart(4)} m   ${relevant}`);
+  console.log(`      used by: ${[...o.routes].join(' | ')}`);
+  console.log(`      https://www.openstreetmap.org/way/${id}`);
+}
