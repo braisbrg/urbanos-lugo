@@ -56,6 +56,8 @@ import {
   resolveLocationQuery,
   QUICK_DESTINATIONS,
   LUGO_LANDMARKS,
+  TRANSFER_BUFFER_ESTIMATED_MIN,
+  WALK_MUST_BEAT_BUS_BY_MIN,
 } from '../src/utils/transitEngine';
 import { hydrateGeometry } from './hydrateGeometry';
 
@@ -1235,6 +1237,94 @@ ok('every language can plan a trip and gets prose in that language', () => {
     `the itinerary text is identical across languages — the engine is ignoring lang: ` +
       [...byLang].map(([lang, text]) => `${lang}: ${text.slice(0, 70)}`).join('  //  '),
   );
+});
+
+ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
+  // Two faults, one cause: the plan used to start at `now` whatever the timetable said.
+  // Asking at 09:00 for a bus at 09:28 produced a 7-minute walk and 21 minutes of
+  // standing, called it a 50-minute journey, and then offered five such journeys that
+  // all arrived at 09:50 — five ways of catching the same 4.2.
+  //
+  // With the departure free to slide, ranking on duration broke the other way: the
+  // shortest ride from Fonte dos Ranchos to HULA is a 22-minute 5ES that leaves at
+  // 14:08, and at 09:00 it led the list. What is compared now is when you get there.
+  const PAIRS: [string, string][] = [
+    ['Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)'],
+    ['Praza Maior', 'Campus Universitario'],
+    ['Polígono do Ceao', 'Rda. Muralla 56 (Sindicatos)'],
+  ];
+  for (const hour of [7, 9, 11, 14, 17, 20]) {
+    const nowMinutes = hour * 60;
+    for (const [from, to] of PAIRS) {
+      const plans = planTrips(from, to, { now: new Date(2026, 8, 8, hour, 0, 0) });
+      for (const plan of plans) {
+        const departed = (parseTimeToMinutes(plan.departureTime) - nowMinutes + 1440) % 1440;
+        assert(
+          departed === plan.slackMinutes,
+          `${from} -> ${to} at ${hour}: leaves ${plan.departureTime}, ${departed} min after the question, but claims ${plan.slackMinutes}`,
+        );
+
+        // Standing before the first bus is capped at the margin that exists because the
+        // buses here have no GPS and have been seen running early. Waits *between* buses
+        // are not: once you are in the system you cannot choose to set off later.
+        const firstBus = plan.segments.findIndex((seg) => seg.type === 'bus');
+        if (firstBus > 0 && plan.segments[firstBus - 1].type === 'wait') {
+          assert(
+            plan.segments[firstBus - 1].durationMinutes <= TRANSFER_BUFFER_ESTIMATED_MIN,
+            `${from} -> ${to} at ${hour}: ${plan.segments[firstBus - 1].durationMinutes} min standing at the pole before the first bus`,
+          );
+        }
+      }
+
+      // The option on top has to be the one that gets there first, and the only thing
+      // allowed to arrive before it is a walk that does not beat it by the documented
+      // margin — bus times here are interpolated, so three minutes is not a real lead.
+      const reach = (p: (typeof plans)[number]) => p.slackMinutes + p.durationMinutes;
+      const leader = plans[0];
+      for (const plan of plans) {
+        if (reach(plan) >= reach(leader)) continue;
+        const isWalk = !plan.segments.some((seg) => seg.type === 'bus');
+        assert(
+          isWalk && reach(leader) - reach(plan) < WALK_MUST_BEAT_BUS_BY_MIN,
+          `${from} -> ${to} at ${hour}: the list leads with ${leader.departureTime} -> ${leader.arrivalTime}, ` +
+            `but ${plan.departureTime} -> ${plan.arrivalTime} gets there ${reach(leader) - reach(plan)} min sooner`,
+        );
+      }
+    }
+  }
+});
+
+ok('the itinerary prose does not repeat the figures its own row already shows', () => {
+  // Every step of the itinerary is drawn with a header carrying the clock ("12:18 →
+  // 12:22"), the duration ("4 min") and, for a walk, the distance ("Camiñar ~535 m").
+  // The sentence under it used to say all three again, so one 173 px row showed the
+  // same time twice and the same minutes twice, and the stop name landed three times
+  // across three consecutive rows. Nothing here is a style preference: a figure printed
+  // twice is a figure that can disagree with itself once somebody edits one of them.
+  //
+  // Two rules, both narrow enough that no place name can trip them. No stop name or
+  // pole code contains a clock, and none is followed by a metre word.
+  const now = new Date(2026, 7, 20, 9, 30);
+  for (const lang of LANGS) {
+    for (const plan of planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now, lang })) {
+      for (const seg of plan.segments) {
+        // The bus step draws its own fields and never renders `instruction`.
+        if (seg.type === 'bus') continue;
+        const clock = seg.instruction.match(/\d{1,2}:\d{2}/);
+        assert(
+          !clock,
+          `${lang}: "${clock?.[0]}" is in the header already — "${seg.instruction}"`,
+        );
+        if (seg.walkMeters) {
+          const metres = new RegExp(`\\b${seg.walkMeters}\\s*(m\\b|metros|metres)`);
+          assert(
+            !metres.test(seg.instruction),
+            `${lang}: ${seg.walkMeters} m is in the header already — "${seg.instruction}"`,
+          );
+        }
+      }
+    }
+  }
 });
 
 ok('no translated key is left with nothing reading it', () => {
@@ -3250,6 +3340,40 @@ await okAsync('the walking router returns a route you could actually walk', asyn
   const short = await routeOnFoot(from, nudged);
   assert(short, 'no route to a point twenty metres away');
   assert(short!.meters < 120, `${short!.meters} m to walk twenty metres up the same street`);
+
+  // One route is not enough. Checked over a spread of real pairs, because the failure
+  // this catches only showed on endpoints that sit well back from the network -- a stop
+  // in a lay-by on the N-VI is 50 m from the nearest walkable way. The distance left that
+  // ground out of its total while the drawn line included it, so 125 of 2.631 measured
+  // legs reported less than they drew, by up to 101 m, and one answered 55 m for two
+  // points 72 m apart. A walk shorter than the line through it is not a walk.
+  let sampled = 0;
+  for (let i = 0; i < BUS_STOPS.length; i += 37) {
+    for (let j = 11; j < BUS_STOPS.length; j += 53) {
+      const a = BUS_STOPS[i];
+      const b = BUS_STOPS[j];
+      if (a.id === b.id) continue;
+      const leg = await routeOnFoot([a.lat, a.lng], [b.lat, b.lng]);
+      if (!leg) continue;
+      sampled++;
+
+      let drew = 0;
+      for (let p = 1; p < leg.path.length; p++) {
+        drew += metresBetween(leg.path[p - 1][0], leg.path[p - 1][1], leg.path[p][0], leg.path[p][1]);
+      }
+      assert(
+        Math.abs(drew - leg.meters) <= leg.meters * 0.02 + 8,
+        `${a.name} -> ${b.name}: draws ${Math.round(drew)} m, reports ${leg.meters} m`,
+      );
+      const asTheCrowFlies = metresBetween(a.lat, a.lng, b.lat, b.lng);
+      assert(
+        leg.meters >= asTheCrowFlies - 1,
+        `${a.name} -> ${b.name}: ${leg.meters} m over a ${Math.round(asTheCrowFlies)} m straight line`,
+      );
+      assert(leg.minutes >= 1, `${a.name} -> ${b.name}: a walk of ${leg.minutes} min`);
+    }
+  }
+  assert(sampled > 50, `only ${sampled} pairs routed; the sweep is not sweeping`);
 });
 
 ok('the three front doors say the same true things', () => {

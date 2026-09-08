@@ -382,6 +382,22 @@ export async function routeOnFoot(
   const finish = snap(g, to[0], to[1]);
   if (!start || !finish) return null;
 
+  /**
+   * The walk from where you are to where the network is, at both ends.
+   *
+   * A bus stop in a lay-by, or a place whose coordinate is inside a block, can sit tens
+   * of metres from the nearest walkable way; one of the stops on the N-VI is 50 m off it.
+   * The route between the two snapped points does not cover that ground, but the drawn
+   * line does — it starts at the real coordinate — so leaving it out made the distance
+   * disagree with its own polyline on 125 of 2.631 legs measured, by up to 101 m, and
+   * produced the impossible: a 55 m walk between two points 72 m apart.
+   *
+   * Charged at the flat walking speed. Which way you cross those last metres is not in
+   * OpenStreetMap, and pretending to route it would be inventing a path.
+   */
+  const offMetres = start.awayMetres + finish.awayMetres;
+  const offSeconds = (offMetres / METRES_PER_MINUTE) * 60;
+
   const metresOf = (edge: number) => g.edgeMetres[edge];
   const secondsPerMetre = (edge: number) => g.edgeSeconds[edge] / (g.edgeMetres[edge] || 1);
 
@@ -421,12 +437,13 @@ export async function routeOnFoot(
     const metres = Math.abs(finish.metresFromA - start.metresFromA);
     return {
       path: [[from[0], from[1]], ...slice(g, start.edge, start.metresFromA, finish.metresFromA), [to[0], to[1]]],
-      meters: Math.round(metres),
+      meters: Math.round(metres + offMetres),
       minutes: Math.max(
         1,
         Math.round(
           (metres * secondsPerMetre(start.edge) +
-            partialClimb(start.edge, start.metresFromA, finish.metresFromA)) /
+            partialClimb(start.edge, start.metresFromA, finish.metresFromA) +
+            offSeconds) /
             60,
         ),
       ),
@@ -536,7 +553,7 @@ export async function routeOnFoot(
 
   return {
     path,
-    meters: Math.round(metres),
-    minutes: Math.max(1, Math.round(seconds / 60)),
+    meters: Math.round(metres + offMetres),
+    minutes: Math.max(1, Math.round((seconds + offSeconds) / 60)),
   };
 }

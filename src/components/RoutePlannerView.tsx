@@ -10,14 +10,14 @@ import {
   AlertCircle,
   ArrowRight,
   LocateFixed,
-  Sparkles,
   Check,
   ChevronDown,
 } from 'lucide-react';
 import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { BUS_STOPS } from '../data/transitData';
 import { formatMinutes, parseTimeToMinutes } from '../utils/schedule';
-import { planTrips, resolveLocationQuery, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
+import { planTrips, resolveLocationQuery, estimateWalk, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
+import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 // Same reason as the map tab: Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
@@ -46,6 +46,28 @@ function shiftClock(hhmm: string, deltaMinutes: number): string {
   // same `((n % 1440) + 1440) % 1440`, same padStart — and parsing is what
   // parseTimeToMinutes is for. This had its own copy of all three.
   return formatMinutes(parseTimeToMinutes(hhmm) + deltaMinutes);
+}
+
+/**
+ * The plan, once the pedestrian router has said how long the walk really is.
+ *
+ * The bus leaves when it leaves, so a walk that turns out longer than the estimate does
+ * not delay the arrival — it delays *you*, and the only thing it can eat is the cushion
+ * the plan already handed back as a later departure. This used to add the whole
+ * correction to the arrival, which put the reader at HULA two minutes after a bus that
+ * gets there at 09:50 whatever anybody walks.
+ *
+ * A shorter walk is the same fact the other way round: set off later, land at the same
+ * minute. Only a correction bigger than the cushion can move the arrival, and then it
+ * moves it because the bus has gone.
+ */
+function withMeasuredWalk(plan: RoutePlanResult, fix: number) {
+  const absorbed = Math.min(fix, plan.slackMinutes);
+  return {
+    departure: shiftClock(plan.departureTime, -absorbed),
+    arrival: shiftClock(plan.arrivalTime, fix - absorbed),
+    durationMinutes: plan.durationMinutes + fix,
+  };
 }
 
 const MAX_OPTIONS = 4;
@@ -237,9 +259,26 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
       const measured = hops.map(([a, b]) => walkPaths[walkHopKey(a, b)]);
       // All or nothing: half-measured totals would be neither the estimate nor the truth.
       if (!hops.length || measured.some((w) => !w)) return 0;
-      const estimated = plan.segments
-        .filter((seg) => seg.type === 'walk')
-        .reduce((n, seg) => n + (seg.durationMinutes ?? 0), 0);
+
+      /*
+       * The estimate for the same hops, not the plan's walk segments.
+       *
+       * Those are not the same set. A transfer between two different stops is walked --
+       * `walkHopsOf` returns a hop for it and the router answers it -- but the itinerary
+       * has no walk segment for that hop, only a gap in the clock between getting off at
+       * 16:52 and the next wait starting at 16:56. Subtracting the segments from the hops
+       * therefore counted the whole transfer walk as if it were new: measured over 563
+       * options with a transfer, 105 walked a hop they had no segment for and the
+       * correction came out 1 min too big at the median and 2 at the worst.
+       *
+       * `estimateWalk` on each hop is what the planner used to build those minutes in the
+       * first place, so this compares like with like whatever the segments happen to say,
+       * and stays right if the itinerary ever grows the missing leg.
+       */
+      const estimated = hops.reduce(
+        (n, [a, b]) => n + estimateWalk(getDistanceMeters(a[0], a[1], b[0], b[1])).minutes,
+        0,
+      );
       return (measured as WalkingPath[]).reduce((n, w) => n + w.minutes, 0) - estimated;
     },
     [walkPaths, endpoints],
@@ -409,43 +448,36 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
           )}
 
           <div
-            className={`bg-bg rounded-xl p-6 shadow-sm border border-edge ${
+            className={`bg-bg rounded-xl p-3.5 sm:p-6 shadow-sm border border-edge ${
               asked && !formOpen ? 'hidden lg:block' : ''
             }`}
           >
-            <div className="mb-4">
-              <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
-                <Navigation className="w-4 h-4 text-accent" />
-                {t.planner.title}
-              </h2>
-              <p className="text-label text-ink-3 mt-0.5">{t.planner.subtitle}</p>
-            </div>
+            {/* You got here by pressing a tab called "Ruta", so a heading and a sentence
+                explaining the screen are furniture on the screen they explain. Measured on
+                a 375x812 the whole form needs 762 px and has 619 to live in, so the
+                furniture is what goes. The heading stays for the document outline and for
+                anyone arriving by screen reader, which is the only thing it was doing. */}
+            <h2 className="sr-only">{t.planner.title}</h2>
 
-            {/* Inputs Container */}
-            <div className="space-y-3 relative">
-              {/* Origin Input */}
-              <div className="relative">
-                {/* The label and the GPS button shared a row, and on a phone the label
-                    lost: it wrapped to two lines beside a button that did not. */}
-                <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-                  <label
-                    htmlFor="input-origin-query"
-                    className="text-label font-bold text-ink-2 flex items-center gap-1.5 uppercase tracking-wide"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-ink-2" aria-hidden="true" />
+            {/* Where from, where to: one control, not two forms with a button between.
+                It was a label row, a GPS button of its own, a field, a centred swap, a
+                second label row and a second field -- 194 px of the 762 the form needs,
+                before any of it was the thing you came to type. The labels are still here
+                for a screen reader; the dot and the ring say the same thing to an eye, and
+                the placeholders already carry "street, place or stop". */}
+            <div className="relative">
+              <div className="relative rounded-xl border border-edge bg-surface">
+                {/* Origin Input */}
+                <div className="relative">
+                  <label htmlFor="input-origin-query" className="sr-only">
                     {t.planner.origin}
                   </label>
-
-                  <button
-                    onClick={handleUseGpsForOrigin}
-                    className="text-label font-semibold text-accent h-11 flex items-center gap-1 bg-surface px-2 py-0.5 rounded border border-edge transition-colors"
+                  <span
+                    className="pointer-events-none absolute left-5 top-0 flex h-12 items-center text-ink-2"
+                    aria-hidden="true"
                   >
-                    <LocateFixed className="w-3 h-3" />
-                    <span>{isLocating ? t.planner.locating : t.planner.useMyLocation}</span>
-                  </button>
-                </div>
-
-                <div className="relative">
+                    <span className="h-2 w-2 rounded-full bg-ink-2" />
+                  </span>
                   <input
                     id="input-origin-query"
                     maxLength={MAX_QUERY_LENGTH}
@@ -460,70 +492,61 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       setOriginSuggestions(getSuggestions(originQuery));
                     }}
                     placeholder={t.planner.placeholderOrig}
-                    className="h-11 w-full px-3.5 bg-surface border border-edge rounded-[9px] text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:bg-bg"
+                    className="h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:rounded-t-xl"
                   />
-                  {originQuery && (
-                    <button
-                      onClick={() => setOriginQuery('')}
-                      className="absolute right-0 top-0 h-11 w-11 flex items-center justify-center text-label text-ink-3 hover:text-ink-2"
-                    >
-                      ✕
-                    </button>
+                  {/* The GPS is one way of filling this field, not a peer of "calculate",
+                      so it sits in the field like the clear button rather than above it. */}
+                  <button
+                    onClick={handleUseGpsForOrigin}
+                    aria-label={isLocating ? t.planner.locating : t.planner.useMyLocation}
+                    title={isLocating ? t.planner.locating : t.planner.useMyLocation}
+                    className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-accent"
+                  >
+                    <LocateFixed className={`h-[18px] w-[18px] ${isLocating ? 'animate-pulse' : ''}`} />
+                  </button>
+
+                  {/* Origin Autocomplete Suggestions */}
+                  {activeInput === 'origin' && originSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                      {originSuggestions.map((sug) => (
+                        <button
+                          key={sug.id || sug.name}
+                          type="button"
+                          onClick={() => {
+                            setOriginQuery(sug.name);
+                            setActiveInput(null);
+                            handleCalculate(sug.name, destQuery);
+                          }}
+                          className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
+                            <span className="truncate font-bold text-ink" title={sug.name}>{sug.name}</span>
+                          </div>
+                          {sug.code && (
+                            <span className="text-label font-mono font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shrink-0">
+                              #{sug.code}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
 
-                {/* Origin Autocomplete Suggestions */}
-                {activeInput === 'origin' && originSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
-                    {originSuggestions.map((sug) => (
-                      <button
-                        key={sug.id || sug.name}
-                        type="button"
-                        onClick={() => {
-                          setOriginQuery(sug.name);
-                          setActiveInput(null);
-                          handleCalculate(sug.name, destQuery);
-                        }}
-                        className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left"
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
-                          <span className="truncate font-bold text-ink" title={sug.name}>{sug.name}</span>
-                        </div>
-                        {sug.code && (
-                          <span className="text-label font-mono font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shrink-0">
-                            #{sug.code}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div className="mx-3.5 border-t border-line" aria-hidden="true" />
 
-              {/* Swap Button */}
-              <div className="flex justify-center -my-1">
-                <button
-                  id="btn-swap-stops"
-                  onClick={handleSwap}
-                  className="h-11 w-11 flex items-center justify-center rounded-[9px] bg-surface border border-edge text-ink-2 transition-colors shadow-xs"
-                  aria-label={t.planner.swap}
-                  title={t.planner.swap}
-                >
-                  <ArrowDownUp className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Destination Input */}
-              <div className="relative">
-                <label
-                  htmlFor="input-dest-query"
-                  className="block text-label font-bold text-ink-2 mb-1 flex items-center gap-1.5 uppercase tracking-wide"
-                >
-                  <span className="w-2 h-2 rounded-full border-2 border-ink-2" aria-hidden="true" />
-                  {t.planner.destination}
-                </label>
+                {/* Destination Input */}
                 <div className="relative">
+                  <label htmlFor="input-dest-query" className="sr-only">
+                    {t.planner.destination}
+                  </label>
+                  <span
+                    className="pointer-events-none absolute left-5 top-0 flex h-12 items-center text-ink-2"
+                    aria-hidden="true"
+                  >
+                    <span className="h-2 w-2 rounded-full border-2 border-ink-2" />
+                  </span>
                   <input
                     id="input-dest-query"
                     maxLength={MAX_QUERY_LENGTH}
@@ -538,45 +561,57 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       setDestSuggestions(getSuggestions(destQuery));
                     }}
                     placeholder={t.planner.placeholderDest}
-                    className="h-11 w-full px-3.5 bg-surface border border-edge rounded-[9px] text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:bg-bg"
+                    className="h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:rounded-b-xl"
                   />
                   {destQuery && (
                     <button
                       onClick={() => setDestQuery('')}
-                      className="absolute right-0 top-0 h-11 w-11 flex items-center justify-center text-label text-ink-3 hover:text-ink-2"
+                      aria-label={t.search.clear}
+                      className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-label text-ink-3"
                     >
                       ✕
                     </button>
                   )}
+
+                  {/* Dest Autocomplete Suggestions */}
+                  {activeInput === 'dest' && destSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                      {destSuggestions.map((sug) => (
+                        <button
+                          key={sug.id || sug.name}
+                          type="button"
+                          onClick={() => {
+                            setDestQuery(sug.name);
+                            setActiveInput(null);
+                            handleCalculate(originQuery, sug.name);
+                          }}
+                          className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-warn-ink shrink-0" />
+                            <span className="truncate font-bold text-ink" title={sug.name}>{sug.name}</span>
+                          </div>
+                          {sug.code && (
+                            <span className="text-label font-mono font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shrink-0">
+                              #{sug.code}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Dest Autocomplete Suggestions */}
-                {activeInput === 'dest' && destSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
-                    {destSuggestions.map((sug) => (
-                      <button
-                        key={sug.id || sug.name}
-                        type="button"
-                        onClick={() => {
-                          setDestQuery(sug.name);
-                          setActiveInput(null);
-                          handleCalculate(originQuery, sug.name);
-                        }}
-                        className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left"
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <MapPin className="w-3.5 h-3.5 text-warn-ink shrink-0" />
-                          <span className="truncate font-bold text-ink" title={sug.name}>{sug.name}</span>
-                        </div>
-                        {sug.code && (
-                          <span className="text-label font-mono font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shrink-0">
-                            #{sug.code}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* One swap for both rows, on the edge where a thumb already is. */}
+                <button
+                  id="btn-swap-stops"
+                  onClick={handleSwap}
+                  className="absolute left-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-bg text-ink-2 shadow-xs"
+                  aria-label={t.planner.swap}
+                  title={t.planner.swap}
+                >
+                  <ArrowDownUp className="h-4 w-4" />
+                </button>
               </div>
 
               {/* When to travel */}
@@ -610,12 +645,15 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               </div>
 
               {/* Calculate Button */}
+              {/* No sparkle. Nothing here is magic: it reads a printed timetable and does
+                  arithmetic, and a wand over that button promises a different kind of
+                  answer than the one this app gives. */}
               <button
                 onClick={() => handleCalculate()}
-                className="w-full mt-2 h-12 px-4 bg-accent text-on-accent font-bold text-label uppercase tracking-wider rounded-md shadow-xs transition-colors flex items-center justify-center gap-2"
+                className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 text-body font-semibold text-on-accent transition-colors"
               >
-                <Sparkles className="w-4 h-4 text-ink-2" />
                 <span>{t.planner.calculate}</span>
+                <ArrowRight className="h-[18px] w-[18px]" strokeWidth={2.5} aria-hidden="true" />
               </button>
             </div>
 
@@ -627,7 +665,13 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               }`}
             >
               <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">{t.planner.quickDestinations}</span>
-              <div className="flex flex-wrap gap-1.5">
+              {/* A rail on a phone, wrapping from sm: up.
+                  Six pills of 44 px in two columns measured 194 px on a 375x812 -- a
+                  quarter of a form that already did not fit. A rail is the right shape for
+                  a shortcut, where you either see the one you wanted or you type; it would
+                  be the wrong shape for the alternatives further down, which are the answer
+                  and have to be seen whole. Same pattern as the line rail on the map. */}
+              <div className="-mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
                 {quickPicks.map((qp, idx) => (
                   <button
                     key={idx}
@@ -635,10 +679,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       setDestQuery(qp.query);
                       handleCalculate(originQuery, qp.query);
                     }}
-                    className={`h-11 px-3.5 rounded-[9px] text-label font-semibold border inline-flex items-center transition-colors ${
+                    className={`h-8 shrink-0 snap-start whitespace-nowrap rounded-full px-3 text-label font-semibold inline-flex items-center transition-colors ${
                       destQuery.includes(qp.label) || destQuery === qp.query
-                        ? 'bg-accent text-on-accent border-edge'
-                        : 'bg-surface border-edge text-ink-2 hover:bg-surface'
+                        ? 'bg-accent text-on-accent'
+                        : 'bg-surface text-ink-2'
                     }`}
                   >
                     {qp.label}
@@ -652,10 +696,17 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
         {/* Right Column: Route Result & Step by Step Itinerary */}
         <div className={`space-y-4 lg:col-span-7 lg:block ${asked ? '' : 'hidden'}`}>
           {planResult ? (
-            <div className="bg-bg rounded-xl p-6 shadow-sm border border-edge">
+            /* One rhythm, declared once.
+               Every block in here carried its own bottom margin -- mb-4, mb-5, mt-3, mt-6
+               -- and they drifted: measured down the column the gaps ran 20, 0, 20, 20, 24
+               px, so the alternatives sat flush against the folded box above them while
+               everything else breathed. Nobody can keep six numbers in step by hand. The
+               column owns the spacing now, the way every other view in this app already
+               does, and the blocks say nothing about it. */
+            <div className="space-y-5 bg-bg rounded-xl p-6 shadow-sm border border-edge">
               {/* Out of service notice */}
               {!planResult.isServiceActive && planResult.serviceNotice && (
-                <div className="mb-4 p-3.5 rounded-lg bg-warn border border-warn text-warn-ink text-label font-bold flex items-start gap-2.5 shadow-xs">
+                <div className="p-3.5 rounded-lg bg-warn border border-warn text-warn-ink text-label font-bold flex items-start gap-2.5 shadow-xs">
                   <AlertCircle className="w-4 h-4 text-estimated shrink-0 mt-0.5" />
                   <div>
                     <div className="font-extrabold uppercase tracking-wide text-estimated">{t.planner.serviceNoticeTitle}</div>
@@ -668,23 +719,31 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   takes, when to leave, when you land. On the page ground rather than a
                   solid slab — a coloured block here fought the provenance chips, which
                   are the only things on this screen that should read as badges. */}
-              <div className="mb-5 border-b border-line pb-4">
-                <div className="flex items-baseline gap-2">
+              {/* One line, not two.
+                  The same three numbers used to take 82 px across two rows, with "Salida"
+                  and "Llegada" spelling out what an arrow between two clocks already says.
+                  They sit on one baseline now: how long on the left, when on the right.
+                  The two words stay for a screen reader, which gets "16:48 17:31" and no
+                  arrow to read. */}
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-3">
+                <span className="flex items-baseline gap-2">
                   <span className="tnum text-num font-bold tracking-[-0.025em]">
-                    {planResult.durationMinutes + walkCorrection}
+                    {withMeasuredWalk(planResult, walkCorrection).durationMinutes}
                   </span>
                   <span className="text-body text-ink-3">{t.common.min}</span>
-                </div>
+                </span>
 
-                <div className="mt-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-                  <span className="text-label text-ink-3">{t.planner.departureLabel}</span>
-                  <span className="tnum text-emph font-semibold">{planResult.departureTime}</span>
-                  <ArrowRight className="h-[15px] w-[15px] shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
-                  <span className="text-label text-ink-3">{t.planner.arrivalLabel}</span>
+                <span className="flex items-baseline gap-2">
+                  <span className="sr-only">{t.planner.departureLabel}</span>
                   <span className="tnum text-emph font-semibold">
-                    ~{shiftClock(planResult.arrivalTime, walkCorrection)}
+                    {withMeasuredWalk(planResult, walkCorrection).departure}
                   </span>
-                </div>
+                  <ArrowRight className="h-[15px] w-[15px] shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
+                  <span className="sr-only">{t.planner.arrivalLabel}</span>
+                  <span className="tnum text-emph font-semibold">
+                    ~{withMeasuredWalk(planResult, walkCorrection).arrival}
+                  </span>
+                </span>
               </div>
 
                 {/* The small print, folded.
@@ -694,18 +753,44 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     They are worth reading once, not on the way to the thing that was asked
                     for. The summary keeps the two figures people actually scan for, so
                     folded is still an answer rather than a locked drawer. */}
-                <details className="mt-3 rounded-md border border-edge bg-surface/40">
+                <details className="rounded-md border border-edge bg-surface/40">
                   <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-label font-semibold text-ink-2">
-                    <span className="font-bold uppercase tracking-wider">{t.planner.tripInfoTitle}</span>
-                    <span className="flex items-baseline gap-3 font-mono">
+                    {/* The label was the least informative word on the line, and adding the
+                        footprint to say what the figures were pushed the row onto two
+                        lines. What is left says it without it: a footprint, a walk, a fare.
+                        The word stays for a screen reader, which has no icon to read. */}
+                    <span className="sr-only">{t.planner.tripInfoTitle}</span>
+                    <ChevronDown className="h-[15px] w-[15px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+                    {/* Spread, not flushed right. Both figures were pushed to the right
+                        edge, which left the whole middle of a 44 px row empty and the
+                        chevron stranded on its own at the far left. They are two separate
+                        facts — the walk and the fare — so they take the two ends. */}
+                    <span className="flex flex-1 items-baseline justify-between gap-3 font-mono">
+                      {/* Say what the numbers are.
+                          The folded line read "Información  10 min · 0,5 km  0,64 €", and
+                          the pair in the middle could have been anything -- the trip, the
+                          bus, the wait. It is the walking, and a summary you have to open
+                          to understand is not doing the job a summary is for. The footprint
+                          says it in the width the line has; the label under it says it in
+                          words for a screen reader. */}
                       {measuredWalk && (
-                        <span className="text-ink">
-                          {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
+                        <span
+                          className="flex items-baseline gap-1.5 text-ink"
+                          aria-label={`${t.planner.measuredWalkTitle}: ${measuredWalk.minutes} min, ${(measuredWalk.meters / 1000).toFixed(1).replace('.', ',')} km`}
+                        >
+                          <Footprints className="h-[13px] w-[13px] shrink-0 self-center text-ink-3" aria-hidden="true" />
+                          {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1).replace('.', ',')} km
                         </span>
                       )}
+                      {/* The ordinary fare, not the card one.
+                          This showed 0,45 € -- the Tarxeta Cidadá price -- as the price of
+                          the trip, which assumes the reader has a card issued by Lugo city
+                          council. Somebody visiting pays 0,64 € and was told otherwise by
+                          the only number on the summary line. The discount is real and it
+                          is one line below; it is not the default. */}
                       {planResult.fare && planResult.fare.busLegs > 0 && (
-                        <span className="font-black text-estimated">
-                          {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
+                        <span className="font-black text-ink">
+                          {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
                         </span>
                       )}
                     </span>
@@ -718,7 +803,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           {t.planner.measuredWalkTitle}
                         </span>
                         <span className="font-mono font-black">
-                          {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1)} km
+                          {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1).replace('.', ',')} km
                         </span>
                       </div>
                     )}
@@ -734,28 +819,32 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
                     {planResult.fare && planResult.fare.busLegs > 0 && (
                       <div className="mt-3 border-t border-line pt-2 text-label text-ink">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-label font-bold uppercase tracking-wider text-ink-2">
-                            {t.planner.fareTitle}
-                          </span>
-                          <span className="flex items-baseline gap-3 font-mono">
-                            <span className="text-body font-black text-estimated">
-                              {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
-                            </span>
-                            <span className="text-ink-2 line-through">
-                              {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
-                            </span>
+                        {/* Both fares, neither struck through.
+                            The ordinary one was crossed out beside the card price, which is
+                            the idiom of a shop sale: it reads as "this price no longer
+                            applies". It applies to everyone without a Tarxeta Cidadá, which
+                            is every visitor. Two rows, each labelled, and the one anybody
+                            pays comes first. */}
+                        <span className="mb-1 block text-label font-bold uppercase tracking-wider text-ink-2">
+                          {t.planner.fareTitle}
+                        </span>
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-label text-ink">{t.planner.fareSingle}</span>
+                          <span className="tnum text-body font-black text-ink">
+                            {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
                           </span>
                         </div>
-                        <div className="mt-1 text-label text-ink-2">
-                          {t.planner.fareCard} &bull; {t.planner.fareSingle}:{' '}
-                          {planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €
-                          {planResult.fare.busLegs > 1 && (
-                            <span className="mt-0.5 block text-estimated">
-                              {planResult.fare.transfersFree ? t.planner.fareTransferFree : t.planner.fareTransferPaid}
-                            </span>
-                          )}
+                        <div className="mt-1 flex items-baseline justify-between gap-3">
+                          <span className="text-label text-ink-2">{t.planner.fareCard}</span>
+                          <span className="tnum text-label font-semibold text-ink-2">
+                            {planResult.fare.citizenCardEuros.toFixed(2).replace('.', ',')} €
+                          </span>
                         </div>
+                        {planResult.fare.busLegs > 1 && (
+                          <span className="mt-1.5 block text-label text-estimated">
+                            {planResult.fare.transfersFree ? t.planner.fareTransferFree : t.planner.fareTransferPaid}
+                          </span>
+                        )}
                       </div>
                     )}
 
@@ -771,65 +860,92 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               {/* Alternatives. One answer hides the fact that there is usually more than
                   one way, and people have reasons to prefer a line they know. */}
               {planOptions.length > 1 && (
-                <div className="mb-5">
+                <div>
                   <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">
-                    {t.planner.optionsTitle(Math.min(planOptions.length, MAX_OPTIONS), planOptions.length)}
+                    {t.planner.optionsTitle}
                   </span>
-                  <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
+                  {/* Rows, not cards, and not a carousel.
+                      The carousel went first: measured on a 375x812 the strip was 305 px
+                      wide holding 887 px of cards, so two of the four options sat off the
+                      screen with nothing but a clipped edge to say so. The cards that
+                      replaced it were readable but expensive -- four of them ran to 274 px,
+                      39% of the 706 px that scroll, to carry three figures each. A border,
+                      a radius and a fill on every row say "four separate objects" when what
+                      is actually being read is one column of four comparable lines.
+                      So the chrome goes and the alignment does the work: badges, clock and
+                      duration land in the same place on every row, which is what makes them
+                      comparable at a glance. The rows keep a 44 px target because they are
+                      still buttons on a phone. */}
+                  <div className="border-y border-line">
                     {offeredOptions.map(({ option, idx }) => {
                       const busLegs = option.segments.filter((seg) => seg.type === 'bus');
-                      // Same correction the detail applies, so the card you open agrees
+                      // Same correction the detail applies, so the row you open agrees
                       // with what opens, and the four are compared like for like.
                       const fix = correctionFor(option);
+                      const shown = withMeasuredWalk(option, fix);
+                      // The row draws the change: "6 → 4.2" is one transfer and there is
+                      // no other way to read it. Spelling it out again cost the two rows
+                      // that had one 18 px each, because the wider badge column pushed
+                      // "4 min de espera · 1 transbordo" onto a second line. The words
+                      // stay for a screen reader, which is read the badges as bare
+                      // numbers and cannot see the arrow between them.
+                      const notes = [
+                        option.totalWaitMinutes > 0 && option.totalWaitMinutes <= LONG_WAIT_MIN
+                          ? t.planner.waitShort(option.totalWaitMinutes)
+                          : '',
+                        busLegs.length === 0 ? t.planner.noWaitNoFare : '',
+                      ].filter(Boolean);
                       return (
                         <button
                           key={idx}
                           onClick={() => setChosenOption(idx)}
                           aria-pressed={idx === chosenOption}
-                          className={`w-[72%] shrink-0 snap-start p-2.5 rounded-lg border text-left transition-colors sm:w-auto ${
+                          className={`grid min-h-11 w-full grid-cols-[auto_1fr_auto] items-center gap-2.5 border-l-[3px] py-1.5 pl-2 pr-1 text-left transition-colors ${
+                            idx > 0 ? 'border-t border-t-line' : ''
+                          } ${
                             idx === chosenOption
-                              ? 'border-ink bg-ink text-bg'
-                              : 'border-edge bg-bg text-ink'
+                              ? 'border-l-ink bg-surface text-ink'
+                              : 'border-l-transparent text-ink'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="flex items-center gap-1 flex-wrap">
-                              {busLegs.length === 0 ? (
-                                <span className="flex items-center gap-1 font-bold text-label">
-                                  <Footprints className="w-3.5 h-3.5" />
-                                  {t.planner.walkOnly}
-                                </span>
-                              ) : (
-                                busLegs.map((seg, k) => (
-                                  <React.Fragment key={k}>
-                                    {k > 0 && <span className="opacity-60 text-label">→</span>}
-                                    <span
-                                      className="px-1.5 rounded text-label font-black text-white"
-                                      style={{ backgroundColor: seg.line?.color }}
-                                    >
-                                      {seg.line?.number}
-                                    </span>
-                                  </React.Fragment>
-                                ))
-                              )}
+                          <span className="flex items-center gap-1">
+                            {busLegs.length === 0 ? (
+                              <span className="flex items-center gap-1 text-label font-bold">
+                                <Footprints className="h-3.5 w-3.5" />
+                                {t.planner.walkOnly}
+                              </span>
+                            ) : (
+                              busLegs.map((seg, k) => (
+                                <React.Fragment key={k}>
+                                  {k > 0 && <span className="text-label text-ink-3">→</span>}
+                                  <span
+                                    className="rounded px-1.5 text-label font-black text-white"
+                                    style={{ backgroundColor: seg.line?.color }}
+                                  >
+                                    {seg.line?.number}
+                                  </span>
+                                </React.Fragment>
+                              ))
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="tnum block font-mono text-label text-ink-2">
+                              {shown.departure} → ~{shown.arrival}
                             </span>
-                            <span className="font-mono font-black text-body shrink-0">
-                              {option.durationMinutes + fix} min
-                            </span>
-                          </div>
-                          <div
-                            className={`mt-1 text-label font-medium ${
-                              idx === chosenOption ? 'opacity-85' : 'text-ink-3'
+                            {notes.length > 0 && (
+                              <span className="block text-label text-ink-3">{notes.join(' · ')}</span>
+                            )}
+                            {busLegs.length > 1 && (
+                              <span className="sr-only">{t.planner.transfersShort(busLegs.length - 1)}</span>
+                            )}
+                          </span>
+                          <span
+                            className={`tnum shrink-0 font-mono text-body ${
+                              idx === chosenOption ? 'font-black' : 'font-bold text-ink-2'
                             }`}
                           >
-                            {option.departureTime}{' '}
-                            → ~{shiftClock(option.arrivalTime, fix)}
-                            {option.totalWaitMinutes > 0 &&
-                              option.totalWaitMinutes <= LONG_WAIT_MIN &&
-                              ` · ${t.planner.waitShort(option.totalWaitMinutes)}`}
-                            {busLegs.length > 1 && ` · ${t.planner.transfersShort(busLegs.length - 1)}`}
-                            {busLegs.length === 0 && ` · ${t.planner.noWaitNoFare}`}
-                          </div>
+                            {shown.durationMinutes} min
+                          </span>
                         </button>
                       );
                     })}
@@ -839,7 +955,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
               {/* Route map. Reading a list of streets is much harder than seeing the shape
                   of the trip, so it is shown by default and can be folded away. */}
-              <div className="mb-5">
+              <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-label font-bold text-ink-2 uppercase tracking-wider flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-accent" />
@@ -921,29 +1037,49 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               >
                                 {seg.line.number}
                               </button>
+                              {/* Where this bus is going, not what the line is called.
+                                  The line's own name is "Rda. Muralla 56 (Sindicatos) -
+                                  HULA (Ent. Principal)" — 355 px of it in a 103 px slot,
+                                  so 29% of it showed and it broke off mid-word. It is also
+                                  the wrong fact: the row below already says where you get
+                                  on, and what is missing is which way it runs. The full
+                                  name stays on the badge's tooltip. */}
                               <span
                                 className="min-w-0 flex-1 truncate text-body font-semibold"
                                 title={seg.line.name}
+                                aria-label={t.service.towards(
+                                  seg.line.directions.find((d) => d.id === seg.directionId)?.destination ??
+                                    seg.line.name,
+                                )}
                               >
-                                {seg.line.name}
+                                <span aria-hidden="true" className="text-ink-3">→ </span>
+                                {seg.line.directions.find((d) => d.id === seg.directionId)?.destination ??
+                                  seg.line.name}
                               </span>
                               <span className="tnum shrink-0 text-emph font-bold">
                                 {seg.durationMinutes} min
                               </span>
                             </div>
 
-                            <div className="mt-3 flex items-baseline gap-2">
-                              <span className="text-label text-ink-3">{t.planner.board}</span>
+                            {/* The label and the time move off the name's line.
+                                "Sube en" plus a clock left 132 px for "Rda. Muralla (Obras
+                                Publicas)", which needs 204 -- so the stop you have to walk
+                                to and recognise was the thing being cut. Nothing here is
+                                worth truncating a stop name for. */}
+                            <div className="mt-3">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <span className="text-label text-ink-3">{t.planner.board}</span>
+                                <span className="tnum shrink-0 text-body font-semibold">
+                                  {seg.departureTime}
+                                </span>
+                              </div>
                               <button
                                 onClick={() => seg.fromStop && onSelectStop(seg.fromStop)}
                                 title={seg.fromStop?.name}
-                                className="flex min-h-11 min-w-0 flex-1 items-center truncate text-left text-body font-semibold underline underline-offset-2"
+                                className="flex min-h-11 w-full items-center text-left text-body font-semibold underline underline-offset-2"
                               >
                                 {seg.fromStop?.name}
                               </button>
-                              <span className="tnum shrink-0 text-body font-semibold">
-                                {seg.departureTime}
-                              </span>
                             </div>
 
                             {/* What you actually pass through. Collapsed by default because
@@ -990,18 +1126,20 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               );
                             })()}
 
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-label text-ink-3">{t.planner.alight}</span>
+                            <div>
+                              <div className="flex items-baseline justify-between gap-2">
+                                <span className="text-label text-ink-3">{t.planner.alight}</span>
+                                <span className="tnum shrink-0 text-body font-semibold">
+                                  {seg.arrivalTime}
+                                </span>
+                              </div>
                               <button
                                 onClick={() => seg.toStop && onSelectStop(seg.toStop)}
                                 title={seg.toStop?.name}
-                                className="flex min-h-11 min-w-0 flex-1 items-center truncate text-left text-body font-semibold underline underline-offset-2"
+                                className="flex min-h-11 w-full items-center text-left text-body font-semibold underline underline-offset-2"
                               >
                                 {seg.toStop?.name}
                               </button>
-                              <span className="tnum shrink-0 text-body font-semibold">
-                                {seg.arrivalTime}
-                              </span>
                             </div>
 
                             {/* Where the boarding time came from, in the same two shapes the
@@ -1075,7 +1213,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               </div>
 
               {/* Notice */}
-              <div className="mt-6 p-3 rounded-lg bg-warn border border-warn flex items-start gap-2.5 text-label text-warn-ink font-medium">
+              <div className="p-3 rounded-lg bg-warn border border-warn flex items-start gap-2.5 text-label text-warn-ink font-medium">
                 <AlertCircle className="w-4 h-4 text-estimated shrink-0 mt-0.5" />
                 <span>{t.planner.transferFreeNotice}</span>
               </div>
