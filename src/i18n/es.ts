@@ -98,7 +98,7 @@ export const es: Dict = {
       },
       tmg: {
         badge: 'Xunta de Galicia',
-        title: 'Tarjeta del transporte público de Galicia (TMG)',
+        title: 'Tarjeta del Transporte Metropolitano de Galicia (TMG)',
         subtitle: 'Válida en la red urbana de Lugo',
         details: (minutes: number) =>
           `Si llegas en un bus metropolitano, el urbano va incluido dentro de los ${minutes} min siguientes sin volver a pagar. Más de 41 viajes metropolitanos al mes devuelven el 15% del gasto.`,
@@ -150,7 +150,6 @@ export const es: Dict = {
 
   planner: {
     title: 'Planificador de ruta',
-    subtitle: 'Calcula el trayecto desde cualquier calle, lugar o parada de Lugo',
     origin: 'Origen (calle, lugar o parada)',
     destination: 'Destino (calle, lugar o parada)',
     useMyLocation: 'Usar mi ubicación GPS',
@@ -168,7 +167,7 @@ export const es: Dict = {
     quickDestinations: 'Destinos rápidos habituales:',
     noRouteFound: 'No se encontró una combinación óptima. Prueba con otra calle o parada cercana.',
     transferFreeNotice:
-      'Recuerda que el transbordo dentro de los 75 minutos es gratuito con la Tarjeta Ciudadana o TPG.',
+      'Recuerda que el transbordo dentro de los 75 minutos es gratuito con la Tarjeta Ciudadana o TMG.',
     placeholderOrig: 'Escribe una calle, plaza o parada...',
     placeholderDest: 'Escribe tu destino en Lugo...',
     lineWithStops: (line: string, stops: number) => `Línea ${line} · ${stops} ${stops === 1 ? 'parada' : 'paradas'}`,
@@ -184,12 +183,15 @@ export const es: Dict = {
     fareSingle: 'Billete ordinario',
     fareTransferFree: 'Transbordo incluido (dentro de los 75 min)',
     fareTransferPaid: 'El transbordo supera los 75 min: pagas dos billetes',
-    optionsTitle: (shown: number, total: number) => `Opciones de trayecto (${shown} de ${total})`,
+    optionsTitle: 'Mejores opciones de trayecto',
+    moreOptions: (count: number) => (count === 1 ? '1 opción más' : `${count} opciones más`),
+    fewerOptions: 'Mostrar menos',
     scheduledWait: 'Espera programada en la parada',
     walkOnly: 'Todo a pie',
     walkMetres: (metres: number) => `Caminar ~${metres} m`,
     walkConnection: 'Conexión a pie',
     measuredWalkTitle: 'A pie, medido',
+    walkLeg: (metres: number, minutes: number) => `A pie · ${metres} m · ${minutes} min`,
     tripInfoTitle: 'Información',
     timeProvenanceMeasured:
       'Los tramos a pie están medidos por el enrutador peatonal de OpenStreetMap, no estimados. Las horas de bus siguen viniendo del cuadro horario oficial; las marcadas con ~ se deducen del tiempo de recorrido medido por carretera.',
@@ -208,7 +210,7 @@ export const es: Dict = {
     faqs: [
       {
         q: '¿Cómo funciona el transbordo gratuito?',
-        a: 'Al pagar con la Tarjeta Ciudadana del Ayuntamiento de Lugo o con la Tarjeta TPG de Galicia, dispones de 75 minutos desde la primera validación para cambiar a cualquier otra línea sin coste adicional.',
+        a: 'Al pagar con la Tarjeta Ciudadana del Ayuntamiento de Lugo o con la Tarjeta TMG de Galicia, dispones de 75 minutos desde la primera validación para cambiar a cualquier otra línea sin coste adicional.',
       },
       {
         q: '¿Se puede pagar con tarjeta bancaria o móvil?',
@@ -477,18 +479,17 @@ export const es: Dict = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `La línea ${line} no presta servicio hoy (${days}).`,
-    transferAt: (stop: string, line: string, at: string, wait: number) =>
-      `Transbordo en "${stop}". El siguiente bus de la Línea ${line} sale a las ${at} (~${wait} min de espera). Transbordo gratuito dentro de los 75 min con la Tarjeta Ciudadana.`,
-    waitAt: (stop: string, until: string, wait: number, line: string, to: string) =>
-      `Espera en la parada "${stop}" hasta las ${until}, unos ${wait} min. Línea ${line} con destino ${to}.`,
+    transferAt: (stop: string, line: string) =>
+      `Transbordo en "${stop}" a la Línea ${line}. Gratuito dentro de los 75 min con la Tarjeta Ciudadana.`,
+    waitAt: (stop: string, line: string, to: string) =>
+      `En la parada "${stop}". Línea ${line} con destino ${to}.`,
     board: (line: string, direction: string, at: string, alightAt: string, stops: number, km: string, arriveAt: string) =>
       `Sube a la Línea ${line} (${direction}) a las ${at} y baja en "${alightAt}" tras ${stops} paradas (${km} km). Llegada a las ${arriveAt}.`,
-    walkWholeWay: (from: string, to: string, metres: number, minutes: number) =>
-      `Ve andando desde "${from}" hasta "${to}": ${metres} metros, unos ${minutes} min. Sin esperas ni billete.`,
-    walkToStop: (metres: number, minutes: number, from: string, stop: string, code: string) =>
-      `Camina ${metres} metros (~${minutes} min) desde "${from}" hasta la parada "${stop}" (Cód. ${code}).`,
-    walkToDestination: (metres: number, minutes: number, to: string, arriveAt: string) =>
-      `Camina ${metres} metros (~${minutes} min) hasta "${to}". Llegada final a las ${arriveAt}.`,
+    walkWholeWay: (from: string, to: string) =>
+      `Desde "${from}" hasta "${to}". Sin esperas ni billete.`,
+    walkToStop: (from: string, stop: string, code: string) =>
+      `Desde "${from}" hasta la parada "${stop}" (Cód. ${code}).`,
+    walkToDestination: (to: string) => `Hasta "${to}".`,
   },
 
   error: {

@@ -12,20 +12,32 @@ import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, lineRu
 
 
 /**
- * Offline fallback for how long a walk takes.
+ * The first guess at how long a walk takes, before the router answers.
  *
- * Measured against 120 real pedestrian routes in Lugo (`npm run calibrate:walking`):
- * the detour over the straight line ranges from 1.03 to 2.38 with a median of 1.26, and
- * the router walks at 75 m/min. The spread is the point — the wall, the river and the
- * railway force detours no single number can predict, so the worst case is ~14 minutes
- * out whatever constant is chosen.
+ * Calibrated against 120 pedestrian routes (`pnpm run calibrate:walking`) as a detour
+ * over the straight line: 1.03 to 2.38, median 1.26, at 75 m/min. 1.35 was chosen
+ * deliberately above that median, so it would over-state rather than under-state and
+ * leave 24% of walks short instead of 51%. Being told a walk is longer than it is beats
+ * missing the bus.
  *
- * 1.35 is therefore deliberately above the median: it over-states by 2 minutes on
- * average and leaves 24% of walks under-stated, against 51% at the median value. Being
- * told a walk is slightly longer than it is beats missing the bus.
+ * **Re-measured against the network the app now carries, and it no longer does that.**
+ * Over 1.022 hops of real plans — you to your first stop, the transfers, the last stop to
+ * where you are going — the median detour is x1.36 and 1.35 leaves 51% of walks
+ * under-stated, which is exactly the position the old comment described as the one to
+ * avoid. The old figure was measured on a different and smaller sample; this one is every
+ * hop of a few hundred plans, against a router that agrees with FOSSGIS to 1,2%.
  *
- * When there is a connection the app asks the real router instead — see
- * services/walkingPath.ts — and shows the true figure.
+ * It is left at 1.35 on purpose rather than raised. Where this number reaches the reader
+ * it is corrected within milliseconds — `src/utils/walkRouter.ts` routes every hop of
+ * every option offered, on the device, and the planner replaces the estimate with what it
+ * says. What is left uncorrected is "stops near me", which sorts by this, and the seven
+ * stops the network cannot reach on foot. Raising it would make the corrected screens
+ * flash a worse number on the way to the right one.
+ *
+ * The spread is the real point and no constant fixes it: the detour is x1.42 at the
+ * median under 250 m and x1.33 over 750 m, and its p90 is x2.12. The wall, the river and
+ * the railway force detours no single multiplier can predict, which is why the app stopped
+ * relying on one.
  */
 const WALK_DETOUR_FACTOR = 1.35;
 const WALK_METRES_PER_MINUTE = 75;

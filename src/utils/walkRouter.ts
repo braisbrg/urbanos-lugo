@@ -85,7 +85,7 @@ let inFlight: Promise<Graph> | null = null;
  *
  * The file is written as runs of integers because that is what compresses; this is the
  * other end of that. Done once, lazily, and only when a walking route is first wanted —
- * the file is 412 KB gzipped and most visits never plan a trip.
+ * the file is 448 KB gzipped, 396 brotli, and most visits never plan a trip.
  */
 function decode(raw: {
   scale: number;

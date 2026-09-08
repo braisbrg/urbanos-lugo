@@ -125,7 +125,7 @@ export const gl = {
       },
       tmg: {
         badge: 'Xunta de Galicia',
-        title: 'Tarxeta do transporte público de Galicia (TMG)',
+        title: 'Tarxeta do Transporte Metropolitano de Galicia (TMG)',
         subtitle: 'Válida na rede urbana de Lugo',
         details: (minutes: number) =>
           `Se chegas nun bus metropolitano, o urbano vai incluído dentro dos ${minutes} min seguintes sen pagar de novo. Máis de 41 viaxes metropolitanas ao mes devolven o 15% do gasto.`,
@@ -180,7 +180,6 @@ export const gl = {
 
   planner: {
     title: 'Planificador de ruta',
-    subtitle: 'Calcula o traxecto desde calquera rúa, lugar ou parada de Lugo',
     origin: 'Orixe (rúa, lugar ou parada)',
     destination: 'Destino (rúa, lugar ou parada)',
     useMyLocation: 'Usar a miña localización GPS',
@@ -198,7 +197,7 @@ export const gl = {
     quickDestinations: 'Destinos rápidos habituais:',
     noRouteFound: 'Non se atopou unha combinación óptima. Proba con outra rúa ou parada próxima.',
     transferFreeNotice:
-      'Lembra que o transbordo dentro dos 75 minutos é gratuíto coa Tarxeta Cidadá ou TPG.',
+      'Lembra que o transbordo dentro dos 75 minutos é gratuíto coa Tarxeta Cidadá ou TMG.',
     placeholderOrig: 'Escribe unha rúa, praza ou parada...',
     placeholderDest: 'Escribe o teu destino en Lugo...',
     lineWithStops: (line: string, stops: number) => `Liña ${line} · ${stops} ${stops === 1 ? 'parada' : 'paradas'}`,
@@ -214,12 +213,21 @@ export const gl = {
     fareSingle: 'Billete ordinario',
     fareTransferFree: 'Transbordo incluído (dentro dos 75 min)',
     fareTransferPaid: 'O transbordo supera os 75 min: paga dous billetes',
-    optionsTitle: (shown: number, total: number) => `Opcións de traxecto (${shown} de ${total})`,
+    /* Sen o reconto.
+       Dicía «4 de 55», que soa a que gardamos corenta e nove respostas nun caixón. O que
+       queda fóra son as mesmas liñas saíndo máis tarde: o planificador ordena por
+       isBetterPlan — servizo en marcha primeiro, despois quen chega antes — e amosa as
+       catro primeiras, así que son as mellores e non unha mostra. */
+    optionsTitle: 'Mellores opcións de traxecto',
+    moreOptions: (count: number) => (count === 1 ? '1 opción máis' : `${count} opcións máis`),
+    fewerOptions: 'Amosar menos',
     scheduledWait: 'Espera programada na parada',
     walkOnly: 'Todo a pé',
     walkMetres: (metres: number) => `Camiñar ~${metres} m`,
     walkConnection: 'Conexión a pé',
     measuredWalkTitle: 'A pé, medido',
+    /** The tooltip on a walked leg drawn on the route map. */
+    walkLeg: (metres: number, minutes: number) => `A pé · ${metres} m · ${minutes} min`,
     tripInfoTitle: 'Información',
     timeProvenanceMeasured:
       'Os tramos a pé están medidos polo enrutador peonil de OpenStreetMap, non estimados. As horas de bus seguen a vir do cadro horario oficial; as marcadas con ~ dedúcense do tempo de percorrido medido por estrada.',
@@ -238,7 +246,7 @@ export const gl = {
     faqs: [
       {
         q: 'Como funciona o transbordo gratuíto?',
-        a: 'Ao pagar coa Tarxeta Cidadá do Concello de Lugo ou coa Tarxeta TPG de Galicia, dispoñerás de 75 minutos desde a primeira validación para cambiar a calquera outra liña sen custe adicional.',
+        a: 'Ao pagar coa Tarxeta Cidadá do Concello de Lugo ou coa Tarxeta TMG de Galicia, dispoñerás de 75 minutos desde a primeira validación para cambiar a calquera outra liña sen custe adicional.',
       },
       {
         q: 'Pódese pagar con tarxeta bancaria ou móbil?',
@@ -509,18 +517,20 @@ export const gl = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `A liña ${line} non presta servizo hoxe (${days}).`,
-    transferAt: (stop: string, line: string, at: string, wait: number) =>
-      `Transbordo en "${stop}". O seguinte bus da Liña ${line} sae ás ${at} (~${wait} min de espera). Transbordo gratuíto dentro dos 75 min coa Tarxeta Cidadá.`,
-    waitAt: (stop: string, until: string, wait: number, line: string, to: string) =>
-      `Espera na parada "${stop}" ata as ${until}, uns ${wait} min. Liña ${line} con destino ${to}.`,
+    // Cada paso xa leva a súa cabeceira: "12:18 → 12:22" e "4 min". Cando o texto
+    // repetía as dúas cifras, a mesma hora e os mesmos minutos aparecían tres veces
+    // nunha fila de 173 px. Aquí queda só o que a cabeceira non pode dicir.
+    transferAt: (stop: string, line: string) =>
+      `Transbordo en "${stop}" á Liña ${line}. Gratuíto dentro dos 75 min coa Tarxeta Cidadá.`,
+    waitAt: (stop: string, line: string, to: string) =>
+      `Na parada "${stop}". Liña ${line} con destino ${to}.`,
     board: (line: string, direction: string, at: string, alightAt: string, stops: number, km: string, arriveAt: string) =>
       `Sube á Liña ${line} (${direction}) ás ${at} e baixa en "${alightAt}" tras ${stops} paradas (${km} km). Chegada ás ${arriveAt}.`,
-    walkWholeWay: (from: string, to: string, metres: number, minutes: number) =>
-      `Vai andando desde "${from}" ata "${to}": ${metres} metros, uns ${minutes} min. Sen agardar nin pagar.`,
-    walkToStop: (metres: number, minutes: number, from: string, stop: string, code: string) =>
-      `Camiña ${metres} metros (~${minutes} min) desde "${from}" ata a parada "${stop}" (Cód. ${code}).`,
-    walkToDestination: (metres: number, minutes: number, to: string, arriveAt: string) =>
-      `Camiña ${metres} metros (~${minutes} min) ata "${to}". Chegada final ás ${arriveAt}.`,
+    walkWholeWay: (from: string, to: string) =>
+      `Desde "${from}" ata "${to}". Sen agardar nin pagar.`,
+    walkToStop: (from: string, stop: string, code: string) =>
+      `Desde "${from}" ata a parada "${stop}" (Cód. ${code}).`,
+    walkToDestination: (to: string) => `Ata "${to}".`,
   },
 
   error: {

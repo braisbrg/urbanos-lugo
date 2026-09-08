@@ -216,10 +216,22 @@ pode ser a túa posición do GPS. Iso é algo que hai que pedir permiso para fac
 se pedía. Agora non hai nada que consentir: o botón desapareceu e o camiño debúxase
 sempre.
 
-Medido sobre 410 pares de paradas, o rodeo real fronte á liña recta ten unha mediana de
-**×1,35** — exactamente o factor que usaba a estimación, que resulta estar ben de media.
-O que nunca estivo ben é a cola: o p90 é ×3,59 e o peor ×32,5, dous postes a poucas
-decenas de metros cun quilómetro de camiño entre eles porque hai unha vía polo medio.
+**Canto se rodea de verdade**, medido co enrutador contra a liña recta. Depende de sobre
+que se mida, así que van as dúas:
+
+| | mediana | p90 | peor |
+| :--- | ---: | ---: | ---: |
+| 340 pares de paradas veciñas | ×1,42 | ×3,78 | ×32,96 |
+| 1.022 tramos a pé de plans reais | ×1,36 | ×2,12 | |
+
+A segunda é a que importa, porque é a poboación á que se lle aplica a estimación: ti ata a
+túa primeira parada, os transbordos, e a última parada ata onde vas. Aí a constante de
+1,35 queda **na mediana**, non por riba dela como pretendía o seu comentario — e ese
+comentario xa está corrixido coa medición nova en `src/utils/transitEngine.ts`.
+
+O que nunca estivo ben é a cola: **×32,96 no peor caso**, dous postes a poucas decenas de
+metros cun quilómetro de camiño entre eles porque hai unha vía polo medio. Ningunha
+constante arregla iso, que é a razón de deixar de depender dunha.
 
 Cando **non hai camiño peonil**, a opción de ir andando retírase en vez de quedar cunha
 estimación. Nas paradas da N-VI en Ombreiro esa estimación sería un paseo de seis
@@ -227,12 +239,12 @@ quilómetros a campo través, e alí non hai beirarrúa ningunha.
 
 **Substituír algo é afirmar que o teu é igual de bo, así que se comproba.**
 `pnpm run compare:walk` colle 40 traxectos reais e pregúntallos aos dous enrutadores, ao
-noso e ao de FOSSGIS que había antes. Última medición: mediana **−2,0%**, p10 −6,6%, p90
-−0,6%, e **39 dos 40 dentro do 10%**, os 40 dentro do 25%.
+noso e ao de FOSSGIS que había antes. Última medición: mediana **−1,2%**, p10 −6,0%, p90
++0,5%, e **39 dos 40 dentro do 10%**, os 40 dentro do 25%.
 
 O signo importa e é honesto dicilo: os nosos camiños son sistematicamente un chisco máis
 curtos. O noso perfil admite `track`, que é o que fai falta para chegar ás parroquias —
-Bóveda, Muxa, Nadela — e o de OSRM penalízao. A maior discrepancia, −18,4%, é xustamente
+Bóveda, Muxa, Nadela — e o de OSRM penalízao. A maior discrepancia, −15,6%, é xustamente
 un traxecto rural (Barbaín → Avda. Madrid). Se algún día hai que apertar iso, o mando
 está en `STEPS_SPEED_FACTOR` e nos tipos de vía de `tools/importWalkNetwork.ts`.
 
@@ -253,7 +265,7 @@ nos dous sentidos:
 | :--- | ---: | ---: |
 | Ponte Romana → Praza Maior | 31 min | 23 min |
 | A Ponte → Catedral | 25 min | 18 min |
-| Campus USC → Rda. Muralla 56 | 38 min | 35 min |
+| Campus USC → Rda. Muralla 56 | 39 min | 36 min |
 
 Antes desas alturas os tres pares daban o mesmo nas dúas direccións.
 
@@ -273,7 +285,7 @@ con 5 m queda por debaixo.
 
 Un efecto secundario que é o correcto: **o camiño máis barato para subir xa non é sempre o
 mesmo que para baixar.** O enrutador colle unha rúa máis longa e máis suave para subir,
-que é o que fai unha persoa. Da Ponte Romana á Praza Maior son 1.649 m subindo e 1.638 m
+que é o que fai unha persoa. Da Ponte Romana á Praza Maior son 1.664 m subindo e 1.653 m
 baixando.
 
 Todo iso vai no mesmo ficheiro que o grafo, codificado en diferenzas: 21.093 alturas e
@@ -752,14 +764,22 @@ Regras que evitan suxestións absurdas ou perigosas:
   existe sempre nese caso. Aparecía como `5.1 → 5.1` no listado de opcións.
 - **Unha tarxeta por combinación visible.** Dúas opcións coas mesmas insignias son a
   mesma viaxe para quen a le, aínda que difiran en poste, sentido do bucle ou rama rural
-  (as catro liñas numeradas `11`). Gárdase a máis rápida.
+  (as catro liñas numeradas `11`). Gárdase a que chega antes.
 - **Marxe de transbordo segundo a procedencia da hora.** Dous minutos abondan cando a
   chegada é oficial, porque as dúas puntas veñen do mesmo cadro; catro cando é
   interpolada. Pasarse de largo só empurra a suxestión ao seguinte bus, quedarse curto
   deixa a alguén na beirarrúa.
 - **Cando saír da casa.** Cada opción amosa `sae ás HH:MM`, que é a hora de saír da
   orixe: a espera antes do primeiro bus pásase na casa, non na parada. Contala como
-  tempo de viaxe facía parecer peor unha ruta que só saía máis tarde.
+  tempo de viaxe facía parecer peor unha ruta que só saía máis tarde. Preguntando ás
+  09:00 por HULA, a resposta era «50 min, sae ás 09:00» con 21 deles de pé no poste;
+  agora é «33 min, sae ás 09:17», e chégase á mesma hora. Na parada quedan os mesmos
+  dous ou catro minutos de marxe que se lle dan a un transbordo, e pola mesma razón.
+- **Ordénanse por cando chegas, non por canto duran.** Coa saída libre de moverse as dúas
+  cousas deixan de ser a mesma: o traxecto máis curto de Fonte dos Ranchos a HULA é un
+  5ES de 22 minutos que sae ás 14:08, e preguntando ás 09:00 encabezaba a lista. O que se
+  compara é a hora á que estás alí; entre dúas que chegan á vez gaña a que che come menos
+  o día.
 - **Nunca unha soa parada en bus.** Medido sobre 2.254 tramos ao mediodía, un tramo
   dunha parada son 1,2 min de viaxe tras 5,3 de espera, fronte a un paseo de 5 min entre
   eses dous postes: custa o que custa andar. Os nove que si lle gañaban ao paseo aforraban
@@ -1182,7 +1202,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-71 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+120 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

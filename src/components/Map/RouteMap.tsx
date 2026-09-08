@@ -80,6 +80,9 @@ export const RouteMap: React.FC<RouteMapProps> = ({
       zoom: 13,
       maxZoom: 19,
       zoomControl: false,
+      // A small map inside a scrolling page, the same as the stop mini map: flicking past
+      // it should scroll the itinerary, not zoom the city.
+      scrollWheelZoom: false,
     });
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
@@ -109,12 +112,19 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     const bounds = L.latLngBounds([]);
     const extend = (points: [number, number][]) => points.forEach((p) => bounds.extend(p));
 
-    /** A real pavement route when we have fetched one, a straight hint otherwise. */
+    /**
+     * A real pavement route where the router answered, a straight hint where it did not.
+     *
+     * The tooltip was Galician written into this file, which is the one thing the i18n
+     * rule forbids: a reader on Spanish or English got "A pé" on every walked leg of
+     * their itinerary. It only ever showed on a routed leg, and until the network shipped
+     * a routed leg was rare, which is how it lasted.
+     */
     const walkLine = (a: [number, number], b: [number, number]): L.Polyline => {
       const detailed = walkPaths[walkHopKey(a, b)];
       return detailed
         ? L.polyline(detailed.path, { color: colors.walkRouted, weight: 4, dashArray: '1 7', opacity: 0.9 }).bindTooltip(
-            `A pé · ${detailed.meters} m · ${detailed.minutes} min`,
+            escapeHtml(translations(lang).planner.walkLeg(detailed.meters, detailed.minutes)),
           )
         : L.polyline([a, b], { color: colors.walkStraight, weight: 3, dashArray: '4 6', opacity: 0.8 });
     };

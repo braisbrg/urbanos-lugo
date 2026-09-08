@@ -6,11 +6,15 @@
  * as a real header instead. Writing it twice would mean maintaining it twice and finding
  * out on the day they disagreed.
  *
- * Every remote origin here is one the app actually uses: OpenFreeMap for the basemap,
- * Google Fonts for the two typefaces, and OpenStreetMap's foot router for the measured
- * walking legs. tile.openstreetmap.org is the raster fallback for a device with no
- * WebGL2. buslugo.com is deliberately absent — only the server ever reaches it, because
- * CORS blocks the browser.
+ * Every remote origin here is one the app actually uses, and the list has only ever got
+ * shorter: OpenFreeMap for the basemap, and tile.openstreetmap.org as the raster fallback
+ * for a device with no WebGL2. That is all of them.
+ *
+ * Two used to be here and are not. Google Fonts went when the typefaces moved to this
+ * site (`tools/importFonts.ts`), so `font-src` is a bare 'self'. OpenStreetMap's foot
+ * router went when the pedestrian network moved into the bundle and the walk started
+ * being routed on the device. buslugo.com was never here — only the server reaches it,
+ * because CORS blocks the browser.
  *
  * Scripts are same-origin only plus exactly one hash: no wasm, and the QR scanner uses the
  * browser's own BarcodeDetector rather than a library. The map renderer runs a worker, but

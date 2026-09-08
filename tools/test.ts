@@ -1239,6 +1239,31 @@ ok('every language can plan a trip and gets prose in that language', () => {
   );
 });
 
+ok('the answer column spaces its blocks in one place', () => {
+  // Measured down the Ruta result column on a 375x812, the gaps between the six blocks
+  // ran 20, 0, 20, 20, 24 px. Each block carried its own margin -- mb-4 on the notice,
+  // mb-5 on the headline, mt-3 on the folded box, mb-5 twice more, mt-6 on the footer --
+  // and six numbers kept by hand do not stay in step. The alternatives ended up flush
+  // against the box above them, which is the one gap a reader notices.
+  //
+  // The column owns the rhythm now, the way AlertsView and FaresView already do. A block
+  // that brings its own vertical margin back will look right in isolation and put the
+  // column out again, so the class names are what is checked.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const view = readFileSync(join(root, 'src/components/RoutePlannerView.tsx'), 'utf8');
+
+  assert(
+    /className="space-y-5 bg-bg/.test(view),
+    'the answer card no longer declares the rhythm its blocks depend on',
+  );
+  // mb-1, mb-2 and mb-1.5 are inside a block -- a heading above its own content -- and
+  // are left alone. These four were only ever used between blocks.
+  for (const stray of ['mb-4', 'mb-5', 'mt-6', 'mt-5']) {
+    const found = new RegExp(`className="[^"]*\\b${stray}\\b`).exec(view);
+    assert(!found, `${stray} is back in the planner: "${found?.[0]}" — the column spaces its blocks`);
+  }
+});
+
 ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
   // Two faults, one cause: the plan used to start at `now` whatever the timetable said.
   // Asking at 09:00 for a bus at 09:28 produced a 7-minute walk and 21 minutes of
@@ -1842,8 +1867,6 @@ ok('the content security policy still refuses what it was written to refuse', ()
   // Every remote origin the policy allows should be one the app actually talks to.
   const allowed = [...CSP_HEADER.matchAll(/https:\/\/[^\s;]+/g)].map((m) => m[0]);
   const expected = [
-    'https://fonts.googleapis.com',
-    'https://fonts.gstatic.com',
     'https://tiles.openfreemap.org',
     'https://tile.openstreetmap.org',
   ];

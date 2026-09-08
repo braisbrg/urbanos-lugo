@@ -109,7 +109,7 @@ export const en: Dict = {
       },
       tmg: {
         badge: 'Xunta de Galicia',
-        title: 'Galician public transport card (TMG)',
+        title: 'Galician Metropolitan Transport card (TMG)',
         subtitle: 'Valid on the Lugo city network',
         details: (minutes: number) =>
           `If you arrive on a regional bus, the city bus is included for the next ${minutes} min at no extra charge. More than 41 regional trips a month earns 15% of the spend back.`,
@@ -161,7 +161,6 @@ export const en: Dict = {
 
   planner: {
     title: 'Route planner',
-    subtitle: 'Work out a trip from any street, place or stop in Lugo',
     origin: 'From (street, place or stop)',
     destination: 'To (street, place or stop)',
     useMyLocation: 'Use my GPS location',
@@ -179,7 +178,7 @@ export const en: Dict = {
     quickDestinations: 'Common destinations:',
     noRouteFound: 'No good combination found. Try another street or a nearby stop.',
     transferFreeNotice:
-      'Remember that changing bus within 75 minutes is free with the Tarxeta Cidadá or the TPG card.',
+      'Remember that changing bus within 75 minutes is free with the Tarxeta Cidadá or the TMG card.',
     placeholderOrig: 'Type a street, square or stop...',
     placeholderDest: 'Type your destination in Lugo...',
     lineWithStops: (line: string, stops: number) => `Line ${line} · ${stops} ${stops === 1 ? 'stop' : 'stops'}`,
@@ -195,12 +194,15 @@ export const en: Dict = {
     fareSingle: 'Single ticket',
     fareTransferFree: 'Transfer included (within 75 min)',
     fareTransferPaid: 'The transfer is over 75 min apart: you pay two fares',
-    optionsTitle: (shown: number, total: number) => `Trip options (${shown} of ${total})`,
+    optionsTitle: 'Best trip options',
+    moreOptions: (count: number) => (count === 1 ? '1 more option' : `${count} more options`),
+    fewerOptions: 'Show fewer',
     scheduledWait: 'Scheduled wait at the stop',
     walkOnly: 'Walk the whole way',
     walkMetres: (metres: number) => `Walk ~${metres} m`,
     walkConnection: 'Walking connection',
     measuredWalkTitle: 'On foot, measured',
+    walkLeg: (metres: number, minutes: number) => `On foot · ${metres} m · ${minutes} min`,
     tripInfoTitle: 'Details',
     timeProvenanceMeasured:
       'The walking legs are measured by the OpenStreetMap pedestrian router, not estimated. Bus times still come from the official timetable; those marked ~ are worked out from the driving time measured along the road.',
@@ -219,7 +221,7 @@ export const en: Dict = {
     faqs: [
       {
         q: 'How does the free transfer work?',
-        a: 'If you pay with the Tarxeta Cidadá issued by Lugo city council, or with the Galician TPG card, you have 75 minutes from the first tap to change to any other line at no extra cost.',
+        a: 'If you pay with the Tarxeta Cidadá issued by Lugo city council, or with the Galician TMG card, you have 75 minutes from the first tap to change to any other line at no extra cost.',
       },
       {
         q: 'Can I pay by bank card or phone?',
@@ -488,18 +490,15 @@ export const en: Dict = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `Line ${line} does not run today (${days}).`,
-    transferAt: (stop: string, line: string, at: string, wait: number) =>
-      `Change at "${stop}". The next Line ${line} bus leaves at ${at}, about ${wait} min later. Changing within 75 minutes is free with the Tarxeta Cidadá.`,
-    waitAt: (stop: string, until: string, wait: number, line: string, to: string) =>
-      `Wait at "${stop}" until ${until}, about ${wait} min. Line ${line} towards ${to}.`,
+    transferAt: (stop: string, line: string) =>
+      `Change at "${stop}" to Line ${line}. Free within 75 minutes with the Tarxeta Cidadá.`,
+    waitAt: (stop: string, line: string, to: string) => `At "${stop}". Line ${line} towards ${to}.`,
     board: (line: string, direction: string, at: string, alightAt: string, stops: number, km: string, arriveAt: string) =>
       `Get on Line ${line} (${direction}) at ${at} and get off at "${alightAt}" after ${stops} stops (${km} km). Arriving at ${arriveAt}.`,
-    walkWholeWay: (from: string, to: string, metres: number, minutes: number) =>
-      `Walk from "${from}" to "${to}": ${metres} metres, about ${minutes} min. No waiting and no fare.`,
-    walkToStop: (metres: number, minutes: number, from: string, stop: string, code: string) =>
-      `Walk ${metres} metres (about ${minutes} min) from "${from}" to the stop "${stop}" (code ${code}).`,
-    walkToDestination: (metres: number, minutes: number, to: string, arriveAt: string) =>
-      `Walk ${metres} metres (about ${minutes} min) to "${to}". Arriving at ${arriveAt}.`,
+    walkWholeWay: (from: string, to: string) => `From "${from}" to "${to}". No waiting and no fare.`,
+    walkToStop: (from: string, stop: string, code: string) =>
+      `From "${from}" to the stop "${stop}" (code ${code}).`,
+    walkToDestination: (to: string) => `To "${to}".`,
   },
 
   error: {
