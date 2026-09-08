@@ -26,6 +26,25 @@ import { metresBetween } from './geo';
 const METRES_PER_MINUTE = 75;
 const STEPS_SPEED_FACTOR = 0.5;
 
+/**
+ * What a climb costs, which OpenStreetMap cannot tell us and the IGN can.
+ *
+ * Naismith's rule: a minute for every ten metres of ascent, on top of the time the
+ * distance already costs. It is a century old, it was written for hillwalkers, and it is
+ * the figure every later refinement is a correction to — so it is the honest starting
+ * point and it is a named constant because it is the thing to tune if the comparison
+ * against a second router ever says so.
+ *
+ * Descent is free. Naismith himself gave it nothing, later rules give a small credit on
+ * gentle slopes and a penalty on steep ones, and Lugo has nothing steep enough for the
+ * difference to survive being rounded to a minute.
+ *
+ * Heights are per junction, so a street that goes up and back down between two junctions
+ * reads as flat. In a city that is tens of metres of street; it is a real limitation, not
+ * a rounding error.
+ */
+const SECONDS_PER_METRE_CLIMBED = 6;
+
 /** Bucket size for the index that finds the nearest street. Roughly 200 m. */
 const CELL_LAT = 0.002;
 const CELL_LNG = 0.0025;
@@ -45,6 +64,8 @@ interface Graph {
   edgeSeconds: Float64Array;
   /** The street between the two junctions, ends excluded, in drawing order a → b. */
   edgeShape: [number, number][][];
+  /** Metres above sea level per junction, or null where the build had no terrain. */
+  heights: Int32Array | null;
   /** Edge indices touching each junction. */
   adjacency: number[][];
   /** Cell key → edge indices whose shape passes through it. */
@@ -63,7 +84,7 @@ let inFlight: Promise<Graph> | null = null;
  * other end of that. Done once, lazily, and only when a walking route is first wanted —
  * the file is 412 KB gzipped and most visits never plan a trip.
  */
-function decode(raw: { scale: number; junctions: number[]; edges: number[] }): Graph {
+function decode(raw: { scale: number; junctions: number[]; edges: number[]; heights?: number[] }): Graph {
   const { scale } = raw;
   const junctionCount = raw.junctions.length / 2;
   const lat = new Float64Array(junctionCount);
@@ -130,9 +151,20 @@ function decode(raw: { scale: number; junctions: number[]; edges: number[] }): G
     }
   }
 
+  let heights: Int32Array | null = null;
+  if (raw.heights?.length === junctionCount) {
+    heights = new Int32Array(junctionCount);
+    let running = 0;
+    for (let i = 0; i < junctionCount; i++) {
+      running += raw.heights[i];
+      heights[i] = running;
+    }
+  }
+
   return {
     lat,
     lng,
+    heights,
     edgeA: Int32Array.from(edgeA),
     edgeB: Int32Array.from(edgeB),
     edgeMetres: Float64Array.from(edgeMetres),
@@ -337,13 +369,40 @@ export async function routeOnFoot(
   const metresOf = (edge: number) => g.edgeMetres[edge];
   const secondsPerMetre = (edge: number) => g.edgeSeconds[edge] / (g.edgeMetres[edge] || 1);
 
+  /**
+   * What it costs to climb from one junction to another, in seconds.
+   *
+   * Charged at traversal rather than baked into the edge, because an edge is walked both
+   * ways and only one of those is uphill. Baking it in would have made every street cost
+   * its climb in both directions, which is the kind of wrong that still returns a route.
+   */
+  const climb = (from: number, to: number): number =>
+    g.heights ? Math.max(0, g.heights[to] - g.heights[from]) * SECONDS_PER_METRE_CLIMBED : 0;
+
+  /** The same, for the part of an edge the walk actually covers at each end. */
+  const partialClimb = (edge: number, fromMetres: number, toMetres: number): number => {
+    if (!g.heights) return 0;
+    const total = metresOf(edge) || 1;
+    const a = g.heights[g.edgeA[edge]];
+    const b = g.heights[g.edgeB[edge]];
+    const at = (along: number) => a + ((b - a) * along) / total;
+    return Math.max(0, at(toMetres) - at(fromMetres)) * SECONDS_PER_METRE_CLIMBED;
+  };
+
   // Both ends on the same street: no junction is involved and A* has nothing to search.
   if (start.edge === finish.edge) {
     const metres = Math.abs(finish.metresFromA - start.metresFromA);
     return {
       path: [[from[0], from[1]], ...slice(g, start.edge, start.metresFromA, finish.metresFromA), [to[0], to[1]]],
       meters: Math.round(metres),
-      minutes: Math.max(1, Math.round((metres * secondsPerMetre(start.edge)) / 60)),
+      minutes: Math.max(
+        1,
+        Math.round(
+          (metres * secondsPerMetre(start.edge) +
+            partialClimb(start.edge, start.metresFromA, finish.metresFromA)) /
+            60,
+        ),
+      ),
     };
   }
 
@@ -360,7 +419,9 @@ export async function routeOnFoot(
     [g.edgeA[start.edge], start.metresFromA],
     [g.edgeB[start.edge], metresOf(start.edge) - start.metresFromA],
   ] as const) {
-    const seconds = metres * secondsPerMetre(start.edge);
+    const seconds =
+      metres * secondsPerMetre(start.edge) +
+      partialClimb(start.edge, start.metresFromA, junction === g.edgeA[start.edge] ? 0 : metresOf(start.edge));
     if (!best.has(junction) || seconds < best.get(junction)!) {
       best.set(junction, seconds);
       queue.push(junction, seconds + heuristic(junction));
@@ -397,7 +458,7 @@ export async function routeOnFoot(
 
     for (const edge of g.adjacency[node]) {
       const other = g.edgeA[edge] === node ? g.edgeB[edge] : g.edgeA[edge];
-      const next = soFar + g.edgeSeconds[edge];
+      const next = soFar + g.edgeSeconds[edge] + climb(node, other);
       if (best.has(other) && best.get(other)! <= next) continue;
       best.set(other, next);
       cameFrom.set(other, { previous: node, edge });
@@ -428,13 +489,14 @@ export async function routeOnFoot(
   path.push(...slice(g, start.edge, start.metresFromA, toFirst));
   metres += Math.abs(toFirst - start.metresFromA);
   seconds += Math.abs(toFirst - start.metresFromA) * secondsPerMetre(start.edge);
+  seconds += partialClimb(start.edge, start.metresFromA, toFirst);
 
   for (const step of chain) {
     const edge = step.edge;
     const forwards = g.edgeB[edge] === step.node;
     path.push(...slice(g, edge, forwards ? 0 : metresOf(edge), forwards ? metresOf(edge) : 0));
     metres += metresOf(edge);
-    seconds += g.edgeSeconds[edge];
+    seconds += g.edgeSeconds[edge] + climb(forwards ? g.edgeA[edge] : g.edgeB[edge], step.node);
   }
 
   // And along the last edge to where the walk ends.
@@ -442,6 +504,7 @@ export async function routeOnFoot(
   path.push(...slice(g, finish.edge, fromLast, finish.metresFromA));
   metres += Math.abs(finish.metresFromA - fromLast);
   seconds += Math.abs(finish.metresFromA - fromLast) * secondsPerMetre(finish.edge);
+  seconds += partialClimb(finish.edge, fromLast, finish.metresFromA);
   path.push([to[0], to[1]]);
 
   return {

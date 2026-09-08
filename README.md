@@ -239,6 +239,29 @@ está en `STEPS_SPEED_FACTOR` e nos tipos de vía de `tools/importWalkNetwork.ts
 Non está en CI nin no `pnpm test`: bate contra un servidor alleo, á súa cadencia dunha
 petición por segundo, e cachea para que repetilo non custe nada.
 
+**E cobra a costa.** OpenStreetMap non leva altitude, así que ata aquí o enrutador
+acertaba a beirarrúa e calaba sobre a callada — nunha cidade co Miño abaixo e unha vila
+amurallada arriba, que é boa parte da diferenza entre subir e baixar pola mesma rúa. Cada
+un dos 21.093 cruces leva agora a súa altura, tomada do **MDT05 do IGN**, o modelo do
+terreo español a paso de 5 m levantado con LiDAR aéreo do PNOA.
+
+A regra é a de Naismith: un minuto por cada dez metros de subida, enriba do que xa custa a
+distancia. A baixada é de balde. Medido despois de poñelo, pola mesma beirarrúa e nos dous
+sentidos:
+
+| | subindo | baixando |
+| :--- | ---: | ---: |
+| Ponte Romana → Praza Maior | 32 min | 22 min |
+| A Ponte → Catedral | 26 min | 18 min |
+| Campus USC → Rda. Muralla 56 | 41 min | 36 min |
+
+Antes desas alturas os tres pares daban o mesmo nas dúas direccións. As alturas van no
+mesmo ficheiro que o grafo, codificadas en diferenzas: 21.093 números máis por 18 KB.
+
+O límite, dito: hai unha altura por cruce, así que unha rúa que sobe e volve baixar entre
+dous cruces lese chá. Nunha cidade iso son decenas de metros de rúa, pero é unha
+limitación real e non un redondeo.
+
 Amosa tamén **canto custa o traxecto** cos dous títulos, aplicando a regra dos 75 minutos:
 un transbordo dentro da ventá vai incluído coa Tarxeta Cidadá.
 
@@ -275,7 +298,7 @@ tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por ac
 
 **Tarifas** (`/tarifas`) leva os títulos de transporte tal e como os publica o operador,
 **cada un coa súa fonte enlazada**: billete ordinario, bono ordinario e bono social da
-Tarxeta Cidadá, e a **Tarxeta do transporte público de Galicia (TMG)**, válida na rede
+Tarxeta Cidadá, e a **Tarxeta do Transporte Metropolitano de Galicia (TMG)**, válida na rede
 urbana de Lugo desde que a cidade entrou na Área de Transporte Metropolitano en 2012. Máis
 as normas a bordo, as preguntas frecuentes e os contactos.
 
@@ -507,6 +530,8 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── buildDataset.ts             xera stops.json e lines.json (rápido)
 │   ├── importOsmRoutes.ts          relacións de ruta desde Overpass
 │   ├── importWalkNetwork.ts        as vías camiñables de Lugo desde Overpass
+│   ├── importElevation.ts          o MDT05 do IGN, só onde se pode camiñar
+│   ├── terrain.ts                  le o TIFF do IGN e coloca cada altura
 │   ├── buildWalkGraph.ts           fainas grafo: cruces, arestas e polilinas
 │   ├── compareWalkRouter.ts        o noso enrutador fronte ao de FOSSGIS
 │   ├── checkLandmarks.ts           onde din OSM e Wikidata que están os sitios

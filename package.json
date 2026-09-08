@@ -20,6 +20,7 @@
     "data:fetch": "tsx tools/importOfficialData.ts",
     "data:osm": "tsx tools/importOsmRoutes.ts",
     "data:walk": "tsx tools/importWalkNetwork.ts",
+    "data:elevation": "tsx tools/importElevation.ts",
     "data:walkgraph": "tsx tools/buildWalkGraph.ts",
     "data:build": "tsx tools/buildDataset.ts",
     "data:audit": "tsx tools/fullAudit.ts",

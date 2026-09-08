@@ -16,8 +16,10 @@
  *   pnpm run data:walkgraph
  */
 import { gzipSync } from 'node:zlib';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { metresBetween } from '../src/utils/geo';
+import { type Raster, decodeTiff, terrainFrom } from './terrain';
 
 interface KeptWay {
   id: number;
@@ -142,6 +144,55 @@ for (let start = 0; start < junctionCoords.length; start++) {
 }
 const biggest = Math.max(...componentSizes);
 
+/* ---------- how high each junction is ---------- */
+
+/**
+ * A metre of height per junction, from the IGN's 5 m model where it is cached.
+ *
+ * OpenStreetMap carries no elevation, so without this the router is right about the
+ * pavement and silent about the climb — and Lugo has the Miño at the bottom and a walled
+ * hill on top. One height per junction rather than a grid: 21.093 numbers, and it is the
+ * only place the router ever asks.
+ *
+ * What that costs is the hump in the middle of a long edge. An edge's climb is the
+ * difference between its two ends, so a street that goes up and back down reads as flat.
+ * Between junctions that is tens of metres of street, and in a city junctions are close
+ * together — but it is a real limitation and not a rounding error.
+ *
+ * Optional on purpose. Without `pnpm run data:elevation` the graph builds exactly as it
+ * did and the router charges nothing for a slope, rather than the build failing over a
+ * cache nobody has filled.
+ */
+const TERRAIN_CACHE = '.cache/mdt';
+let elevations: number[] = [];
+
+if (existsSync(TERRAIN_CACHE) && readdirSync(TERRAIN_CACHE).length) {
+  const cells = new Map<string, Raster>();
+  for (const name of readdirSync(TERRAIN_CACHE)) {
+    if (!name.endsWith('.tif')) continue;
+    cells.set(name.replace('.tif', ''), decodeTiff(readFileSync(join(TERRAIN_CACHE, name))));
+  }
+  const terrain = terrainFrom(cells);
+
+  let missing = 0;
+  const known: number[] = [];
+  elevations = junctionCoords.map(([lat, lng]) => {
+    const metres = terrain.at(lat, lng);
+    if (metres === null) {
+      missing++;
+      return 0;
+    }
+    known.push(metres);
+    return metres;
+  });
+
+  console.log(
+    `  ${cells.size} terrain cells; ${known.length} junctions placed between ${Math.min(...known)} m and ${Math.max(...known)} m, ${missing} off the coverage`,
+  );
+} else {
+  console.log('  no terrain cached (pnpm run data:elevation) — the graph will carry no heights');
+}
+
 /* ---------- write it as flat integer arrays, which is what gzip likes ---------- */
 
 const j: number[] = [];
@@ -171,7 +222,16 @@ for (const edge of edges) {
   }
 }
 
-const out = JSON.stringify({ scale: SCALE, junctions: j, edges: e });
+// Heights are delta-coded like everything else here: neighbouring junctions are usually
+// within a metre or two of each other, so the deltas are one digit and compress away.
+const h: number[] = [];
+let lastHeight = 0;
+for (const metres of elevations) {
+  h.push(metres - lastHeight);
+  lastHeight = metres;
+}
+
+const out = JSON.stringify({ scale: SCALE, junctions: j, edges: e, ...(h.length ? { heights: h } : {}) });
 writeFileSync('src/data/walk-network.json', out + '\n');
 
 const totalKm = edges.reduce((n, edge) => n + edge.metres, 0) / 1000;

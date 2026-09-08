@@ -23,7 +23,7 @@ import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/a
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
-import { poleCode } from '../src/data/transitData';
+import { poleCode, FARES } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
 import { PATHS } from '../src/routes';
@@ -1039,6 +1039,109 @@ ok('the three dictionaries have exactly the same shape', () => {
     for (const path of shape.keys()) {
       assert(reference.shape.has(path), `${lang} has an extra key "${path}"`);
     }
+  }
+});
+
+ok('the price a trip shows is the one anybody pays', () => {
+  // The planner showed 0,45 € as the cost of the trip. That is the Tarxeta Cidadá price,
+  // and it assumes the reader holds a card issued by Lugo city council -- somebody visiting
+  // pays 0,64 € and the only number on the summary said otherwise. Worse, the detail put
+  // the ordinary fare beside it with a line through it, which is the idiom of a shop sale:
+  // "this price no longer applies". It applies to everyone without the card.
+  //
+  // Same rule as the times. The default is the figure that is true for whoever is reading,
+  // and the better one is offered rather than assumed.
+  assert(
+    FARES.singleTicket > FARES.citizenCard,
+    'the ordinary fare is no longer the dearer one, so this check is about the wrong number',
+  );
+
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const view = readFileSync(join(root, 'src/components/RoutePlannerView.tsx'), 'utf8');
+
+  // The summary line -- the one figure you see without opening anything -- has to be the
+  // ordinary fare. Take the first fare rendered in the file: it is the summary's.
+  const firstFare = view.search(/fare\.(singleTicket|citizenCard)Euros/);
+  assert(firstFare > 0, 'the planner no longer shows a fare at all');
+  assert(
+    /^fare\.singleTicketEuros/.test(view.slice(firstFare)),
+    'the first fare the planner shows is the discounted one; it should be the ordinary ticket',
+  );
+
+  // And no fare is ever struck through.
+  assert(
+    !/line-through/.test(view),
+    'a fare is crossed out again, which reads as a price that no longer applies',
+  );
+});
+
+ok('the Galician card is called what its own issuer calls it', () => {
+  // The app named one card two ways. The fare cards, transitData.ts, the README and the
+  // source URL all said TMG; the transfer reminder and the FAQ said TPG, in all three
+  // languages -- six strings for a card that does not exist under that name.
+  //
+  // And the expansion disagreed with the acronym it was expanding: "Tarxeta do transporte
+  // público de Galicia (TMG)". Read at tmg.xunta.gal, the issuer writes "Tarxeta TMG" and
+  // "tarxeta do Transporte Metropolitano de Galicia" -- metropolitano, which is where the
+  // M comes from. A price is never inferred here; neither is the name on the card.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const files = ['src/i18n/gl.ts', 'src/i18n/es.ts', 'src/i18n/en.ts', 'src/data/transitData.ts', 'README.md'];
+  for (const file of files) {
+    const source = readFileSync(join(root, file), 'utf8');
+    assert(!/\bTPG\b/.test(source), `${file} still calls the card TPG; the issuer calls it TMG`);
+    assert(
+      !/transporte p[úu]blico de Galicia|public transport card \(TMG\)/i.test(source),
+      `${file} expands TMG as "public transport"; the M is for Metropolitano`,
+    );
+  }
+
+  // And the fare card itself still names it, in every language.
+  for (const lang of LANGS) {
+    const title = translations(lang).fares.cards.tmg.title;
+    assert(/TMG/.test(title), `${lang}: the metropolitan fare card no longer says TMG`);
+  }
+});
+
+ok('every map gets its chrome from the one place that has it', () => {
+  // Three maps draw the same basemap -- the big one, the route map and the stop mini map --
+  // and each built its own furniture. So the "Leaflet |" prefix was dropped in TransitMap
+  // and nowhere else, and the route map and the mini map printed a line the big map had
+  // already decided was too long for a 375 px screen. The same drift gave the route map
+  // scroll-wheel zoom, which on a small map inside a scrolling itinerary means flicking
+  // past it zooms the city instead.
+  //
+  // The prefix now goes in createBasemap, where all three arrive. This is the check that a
+  // fourth map cannot be born with the old line, and that nobody puts it back in a view.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const mapDir = join(root, 'src/components/Map');
+
+  const basemap = readFileSync(join(mapDir, 'basemap.ts'), 'utf8');
+  assert(
+    /attributionControl\?\.setPrefix\(false\)/.test(basemap),
+    'createBasemap no longer drops the "Leaflet" prefix, so every map prints it again',
+  );
+
+  for (const file of readdirSync(mapDir).filter((f) => f.endsWith('.tsx'))) {
+    const source = readFileSync(join(mapDir, file), 'utf8');
+    if (!/\bL\.map\(/.test(source)) continue;
+
+    assert(
+      /createBasemap\(/.test(source),
+      `${file} builds a map without createBasemap, so it gets neither the basemap nor its attribution`,
+    );
+    assert(
+      !/setPrefix\(/.test(source),
+      `${file} sets the attribution prefix itself; that belongs in basemap.ts for all of them`,
+    );
+  }
+
+  // The two maps that live inside something the reader scrolls have to let them scroll.
+  for (const file of ['RouteMap.tsx', 'NearbyMiniMap.tsx']) {
+    const source = readFileSync(join(mapDir, file), 'utf8');
+    assert(
+      /scrollWheelZoom:\s*false/.test(source),
+      `${file} zooms on the scroll wheel, and it sits inside a page that scrolls`,
+    );
   }
 });
 
@@ -3193,6 +3296,54 @@ ok('the three front doors say the same true things', () => {
   }
   const gl = readFileSync(join(root, 'README.md'), 'utf8');
   assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
+});
+
+await okAsync('walking up a hill costs more than walking down it', async () => {
+  // OpenStreetMap has no elevation, so until the IGN's 5 m model was added to the graph
+  // every walk cost the same in both directions -- and Lugo has the Miño at the bottom of
+  // it and a walled town on top. The climb from the Ponte Romana up to the Praza Maior is
+  // about ninety metres of ascent over the same pavement in either direction.
+  const graph = JSON.parse(
+    readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8'),
+  ) as { junctions: number[]; heights?: number[] };
+
+  const junctionCount = graph.junctions.length / 2;
+  assert(graph.heights, 'the graph carries no heights; run pnpm run data:elevation');
+  assert(
+    graph.heights!.length === junctionCount,
+    `${graph.heights!.length} heights for ${junctionCount} junctions`,
+  );
+
+  // Delta-coded, like the coordinates. Lugo's lowest ground is the river at about 357 m
+  // and the hills out towards Bóveda reach a little over 700; anything outside that is
+  // not this city, and a height map read wrong puts hills in the wrong places silently.
+  let running = 0;
+  let low = Infinity;
+  let high = -Infinity;
+  for (const delta of graph.heights!) {
+    running += delta;
+    low = Math.min(low, running);
+    high = Math.max(high, running);
+  }
+  assert(low > 300 && low < 400, `the lowest junction is at ${low} m`);
+  assert(high > 600 && high < 900, `the highest junction is at ${high} m`);
+
+  const ponte = LUGO_LANDMARKS.find((l) => l.name.includes('Ponte Romana'))!;
+  const praza = LUGO_LANDMARKS.find((l) => l.name.includes('Praza Maior'))!;
+  const up = await routeOnFoot([ponte.lat, ponte.lng], [praza.lat, praza.lng]);
+  const down = await routeOnFoot([praza.lat, praza.lng], [ponte.lat, ponte.lng]);
+  assert(up && down, 'no route between the bridge and the square');
+
+  // The same pavement either way, so a difference in distance would mean the router found
+  // two different streets and the times are not comparable.
+  assert(
+    Math.abs(up!.meters - down!.meters) <= 2,
+    `${up!.meters} m up against ${down!.meters} m down is not the same walk`,
+  );
+  assert(
+    up!.minutes > down!.minutes,
+    `${up!.minutes} min up the hill against ${down!.minutes} min down it`,
+  );
 });
 
 console.log(`\n${checks} checks passed\n`);

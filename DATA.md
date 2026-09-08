@@ -94,6 +94,29 @@ sends **two requests a week**. Nothing in the browser ever calls it.
   of their own — FOSSGIS ask for one request a second, no scraping and no heavy usage.
   Check them before pointing anything heavier at them.
 
+## Altitude — Instituto Geográfico Nacional (MDT05)
+
+- **What:** how high the ground is under each of the 21.093 junctions of the walking
+  network, so a route can charge for a climb. OpenStreetMap carries no elevation, and
+  without this the router was right about the pavement and silent about the hill — which
+  in a city with the Miño at the bottom and a walled town on top is most of the difference
+  between the two ways along one street.
+- **Source:** the **MDT05**, Spain's national terrain model on a 5 m grid, derived from
+  the airborne LiDAR of the PNOA programme, fetched from the IGN's INSPIRE WCS at
+  `servicios.idee.es/wcs-inspire/mdt` (coverage `Elevacion4258_5`). 460 coverages of 0,01°
+  cover the walkable network; only cells a walkable way passes through are asked for.
+- **Licence:** **CC BY 4.0** under the Sistema Cartográfico Nacional. Attribution as
+  published: `CC BY 4.0 scne.es`, carried in `NOTICE.md`.
+- **Why this rather than the global tiles:** the first version read the Terrarium tiles on
+  AWS, which are about 28 m a pixel over Spain and are a worldwide composite. Asking the
+  national mapping agency for its own LiDAR is five times finer, and this is the number
+  that gets stored, so it is worth the extra requests. They are made by hand, spaced
+  1,5 s apart, and cached under `.cache/mdt/` — 46 MB that never ships.
+- **Consequence:** the heights live in `src/data/walk-network.json` alongside the graph,
+  delta-coded: 21.093 more numbers for 18 KB gzipped. That file is therefore covered by
+  **both** ODbL (the geometry, from OSM) and CC BY 4.0 (the heights, from the IGN), and
+  both are credited.
+
 ## Service notices — buslugo.com and the Concello de Lugo
 
 The notices screen reads two kinds of thing, and keeps them apart on screen because they
