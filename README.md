@@ -246,21 +246,38 @@ un dos 21.093 cruces leva agora a súa altura, tomada do **MDT05 do IGN**, o mod
 terreo español a paso de 5 m levantado con LiDAR aéreo do PNOA.
 
 A regra é a de Naismith: un minuto por cada dez metros de subida, enriba do que xa custa a
-distancia. A baixada é de balde. Medido despois de poñelo, pola mesma beirarrúa e nos dous
-sentidos:
+distancia. A baixada é de balde. Medido despois de poñelo, entre os mesmos dous puntos e
+nos dous sentidos:
 
 | | subindo | baixando |
 | :--- | ---: | ---: |
-| Ponte Romana → Praza Maior | 32 min | 22 min |
-| A Ponte → Catedral | 26 min | 18 min |
-| Campus USC → Rda. Muralla 56 | 41 min | 36 min |
+| Ponte Romana → Praza Maior | 31 min | 23 min |
+| A Ponte → Catedral | 25 min | 18 min |
+| Campus USC → Rda. Muralla 56 | 38 min | 35 min |
 
-Antes desas alturas os tres pares daban o mesmo nas dúas direccións. As alturas van no
-mesmo ficheiro que o grafo, codificadas en diferenzas: 21.093 números máis por 18 KB.
+Antes desas alturas os tres pares daban o mesmo nas dúas direccións.
 
-O límite, dito: hai unha altura por cruce, así que unha rúa que sobe e volve baixar entre
-dous cruces lese chá. Nunha cidade iso son decenas de metros de rúa, pero é unha
-limitación real e non un redondeo.
+**E o que se cobra é a subida da rúa, non a resta dos seus extremos.** Empezou sendo o
+segundo, que le como chá unha rúa que sobe e volve baixar entre dous cruces. Medido contra
+o modelo de 5 m nas 29.489 arestas: en total case non cambia nada —41.834 m de ascenso
+polos extremos fronte a 42.086 m polo perfil completo—, pero **3.169 arestas agochan algo
+de callada e 287 agochan dez metros ou máis, que é un minuto enteiro**. Non é un nesgo, é
+unha cola, e son as arestas longas: a peor son 1.941 m de estrada rural cos dous extremos
+ao mesmo nivel e 77 m de desnivel polo medio.
+
+Así que o build percorre o perfil de cada rúa a 5 m e garda o que sobe en cada sentido.
+Ignóranse os ascensos de menos de 2 m: as alturas están en metros enteiros, e sumar cada
+osciliación ao longo de medio millón de mostras converte o ruído en 68.160 m de ascenso —
+27 m por quilómetro, que non é esta cidade. Con 3 m volve caer sobre a resta dos extremos;
+con 5 m queda por debaixo.
+
+Un efecto secundario que é o correcto: **o camiño máis barato para subir xa non é sempre o
+mesmo que para baixar.** O enrutador colle unha rúa máis longa e máis suave para subir,
+que é o que fai unha persoa. Da Ponte Romana á Praza Maior son 1.649 m subindo e 1.638 m
+baixando.
+
+Todo iso vai no mesmo ficheiro que o grafo, codificado en diferenzas: 21.093 alturas e
+29.489 pares de ascensos por 36 KB, e 17.053 arestas son chás de verdade nos dous sentidos.
 
 Amosa tamén **canto custa o traxecto** cos dous títulos, aplicando a regra dos 75 minutos:
 un transbordo dentro da ventá vai incluído coa Tarxeta Cidadá.

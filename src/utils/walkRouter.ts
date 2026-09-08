@@ -39,9 +39,9 @@ const STEPS_SPEED_FACTOR = 0.5;
  * gentle slopes and a penalty on steep ones, and Lugo has nothing steep enough for the
  * difference to survive being rounded to a minute.
  *
- * Heights are per junction, so a street that goes up and back down between two junctions
- * reads as flat. In a city that is tens of metres of street; it is a real limitation, not
- * a rounding error.
+ * What is charged is the climb along the street's own profile, not the difference between
+ * the heights of its two ends — see `climb` below for why that distinction is worth
+ * 29.489 extra numbers in the file.
  */
 const SECONDS_PER_METRE_CLIMBED = 6;
 
@@ -66,6 +66,9 @@ interface Graph {
   edgeShape: [number, number][][];
   /** Metres above sea level per junction, or null where the build had no terrain. */
   heights: Int32Array | null;
+  /** Metres climbed walking each edge a→b, and the same walking it b→a. */
+  up: Int32Array | null;
+  down: Int32Array | null;
   /** Edge indices touching each junction. */
   adjacency: number[][];
   /** Cell key → edge indices whose shape passes through it. */
@@ -84,7 +87,14 @@ let inFlight: Promise<Graph> | null = null;
  * other end of that. Done once, lazily, and only when a walking route is first wanted —
  * the file is 412 KB gzipped and most visits never plan a trip.
  */
-function decode(raw: { scale: number; junctions: number[]; edges: number[]; heights?: number[] }): Graph {
+function decode(raw: {
+  scale: number;
+  junctions: number[];
+  edges: number[];
+  heights?: number[];
+  up?: number[];
+  down?: number[];
+}): Graph {
   const { scale } = raw;
   const junctionCount = raw.junctions.length / 2;
   const lat = new Float64Array(junctionCount);
@@ -161,10 +171,16 @@ function decode(raw: { scale: number; junctions: number[]; edges: number[]; heig
     }
   }
 
+  const edgeCount = edgeA.length;
+  const up = raw.up?.length === edgeCount ? Int32Array.from(raw.up) : null;
+  const down = raw.down?.length === edgeCount ? Int32Array.from(raw.down) : null;
+
   return {
     lat,
     lng,
     heights,
+    up,
+    down,
     edgeA: Int32Array.from(edgeA),
     edgeB: Int32Array.from(edgeB),
     edgeMetres: Float64Array.from(edgeMetres),
@@ -370,23 +386,34 @@ export async function routeOnFoot(
   const secondsPerMetre = (edge: number) => g.edgeSeconds[edge] / (g.edgeMetres[edge] || 1);
 
   /**
-   * What it costs to climb from one junction to another, in seconds.
+   * What it costs to climb an edge, in seconds, in the direction it is being walked.
    *
-   * Charged at traversal rather than baked into the edge, because an edge is walked both
-   * ways and only one of those is uphill. Baking it in would have made every street cost
-   * its climb in both directions, which is the kind of wrong that still returns a route.
+   * This was the difference between the two junction heights, which reads a street that
+   * rises and falls between them as flat. The build now walks each street's own profile
+   * against the 5 m model and stores what it actually climbs each way, so an edge with
+   * level ends and a hill in the middle costs the hill. 3.169 of the 29.489 edges hide
+   * some climb that way and 287 hide ten metres or more, which is a minute; they are the
+   * long ones, and the worst is 1.941 m of rural road that is level end to end and climbs
+   * 77 m in between.
+   *
+   * Still charged at traversal rather than baked into the edge, because an edge is walked
+   * both ways and only one of those is uphill.
    */
-  const climb = (from: number, to: number): number =>
-    g.heights ? Math.max(0, g.heights[to] - g.heights[from]) * SECONDS_PER_METRE_CLIMBED : 0;
+  const climb = (edge: number, towardsB: boolean): number =>
+    g.up && g.down ? (towardsB ? g.up[edge] : g.down[edge]) * SECONDS_PER_METRE_CLIMBED : 0;
 
-  /** The same, for the part of an edge the walk actually covers at each end. */
+  /**
+   * The same, for the part of an edge the walk actually covers at each end.
+   *
+   * A share of the edge's climb rather than the profile of that share: where on the
+   * street the hill sits is not stored, only how much of it there is. It is the same
+   * approximation the distance already makes at these two ends, over the same few tens of
+   * metres.
+   */
   const partialClimb = (edge: number, fromMetres: number, toMetres: number): number => {
-    if (!g.heights) return 0;
-    const total = metresOf(edge) || 1;
-    const a = g.heights[g.edgeA[edge]];
-    const b = g.heights[g.edgeB[edge]];
-    const at = (along: number) => a + ((b - a) * along) / total;
-    return Math.max(0, at(toMetres) - at(fromMetres)) * SECONDS_PER_METRE_CLIMBED;
+    if (!g.up || !g.down) return 0;
+    const share = Math.abs(toMetres - fromMetres) / (metresOf(edge) || 1);
+    return (toMetres >= fromMetres ? g.up[edge] : g.down[edge]) * share * SECONDS_PER_METRE_CLIMBED;
   };
 
   // Both ends on the same street: no junction is involved and A* has nothing to search.
@@ -458,7 +485,7 @@ export async function routeOnFoot(
 
     for (const edge of g.adjacency[node]) {
       const other = g.edgeA[edge] === node ? g.edgeB[edge] : g.edgeA[edge];
-      const next = soFar + g.edgeSeconds[edge] + climb(node, other);
+      const next = soFar + g.edgeSeconds[edge] + climb(edge, g.edgeA[edge] === node);
       if (best.has(other) && best.get(other)! <= next) continue;
       best.set(other, next);
       cameFrom.set(other, { previous: node, edge });
@@ -496,7 +523,7 @@ export async function routeOnFoot(
     const forwards = g.edgeB[edge] === step.node;
     path.push(...slice(g, edge, forwards ? 0 : metresOf(edge), forwards ? metresOf(edge) : 0));
     metres += metresOf(edge);
-    seconds += g.edgeSeconds[edge] + climb(forwards ? g.edgeA[edge] : g.edgeB[edge], step.node);
+    seconds += g.edgeSeconds[edge] + climb(edge, forwards);
   }
 
   // And along the last edge to where the walk ends.

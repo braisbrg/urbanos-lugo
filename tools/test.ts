@@ -3328,18 +3328,67 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
   assert(low > 300 && low < 400, `the lowest junction is at ${low} m`);
   assert(high > 600 && high < 900, `the highest junction is at ${high} m`);
 
+  // The climb charged is the one along the street, not the difference between its ends.
+  // A street that rises and falls between two junctions used to read as flat, and the
+  // edges where that happens are the long ones: 3.169 of the 29.489 hide some climb and
+  // 287 hide ten metres or more. If `up` and `down` ever went back to being derivable
+  // from the two heights, every one of those would silently go flat again.
+  const withAscent = JSON.parse(
+    readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8'),
+  ) as { edges: number[]; heights: number[]; up?: number[]; down?: number[] };
+
+  assert(withAscent.up && withAscent.down, 'the graph carries no per-edge ascent');
+
+  // Walk the edge records to pair each edge with its two junctions.
+  const junctionHeight: number[] = [];
+  let climbing = 0;
+  for (const delta of withAscent.heights) {
+    climbing += delta;
+    junctionHeight.push(climbing);
+  }
+  let at = 0;
+  let edgeIndex = 0;
+  let hiddenClimbs = 0;
+  while (at < withAscent.edges.length) {
+    const a = withAscent.edges[at];
+    const b = withAscent.edges[at + 1];
+    const shape = withAscent.edges[at + 4];
+    const rise = junctionHeight[b] - junctionHeight[a];
+    const climbsUp: number = withAscent.up![edgeIndex];
+    const climbsDown: number = withAscent.down![edgeIndex];
+
+    assert(climbsUp >= 0 && climbsDown >= 0, `edge ${edgeIndex} climbs a negative amount`);
+    // A street that ends higher than it starts has to cost more going up it than coming
+    // down. The two are not exactly the height difference apart -- the profile is filtered
+    // to keep a metre of LiDAR noise from becoming a metre of hill, and filtering forwards
+    // and backwards are not the same operation -- so what is checked is the direction,
+    // over rises big enough for the filter not to be the whole story.
+    if (Math.abs(rise) >= 5) {
+      assert(
+        Math.sign(climbsUp - climbsDown) === Math.sign(rise),
+        `edge ${edgeIndex} rises ${rise} m but costs ${climbsUp} m up against ${climbsDown} m down`,
+      );
+    }
+    if (rise <= 0 && climbsUp > 0) hiddenClimbs++;
+    at += 5 + shape * 2;
+    edgeIndex++;
+  }
+  assert(hiddenClimbs > 100, `only ${hiddenClimbs} edges climb over level ends; the profile is not being read`);
+
   const ponte = LUGO_LANDMARKS.find((l) => l.name.includes('Ponte Romana'))!;
   const praza = LUGO_LANDMARKS.find((l) => l.name.includes('Praza Maior'))!;
   const up = await routeOnFoot([ponte.lat, ponte.lng], [praza.lat, praza.lng]);
   const down = await routeOnFoot([praza.lat, praza.lng], [ponte.lat, ponte.lng]);
   assert(up && down, 'no route between the bridge and the square');
 
-  // The same pavement either way, so a difference in distance would mean the router found
-  // two different streets and the times are not comparable.
-  assert(
-    Math.abs(up!.meters - down!.meters) <= 2,
-    `${up!.meters} m up against ${down!.meters} m down is not the same walk`,
-  );
+  // Not quite the same pavement, and that is the point. Once a climb costs something, the
+  // cheapest way up a hill is not always the cheapest way down it: the router will take a
+  // longer, gentler street uphill, which is what a person does. What would be wrong is a
+  // different trip -- so the two are held within a few per cent of each other rather than
+  // pinned to the metre, which is what this asserted while every edge cost the same in
+  // both directions.
+  const spread = Math.abs(up!.meters - down!.meters) / Math.max(up!.meters, down!.meters);
+  assert(spread < 0.1, `${up!.meters} m up against ${down!.meters} m down is a different trip, not a different way up`);
   assert(
     up!.minutes > down!.minutes,
     `${up!.minutes} min up the hill against ${down!.minutes} min down it`,

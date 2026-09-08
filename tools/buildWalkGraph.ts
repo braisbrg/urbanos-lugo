@@ -165,6 +165,7 @@ const biggest = Math.max(...componentSizes);
  */
 const TERRAIN_CACHE = '.cache/mdt';
 let elevations: number[] = [];
+let terrainReader: { at(lat: number, lng: number): number | null } | null = null;
 
 if (existsSync(TERRAIN_CACHE) && readdirSync(TERRAIN_CACHE).length) {
   const cells = new Map<string, Raster>();
@@ -173,6 +174,7 @@ if (existsSync(TERRAIN_CACHE) && readdirSync(TERRAIN_CACHE).length) {
     cells.set(name.replace('.tif', ''), decodeTiff(readFileSync(join(TERRAIN_CACHE, name))));
   }
   const terrain = terrainFrom(cells);
+  terrainReader = terrain;
 
   let missing = 0;
   const known: number[] = [];
@@ -193,6 +195,83 @@ if (existsSync(TERRAIN_CACHE) && readdirSync(TERRAIN_CACHE).length) {
   console.log('  no terrain cached (pnpm run data:elevation) — the graph will carry no heights');
 }
 
+/* ---------- how much climbing each edge actually costs ---------- */
+
+/**
+ * The rise along a street, not the difference between its ends.
+ *
+ * An edge's climb was h(b) - h(a), which reads a street that goes up and back down as
+ * flat. Measured against the 5 m model over all 29.489 edges: in aggregate it barely
+ * matters -- endpoints give 41.834 m of ascent against 42.086 m for the full profile at a
+ * 3 m threshold, six parts in a thousand. But 3.169 edges hide some climb and 287 hide
+ * ten metres or more, which is a whole minute of Naismith, and they are the long ones:
+ * the worst is 1.941 m of rural road whose ends are level and which climbs 77 m in
+ * between. A tail rather than a bias, and the tail is what happens to somebody walking it.
+ *
+ * The profile is sampled at the model's own 5 m, and rises below THRESHOLD_M are ignored
+ * because the stored heights are whole metres and summing every wobble over half a
+ * million samples turns quantisation into ascent nobody climbs: unfiltered it reports
+ * 68.160 m, which is 27 m per kilometre and not a real city. Two metres keeps street
+ * undulation and drops the noise; three collapses onto the endpoints again, five falls
+ * below them.
+ *
+ * Both directions are stored rather than deriving one from the other. The identity
+ * ascent(b→a) = ascent(a→b) − (h(b) − h(a)) holds for an unfiltered profile and only
+ * approximately once a threshold is applied, and an approximation is not worth the four
+ * bytes it saves.
+ */
+const SAMPLE_M = 5;
+const THRESHOLD_M = 2;
+
+function profileOf(points: [number, number][], terrain: { at(lat: number, lng: number): number | null }): number[] {
+  const out: number[] = [];
+  for (let i = 0; i + 1 < points.length; i++) {
+    const [aLat, aLng] = points[i];
+    const [bLat, bLng] = points[i + 1];
+    const steps = Math.max(1, Math.round(metresBetween(aLat, aLng, bLat, bLng) / SAMPLE_M));
+    for (let s = 0; s < steps; s++) {
+      const t = s / steps;
+      const h = terrain.at(aLat + (bLat - aLat) * t, aLng + (bLng - aLng) * t);
+      if (h !== null) out.push(h);
+    }
+  }
+  const last = terrain.at(points[points.length - 1][0], points[points.length - 1][1]);
+  if (last !== null) out.push(last);
+  return out;
+}
+
+/** Total rise along a profile, ignoring anything under the threshold. */
+function ascentOf(heights: number[]): number {
+  let total = 0;
+  let anchor = heights[0] ?? 0;
+  for (const h of heights) {
+    if (h - anchor >= THRESHOLD_M) {
+      total += h - anchor;
+      anchor = h;
+    } else if (h < anchor) {
+      anchor = h;
+    }
+  }
+  return Math.round(total);
+}
+
+/** Ascent walking a→b, and ascent walking b→a. */
+const ascents: [number, number][] = [];
+if (terrainReader) {
+  for (const edge of edges) {
+    const points: [number, number][] = [
+      junctionCoords[edge.a],
+      ...edge.shape,
+      junctionCoords[edge.b],
+    ];
+    const heights = profileOf(points, terrainReader);
+    ascents.push([ascentOf(heights), ascentOf([...heights].reverse())]);
+  }
+  const up = ascents.reduce((n, [a]) => n + a, 0);
+  const flatWay = edges.filter((_, i) => ascents[i][0] === 0 && ascents[i][1] === 0).length;
+  console.log(`  ${up} m of ascent along the profiles, ${flatWay} edges genuinely flat both ways`);
+}
+
 /* ---------- write it as flat integer arrays, which is what gzip likes ---------- */
 
 const j: number[] = [];
@@ -208,6 +287,11 @@ for (const [lat, lng] of junctionCoords) {
 
 // One flat run per edge: a, b, metres, steps, shape point count, then the shape as
 // deltas from the previous point, starting at junction a.
+// Ascent rides in its own pair of runs rather than inside the edge records, so a graph
+// built with no terrain cached is byte for byte the file it always was.
+const up = ascents.map(([forward]) => forward);
+const down = ascents.map(([, backward]) => backward);
+
 const e: number[] = [];
 for (const edge of edges) {
   e.push(edge.a, edge.b, edge.metres, edge.steps ? 1 : 0, edge.shape.length);
@@ -231,7 +315,12 @@ for (const metres of elevations) {
   lastHeight = metres;
 }
 
-const out = JSON.stringify({ scale: SCALE, junctions: j, edges: e, ...(h.length ? { heights: h } : {}) });
+const out = JSON.stringify({
+  scale: SCALE,
+  junctions: j,
+  edges: e,
+  ...(h.length ? { heights: h, up, down } : {}),
+});
 writeFileSync('src/data/walk-network.json', out + '\n');
 
 const totalKm = edges.reduce((n, edge) => n + edge.metres, 0) / 1000;

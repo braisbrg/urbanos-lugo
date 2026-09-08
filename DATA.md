@@ -113,7 +113,10 @@ sends **two requests a week**. Nothing in the browser ever calls it.
   that gets stored, so it is worth the extra requests. They are made by hand, spaced
   1,5 s apart, and cached under `.cache/mdt/` — 46 MB that never ships.
 - **Consequence:** the heights live in `src/data/walk-network.json` alongside the graph,
-  delta-coded: 21.093 more numbers for 18 KB gzipped. That file is therefore covered by
+  delta-coded, together with what each edge climbs in each direction — the build walks
+  every street's own profile at 5 m rather than subtracting the heights of its two ends,
+  because 287 edges hide ten metres or more of climb between level ends. 21.093 heights
+  and 29.489 pairs of ascents for 36 KB gzipped. That file is therefore covered by
   **both** ODbL (the geometry, from OSM) and CC BY 4.0 (the heights, from the IGN), and
   both are credited.
 
