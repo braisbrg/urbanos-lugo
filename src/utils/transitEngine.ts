@@ -64,7 +64,12 @@ export const LUGO_LANDMARKS = [
   { name: 'Piscina Municipal As Pedreiras', lat: 42.99154, lng: -7.54363, zone: 'Acea de Olga' },
   { name: 'Pazo Provincial dos Deportes (CB Breogán)', lat: 42.99125, lng: -7.54534, zone: 'Acea de Olga' },
   { name: 'Centro Comercial Abella (Antigo)', lat: 43.01502, lng: -7.57388, zone: 'Casás' },
-  { name: 'Intercentros Campus Universitario USC', lat: 42.99256, lng: -7.54643, zone: 'Campus' },
+  /* The building, not the middle of the campus. `check:landmarks` moved this to the
+     centroid of OSM's "Campus Terra" polygon, which is accurate about the campus and
+     silent about the name: the nearest stop went from 67 m to 237 m and the one it found
+     was the swimming pool. OSM has "Biblioteca Intercentros" as its own feature, which is
+     what this entry says it is — 159 m from As Pedreiras, and true. */
+  { name: 'Intercentros Campus Universitario USC', lat: 42.99234, lng: -7.54545, zone: 'Campus' },
   { name: 'Facultade de Veterinaria USC', lat: 42.9948, lng: -7.5463, zone: 'Campus' },
   { name: 'Hospital Lucus Augusti (HULA)', lat: 43.0197, lng: -7.5327, zone: 'HULA' },
   { name: 'Rolda das Fontiñas', lat: 43.00688, lng: -7.54715, zone: 'Fontiñas' },
@@ -897,14 +902,8 @@ function buildLeg(
       departureTime: formatMinutes(readyAt),
       arrivalTime: formatMinutes(departure.departureMinutes),
       instruction: hubLabel
-        ? translations(lang).engine.transferAt(fromStop.name, line.number, formatMinutes(departure.departureMinutes), waitMinutes)
-        : translations(lang).engine.waitAt(
-            fromStop.name,
-            formatMinutes(departure.departureMinutes),
-            waitMinutes,
-            line.number,
-            direction.destination,
-          ),
+        ? translations(lang).engine.transferAt(fromStop.name, line.number)
+        : translations(lang).engine.waitAt(fromStop.name, line.number, direction.destination),
     });
   }
 
@@ -998,7 +997,7 @@ const MAX_SAME_POLE_HUBS = 40;
 const MAX_WALKING_HUBS = 20;
 
 const TRANSFER_BUFFER_MIN = 2;
-const TRANSFER_BUFFER_ESTIMATED_MIN = 4;
+export const TRANSFER_BUFFER_ESTIMATED_MIN = 4;
 
 /** Chain two legs through one interchange, allowing time to change platform. */
 function buildTransfer(
@@ -1035,13 +1034,7 @@ function buildTransfer(
       walkMeters: walk.meters,
       departureTime: formatMinutes(first.arrivalMinutes),
       arrivalTime: formatMinutes(first.arrivalMinutes + walk.minutes),
-      instruction: translations(lang).engine.walkToStop(
-        walk.meters,
-        walk.minutes,
-        hubIn.name,
-        hubOut.name,
-        hubOut.code,
-      ),
+      instruction: translations(lang).engine.walkToStop(hubIn.name, hubOut.name, hubOut.code),
     });
     boardAt = first.arrivalMinutes + walk.minutes + buffer;
   }
@@ -1261,7 +1254,7 @@ function planDeparting(
  * says now: the bus takes the near-ties, and a walk that is genuinely quicker gets to
  * lead — whether it wins by six minutes on a 300 m hop or by forty on a crosstown trip.
  */
-const WALK_MUST_BEAT_BUS_BY_MIN = 5;
+export const WALK_MUST_BEAT_BUS_BY_MIN = 5;
 
 /**
  * And past this, a walk stays in the list but stops leading it, however bad the bus is.
@@ -1288,6 +1281,16 @@ const isWalkOnly = (p: RoutePlanResult) => !p.segments.some((seg) => seg.type ==
  */
 const busLegCount = (p: RoutePlanResult) => p.segments.filter((s) => s.type === 'bus').length;
 
+/**
+ * When this plan puts you there, counted from the moment the question was asked.
+ *
+ * Not the same as its duration any more. A plan sets off at `now + slackMinutes`, so a
+ * short ride that leaves in five hours is short and useless: at 09:00 the fastest way to
+ * reach HULA on the clock is a 22-minute 5ES that departs at 14:08. Ranking on duration
+ * put it first. This is what the reader is actually choosing between.
+ */
+const reachedAt = (p: RoutePlanResult): number => p.slackMinutes + p.durationMinutes;
+
 function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
   if (a.isServiceActive !== b.isServiceActive) return a.isServiceActive;
   // A walk only leads when it wins clearly; a bus takes the near-ties.
@@ -1296,11 +1299,14 @@ function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
     const bus = isWalkOnly(a) ? b : a;
     const walkWins =
       walk.durationMinutes <= MAX_HEADLINE_WALK_MIN &&
-      walk.durationMinutes + WALK_MUST_BEAT_BUS_BY_MIN <= bus.durationMinutes;
+      walk.durationMinutes + WALK_MUST_BEAT_BUS_BY_MIN <= reachedAt(bus);
     return isWalkOnly(a) ? walkWins : !walkWins;
   }
+  if (reachedAt(a) !== reachedAt(b)) return reachedAt(a) < reachedAt(b);
+  // There at the same minute, so the tie goes to the one that costs less of your day:
+  // leaving later for the same arrival is strictly better than waiting at the pole.
   if (a.durationMinutes !== b.durationMinutes) return a.durationMinutes < b.durationMinutes;
-  // Same clock, so the tie goes to the simpler trip. Two ways of reaching HULA both
+  // Still level, so the tie goes to the simpler trip. Two ways of reaching HULA both
   // took 36 minutes: one rode line 9 for a single stop to reach the wall, the other
   // walked to the same place. A change you do not need is still a change you can miss.
   return busLegCount(a) < busLegCount(b);
@@ -1387,6 +1393,8 @@ function walkingOnlyPlan(
     fare: { busLegs: 0, transfersFree: true, transferSpanMinutes: 0, singleTicketEuros: 0, citizenCardEuros: 0 },
     departureTime: formatMinutes(nowMinutes),
     arrivalTime: formatMinutes(arrival),
+    // Nothing to be late for, so there is nothing to set off later for either.
+    slackMinutes: 0,
     totalWaitMinutes: 0,
     isServiceActive: true,
     walkToStartMeters: 0,
@@ -1398,12 +1406,7 @@ function walkingOnlyPlan(
         walkMeters: walk.meters,
         departureTime: formatMinutes(nowMinutes),
         arrivalTime: formatMinutes(arrival),
-        instruction: translations(lang).engine.walkWholeWay(
-          fromRes.name,
-          toRes.name,
-          walk.meters,
-          walk.minutes,
-        ),
+        instruction: translations(lang).engine.walkWholeWay(fromRes.name, toRes.name),
       },
     ],
   };
@@ -1434,13 +1437,7 @@ function planBetweenStops(
       walkMeters: from.walkMeters,
       departureTime: formatMinutes(start),
       arrivalTime: formatMinutes(cursor),
-      instruction: translations(lang).engine.walkToStop(
-        from.walkMeters,
-        from.walkMinutes,
-        fromRes.name,
-        startStop.name,
-        startStop.code,
-      ),
+      instruction: translations(lang).engine.walkToStop(fromRes.name, startStop.name, startStop.code),
     });
   }
 
@@ -1463,6 +1460,60 @@ function planBetweenStops(
     const segments = [...leadIn, ...option.segments];
     let end = option.arrivalMinutes;
 
+    /**
+     * Standing at the pole is not part of the trip.
+     *
+     * Every plan used to start at `now` whatever the timetable said, so asking at 09:00
+     * for a bus at 09:28 gave a seven-minute walk followed by twenty-one minutes of
+     * standing, and called the result a fifty-minute journey. Worse, it made the options
+     * indistinguishable: five itineraries "took" fifty minutes and arrived at 09:50,
+     * because they were five ways of catching the same 4.2 and the only difference
+     * between them was how the wait was spent. The reader was offered a choice that was
+     * not one.
+     *
+     * So the departure slides forward until only the margin is left. Nothing about the
+     * bus moves -- same boarding time, same arrival -- but the answer becomes "leave at
+     * 09:19" instead of "leave now and wait".
+     *
+     * This reverses a deliberate decision, and the reason it reverses is that the
+     * decision was answering a different question: the old note here argued for leaving
+     * now because a plan must not print two departure times, which is true and still is.
+     * There is still exactly one. What it did not weigh is that the padding was being
+     * counted as journey time, and that is what made four cards look alike.
+     *
+     * The margin is the one the transfers already use, for the same reason: this network
+     * publishes no vehicle positions and its buses have been seen running early, so a
+     * couple of minutes in hand is the difference between catching one and losing a whole
+     * headway.
+     */
+    const firstBusAt = segments.findIndex((seg) => seg.type === 'bus');
+    const waitAt = firstBusAt - 1;
+    let slack = 0;
+    if (firstBusAt > 0 && segments[waitAt].type === 'wait') {
+      const margin =
+        segments[firstBusAt].precision === 'published'
+          ? TRANSFER_BUFFER_MIN
+          : TRANSFER_BUFFER_ESTIMATED_MIN;
+      slack = Math.max(0, segments[waitAt].durationMinutes - margin);
+    }
+    if (slack > 0) {
+      const later = (t: string | undefined) => (t ? formatMinutes(parseTimeToMinutes(t) + slack) : t);
+      // These segment objects are shared with every other option built from the same
+      // lead-in, so they are replaced rather than edited.
+      for (let i = 0; i < firstBusAt; i++) {
+        const seg = segments[i];
+        const isWait = seg.type === 'wait';
+        segments[i] = {
+          ...seg,
+          durationMinutes: isWait ? seg.durationMinutes - slack : seg.durationMinutes,
+          departureTime: later(seg.departureTime),
+          // The wait still ends when the bus arrives; it just starts later.
+          arrivalTime: isWait ? seg.arrivalTime : later(seg.arrivalTime),
+        };
+      }
+      if (segments[waitAt].durationMinutes <= 0) segments.splice(waitAt, 1);
+    }
+
     // 3. Walk from the alighting stop to the destination.
     if (to.walkMinutes > 0 && to.walkMeters > 50) {
       const start = end;
@@ -1473,28 +1524,20 @@ function planBetweenStops(
         walkMeters: to.walkMeters,
         departureTime: formatMinutes(start),
         arrivalTime: formatMinutes(end),
-        instruction: translations(lang).engine.walkToDestination(
-          to.walkMeters,
-          to.walkMinutes,
-          toRes.name,
-          formatMinutes(end),
-        ),
+        instruction: translations(lang).engine.walkToDestination(toRes.name),
       });
     }
 
-    // There used to be a `leaveAt` here -- now plus the first wait, the last moment you
-    // could set off and still catch the bus. It was shown beside the same option whose
-    // summary and itinerary both said to leave now and wait at the stop, so the screen
-    // gave two departure times for one plan. Leaving now is the answer this app gives:
-    // the bus has no GPS here, buses on this network have been seen running early, and
-    // arriving with a few minutes in hand costs nothing while missing one costs up to
-    // ninety on some lines.
+    // One departure time, and it is the one the itinerary starts with. There used to be
+    // a second `leaveAt` beside a summary that said to leave now, which is the bug that
+    // must not come back: whatever `slack` does above, these two agree.
     return {
-      durationMinutes: Math.round(end - nowMinutes),
+      durationMinutes: Math.round(end - nowMinutes - slack),
       fare: fareFor(segments),
-      departureTime: formatMinutes(nowMinutes),
+      departureTime: formatMinutes(nowMinutes + slack),
       arrivalTime: formatMinutes(end),
-      totalWaitMinutes: option.totalWaitMinutes,
+      slackMinutes: slack,
+      totalWaitMinutes: option.totalWaitMinutes - slack,
       isServiceActive: option.isServiceActive,
       serviceNotice: option.serviceNotice,
       walkToStartMeters: from.walkMeters,
