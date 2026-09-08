@@ -117,7 +117,13 @@ const DARK_TUNING: readonly [layer: string, property: string, value: unknown][] 
    * over the colour.
    */
   ['landcover_wood', 'fill-pattern', undefined],
-  ['landcover_wood', 'fill-color', '#1a2119'],
+  /* Measured against the hierarchy above rather than picked: the ground is the floor,
+     buildings sit 1,07 over it, minor streets 1,31 and major 1,67. The first green tried
+     here was #1a2119, which came out at 1,06 — level with a building and therefore
+     indistinguishable from one, so a park read as a block and the comment above claiming
+     it put something on the park was not true. This is 1,16 over the ground and 1,09 over
+     the buildings: green enough to be a park, quiet enough not to argue with a street. */
+  ['landcover_wood', 'fill-color', '#1e2a1b'],
 ];
 
 /**
@@ -292,6 +298,39 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     const added = baseOnAdd(map);
     attached = map;
     layer.getMaplibreMap()?.on('styledata', tuneStyle);
+
+    /**
+     * Drop Leaflet's own "Leaflet" prefix, on every map that uses this basemap.
+     *
+     * Nobody is owed it: the terms that bind this map are OpenFreeMap's, OpenMapTiles'
+     * and OpenStreetMap's, and all three stay exactly as they are. The prefix is what
+     * made the line too long -- measured on a 375 px screen it wrapped to two lines,
+     * 34 px tall, and the second line was cut off by whatever sat below the map. An
+     * attribution that is covered is not a visible attribution, so the shortest honest
+     * line is also the compliant one.
+     *
+     * It lived in TransitMap, which is why the route map and the stop mini map still
+     * printed "Leaflet |" while the big map did not. It belongs here, in the one place
+     * all three of them go through, so a fourth map cannot be born with the old line.
+     */
+    map.attributionControl?.setPrefix(false);
+
+    /**
+     * Fit to the box, not to the nearest whole zoom level.
+     *
+     * `fitBounds` picks the largest whole zoom whose scale still contains what it was
+     * given, so it lands anywhere between half the map and all of it. Measured on a
+     * 375x812 phone, where the route map is 297x240: the default Fonte dos Ranchos ->
+     * HULA trip was drawn 120x110 inside 241x184 of usable box -- 46% -- and the reader
+     * got a patch of street map with a squiggle in the middle of it. Tapping a different
+     * option jumped it to 67% for no reason visible from the outside, because those
+     * bounds happened to round better. Fractional: 76%, and it stays there.
+     *
+     * Here rather than in the three maps for the reason above it: the justification is a
+     * property of this basemap. It is vector, so it draws at any zoom and there is
+     * nothing to buy by rounding. A raster basemap would want its whole levels back.
+     */
+    map.options.zoomSnap = 0;
 
     // The first paint is its own case. The layer is built inside a container that is still
     // settling, and the renderer works out what to draw before the style has arrived, so
