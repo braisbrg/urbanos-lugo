@@ -892,6 +892,20 @@ function buildLeg(
   readyAt: number,
   now: Date,
   hubLabel?: string,
+  /**
+   * When the standing about actually begins, if that is earlier than `readyAt`.
+   *
+   * These two are the same everywhere except at a transfer, where `readyAt` carries a
+   * safety buffer — two minutes on a published connecting time, four on an estimated
+   * one — so that a slightly late bus does not cost the connection. That buffer is time
+   * spent at the stop, but it was not in any segment: the itinerary showed a bus arriving
+   * at 16:52 and a wait beginning at 16:56, with four minutes belonging to nothing.
+   * Measured over 1.550 planned options, 857 of them had exactly that gap.
+   *
+   * The buffer still decides which departure can be caught. It just stops being invisible:
+   * somebody standing on the pavement from 16:52 waits nine minutes, not five.
+   */
+  waitingFrom?: number,
 ): Itinerary | null {
   const option = pickBestBoarding(lang, candidateLineIds, fromStop.id, toStop.id, readyAt, now);
   if (!option) return null;
@@ -900,7 +914,8 @@ function buildLeg(
   const ride = rideBetween(direction, direction.stops.indexOf(fromStop.id), direction.stops.indexOf(toStop.id));
 
   const segments: RoutePlanResult['segments'] = [];
-  const waitMinutes = Math.max(0, departure.departureMinutes - readyAt);
+  const waitStart = Math.min(readyAt, waitingFrom ?? readyAt);
+  const waitMinutes = Math.max(0, departure.departureMinutes - waitStart);
 
   // Callers already read a null leg as "no itinerary this way", and the walking plan is
   // always offered, so refusing one here never leaves a trip without an answer.
@@ -911,7 +926,7 @@ function buildLeg(
       type: 'wait',
       fromStop,
       durationMinutes: waitMinutes,
-      departureTime: formatMinutes(readyAt),
+      departureTime: formatMinutes(waitStart),
       arrivalTime: formatMinutes(departure.departureMinutes),
       instruction: hubLabel
         ? translations(lang).engine.transferAt(fromStop.name, line.number)
@@ -1011,6 +1026,35 @@ const MAX_WALKING_HUBS = 20;
 const TRANSFER_BUFFER_MIN = 2;
 export const TRANSFER_BUFFER_ESTIMATED_MIN = 4;
 
+/**
+ * Above this a wait stops being a wait, for the purpose of wording it.
+ *
+ * "302 min de espera" beside "sae ás 14:32" says the same thing twice, and the countdown
+ * is the useless half: nobody stands at a pole for five hours, they come back at half past
+ * two. This is a presentation threshold and nothing is refused because of it.
+ */
+export const LONG_WAIT_MIN = 90;
+
+/**
+ * Above this a wait stops being a connection, and the transfer is not offered.
+ *
+ * Counted over 33.661 transfer waits at four times of day: 85% are under 90 minutes and
+ * 60% under 30, then a thin tail out to six hours, and then a cluster of 2.254 sitting
+ * between twelve hours and two days. That cluster is not a connection — it is the next
+ * morning, and the clock renders it as the same hour, so a bus arriving at 08:59 and one
+ * leaving at 09:00 read as a one-minute change when they are a day apart.
+ *
+ * Three hours, because the largest headway the operator publishes is 60 minutes: that
+ * leaves room for a rural line with an irregular timetable to miss two windows and still
+ * be a connection somebody would make. Capping at the 90 above instead was tried and
+ * refused 2.940 waits between 90 minutes and six hours, which cost two rural Sunday pairs
+ * the only bus answer they had.
+ *
+ * Refusing costs nothing structural: the direct rides and the walking option are always
+ * offered, and every other interchange is still tried.
+ */
+const MAX_TRANSFER_WAIT_MIN = 180;
+
 /** Chain two legs through one interchange, allowing time to change platform. */
 function buildTransfer(
   lang: Lang,
@@ -1051,8 +1095,33 @@ function buildTransfer(
     boardAt = first.arrivalMinutes + walk.minutes + buffer;
   }
 
-  const second = buildLeg(lang, leg2Lines, hubOut, endStop, boardAt, now, hubOut.name);
+  // The buffer decides which departure can be caught; it is not time spent anywhere else,
+  // so the wait is shown from the moment the reader is standing at the pole.
+  const freeAt = change.length ? first.arrivalMinutes + (change[0].durationMinutes ?? 0) : first.arrivalMinutes;
+  const second = buildLeg(lang, leg2Lines, hubOut, endStop, boardAt, now, hubOut.name, freeAt);
   if (!second) return null;
+
+  /**
+   * A connection you would have to sleep through is not a connection.
+   *
+   * `buildLeg` answers "the next departure at or after this minute", and when the last bus
+   * of the day has gone that is tomorrow morning. The transfer was built anyway: a 1.441
+   * minute wait, printed as a bus arriving at 08:59 and the next leaving at 09:00, because
+   * the clock renders a day later as the same hour. It read as a one-minute change.
+   *
+   * It hid because the wait segment used to start at the buffered boarding minute, which
+   * put its two ends in the wrong order -- 09:06 to 09:00 -- and the check that walks a
+   * plan's timeline treats a step backwards as midnight and added a day, so the gap came
+   * out as 1.441 minutes and passed. Making the itinerary continuous took the disguise
+   * away, which is how a check that had been passing for the wrong reason started failing
+   * for the right one.
+   *
+   * The cap is the one the planner already uses to decide a wait has stopped being a wait.
+   * Refusing here costs nothing: the direct rides and the walking option are always
+   * offered, and any other interchange is still tried.
+   */
+  const changeWait = second.segments.find((s) => s.type === 'wait')?.durationMinutes ?? 0;
+  if (changeWait > MAX_TRANSFER_WAIT_MIN) return null;
 
   // Getting off a bus to wait for the same line is never the answer. In the same
   // direction it is literally the bus you were already on, and the direct ride is

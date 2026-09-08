@@ -1145,6 +1145,34 @@ ok('every map gets its chrome from the one place that has it', () => {
       `${file} zooms on the scroll wheel, and it sits inside a page that scrolls`,
     );
   }
+
+  // The route map has to still be showing the route after its box changes size. It is
+  // built inside a column that is display:none on a phone until the reader asks for a
+  // plan, and Leaflet's invalidateSize restores the size while leaving the view alone —
+  // so the map kept a zoom worked out for a box that no longer existed. Caught at 375x812
+  // with the trip drawn 118x288 inside a 297x240 map: three of its twenty-nine pieces
+  // were still on screen, and the reader got two streets and a stub of red line.
+  const routeMap = readFileSync(join(mapDir, 'RouteMap.tsx'), 'utf8');
+  assert(
+    /getBounds\(\)\.contains\(/.test(routeMap),
+    'RouteMap no longer checks that the trip is still on the map after a resize',
+  );
+
+  // And the zoom these maps fit to. `fitBounds` rounds down to a whole zoom level unless
+  // told otherwise, which on the 297x240 route map drew the trip at 46% of the box and
+  // then jumped to 67% when the reader tapped an unrelated option. The basemap is vector,
+  // so it draws at any zoom; the reason belongs to the basemap and so does the setting.
+  assert(
+    /map\.options\.zoomSnap = 0/.test(basemap),
+    'the basemap no longer turns off whole-level zoom snapping, so fitBounds wastes up to half of every map',
+  );
+  for (const file of readdirSync(mapDir).filter((f) => f.endsWith('.tsx'))) {
+    const source = readFileSync(join(mapDir, file), 'utf8');
+    assert(
+      !/zoomSnap/.test(source),
+      `${file} sets zoomSnap itself; it comes from the basemap, like the attribution prefix`,
+    );
+  }
 });
 
 ok('the out-of-service banner still fits on two lines', () => {
@@ -1249,18 +1277,21 @@ ok('the answer column spaces its blocks in one place', () => {
   // The column owns the rhythm now, the way AlertsView and FaresView already do. A block
   // that brings its own vertical margin back will look right in isolation and put the
   // column out again, so the class names are what is checked.
+  // Líneas had the same fault and worse: 10, 12, 16, 16 and 20 px between the blocks of
+  // three cards. Both screens are 16 between blocks and 8 from a heading to its content.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const view = readFileSync(join(root, 'src/components/RoutePlannerView.tsx'), 'utf8');
-
-  assert(
-    /className="space-y-5 bg-bg/.test(view),
-    'the answer card no longer declares the rhythm its blocks depend on',
-  );
-  // mb-1, mb-2 and mb-1.5 are inside a block -- a heading above its own content -- and
-  // are left alone. These four were only ever used between blocks.
-  for (const stray of ['mb-4', 'mb-5', 'mt-6', 'mt-5']) {
-    const found = new RegExp(`className="[^"]*\\b${stray}\\b`).exec(view);
-    assert(!found, `${stray} is back in the planner: "${found?.[0]}" — the column spaces its blocks`);
+  for (const file of ['RoutePlannerView.tsx', 'LinesView.tsx']) {
+    const view = readFileSync(join(root, 'src/components', file), 'utf8');
+    assert(
+      /className="space-y-4 bg-bg/.test(view),
+      `${file}: no card declares the rhythm its blocks depend on`,
+    );
+    // mb-1, mb-2 and mb-1.5 sit inside a block -- a heading above its own content -- and
+    // are left alone. These were only ever used between blocks.
+    for (const stray of ['mb-4', 'mb-5', 'mt-6', 'mt-5', 'mt-4', 'mb-2.5']) {
+      const found = new RegExp(`className="[^"]*\\b${stray.replace('.', '\\.')}\\b`).exec(view);
+      assert(!found, `${file}: ${stray} is back — "${found?.[0]}" — the column spaces its blocks`);
+    }
   }
 });
 
@@ -3540,6 +3571,56 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
     up!.minutes > down!.minutes,
     `${up!.minutes} min up the hill against ${down!.minutes} min down it`,
   );
+});
+
+ok('an itinerary has no minutes belonging to nothing', () => {
+  // A transfer carries a safety buffer -- two minutes on a published connecting time, four
+  // on an estimated one -- so a slightly late bus does not cost the connection. That buffer
+  // is time spent standing at the stop, and it was in the clock but in no segment: a bus
+  // arriving at 16:52 above a wait starting at 16:56, with four minutes belonging to
+  // nothing. 857 of 1.550 planned options had exactly that gap.
+  //
+  // It hid a worse thing. Starting the wait at the buffered minute put its two ends in the
+  // wrong order -- 09:06 to 09:00 -- and the check that walks a plan's timeline reads a
+  // step backwards as midnight, so a transfer whose connecting bus left the NEXT MORNING
+  // came out as a 1.441 minute gap and passed, while the itinerary printed it as a
+  // one-minute change. `buildTransfer` now refuses a wait longer than LONG_WAIT_MIN.
+  const points = [...BUS_STOPS.slice(0, 60).map((s) => s.name), ...LUGO_LANDMARKS.map((l) => l.name)];
+  let seed = 987654321;
+  const roll = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+
+  let options = 0;
+  for (let i = 0; i < 120; i++) {
+    const from = points[Math.floor(roll() * points.length)];
+    const to = points[Math.floor(roll() * points.length)];
+    if (from === to) continue;
+    for (const plan of planTrips(from, to, { lang: 'gl' }).slice(0, 3)) {
+      options++;
+      const trip = `${from} -> ${to}`;
+
+      const legs = plan.segments.reduce((n, s) => n + (s.durationMinutes ?? 0), 0);
+      assert(legs === plan.durationMinutes, `${trip}: legs add to ${legs} min, the trip says ${plan.durationMinutes}`);
+
+      // And each leg hands over to the next on the same minute, so there is nowhere for a
+      // minute to hide even when the totals happen to agree.
+      for (let k = 1; k < plan.segments.length; k++) {
+        const ends = plan.segments[k - 1].arrivalTime;
+        const starts = plan.segments[k].departureTime;
+        assert(ends === starts, `${trip}: a ${plan.segments[k - 1].type} leg ends ${ends}, the next starts ${starts}`);
+      }
+
+      // No leg runs backwards. This is what the day-wrap was papering over.
+      for (const s of plan.segments) {
+        if (!s.departureTime || !s.arrivalTime) continue;
+        const span = parseTimeToMinutes(s.arrivalTime) - parseTimeToMinutes(s.departureTime);
+        assert(
+          span >= 0 || span + 1440 === (s.durationMinutes ?? 0),
+          `${trip}: a ${s.type} leg runs ${s.departureTime} to ${s.arrivalTime}`,
+        );
+      }
+    }
+  }
+  assert(options > 100, `only ${options} options planned; the check is not checking`);
 });
 
 console.log(`\n${checks} checks passed\n`);

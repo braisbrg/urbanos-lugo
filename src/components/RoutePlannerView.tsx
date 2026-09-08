@@ -16,7 +16,7 @@ import {
 import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { BUS_STOPS } from '../data/transitData';
 import { formatMinutes, parseTimeToMinutes } from '../utils/schedule';
-import { planTrips, resolveLocationQuery, estimateWalk, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
+import { planTrips, resolveLocationQuery, estimateWalk, LONG_WAIT_MIN, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
 import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 // Same reason as the map tab: Leaflet loads with the map, not with the app.
@@ -32,12 +32,6 @@ const toPoint = (r: { name: string; lat: number; lng: number } | null) =>
   r ? { name: r.name, lat: r.lat, lng: r.lng } : undefined;
 
 /** More than this and the alternatives stop helping and start being a wall. */
-/**
- * Above this a wait stops being a wait. "302 min de espera" beside "sae ás 14:32" says
- * the same thing twice, and the countdown is the useless half: nobody stands at a pole
- * for five hours, they come back at half past two.
- */
-const LONG_WAIT_MIN = 90;
 
 /** Move an "HH:MM" label by a signed number of minutes, wrapping past midnight. */
 function shiftClock(hhmm: string, deltaMinutes: number): string {
@@ -142,6 +136,8 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }));
 
   const [showMap, setShowMap] = useState(true);
+  /** Where the button on the map jumps to. */
+  const stepsRef = useRef<HTMLDivElement>(null);
   /*
    * There is no longer a question to ask.
    *
@@ -233,6 +229,21 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
         });
       });
   }, [shownOptions, walkPaths, endpoints]);
+
+  /**
+   * How many alternatives stand on the screen before you ask for the rest.
+   *
+   * Four rows were 183 px of a 674 px column to answer a question most readers do not
+   * have: the first option is the answer and the second is the alternative somebody
+   * would actually weigh. The third and fourth are there for the person who knows the
+   * network and wants a particular line, and that person will press a button.
+   */
+  const VISIBLE_OPTIONS = 2;
+  const [showAllOptions, setShowAllOptions] = useState(false);
+  // Never fold away the row that is currently open: it would take the reader's own
+  // choice off the screen and leave the detail below it unexplained.
+  const optionsExpanded = showAllOptions || chosenOption >= VISIBLE_OPTIONS;
+  const visibleOptions = optionsExpanded ? offeredOptions : offeredOptions.slice(0, VISIBLE_OPTIONS);
 
   /** Real walking totals, once fetched: what the trip actually costs on foot. */
   const measuredWalk = React.useMemo(() => {
@@ -327,6 +338,8 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     const plans = planTrips(orig, dest, { ...timeOptions(), userLocation: gps, lang });
     setPlanOptions(plans);
     setChosenOption(0);
+    // A new question gets the short list again.
+    setShowAllOptions(false);
     // Answering is what folds the form away. A search that found nothing leaves it
     // open, because the next thing to do is change what you asked for.
     setAsked(true);
@@ -427,12 +440,16 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
       <div className="lg:grid lg:grid-cols-12 lg:gap-6">
         {/* Left Column: Origin & Destination Inputs */}
         <div ref={formRef} className="space-y-4 lg:col-span-5 lg:sticky lg:top-4 lg:self-start">
-          {/* What you asked for, in one line, when the form is folded away. */}
+          {/* What you asked for, in one line, when the form is folded away.
+              A line, not a card. It was a bordered box with its own fill and shadow,
+              which is the same weight the answer below it carries and twice what a
+              breadcrumb needs -- it read as a second panel rather than as the heading of
+              the one underneath. The chrome is gone and the row keeps its 44 px target. */}
           {asked && !formOpen && (
             <button
               type="button"
               onClick={() => setFormOpen(true)}
-              className="flex w-full items-center gap-2 rounded-xl border border-edge bg-bg p-3.5 text-left shadow-sm lg:hidden"
+              className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden"
             >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
               <span
@@ -703,7 +720,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                everything else breathed. Nobody can keep six numbers in step by hand. The
                column owns the spacing now, the way every other view in this app already
                does, and the blocks say nothing about it. */
-            <div className="space-y-5 bg-bg rounded-xl p-6 shadow-sm border border-edge">
+            <div className="space-y-4 bg-bg rounded-xl p-6 shadow-sm border border-edge">
               {/* Out of service notice */}
               {!planResult.isServiceActive && planResult.serviceNotice && (
                 <div className="p-3.5 rounded-lg bg-warn border border-warn text-warn-ink text-label font-bold flex items-start gap-2.5 shadow-xs">
@@ -877,7 +894,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       comparable at a glance. The rows keep a 44 px target because they are
                       still buttons on a phone. */}
                   <div className="border-y border-line">
-                    {offeredOptions.map(({ option, idx }) => {
+                    {visibleOptions.map(({ option, idx }) => {
                       const busLegs = option.segments.filter((seg) => seg.type === 'bus');
                       // Same correction the detail applies, so the row you open agrees
                       // with what opens, and the four are compared like for like.
@@ -929,7 +946,13 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             )}
                           </span>
                           <span className="min-w-0">
-                            <span className="tnum block font-mono text-label text-ink-2">
+                            {/* The clock leads the row, not the duration.
+                                Once the departure stopped being "now" for every option it
+                                became the thing that distinguishes them, and reading
+                                "16:48 → ~17:31" places the trip in the day faster than
+                                "43 min" does. Both are at body size; the clock is first
+                                and the duration is the consequence. */}
+                            <span className="tnum block font-mono text-label font-semibold text-ink">
                               {shown.departure} → ~{shown.arrival}
                             </span>
                             {notes.length > 0 && (
@@ -949,6 +972,26 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                         </button>
                       );
                     })}
+                    {/* The rest, on request. It sits inside the same bordered block and
+                        below the last divider, so it reads as the end of the list rather
+                        than as a separate control floating under it. */}
+                    {offeredOptions.length > VISIBLE_OPTIONS && chosenOption < VISIBLE_OPTIONS && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllOptions(!showAllOptions)}
+                        aria-expanded={optionsExpanded}
+                        className="flex min-h-9 w-full items-center justify-center gap-1.5 border-t border-t-line text-label font-semibold text-ink-3"
+                      >
+                        {optionsExpanded
+                          ? t.planner.fewerOptions
+                          : t.planner.moreOptions(offeredOptions.length - VISIBLE_OPTIONS)}
+                        <ChevronDown
+                          className={`h-3.5 w-3.5 shrink-0 ${optionsExpanded ? 'rotate-180' : ''}`}
+                          strokeWidth={2.5}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -975,24 +1018,56 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   </span>
                 </div>
                 {showMap && (
-                  <Suspense
-                    fallback={<div className="w-full h-[280px] rounded-xl bg-surface animate-pulse" />}
-                  >
-                    <RouteMap
-                      plan={planResult}
-                      lang={lang}
-                      origin={endpoints.origin}
-                      destination={endpoints.destination}
-                      /* Every leg the router answered for; the ones it could not are
-                         drawn as the straight dashed hint they always were. */
-                      walkPaths={walkPaths}
-                      className="w-full h-[280px] rounded-xl overflow-hidden border border-edge z-0"
-                    />
-                  </Suspense>
+                  <div className="relative">
+                    <Suspense
+                      fallback={<div className="w-full h-[240px] sm:h-[280px] rounded-xl bg-surface animate-pulse" />}
+                    >
+                      <RouteMap
+                        plan={planResult}
+                        lang={lang}
+                        origin={endpoints.origin}
+                        destination={endpoints.destination}
+                        /* Every leg the router answered for; the ones it could not are
+                           drawn as the straight dashed hint they always were. */
+                        walkPaths={walkPaths}
+                        className="w-full h-[240px] sm:h-[280px] rounded-xl overflow-hidden border border-edge z-0"
+                      />
+                    </Suspense>
+                    {/* Say that the trip is written out further down.
+                        The map ends within a few pixels of the fold on a 375x812, so the
+                        heading below it is never seen and nothing on screen suggests the
+                        page continues. This sits on the map rather than under it for that
+                        exact reason -- a row below the map would be below the fold too --
+                        and it clears the attribution line and the zoom buttons. */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stepsRef.current?.scrollIntoView({
+                          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                            ? 'auto'
+                            : 'smooth',
+                          block: 'start',
+                        });
+                      }}
+                      className="absolute bottom-6 left-1/2 z-[500] flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-edge bg-bg/90 px-3 py-1.5 text-label font-semibold text-ink-2 shadow-sm backdrop-blur-sm"
+                    >
+                      {t.planner.stepByStepTitle}
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden="true" />
+                    </button>
+                  </div>
                 )}
               </div>
 
-              {/* Step by Step Timeline */}
+              {/* Step by step.
+                  It had no heading, alone among the three blocks in this column, and it
+                  lives below a map -- so on a phone the reader reached the bottom of the
+                  map and had no reason to believe anything followed. The heading names it
+                  and, with the map an inch shorter, sits above the fold: what tells you to
+                  keep scrolling is seeing the start of the next thing, not being told to. */}
+              <div ref={stepsRef} className="scroll-mt-3">
+                <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">
+                  {t.planner.stepByStepTitle}
+                </span>
               <div className="space-y-4 relative pl-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface">
                 {planResult.segments.map((seg, idx) => {
                   const isBus = seg.type === 'bus';
@@ -1210,6 +1285,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     </div>
                   );
                 })}
+                </div>
               </div>
 
               {/* Notice */}
