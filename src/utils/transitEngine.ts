@@ -937,6 +937,25 @@ function buildLeg(
   const boardTime = departure.departureMinutes;
   const arriveTime = departure.arrivalMinutes ?? boardTime + ride.minutes;
 
+  /*
+   * The duration and the two times printed beside it have to be the same number.
+   *
+   * They were not. `formatMinutes` rounds each end to a whole minute; this rounded the
+   * gap between the ends instead, which can differ by one in either direction, and then
+   * floored the answer at 1. Where the operator's timetable puts two stops in the same
+   * minute -- adjacent poles on one street, which happens -- the leg printed "07:36 ->
+   * 07:36" above "1 min": a minute that was in the segment and in no part of the clock.
+   * Measured on one pair, 40 of its 4.320 options across the day had it, always that
+   * shape, and it is the same family of defect as the transfer buffer that belonged to
+   * nothing.
+   *
+   * So the duration is read off the printed ends, and a hop the timetable finishes inside
+   * one minute is allowed to say so. Pushing the arrival to the next minute instead would
+   * have contradicted a published time, which is the one thing this app does not do.
+   */
+  const shownBoard = Math.round(boardTime);
+  const shownArrive = Math.round(arriveTime);
+
   segments.push({
     type: 'bus',
     line,
@@ -944,7 +963,7 @@ function buildLeg(
     precision: departure.precision,
     fromStop,
     toStop,
-    durationMinutes: Math.max(1, Math.round(arriveTime - boardTime)),
+    durationMinutes: shownArrive - shownBoard,
     stopsCount: ride.stopsCount,
     departureTime: formatMinutes(boardTime),
     arrivalTime: formatMinutes(arriveTime),

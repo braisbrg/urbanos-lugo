@@ -3721,12 +3721,30 @@ ok('an itinerary has no minutes belonging to nothing', () => {
   let seed = 987654321;
   const roll = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 
-  let options = 0;
+  // Two fixed clocks rather than whatever time the suite happens to run at.
+  //
+  // This used to call planTrips with the real one, and the third defect it found only
+  // exists in the few minutes before certain departures: measured on one pair, 40 of its
+  // 4.320 options across a day had it. So the check was green almost always and red for
+  // somebody else later, at a minute they could not reproduce. A test that finds a real
+  // bug one run in a hundred is a test that teaches people to re-run it.
+  const CLOCKS = [7 * 60 + 32, 13 * 60 + 40];
+
+  // The pair that had it, kept by name: two poles on Rúa Industria where the operator's
+  // timetable puts the bus at both of them in the same minute, so the leg printed
+  // "07:36 -> 07:36" above "1 min" -- a minute in the segment and in no part of the clock.
+  const pairs: [string, string][] = [['Rúa industria (T. Pereira)', 'Rúa Industria (Sum. La Ronda)']];
   for (let i = 0; i < 120; i++) {
     const from = points[Math.floor(roll() * points.length)];
     const to = points[Math.floor(roll() * points.length)];
-    if (from === to) continue;
-    for (const plan of planTrips(from, to, { lang: 'gl' }).slice(0, 3)) {
+    if (from !== to) pairs.push([from, to]);
+  }
+
+  let options = 0;
+  for (const minutes of CLOCKS) {
+    const now = new Date(2026, 8, 9, Math.floor(minutes / 60), minutes % 60, 0, 0);
+    for (const [from, to] of pairs) {
+    for (const plan of planTrips(from, to, { lang: 'gl', now }).slice(0, 3)) {
       options++;
       const trip = `${from} -> ${to}`;
 
@@ -3751,8 +3769,9 @@ ok('an itinerary has no minutes belonging to nothing', () => {
         );
       }
     }
+    }
   }
-  assert(options > 100, `only ${options} options planned; the check is not checking`);
+  assert(options > 400, `only ${options} options planned; the check is not checking`);
 });
 
 console.log(`\n${checks} checks passed\n`);
