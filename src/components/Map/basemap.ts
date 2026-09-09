@@ -3,6 +3,9 @@ import { setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '@maplibre/maplibre-gl-leaflet';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import type { StyleSpecification } from 'maplibre-gl';
+import darkStyle from '../../data/map-style-dark.json';
+import lightStyle from '../../data/map-style-light.json';
 
 // The renderer works out where its worker lives at runtime -- new URL() against its own
 // module URL -- which no bundler can see, so the file is never emitted, the request falls
@@ -38,93 +41,14 @@ setWorkerUrl(maplibreWorkerUrl);
  */
 
 const STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/positron',
-  dark: 'https://tiles.openfreemap.org/styles/dark',
+  light: lightStyle as unknown as StyleSpecification,
+  dark: darkStyle as unknown as StyleSpecification,
 };
 
-// Tiles, glyphs and sprites all come from that one host, which is what keeps the policy
-// in src/security/csp.ts down to a single extra origin.
-
-/**
- * Fewer labels where our own take over.
- *
- * From zoom 16 the map writes a name beside every stop — a dozen on a phone screen — and
- * the basemap is writing street names into the same space at the same time. Two sets of
- * text competing is how a map stops being readable, and only one of them answers the
- * question this screen is for.
- *
- * So the street names fade out exactly where the stop names arrive, rather than being
- * removed outright: below 15 they are the only thing telling you where you are, and there
- * are no stop labels yet to take over. Applies to both styles — this is about density,
- * not about the dark one being dark.
- */
-const LABEL_TUNING: readonly [layer: string, property: string, value: unknown][] = [
-  ['highway_name_other', 'text-opacity', ['interpolate', ['linear'], ['zoom'], 15, 1, 16.5, 0]],
-  ['highway_name_motorway', 'text-opacity', ['interpolate', ['linear'], ['zoom'], 15, 1, 16.5, 0]],
-];
-
-/**
- * Give the dark map somewhere to be.
- *
- * As published it puts everything inside seventeen levels of black: the ground is
- * rgb(12,12,12), water is rgb(27,27,29) and buildings are rgb(10,10,10) — darker than the
- * ground they stand on. Nothing has a hierarchy, and the app's own background is #110d0d,
- * so the map does not even separate from the chrome around it. That flatness is what
- * reads as cheap; it is not the absence of detail, the detail is all there and all the
- * same colour.
- *
- * The order matters more than any single value: ground at the bottom, blocks a step up,
- * streets brightest of all. Raising only the ground inverts that — the published streets
- * are #181818, and against a #171a1f ground they stop being bright lines and become dark
- * ones. So everything above the ground moves with it.
- *
- * Contrast is set for a phone in daylight, not for a dark room. Dark mode here is a
- * preference, not a time of day: somebody reads this at a sunlit shelter at two in the
- * afternoon, and seventeen levels of near-black is unreadable long before the screen is.
- *
- * Water goes the other way, darker and actually blue, so the Miño reads as a river
- * instead of a slightly different rectangle.
- *
- * Buildings keep their mass and lose their linework. Every building outlined individually
- * is detail a bus app never uses — nobody is navigating by the shape of a block — and it
- * is drawn underneath the thing the screen is actually for. Matching the outline to the
- * fill leaves a soft mass that still says "built up here" without drawing each one.
- *
- * The light style is left alone. Positron's rgb(242,243,240) already separates from the
- * app's #fefdfd and its layers already differ from one another.
- *
- * Tried and rejected: swapping the whole style for `fiord`, OpenFreeMap's designed dark.
- * Its ground is #45516E, which rendered as a pale blue slab inside a near-black app —
- * the route line dissolved into it and the white stop dots disappeared.
- */
-const DARK_TUNING: readonly [layer: string, property: string, value: unknown][] = [
-  ['background', 'background-color', '#171a1f'],
-  ['water', 'fill-color', '#0e151d'],
-  ['building', 'fill-color', '#1c2027'],
-  ['building', 'fill-outline-color', '#1c2027'],
-  ['highway_minor', 'line-color', '#2b3038'],
-  ['highway_major_inner', 'line-color', '#39404b'],
-  ['highway_motorway_inner', 'line-color', '#39404b'],
-  /*
-   * A colour instead of a texture that does not exist.
-   *
-   * The published dark style paints woodland with `fill-pattern: "wood-pattern"` and the
-   * sprite it names has no such image — 264 icons and not one pattern among them, so
-   * every load of the dark map logged "Image 'wood-pattern' could not be loaded" and the
-   * woods came out unpainted. Upstream's bug, ours to survive: a flat green in the same
-   * family as the ground keeps the console for real errors and puts something on the
-   * park. `fill-pattern` is cleared alongside it because a pattern, when it is set, wins
-   * over the colour.
-   */
-  ['landcover_wood', 'fill-pattern', undefined],
-  /* Measured against the hierarchy above rather than picked: the ground is the floor,
-     buildings sit 1,07 over it, minor streets 1,31 and major 1,67. The first green tried
-     here was #1a2119, which came out at 1,06 — level with a building and therefore
-     indistinguishable from one, so a park read as a block and the comment above claiming
-     it put something on the park was not true. This is 1,16 over the ground and 1,09 over
-     the buildings: green enough to be a park, quiet enough not to argue with a street. */
-  ['landcover_wood', 'fill-color', '#1e2a1b'],
-];
+// The colours are ours; the tiles, glyphs and sprites the style names are still served by
+// OpenFreeMap, which is what keeps the policy in src/security/csp.ts down to one extra
+// origin. See tools/buildMapStyle.ts for what was changed and why, and for why these are
+// files here rather than adjustments applied at runtime to a style fetched from them.
 
 /**
  * Three parties are owed a credit here, and on a phone they have one line to share.
@@ -220,8 +144,6 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   let observer: ResizeObserver | null = null;
   let onVisible: (() => void) | null = null;
   let attached: L.Map | null = null;
-  /** Which of the two styles is loaded. Asked by the tuning below, which only fits one. */
-  let darkStyle = isDark;
 
   /**
    * Put the renderer back in step with Leaflet.
@@ -262,42 +184,9 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     setTimeout(() => attached?.fire('move'), 0);
   };
 
-  /**
-   * Apply the tuning above, every time a style finishes loading.
-   *
-   * On `styledata` rather than `load`, because switching theme calls setStyle and the new
-   * style arrives with the published colours again — a one-shot on first load would be
-   * correct until the first time somebody changed theme.
-   *
-   * Each property is set on its own and forgiven on its own: these are layer ids in
-   * somebody else's style, and a rename upstream should cost that one adjustment, not the
-   * map.
-   */
-  const tuneStyle = () => {
-    const gl = layer.getMaplibreMap();
-    if (!gl?.getLayer) return;
-    // Label density applies to both styles; the colours only to the dark one.
-    for (const [id, property, value] of darkStyle
-      ? [...LABEL_TUNING, ...DARK_TUNING]
-      : LABEL_TUNING) {
-      try {
-        // The renderer types the property name as a union of every paint property it
-        // knows, keyed to the layer's type, which it cannot check for a name held in a
-        // variable. The pairs in the table above are checked by eye against the published
-        // style and by the map in front of you; this cast is the loop, not the values.
-        if (gl.getLayer(id)) {
-          (gl.setPaintProperty as (l: string, p: string, v: unknown) => void)(id, property, value);
-        }
-      } catch {
-        /* upstream renamed or dropped it; the published colour stands. */
-      }
-    }
-  };
-
   layer.onAdd = (map: L.Map) => {
     const added = baseOnAdd(map);
     attached = map;
-    layer.getMaplibreMap()?.on('styledata', tuneStyle);
 
     /**
      * Drop Leaflet's own "Leaflet" prefix, on every map that uses this basemap.
@@ -387,9 +276,6 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   };
 
   layer.setBasemapTheme = (dark: boolean) => {
-    // Recorded before the style is asked for, so the styledata handler that fires when it
-    // arrives already knows which of the two it is looking at.
-    darkStyle = dark;
     // Restyling in place rather than rebuilding the layer, so the view stays where the
     // reader left it instead of snapping back to Lugo centre.
     layer.getMaplibreMap()?.setStyle(dark ? STYLES.dark : STYLES.light);

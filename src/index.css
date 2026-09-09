@@ -446,23 +446,24 @@
     border-width: 2px;
   }
 
-  /* CARTO Dark Matter is honest cartography but nearly monochrome: the ground, the
-     streets and the building footprints all land within a few values of black, so at
-     a glance you cannot tell a block from a park. Lifting the whole basemap keeps the
-     dark map dark while pulling those three apart. Only the tiles are touched — the
-     stops, routes and buses are drawn on the overlay canvas above and keep the exact
-     colours the palette chose for them.
+  /* There was a `filter: brightness(2.8)` on the dark tile pane here, and taking it out
+     is the point of the style in src/data/map-style-dark.json.
 
-     Brightness alone, deliberately. contrast() pivots at mid grey, so on an image
-     that lives between 9 and 16 it drags the floor to pure black and narrows the very
-     range it was meant to widen — measured, not guessed. Brightness keeps the spread
-     and moves it up: 9-16 becomes 25-45, where the eye can actually separate a street
-     from a block.
+     It was written for CARTO Dark Matter, a raster provider: pictures arrive already
+     coloured, so the only lever on a near-monochrome basemap is to amplify the picture.
+     CARTO was replaced by vector tiles in August 2026 and the filter was not, so for
+     months every colour in the style reached the screen multiplied by 2.8 — the ground
+     we had set to #171a1f painted as #404850, measured off the composited frame.
 
-     If it still reads flat, the next lever is the provider rather than the filter. */
-  .dark .leaflet-tile-pane {
-    filter: brightness(2.8);
-  }
+     Two things came of that. Every colour in the style was picked by eye through an
+     amplifier, so none of them meant what it said. And the filter applies to the tile
+     pane alone, while the routes and stops are drawn on the overlay pane above it: the
+     basemap was being multiplied by 2.8 and our own ink by 1, which is the whole reason
+     a bus line was disappearing into the street underneath it.
+
+     A vector style has its colours in a file we own, so the amplifier has nothing left
+     to do. The hierarchy it was reaching for is now in the style itself, where it can
+     be measured. */
 
   /* The focus ring appears instantly — animating it hides it from anyone who
      navigates fast with a keyboard. */

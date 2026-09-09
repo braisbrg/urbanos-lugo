@@ -142,7 +142,14 @@ se llo negas.
 
 ### Mapa da rede
 Leaflet cunha capa vectorial de MapLibre GL sobre teselas de OpenFreeMap; nun dispositivo
-sen WebGL2 cae ás teselas ráster de OpenStreetMap. Os trazados **seguen a rede viaria real**: cada
+sen WebGL2 cae ás teselas ráster de OpenStreetMap. O **estilo é do repositorio**, derivado
+do publicado por OpenFreeMap e xerado por `tools/buildMapStyle.ts`: as teselas, os sprites
+e os glifos seguen sendo os seus, as cores son nosas. Están medidas contra o que se debuxa
+enriba — as 24 cores de liña quedan a 1,45 ou máis sobre calquera das tres capas de rúa
+que cruzan, e ningún rótulo do mapa baixa de 4,5. O plan e as cifras están en
+[`design/PLAN-mapa-propio.md`](design/PLAN-mapa-propio.md).
+
+Os trazados **seguen a rede viaria real**: cada
 itinerario está axustado ás rúas no momento de xerar os datos, non interpolado entre
 paradas. Corenta e cinco dos corenta e oito sentidos son o itinerario levantado en
 OpenStreetMap; **tres constrúense coa ruta que faría un coche** (a 3.2 nos dous sentidos

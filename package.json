@@ -23,6 +23,7 @@
     "data:elevation": "tsx tools/importElevation.ts",
     "data:walkgraph": "tsx tools/buildWalkGraph.ts",
     "data:build": "tsx tools/buildDataset.ts",
+    "map:style": "tsx tools/buildMapStyle.ts",
     "data:audit": "tsx tools/fullAudit.ts",
     "check:landmarks": "tsx tools/checkLandmarks.ts",
     "reconcile": "tsx tools/reconcile.ts",
