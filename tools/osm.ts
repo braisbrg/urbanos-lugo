@@ -83,9 +83,28 @@ out tags geom;`;
  * Closed to motor vehicles, with no exception for buses recorded.
  *
  * A relation says where a mapper believes the bus goes; these tags are a different survey
- * of the same street, and at the historic-centre terminus of lines 7, 8, 9 and 12 the two
- * disagree. Nothing in open data resolves it, so it is measured and reported rather than
- * decided.
+ * of the same street, and the two disagree. Nothing in open data resolves it, so it is
+ * measured and reported rather than decided.
+ *
+ * Surveyed once, way by way, so the disagreement is about streets rather than about a
+ * total: the nine flagged routes run over **fourteen** distinct ways, in two groups.
+ *
+ * Thirteen of them are the historic-centre terminus of lines 7, 8, 9 and 12 — Rúa Bolaño
+ * Rivadeneira, Rúa Montevideo and Rúa de San Fernando, `highway=pedestrian`, one of them
+ * also `access=no motor_vehicle=private`, none carrying `bus=yes` or `psv=yes`. The
+ * itinerary is not what is wrong here: all four lines are *published* as terminating at
+ * "Casco Histórico (Bolaño)", and the OSM `route=bus` relations — mapped by OSM's own
+ * contributors — run over these ways. So OSM says in one place that the bus goes there and
+ * in another that no vehicle may. The missing tag is `psv=yes`, and it belongs upstream in
+ * OSM, not in a fixup here; rerouting a bus away from its own published terminus to satisfy
+ * a tag would make the map wrong to make the survey quiet.
+ *
+ * The fourteenth is way 368828180, 317 m of `highway=track` on line 11 between Calde and
+ * Ramón Ferreiro. Same shape of argument and a weaker claim: a rural line on a track is
+ * ordinary, and `track` says nothing about buses either way.
+ *
+ * checkOsmGeometry watches the total, so a mapper adding the exception shows up as a drop
+ * and the notice about the terminus gets rewritten.
  */
 export function closedToBuses(tags: any): boolean {
   if (['yes', 'designated'].includes(tags.bus) || ['yes', 'designated'].includes(tags.psv)) return false;

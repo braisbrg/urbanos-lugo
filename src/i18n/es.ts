@@ -66,7 +66,7 @@ export const es: Dict = {
   },
 
   service: {
-    weekday: 'De lunes a viernes (laborables)',
+    weekday: 'Laborables',
     weekend: 'Fines de semana y festivos',
     everyday: 'Todos los días',
     checkTimetable: 'Consultar horario',
@@ -164,6 +164,8 @@ export const es: Dict = {
       `${stops} ${stops === 1 ? 'parada' : 'paradas'} · ${minutes} min`,
     viaStops: 'Paradas por las que pasa',
     editTrip: 'Cambiar origen o destino',
+    backToAnswer: 'Volver al resultado',
+    recentRoutes: 'Tus últimas rutas',
     quickDestinations: 'Destinos rápidos habituales:',
     noRouteFound: 'No se encontró una combinación óptima. Prueba con otra calle o parada cercana.',
     transferFreeNotice:
@@ -193,6 +195,8 @@ export const es: Dict = {
     measuredWalkTitle: 'A pie, medido',
     walkLeg: (metres: number, minutes: number) => `A pie · ${metres} m · ${minutes} min`,
     tripInfoTitle: 'Información',
+    unreachableWalk: 'Con el paseo medido ya no llegas a este bus',
+    stepByStepTitle: 'Paso a paso',
     timeProvenanceMeasured:
       'Los tramos a pie están medidos por el enrutador peatonal de OpenStreetMap, no estimados. Las horas de bus siguen viniendo del cuadro horario oficial; las marcadas con ~ se deducen del tiempo de recorrido medido por carretera.',
     noWaitNoFare: 'sin esperas ni billete',

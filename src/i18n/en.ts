@@ -77,7 +77,7 @@ export const en: Dict = {
   },
 
   service: {
-    weekday: 'Monday to Friday (weekdays)',
+    weekday: 'Weekdays',
     weekend: 'Weekends and public holidays',
     everyday: 'Every day',
     checkTimetable: 'See timetable',
@@ -175,6 +175,8 @@ export const en: Dict = {
       `${stops} ${stops === 1 ? 'stop' : 'stops'} · ${minutes} min`,
     viaStops: 'Stops along the way',
     editTrip: 'Change origin or destination',
+    backToAnswer: 'Back to the answer',
+    recentRoutes: 'Your recent trips',
     quickDestinations: 'Common destinations:',
     noRouteFound: 'No good combination found. Try another street or a nearby stop.',
     transferFreeNotice:
@@ -204,6 +206,8 @@ export const en: Dict = {
     measuredWalkTitle: 'On foot, measured',
     walkLeg: (metres: number, minutes: number) => `On foot · ${metres} m · ${minutes} min`,
     tripInfoTitle: 'Details',
+    unreachableWalk: 'The measured walk no longer gets you to this bus',
+    stepByStepTitle: 'Step by step',
     timeProvenanceMeasured:
       'The walking legs are measured by the OpenStreetMap pedestrian router, not estimated. Bus times still come from the official timetable; those marked ~ are worked out from the driving time measured along the road.',
     noWaitNoFare: 'no waiting, no fare',

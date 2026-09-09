@@ -19,6 +19,7 @@ import { formatMinutes, parseTimeToMinutes } from '../utils/schedule';
 import { planTrips, resolveLocationQuery, estimateWalk, LONG_WAIT_MIN, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
 import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
+import { useRecentRoutes } from '../hooks/useRecentRoutes';
 // Same reason as the map tab: Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
@@ -84,11 +85,26 @@ function withMeasuredWalk(plan: RoutePlanResult, fix: WalkCorrection) {
    * for a stroll they take after the bus has already gone.
    */
   const absorbed = Math.min(fix.before, plan.slackMinutes);
-  const total = fix.before + fix.after;
+  /*
+   * What the cushion could not absorb is not lateness. It is a missed bus.
+   *
+   * Setting off `fix.before` minutes earlier than the plan says is only possible while
+   * there is cushion to spend. Past that the departure would be before now, which has
+   * already happened -- so the reader does not board that bus at all, and the arrival it
+   * would have given is a time nobody can reach. Measured over 1,017 options with a bus,
+   * 180 of them (18%) were showing exactly that.
+   *
+   * So the arrival is left alone and the option says what is true: with the walk as
+   * measured, this one is gone. The view replans once from the real walk before it
+   * settles for saying so.
+   */
+  const missedBy = fix.before - absorbed;
   return {
+    reachable: missedBy <= 0,
+    missedBy,
     departure: shiftClock(plan.departureTime, -absorbed),
-    arrival: shiftClock(plan.arrivalTime, fix.before - absorbed + fix.after),
-    durationMinutes: plan.durationMinutes + total,
+    arrival: shiftClock(plan.arrivalTime, fix.after),
+    durationMinutes: plan.durationMinutes + absorbed + fix.after,
   };
 }
 
@@ -162,6 +178,8 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     origin: toPoint(resolveLocationQuery('Fonte dos Ranchos')),
     destination: toPoint(resolveLocationQuery('Hospital Lucus Augusti (HULA)')),
   }));
+
+  const [recentRoutes, rememberRoute, clearRecentRoutes] = useRecentRoutes();
 
   const [showMap, setShowMap] = useState(true);
   /** Where the button on the map jumps to. */
@@ -325,10 +343,18 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
        * and the cushion is left alone.
        */
       const ridesABus = plan.segments.some((s) => s.type === 'bus');
+      // What the plan itself allowed for the walk to the first stop. Usually the estimate,
+      // because that is all the planner had -- but once a measured walk has been handed
+      // back to `planTrips`, the plan is already built on the real one and charging the
+      // difference a second time would move a departure that is already right.
+      const planned = plan.segments[0]?.type === 'walk' ? plan.segments[0].durationMinutes : undefined;
       let before = 0;
       let after = 0;
       hops.forEach(([a, b], i) => {
-        const estimate = estimateWalk(getDistanceMeters(a[0], a[1], b[0], b[1])).minutes;
+        const estimate =
+          i === 0 && planned !== undefined
+            ? planned
+            : estimateWalk(getDistanceMeters(a[0], a[1], b[0], b[1])).minutes;
         const diff = (measured[i] as WalkingPath).minutes - estimate;
         if (i === 0 && ridesABus) before += diff;
         else after += diff;
@@ -339,6 +365,60 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   );
 
   const walkCorrection = correctionFor(planResult);
+
+  /**
+   * Ask again when the measured walk has already cost the reader the bus.
+   *
+   * The plan is built from the estimated walk (straight line x 1.35) and the router then
+   * measures the real pavement. When the walk to the first stop turns out longer than the
+   * cushion the plan handed back as a later departure, setting off in time would mean
+   * setting off before now — the bus is gone. Measured over 1,017 options with a bus in
+   * them, 180 were being shown with an arrival on a bus the reader could not catch.
+   *
+   * Patching the clock is the wrong answer: it would print a time that exists nowhere. So
+   * the question is asked again as if the reader set off `missedBy` minutes later, which
+   * is exactly the debt the estimate ran up. Every plan that comes back then departs late
+   * enough for the same walk to fit.
+   *
+   * Once, and only once. The new plan may board somewhere else, whose walk is measured
+   * again and can be wrong in its own way; going round a second time can oscillate
+   * between two boarding points forever. If the second answer still does not reach, the
+   * option says so — see `withMeasuredWalk`.
+   */
+  useEffect(() => {
+    if (replannedRef.current || !planResult) return;
+    const shown = withMeasuredWalk(planResult, walkCorrection);
+    if (shown.reachable) return;
+    replannedRef.current = true;
+    const { orig, dest, opts } = askedRef.current;
+    /*
+     * Hand back every walk the router has already traced, keyed by the stop it leads to.
+     *
+     * Shifting the clock instead was the first attempt and it barely moved: asked again
+     * at a later minute the planner still ranks its boarding stops on the straight-line
+     * estimate, so it picks a different wrong stop. Measured over 312 questions, the
+     * answer on screen was unreachable in 47 of them; moving the clock left 39, handing
+     * the measurements over leaves 34. What is left boards somewhere nobody has measured
+     * yet, and it says so rather than guessing again.
+     */
+    const known = new Map<string, number>();
+    for (const option of shownOptions) {
+      const boarding = option.segments.find((seg) => seg.type === 'bus')?.fromStop;
+      const first = walkHopsOf(option, endpoints.origin, endpoints.destination)[0];
+      if (!boarding || !first) continue;
+      const path = walkPaths[walkHopKey(first[0], first[1])];
+      if (path) known.set(boarding.id, path.minutes);
+    }
+    const again = planTrips(orig, dest, {
+      ...opts,
+      lang,
+      measuredWalkToStop: (id) => known.get(id),
+    });
+    // Nothing better exists at the later time: keep what is on screen, marked.
+    if (!again.length) return;
+    setPlanOptions(again);
+    setChosenOption(0);
+  }, [planResult, walkCorrection, lang]);
 
   /**
    * On a phone the form is 352 px and the quick destinations another 235, so the
@@ -368,6 +448,21 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   const t = translations(lang);
 
   // Recalculate route whenever queries or user location change
+  /**
+   * The question the plans on screen are answering.
+   *
+   * Not the fields: somebody can type a new origin without pressing the button, and a
+   * replan that used those would silently answer a question nobody asked.
+   */
+  const askedRef = useRef({
+    orig: 'Fonte dos Ranchos',
+    dest: 'Hospital Lucus Augusti (HULA)',
+    gps: undefined as [number, number] | undefined,
+    opts: {} as { userLocation?: [number, number]; departAt?: number; arriveBy?: number },
+  });
+  /** One replan per question, and no more. See the effect that uses it. */
+  const replannedRef = useRef(false);
+
   const timeOptions = () => {
     const [h, m] = timeValue.split(':').map(Number);
     const minutes = (h || 0) * 60 + (m || 0);
@@ -378,7 +473,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
   const handleCalculate = (orig = originQuery, dest = destQuery, gps = userLocation) => {
     if (!orig.trim() || !dest.trim()) return;
-    const plans = planTrips(orig, dest, { ...timeOptions(), userLocation: gps, lang });
+    const opts = { ...timeOptions(), userLocation: gps };
+    askedRef.current = { orig, dest, gps, opts };
+    replannedRef.current = false;
+    const plans = planTrips(orig, dest, { ...opts, lang });
     setPlanOptions(plans);
     setChosenOption(0);
     // A new question gets the short list again.
@@ -386,7 +484,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     // Answering is what folds the form away. A search that found nothing leaves it
     // open, because the next thing to do is change what you asked for.
     setAsked(true);
-    if (plans.length) setFormOpen(false);
+    if (plans.length) {
+      setFormOpen(false);
+      rememberRoute({ from: orig, to: dest });
+    }
     setEndpoints({
       origin: toPoint(resolveLocationQuery(orig, gps)),
       destination: toPoint(resolveLocationQuery(dest, gps)),
@@ -483,15 +584,21 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
       <div className="lg:grid lg:grid-cols-12 lg:gap-6">
         {/* Left Column: Origin & Destination Inputs */}
         <div ref={formRef} className="space-y-4 lg:col-span-5 lg:sticky lg:top-4 lg:self-start">
-          {/* What you asked for, in one line, when the form is folded away.
+          {/* What you asked for, in one line, and the way in and out of the fields.
               A line, not a card. It was a bordered box with its own fill and shadow,
               which is the same weight the answer below it carries and twice what a
               breadcrumb needs -- it read as a second panel rather than as the heading of
-              the one underneath. The chrome is gone and the row keeps its 44 px target. */}
-          {asked && !formOpen && (
+              the one underneath. The chrome is gone and the row keeps its 44 px target.
+
+              It used to disappear the moment the fields opened, which left the screen
+              with no way back: `setFormOpen(false)` only ran on a successful search, so
+              somebody who opened the fields to look and changed their mind had to run
+              another search to get out. Now the row stays, and it closes what it opened. */}
+          {asked && (
             <button
               type="button"
-              onClick={() => setFormOpen(true)}
+              onClick={() => setFormOpen(!formOpen)}
+              aria-expanded={formOpen}
               className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden"
             >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
@@ -502,7 +609,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 {originQuery} → {destQuery}
               </span>
               <span className="shrink-0 text-label font-semibold text-accent underline">
-                {t.planner.editTrip}
+                {formOpen ? t.planner.backToAnswer : t.planner.editTrip}
               </span>
             </button>
           )}
@@ -666,11 +773,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 <button
                   id="btn-swap-stops"
                   onClick={handleSwap}
-                  className="absolute left-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-bg text-ink-2 shadow-xs"
+                  className="absolute left-1 top-1/2 flex h-11 w-11 -translate-x-1 -translate-y-1/2 items-center justify-center rounded-full text-ink-2 before:absolute before:h-9 before:w-9 before:rounded-full before:border before:border-edge before:bg-bg before:shadow-xs"
                   aria-label={t.planner.swap}
                   title={t.planner.swap}
                 >
-                  <ArrowDownUp className="h-4 w-4" />
+                  {/* Above the disc the pseudo-element draws, not under it. */}
+                  <ArrowDownUp className="relative h-4 w-4" />
                 </button>
               </div>
 
@@ -719,11 +827,61 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
             {/* Quick Destinations. Gone from the phone once there is a plan: eight
                 chips of "where to?" under an answer to that very question. */}
+            {/* Folded away with the form, and back when the form is.
+                This hid on `asked` alone, so after the first search the shortcuts never
+                returned on a phone even with the fields reopened — which is exactly when
+                somebody wants them, and the only moment the list of your own trips is any
+                use at all. The form itself has always used this rule. */}
             <div
-              className={`mt-5 pt-4 border-t border-line ${
-                asked ? 'hidden lg:block' : ''
+              className={`mt-5 space-y-4 border-t border-line pt-4 ${
+                asked && !formOpen ? 'hidden lg:block' : ''
               }`}
             >
+              {/* Your own trips first, then everybody's.
+                  The shortcuts below are the places most people in Lugo ask for; this is
+                  the one trip you ask for twice a day. It only appears once there is one,
+                  so a first visit sees exactly what it saw before. */}
+              {recentRoutes.length > 0 && (
+                <div>
+                  <div className="mb-2 flex items-baseline justify-between gap-3">
+                    <span className="text-label font-bold uppercase tracking-wider text-ink-2">
+                      {t.planner.recentRoutes}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={clearRecentRoutes}
+                      className="inline-flex h-11 items-center text-label font-semibold text-accent underline"
+                    >
+                      {t.stopHome.clearRecent}
+                    </button>
+                  </div>
+                  <div className="flex flex-col">
+                    {recentRoutes.map((route, idx) => (
+                      <button
+                        key={`${route.from}>${route.to}`}
+                        type="button"
+                        onClick={() => {
+                          setOriginQuery(route.from);
+                          setDestQuery(route.to);
+                          handleCalculate(route.from, route.to);
+                        }}
+                        className={`flex min-h-11 w-full items-center gap-2 py-1.5 text-left ${
+                          idx > 0 ? 'border-t border-t-line' : ''
+                        }`}
+                      >
+                        <Navigation className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
+                        <span className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
+                          {route.from}
+                          <span className="px-1 text-ink-3" aria-hidden="true">→</span>
+                          {route.to}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
               <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">{t.planner.quickDestinations}</span>
               {/* A rail on a phone, wrapping from sm: up.
                   Six pills of 44 px in two columns measured 194 px on a 375x812 -- a
@@ -739,7 +897,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       setDestQuery(qp.query);
                       handleCalculate(originQuery, qp.query);
                     }}
-                    className={`h-8 shrink-0 snap-start whitespace-nowrap rounded-full px-3 text-label font-semibold inline-flex items-center transition-colors ${
+                    className={`inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full px-3.5 text-label font-semibold transition-colors ${
                       destQuery.includes(qp.label) || destQuery === qp.query
                         ? 'bg-accent text-on-accent'
                         : 'bg-surface text-ink-2'
@@ -749,12 +907,20 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   </button>
                 ))}
               </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Right Column: Route Result & Step by Step Itinerary */}
-        <div className={`space-y-4 lg:col-span-7 lg:block ${asked ? '' : 'hidden'}`}>
+        {/* The fields and the answer take turns on a phone.
+            Reopening the fields used to leave the previous answer underneath them: the
+            trip you were still editing pushed 410 px down the page, behind the fields,
+            your recent trips and the shortcuts, at 0.60 of a screen instead of 0.09. The
+            row above keeps the trip in sight while you edit, so nothing is lost by
+            standing the detail down until there is a new answer. From `lg` up both fit
+            side by side and neither hides. */}
+        <div className={`space-y-4 lg:col-span-7 lg:block ${asked && !formOpen ? '' : 'hidden'}`}>
           {planResult ? (
             /* One rhythm, declared once.
                Every block in here carried its own bottom margin -- mb-4, mb-5, mt-3, mt-6
@@ -804,6 +970,15 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     ~{withMeasuredWalk(planResult, walkCorrection).arrival}
                   </span>
                 </span>
+                {/* The one thing that must not be quiet: these times are for a bus the
+                    measured walk no longer reaches. The planner already asked again from
+                    the real walk; this is what is left when that found nothing better. */}
+                {!withMeasuredWalk(planResult, walkCorrection).reachable && (
+                  <span className="flex w-full items-center gap-2 rounded-md border border-warn bg-warn px-2.5 py-1.5 text-label font-bold text-warn-ink">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-estimated" aria-hidden="true" />
+                    {t.planner.unreachableWalk}
+                  </span>
+                )}
               </div>
 
                 {/* The small print, folded.
@@ -949,12 +1124,14 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       // "4 min de espera · 1 transbordo" onto a second line. The words
                       // stay for a screen reader, which is read the badges as bare
                       // numbers and cannot see the arrow between them.
-                      const notes = [
-                        option.totalWaitMinutes > 0 && option.totalWaitMinutes <= LONG_WAIT_MIN
-                          ? t.planner.waitShort(option.totalWaitMinutes)
-                          : '',
-                        busLegs.length === 0 ? t.planner.noWaitNoFare : '',
-                      ].filter(Boolean);
+                      const notes = shown.reachable
+                        ? [
+                            option.totalWaitMinutes > 0 && option.totalWaitMinutes <= LONG_WAIT_MIN
+                              ? t.planner.waitShort(option.totalWaitMinutes)
+                              : '',
+                            busLegs.length === 0 ? t.planner.noWaitNoFare : '',
+                          ].filter(Boolean)
+                        : [];
                       return (
                         <button
                           key={idx}
@@ -1001,6 +1178,11 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             {notes.length > 0 && (
                               <span className="block text-label text-ink-3">{notes.join(' · ')}</span>
                             )}
+                            {!shown.reachable && (
+                              <span className="block truncate text-label font-semibold text-warn-ink">
+                                {t.planner.unreachableWalk}
+                              </span>
+                            )}
                             {busLegs.length > 1 && (
                               <span className="sr-only">{t.planner.transfersShort(busLegs.length - 1)}</span>
                             )}
@@ -1023,7 +1205,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                         type="button"
                         onClick={() => setShowAllOptions(!showAllOptions)}
                         aria-expanded={optionsExpanded}
-                        className="flex min-h-9 w-full items-center justify-center gap-1.5 border-t border-t-line text-label font-semibold text-ink-3"
+                        className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-t-line text-label font-semibold text-ink-3"
                       >
                         {optionsExpanded
                           ? t.planner.fewerOptions
@@ -1095,10 +1277,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           block: 'start',
                         });
                       }}
-                      className="absolute left-1/2 top-3 z-[500] flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-accent bg-bg/90 px-3 py-1.5 text-label font-semibold text-ink shadow-sm backdrop-blur-sm"
+                      className="absolute left-1/2 top-0 z-[500] flex h-11 -translate-x-1/2 items-center px-2"
                     >
-                      {t.planner.stepByStepTitle}
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-accent" strokeWidth={2.5} aria-hidden="true" />
+                      <span className="flex items-center gap-1.5 rounded-full border border-accent bg-bg/90 px-3 py-1.5 text-label font-semibold text-ink shadow-sm backdrop-blur-sm">
+                        {t.planner.stepByStepTitle}
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-accent" strokeWidth={2.5} aria-hidden="true" />
+                      </span>
                     </button>
                   </div>
                 )}

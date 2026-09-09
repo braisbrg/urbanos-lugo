@@ -25,6 +25,16 @@ interface RouteMapProps {
 /* Map furniture is drawn over CARTO's tiles, which do not change with the app theme, so
    these colours are fixed rather than tokenised. Reading the theme here also baked the
    value at layer-creation time: switching to dark left light-on-light pins at 2.15:1. */
+/**
+ * Room the fit leaves around the trip, as Leaflet wants it: [x, y].
+ *
+ * More at the top than anywhere else, because the "Paso a paso" chip sits up there and a
+ * route fitted to the whole box runs underneath it. Twenty-eight is the margin that keeps
+ * a pin off the edge; the top gets the chip's height on top of that.
+ */
+const FIT_TOP_LEFT: [number, number] = [28, 56];
+const FIT_BOTTOM_RIGHT: [number, number] = [28, 28];
+
 /** Rough relative luminance of a #rrggbb colour, enough to pick black or white ink. */
 function isLight(hex: string): boolean {
   const n = parseInt(hex.replace('#', ''), 16);
@@ -65,6 +75,18 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
+  /**
+   * The trip this map is meant to be showing, kept so the view can be put back.
+   *
+   * `fitBounds` fits the container as it is at that instant, and this map is built inside
+   * a column that is `display: none` on a phone until the reader asks for a plan, then
+   * revealed, then resized again when the browser chrome slides away. Leaflet's answer to
+   * a resize is `invalidateSize`, which restores the size and leaves the view where it
+   * was -- so the map keeps a zoom worked out for a box that no longer exists and clips
+   * the trip down to a couple of streets. Caught on a 375x812: the route drawn 118x288
+   * inside a 297x240 map, three of its twenty-nine pieces still on screen.
+   */
+  const shownRef = useRef<L.LatLngBounds | null>(null);
   const geometryReady = useRouteGeometry();
   const tilesRef = useRef<BasemapLayer | null>(null);
   const isDark = useIsDark();
@@ -89,7 +111,17 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     setMap(instance);
 
     const observer =
-      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => instance.invalidateSize()) : null;
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            instance.invalidateSize();
+            // Only when the trip has actually fallen off the map. A reader who zoomed in
+            // on their own keeps their view; a box that changed under them does not.
+            const want = shownRef.current;
+            if (want?.isValid() && !instance.getBounds().contains(want)) {
+              instance.fitBounds(want, { paddingTopLeft: FIT_TOP_LEFT, paddingBottomRight: FIT_BOTTOM_RIGHT, maxZoom: 16 });
+            }
+          })
+        : null;
     observer?.observe(el);
 
     return () => {
@@ -206,7 +238,10 @@ export const RouteMap: React.FC<RouteMapProps> = ({
       bounds.extend(end);
     }
 
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
+    if (bounds.isValid()) {
+      shownRef.current = bounds;
+      map.fitBounds(bounds, { paddingTopLeft: FIT_TOP_LEFT, paddingBottomRight: FIT_BOTTOM_RIGHT, maxZoom: 16 });
+    }
 
     return () => {
       group.remove();

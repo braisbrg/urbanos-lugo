@@ -286,7 +286,12 @@ async function mapTab(browser: Browser): Promise<void> {
   report('canvases', `${after.canvases - before.canvases}`, `${before.canvases} -> ${after.canvases}`);
   report('map containers', `${after.maps - before.maps}`, `${before.maps} -> ${after.maps}`);
   report('DOM nodes', `${after.nodes - before.nodes}`, `${before.nodes} -> ${after.nodes}`);
-  budget('net event listeners added', probe.listeners - startListeners, 40, 'listeners');
+  budget('net listeners left on window/document', probe.listeners - startListeners, 4, 'listeners');
+  const grew = Object.entries(probe.listenerKinds).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  if (grew.length) {
+    console.log('    what was added and never taken off:');
+    for (const [kind, n] of grew) console.log(`      ${String(n).padStart(4)}  ${kind}`);
+  }
   budget('net intervals left running', probe.intervals - startIntervals, 2, 'timers');
   budget('heap held after twelve laps', (after.heap - before.heap) / 1048576, 3, 'MB');
 
@@ -511,7 +516,7 @@ async function longSession(browser: Browser): Promise<void> {
   report('DOM nodes', `${after.nodes - before.nodes}`, `${before.nodes} -> ${after.nodes}`);
   budget('heap held after the session', (after.heap - before.heap) / 1048576, 3, 'MB');
   report('heap, before and after', mb(after.heap - before.heap), `${mb(before.heap)} -> ${mb(after.heap)}`);
-  budget('net event listeners added', probe.listeners - start.listeners, 20, 'listeners');
+  budget('net listeners left on window/document', probe.listeners - start.listeners, 4, 'listeners');
   budget('net intervals left running', probe.intervals - start.intervals, 2, 'timers');
   budget('main thread blocked over the session', blockingMs(probe), 2000);
   report('longest single task', `${Math.max(0, ...probe.longtasks.map(([, d]) => d)).toFixed(0)} ms`, `${probe.longtasks.length} long tasks`);

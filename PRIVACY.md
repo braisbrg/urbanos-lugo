@@ -11,7 +11,7 @@ form one from.
 
 ## Kept on your device, and only there
 
-Five things are saved in your browser's `localStorage`. They never leave it: nothing in
+Six things are saved in your browser's `localStorage`. They never leave it: nothing in
 this project reads them and sends them anywhere.
 
 | Key | What it holds |
@@ -19,8 +19,15 @@ this project reads them and sends them anywhere.
 | `urbanos_lugo_fav_stops` | the stops you starred |
 | `urbanos_lugo_fav_lines` | the lines you starred |
 | `urbanos-lugo-recent-stops` | the last stops you opened, as ids |
+| `urbanos-lugo-recent-routes` | the last four trips you planned, as you typed them |
 | `urbanos-lugo-lang` | Galician, Spanish or English |
 | `urbanos-lugo-theme` | light, dark or automatic |
+
+One of those is not like the others. A stop id means nothing without the dataset it
+indexes into, but `urbanos-lugo-recent-routes` holds the words you typed — and if you
+typed your street, your street is what it holds. It is kept so you do not have to type
+the same trip twice, it is capped at four, and "Borrar" beside the list removes it. As
+with everything above, nothing in this project reads it back out or sends it anywhere.
 
 Clearing your browser's site data removes all of it. There is no copy anywhere else.
 

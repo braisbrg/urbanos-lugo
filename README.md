@@ -970,11 +970,14 @@ proba, entre un 10% e un 22%, mantendo o ton. Medido no navegador, os fallos de 
 pasaron de **84 de 400 elementos a 0**, e `pnpm test` xa non deixa entrar unha cor ilexible.
 
 **Obxectivos táctiles e tipografía.** Despois do redeseño, os catro tabs, o detalle de
-liña, o menú e a vista de avisos non teñen ningún elemento interactivo por debaixo de
-44×44 px nin texto por debaixo de 12 px, medido no navegador en claro e escuro. As
-excepcións que quedan son deliberadas: os pines do mapa (28–32 px, un pin de 44 taparía
-a rúa), a atribución obrigatoria de Leaflet e as ligazóns dentro dunha frase, que a
-WCAG 2.5.5 exime expresamente.
+liña, o menú, a vista de avisos e o planificador de ruta non teñen ningún elemento
+interactivo por debaixo de 44×44 px nin texto por debaixo de 12 px, medido no navegador
+en claro e escuro. O planificador entrou nesa lista máis tarde ca o resto: nunca se
+auditara, e tiña nove obxectivos por debaixo —o botón de inverter a 36×36 e os oito
+atallos de destino a 32 de alto—. Pasaban o mínimo da WCAG 2.2 (24 px) e non o desta
+casa. As excepcións que quedan son deliberadas: os pines do mapa (28–32 px, un pin de 44
+taparía a rúa), a atribución obrigatoria de Leaflet e as ligazóns dentro dunha frase, que
+a WCAG 2.5.5 exime expresamente.
 
 **Modo escuro e escala do sistema.** **O tema por defecto é o escuro**, e claro ou automático lémbranse só se se escollen:
 isto lese de pé nun poste, moitas veces xa de noite, e un móbil en claro todo o día

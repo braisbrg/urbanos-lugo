@@ -150,8 +150,8 @@ export const LinesView: React.FC<LinesViewProps> = ({
         <div
           className={`space-y-4 lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? 'hidden' : ''}`}
         >
-          <div className="rounded-xl border border-edge bg-bg p-4 lg:p-5">
-            <div className="mb-4">
+          <div className="space-y-4 bg-bg rounded-xl border border-edge p-4 lg:p-5">
+            <div>
               <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
                 <Route className="w-4 h-4 text-accent" />
                 {t.lines.title}
@@ -180,7 +180,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.lines.searchLines}
               aria-label={t.lines.searchLines}
-              className="my-3 h-11 w-full rounded-[9px] border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3 focus:outline-none"
+              className="h-11 w-full rounded-[9px] border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3 focus:outline-none"
             />
 
             <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
@@ -201,35 +201,54 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       setShowDetail(true);
                     }}
                     style={{ '--line': line.color } as React.CSSProperties}
-                    className={`tint tint-strong w-full p-3.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-3 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
+                    className={`tint tint-strong w-full px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-2.5 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <span
-                        className="w-10 h-10 rounded-md flex items-center justify-center font-black text-white text-body shadow-xs shrink-0"
+                        className="w-9 h-9 rounded-md flex items-center justify-center font-black text-white text-body shadow-xs shrink-0"
                         style={{ backgroundColor: line.color }}
                       >
                         {line.number}
                       </span>
                       <div className="min-w-0">
-                        <div className="font-bold text-body text-ink leading-tight flex items-center gap-1.5 truncate">
-                          <span className="truncate" title={line.name}>
-                            {line.name}
+                        {/* Keep the end of the name, not the beginning.
+                            The names are "A - B" and A is shared: nine distinct openings
+                            across twenty-four lines, so 1.1, 1.2 and 1.4 all truncated to
+                            "Opuesto Piscina Pedreira…" and the list asked the reader to
+                            open each one to find out which was which. The far end is the
+                            half that varies -- seventeen distinct -- so it is the half
+                            that must survive a narrow row. The whole name is still on the
+                            row's own tooltip. */}
+                        <div
+                          className="font-bold text-body text-ink leading-tight flex items-baseline gap-1.5 min-w-0"
+                          title={line.name}
+                        >
+                          <span className="hidden truncate text-ink-2 font-semibold sm:inline">
+                            {line.name.split(' - ').slice(0, -1).join(' - ')}
                           </span>
+                          <span className="hidden shrink-0 sm:inline" aria-hidden="true">–</span>
+                          <span className="truncate">{line.name.split(' - ').slice(-1)[0]}</span>
                           {isFavourite && (
-                            <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0" />
+                            <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0 self-center" />
                           )}
                         </div>
-                        <div className="text-label text-ink-2 mt-0.5 flex items-center gap-2 flex-wrap">
-                          <span>{frequencyLabel(line, lang)}</span>
-                          <span>&bull;</span>
-                          <span>{daysLabel(line, lang)}</span>
+                        <div className="text-label text-ink-2 mt-0.5 flex min-w-0 items-center gap-2">
+                          <span className="shrink-0">{frequencyLabel(line, lang)}</span>
+                          <span className="shrink-0">&bull;</span>
+                          <span className="truncate">{daysLabel(line, lang)}</span>
                           {running.length > 0 && (
                             <span
                               title={t.lines.enRouteHint}
-                              className="flex items-center gap-0.5 text-ink-2 font-bold text-label bg-surface px-1.5 py-0.2 rounded border border-edge"
+                              className="flex shrink-0 items-center gap-0.5 text-ink-2 font-bold text-label bg-surface px-1.5 py-0.2 rounded border border-edge"
                             >
-                              <Bus className="w-2.5 h-2.5 text-ink-3" />
-                              {t.lines.enRoute(running.length)}
+                              {/* The bus and the count, not the sentence. "1 en ruta" is
+                                  45 px of a 253 px line, and it was taking them off the
+                                  service days -- which is the only thing separating 1.2
+                                  from 1.4, both "Opuesto Piscina Pedreiras - HULA". The
+                                  words stay for a screen reader and on the tooltip. */}
+                              <Bus className="w-2.5 h-2.5 text-ink-3" aria-hidden="true" />
+                              <span aria-hidden="true">{running.length}</span>
+                              <span className="sr-only">{t.lines.enRoute(running.length)}</span>
                             </span>
                           )}
                         </div>
@@ -257,7 +276,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
             {t.lines.backToLines}
           </button>
 
-          <div className="bg-bg rounded-xl p-6 shadow-sm border border-edge">
+          <div className="space-y-4 bg-bg rounded-xl p-6 shadow-sm border border-edge">
             <div className="flex flex-col justify-between gap-4 border-b border-line pb-5 xl:flex-row xl:items-center">
               <div className="flex items-center gap-4">
                 <span
@@ -324,23 +343,23 @@ export const LinesView: React.FC<LinesViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-              <div className="p-3 rounded-md bg-surface border border-line">
-                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border border-line bg-surface/50 p-3 sm:grid-cols-3">
+              <div>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3">
                   <Clock className="w-3.5 h-3.5 text-accent" />
                   <span>{t.lines.frequency}</span>
                 </div>
                 <div className="text-body font-semibold">{frequencyLabel(currentLine, lang)}</div>
               </div>
-              <div className="p-3 rounded-md bg-surface border border-line">
-                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+              <div>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3">
                   <Calendar className="w-3.5 h-3.5 text-accent" />
                   <span>{t.lines.days}</span>
                 </div>
                 <div className="text-body font-semibold">{daysLabel(currentLine, lang)}</div>
               </div>
-              <div className="p-3 rounded-md bg-surface border border-line col-span-2 sm:col-span-1">
-                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+              <div>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3">
                   <Bus className="w-3.5 h-3.5 text-accent" />
                   <span>{t.lines.serviceHours}</span>
                 </div>
@@ -348,13 +367,14 @@ export const LinesView: React.FC<LinesViewProps> = ({
                   {currentLine.firstDeparture} - {currentLine.lastDeparture}
                 </div>
               </div>
-            </div>
 
-            {/* Three things the dataset has always known and the page never said. They
-                belong to the direction, not the line, so they change with the selector. */}
-            <div className="grid grid-cols-3 gap-3 mt-3">
-              <div className="p-3 rounded-md bg-surface border border-line">
-                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+            {/* Three more things the dataset has always known and the page never said.
+                They belong to the direction, not the line, so they change with the
+                selector — but they are still six facts about one line, and two bordered
+                blocks with a gap between them cost the border, the padding and the gap
+                twice to say so. */}
+              <div>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3">
                   <Route className="w-3.5 h-3.5 text-accent" />
                   <span>{t.lines.routeLength}</span>
                 </div>
@@ -362,15 +382,15 @@ export const LinesView: React.FC<LinesViewProps> = ({
                   {t.lines.kilometres((direction.totalMeters / 1000).toFixed(1))}
                 </div>
               </div>
-              <div className="p-3 rounded-md bg-surface border border-line">
-                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+              <div>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3">
                   <MapPin className="w-3.5 h-3.5 text-accent" />
                   <span>{t.lines.routeStops}</span>
                 </div>
                 <div className="font-bold text-body text-ink font-mono">{direction.stops.length}</div>
               </div>
-              <div className="p-3 rounded-md bg-surface border border-line" title={t.lines.routeDurationHint}>
-                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3 mb-1">
+              <div title={t.lines.routeDurationHint}>
+                <div className="flex items-center gap-1.5 text-label font-bold text-ink-3">
                   <Clock className="w-3.5 h-3.5 text-accent" />
                   <span>{t.lines.routeDuration}</span>
                 </div>
@@ -392,7 +412,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 translated and once not. The field stays: the search matches against it. */}
 
             {direction.geometrySource && direction.geometrySource !== 'osm' && (
-              <p className="mt-3 flex gap-2 rounded-md border border-line bg-surface/50 p-3 text-label leading-relaxed text-ink-2">
+              <p className="flex gap-2 rounded-md border border-line bg-surface/50 p-3 text-label leading-relaxed text-ink-2">
                 <TriangleAlert
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-3"
                   strokeWidth={2}
@@ -407,7 +427,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
           </div>
 
           <div className="bg-bg rounded-xl p-5 shadow-sm border border-edge">
-            <h3 className="font-bold text-ink text-label uppercase tracking-wider mb-2.5 flex items-center gap-2">
+            <h3 className="font-bold text-ink text-label uppercase tracking-wider mb-2 flex items-center gap-2">
               <Clock className="w-4 h-4 text-accent" />
               {t.lines.scheduleTable} &mdash; {direction.origin.slice(0, 28)} ({departures.length})
             </h3>
@@ -425,8 +445,8 @@ export const LinesView: React.FC<LinesViewProps> = ({
             </div>
           </div>
 
-          <div className="bg-bg rounded-xl p-6 shadow-sm border border-edge">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div className="space-y-4 bg-bg rounded-xl p-6 shadow-sm border border-edge">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
                   <Route className="w-4 h-4 text-accent" />
@@ -452,7 +472,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
             </div>
 
             {shownRun ? (
-              <div className="flex items-center justify-between gap-3 mb-4 p-2.5 rounded-lg bg-surface border border-edge">
+              <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-surface border border-edge">
                 <button
                   onClick={() => setPickedRunIndex(Math.max(0, runIndex - 1))}
                   disabled={runIndex === 0}
@@ -494,12 +514,12 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="mb-4 p-2.5 rounded-lg bg-surface border border-edge text-label font-semibold text-ink-2">
+              <div className="p-2.5 rounded-lg bg-surface border border-edge text-label font-semibold text-ink-2">
                 {t.lines.noRunsToday}
               </div>
             )}
 
-            <div className="relative pl-6 space-y-3.5 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-surface">
+            <div className="relative pl-6 space-y-1.5 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-surface">
               {direction.stops.map((stopId, idx) => {
                 const stop = BUS_STOPS.find((s) => s.id === stopId);
                 if (!stop) return null;
@@ -530,25 +550,30 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center transition-transform group-hover:scale-125 ${busHere ? 'bg-estimated ring-2 ring-estimated animate-pulse' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'}`}
                     />
                     <div
-                      className={`p-3 rounded-lg border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}
+                      className={`px-3 py-2 rounded-lg border transition-all flex items-center justify-between gap-2.5 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-body text-ink group-hover:text-accent transition-colors">
+                      <div className="min-w-0 flex-1">
+                        {/* The stop name is not shortened.
+                            Squeezing the row to one line cut names like "Rda. Muralla
+                            (Obras Públicas)" in half, and the name is the only thing on
+                            the row a reader has to match against a pole. Wrapping costs a
+                            few pixels on the long ones; truncating costs the answer. */}
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2">
+                          <span className="font-bold text-body text-ink transition-colors group-hover:text-accent">
                             {stop.name}
                           </span>
                           {isFirst && (
-                            <span className="text-label font-bold px-1.5 py-0.5 rounded bg-surface text-accent">
+                            <span className="shrink-0 rounded bg-surface px-1.5 py-0.5 text-label font-bold text-accent">
                               {t.lines.origin}
                             </span>
                           )}
                           {isLast && (
-                            <span className="text-label font-bold px-1.5 py-0.5 rounded bg-ink text-bg">
+                            <span className="shrink-0 rounded bg-ink px-1.5 py-0.5 text-label font-bold text-bg">
                               {t.lines.destination}
                             </span>
                           )}
                         </div>
-                        <div className="text-label text-ink-3 mt-0.5">
+                        <div className="mt-0.5 truncate text-label text-ink-3">
                           {stop.zone}
                           {poleCode(stop) && (
                             <>
@@ -560,11 +585,12 @@ export const LinesView: React.FC<LinesViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 self-end sm:self-center flex-wrap">
+                      <div className="flex shrink-0 items-center gap-2.5">
                         {busHere ? (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-official text-on-official text-label font-bold shadow-xs">
+                          <div className="flex shrink-0 items-center gap-1.5 rounded-md bg-official px-1.5 py-1 text-label font-bold text-on-official shadow-xs">
                             <Bus className="h-3.5 w-3.5" aria-hidden="true" />
-                            <span>{t.lines.busScheduledHere}</span>
+                            <span className="hidden sm:inline">{t.lines.busScheduledHere}</span>
+                            <span className="sr-only sm:hidden">{t.lines.busScheduledHere}</span>
                           </div>
                         ) : null}
 
@@ -592,7 +618,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                           </span>
                         </div>
 
-                        <span className="text-label font-bold text-accent opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        <span className="hidden whitespace-nowrap text-label font-bold text-accent opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
                           {t.lines.viewStop} &rarr;
                         </span>
                       </div>

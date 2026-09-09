@@ -81,6 +81,24 @@ export function parseOperatorTimes(html: string): OperatorDeparture[] {
 const cache = new Map<string, OperatorTimes>();
 
 /**
+ * The read already on its way, per stop code.
+ *
+ * The cache only helps once a read has finished, so it does nothing for the requests that
+ * arrive while one is still in flight — they all miss, and every one of them opens its own
+ * connection to buslugo.com. Fifty at once on a cold cache measured as fifty outbound
+ * requests, eight seconds, and 502 for all fifty: the operator's site is not sized for that
+ * and this project has no business sending it.
+ *
+ * It also made the promise above untrue. "One outbound request a minute however many people
+ * are looking" is what the twenty-second cache buys under load, and it only buys it if
+ * concurrent misses wait for the same answer instead of racing.
+ *
+ * Deleted in `finally`, so a failed read is retried by the next caller rather than cached
+ * as a failure.
+ */
+const inFlight = new Map<string, Promise<OperatorTimes | null>>();
+
+/**
  * Null rather than an empty list when the page cannot be read.
  *
  * "No departures" and "we could not ask" are different things, and this app does not get
@@ -90,20 +108,30 @@ export async function operatorTimesForStop(code: string): Promise<OperatorTimes 
   const cached = cache.get(code);
   if (cached && Date.now() - new Date(cached.fetchedAt).getTime() < CACHE_TTL_MS) return cached;
 
-  try {
-    const res = await fetch(`${ENDPOINT}/${encodeURIComponent(code)}`, {
-      headers: { 'User-Agent': UA },
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!res.ok) return null;
-    const result: OperatorTimes = {
-      code,
-      departures: parseOperatorTimes(await readCapped(res)),
-      fetchedAt: new Date().toISOString(),
-    };
-    cache.set(code, result);
-    return result;
-  } catch {
-    return null;
-  }
+  const already = inFlight.get(code);
+  if (already) return already;
+
+  const read = (async (): Promise<OperatorTimes | null> => {
+    try {
+      const res = await fetch(`${ENDPOINT}/${encodeURIComponent(code)}`, {
+        headers: { 'User-Agent': UA },
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (!res.ok) return null;
+      const result: OperatorTimes = {
+        code,
+        departures: parseOperatorTimes(await readCapped(res)),
+        fetchedAt: new Date().toISOString(),
+      };
+      cache.set(code, result);
+      return result;
+    } catch {
+      return null;
+    } finally {
+      inFlight.delete(code);
+    }
+  })();
+
+  inFlight.set(code, read);
+  return read;
 }

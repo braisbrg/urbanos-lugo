@@ -106,6 +106,6 @@ export const FARE_INFO = {
   bonobusTicket: formatEuros(FARES.citizenCard),
   socialTicket: formatEuros(FARES.socialCard),
   transfers: `Transbordo gratuíto nos primeiros ${FARES.freeTransferWindowMinutes} minutos coa Tarxeta Cidadá`,
-  metropolitanCard: 'A Tarxeta do transporte público de Galicia (TMG) tamén é válida na rede urbana de Lugo',
+  metropolitanCard: 'A Tarxeta do Transporte Metropolitano de Galicia (TMG) tamén é válida na rede urbana de Lugo',
   source: 'https://buslugo.com/tarifas',
 };

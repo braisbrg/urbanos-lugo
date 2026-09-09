@@ -327,15 +327,35 @@ export const PROBE_SOURCE = `
       for (const e of list.getEntries()) w.__probe.paint['lcp'] = Math.round(e.startTime);
     }).observe({ type: 'largest-contentful-paint', buffered: true });
   } catch {}
-  // Net listeners and net intervals. A remove that matches nothing still decrements, so
-  // the absolute figure means little -- but across a cycle that should balance, growth is
-  // growth, and that is the only question being asked.
+  // Net listeners on window and document, and net intervals.
+  //
+  // Only those two targets. Counting every addEventListener made this cry wolf: twelve laps
+  // in and out of the map reported 66 net listeners, every one of them on an element --
+  // 34 button clicks, 26 details toggles -- while DOM nodes and heap both went *down*. React
+  // had unmounted those elements, and a discarded node takes its listeners with it without
+  // anyone calling removeEventListener, so the count was measuring remounts.
+  //
+  // window and document outlive every component, so a handler left on them is the thing that
+  // actually accumulates. The listenerKinds tally below keeps the full breakdown for when
+  // the number does move and somebody has to find out which effect registered it.
   w.__probe.listeners = 0;
   w.__probe.intervals = 0;
   const add = EventTarget.prototype.addEventListener;
   const drop = EventTarget.prototype.removeEventListener;
-  EventTarget.prototype.addEventListener = function (...a) { w.__probe.listeners++; return add.apply(this, a); };
-  EventTarget.prototype.removeEventListener = function (...a) { w.__probe.listeners--; return drop.apply(this, a); };
+  // Also by kind, because "66 net listeners" says something grows and not what. The key is
+  // the event name and what it was attached to, which is enough to find the effect that
+  // registered it and never took it off.
+  w.__probe.listenerKinds = {};
+  const tally = (target, type, by) => {
+    try {
+      const where = target === w ? 'window' : target === w.document ? 'document' : (target && target.constructor && target.constructor.name) || '?';
+      const key = where + ' ' + type;
+      w.__probe.listenerKinds[key] = (w.__probe.listenerKinds[key] || 0) + by;
+    } catch {}
+  };
+  const longLived = (t) => t === w || t === w.document;
+  EventTarget.prototype.addEventListener = function (...a) { if (longLived(this)) w.__probe.listeners++; tally(this, a[0], 1); return add.apply(this, a); };
+  EventTarget.prototype.removeEventListener = function (...a) { if (longLived(this)) w.__probe.listeners--; tally(this, a[0], -1); return drop.apply(this, a); };
   // What a keystroke actually cost the finger. The Event Timing API measures from the
   // hardware event to the frame that showed its result, which is the number a person
   // feels; how long the handler ran is a different and much kinder number.
@@ -398,6 +418,7 @@ export interface Probe {
   worstFrame: number;
   frames: number[];
   listeners: number;
+  listenerKinds: Record<string, number>;
   intervals: number;
   resizes: number;
   commits: number;

@@ -174,6 +174,14 @@ export interface RoutePlanResult {
   walkToStartMeters: number;
   walkFromEndMeters: number;
   totalWaitMinutes: number;
+  /**
+   * How much later than asked this plan sets off, because the bus was not there yet.
+   *
+   * The reader is told to leave at `departureTime` rather than to stand at the pole, so
+   * this is the cushion that decision spent. It is also the only cushion available if
+   * the walk turns out longer than the estimate: past it, the bus is gone.
+   */
+  slackMinutes: number;
   isServiceActive: boolean;
   serviceNotice?: string;
   segments: {

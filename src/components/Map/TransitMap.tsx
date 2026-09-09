@@ -328,17 +328,8 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
 
-    /**
-     * Drop Leaflet's own "Leaflet" prefix.
-     *
-     * Nobody is owed it: the terms that bind this map are OpenFreeMap's, OpenMapTiles'
-     * and OpenStreetMap's, and all three stay exactly as they are. The prefix is what
-     * made the line too long — measured on a 375 px screen it wrapped to two lines,
-     * 34 px tall, and the second line was cut off by the tab bar below the map while
-     * the first sat under the locate button. An attribution that is covered is not a
-     * visible attribution, so the shortest honest line is also the compliant one.
-     */
-    instance.attributionControl?.setPrefix(false);
+    // The "Leaflet" prefix is dropped in createBasemap now, for every map that uses it —
+    // this one had it and the route map and the stop mini map did not.
 
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
 

@@ -318,27 +318,35 @@ export default function App() {
       />
 
       {/* Nothing is running: the single most useful thing the app can say at 03:00 is
-          when the first bus goes, so that is the sentence, not a decorated panel. */}
+          when the first bus goes, so that is the sentence, not a decorated panel.
+
+          It was a panel anyway -- 162 px measured on a 375x812, a fifth of the screen, on
+          every tab. With the search bar and the bottom nav that left 513 px for the screen
+          itself, and the route planner's form needs 762. Two lines now, and the whole row
+          is the link to the notices, so "Ver avisos" stops costing a 44 px row of its own.
+
+          The festival sentence stays. It is what keeps "no service" from being a lie on the
+          night of San Froilán -- the operator runs extra buses and only ever announces them
+          as a notice -- so it is shortened and pointed at the notices, never dropped. */}
       {isOutOfService && !isNightBannerDismissed && (
-        <div className="flex items-start gap-3 border-b border-line bg-surface px-3.5 py-3">
-          <Moon className="mt-0.5 h-[18px] w-[18px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
-          <div className="min-w-0 flex-1 text-label leading-relaxed">
-            <p className="text-body font-semibold">
-              {t.nightBanner.closed(firstDepartureTomorrow)}
-            </p>
-            {/* Reinforcements for San Froilán, Noitevella and similar dates exist but the
-                operator only publishes them as a notice when they run, so we point at the
-                notices instead of inventing a night timetable. */}
-            <p className="mt-1 text-ink-3">
-              {t.nightBanner.festivals}
-            </p>
-            <button
-              onClick={() => setActiveTab('info')}
-              className="mt-1.5 h-11 text-label font-semibold text-accent underline underline-offset-2"
-            >
-              {t.nightBanner.seeNotices}
-            </button>
-          </div>
+        <div className="flex items-center gap-1 border-b border-line bg-surface pl-3.5 pr-1">
+          <button
+            onClick={() => setActiveTab('info')}
+            className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left"
+          >
+            <Moon className="h-[18px] w-[18px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-body font-semibold">
+                {t.nightBanner.closed(firstDepartureTomorrow)}
+              </span>
+              {/* The chevron is the affordance for the whole row; the label below is what
+                  a screen reader hears instead of a bare "See notices". */}
+              <span className="block truncate text-label text-ink-3">
+                {t.nightBanner.festivals} ›
+              </span>
+            </span>
+            <span className="sr-only">{t.nightBanner.seeNotices}</span>
+          </button>
           <button
             onClick={() => setIsNightBannerDismissed(true)}
             aria-label={t.nightBanner.dismiss}

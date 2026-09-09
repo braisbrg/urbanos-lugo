@@ -106,6 +106,7 @@ async function main() {
   );
   if (burst.some((r) => r.status >= 500 || r.status === -1)) bad++;
 
+
   console.log('\nand the rate limiter still says no');
   const flood = await Promise.all(
     Array.from({ length: 40 }, (_, i) => hit(`plan ${i}`, '/api/plan?from=Praza%20Maior&to=Fontinas')),
@@ -116,6 +117,60 @@ async function main() {
     console.log('  <-- nothing was refused; the plan cap is not being applied');
     bad++;
   }
+
+  /*
+   * Where it stops keeping up.
+   *
+   * One burst says it survived fifty; it does not say what the ceiling is, and "it holds"
+   * is not a number. So the same request is fired at rising concurrency until something
+   * gives.
+   *
+   * What gives is the rate limiter, and that is the answer rather than a problem with the
+   * measurement: `app.use('/api', rateLimit)` caps one address at 120 requests a minute, so
+   * a client asking harder than that is refused rather than served slowly. The first
+   * attempt at this ran the ramp before the limiter check above and spent that budget, which
+   * turned "14 of 40 refused" into "40 of 40" -- so it runs last, and waits out the window
+   * first, or it measures its own footprints.
+   *
+   * The arrival board rather than the operator proxy: `/agora` answers from a 20 s cache and
+   * would measure the cache, while the board is computed from the dataset on every request,
+   * which is the work this server actually does.
+   */
+  console.log('\nwhere it stops keeping up (arrival board, rising concurrency)');
+  console.log('  waiting out the rate-limit window so this measures the server, not the last test...');
+  await new Promise((r) => setTimeout(r, 61_000));
+
+  const quantile = (xs: number[], q: number) =>
+    [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(xs.length * q))];
+  let served = 0;
+  let firstRefusalAt = 0;
+  for (const level of [1, 10, 25, 50, 100, 200]) {
+    const at = Date.now();
+    const wave = await Promise.all(
+      Array.from({ length: level }, (_, i) => hit(`n${level}-${i}`, '/api/arrivals/uilP')),
+    );
+    const elapsed = Math.max(1, Date.now() - at);
+    const ok200 = wave.filter((r) => r.status === 200);
+    const refused = wave.filter((r) => r.status === 429).length;
+    const failed = wave.filter((r) => r.status >= 500 || r.status === -1).length;
+    served += ok200.length;
+    if (refused && !firstRefusalAt) firstRefusalAt = level;
+
+    const ms = ok200.map((r) => r.ms);
+    console.log(
+      `  ${String(level).padStart(3)} at once   ${String(ok200.length).padStart(3)} served   ` +
+        (ms.length
+          ? `p50 ${String(quantile(ms, 0.5)).padStart(4)} ms   p95 ${String(quantile(ms, 0.95)).padStart(4)} ms   ` +
+            `p99 ${String(quantile(ms, 0.99)).padStart(4)} ms   ${((ok200.length / elapsed) * 1000).toFixed(0).padStart(4)} req/s`
+          : '                                              ') +
+        `${refused ? `   ${String(refused).padStart(3)} refused` : ''}${failed ? `   <-- ${failed} failed` : ''}`,
+    );
+    if (failed) bad++;
+  }
+  console.log(
+    `  ${served} served before the cap, first refusal at ${firstRefusalAt || 'no'} concurrent. ` +
+      'The ceiling is the limiter, not the CPU: over it the server refuses rather than queues.',
+  );
 
   console.log(`\n${bad === 0 ? 'nothing broke' : `${bad} thing(s) worth looking at`}\n`);
   if (bad) process.exitCode = 1;

@@ -23,6 +23,7 @@ import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/a
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
+import type { RoutePlanResult } from '../src/types';
 import { poleCode, FARES } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
@@ -1265,6 +1266,41 @@ ok('every language can plan a trip and gets prose in that language', () => {
     `the itinerary text is identical across languages — the engine is ignoring lang: ` +
       [...byLang].map(([lang, text]) => `${lang}: ${text.slice(0, 70)}`).join('  //  '),
   );
+});
+
+ok('PRIVACY.md lists every key this app writes to the device', () => {
+  // PRIVACY.md is a promise, and the promise is specific: it names the keys and says what
+  // each one holds. A key that gets added without a row here is the document quietly
+  // becoming false — and the row that matters most is the new one, because a saved trip
+  // is text somebody typed and can be their street, where a stop id is meaningless
+  // without the dataset it indexes into.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const privacy = readFileSync(join(root, 'PRIVACY.md'), 'utf8');
+
+  const written = new Set<string>();
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.tsx?$/.test(entry.name)) {
+        const source = readFileSync(full, 'utf8');
+        for (const m of source.matchAll(/localStorage\.(?:setItem|removeItem)\(\s*(?:KEY|storageKey|'([^']+)')/g)) {
+          if (m[1]) written.add(m[1]);
+        }
+        // Keys held in a module constant, which is the shape the hooks use.
+        for (const m of source.matchAll(/^const (?:KEY|storageKey) = '([^']+)';/gm)) written.add(m[1]);
+      }
+    }
+  };
+  walk(join(root, 'src'));
+
+  assert(written.size >= 4, `only found ${written.size} storage keys; the scan has stopped working`);
+  for (const key of written) {
+    assert(
+      privacy.includes(`\`${key}\``),
+      `${key} is written to the device and PRIVACY.md does not mention it`,
+    );
+  }
 });
 
 ok('the answer column spaces its blocks in one place', () => {
@@ -3474,6 +3510,102 @@ ok('the three front doors say the same true things', () => {
   }
   const gl = readFileSync(join(root, 'README.md'), 'utf8');
   assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
+});
+
+await okAsync('no option promises a bus the measured walk cannot reach', async () => {
+  // The plan is built from the estimated walk -- the straight line times 1.35 -- and the
+  // router then measures the pavement. When the walk to the first stop turns out longer
+  // than the cushion the plan handed back as a later departure, setting off in time would
+  // mean setting off before now: the bus is gone, and the arrival on screen is a time
+  // nobody can reach. Measured over 1,015 options with a bus in them, 180 were doing
+  // exactly that and nothing on screen said which.
+  //
+  // Two things answer it, and both are checked here. The planner can be told the walks
+  // that have been measured, so a stop that is really twelve minutes away stops passing
+  // for five *before* the candidates are ranked rather than after -- over 312 questions
+  // that took the unreachable answers from 47 to 5. And whatever survives that is
+  // labelled instead of repaired, because the alternative is printing a time that exists
+  // nowhere.
+  const PAIRS: [string, string][] = [
+    ['Avenida das Américas', 'Rda. Muralla 56 (Sindicatos)'],
+    ['Avenida das Américas', 'Hospital Lucus Augusti (HULA)'],
+    ['Avenida das Américas', 'Campus Universitario'],
+    ['Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)'],
+    ['Praza Maior', 'Campus Universitario'],
+  ];
+  type Place = { lat: number; lng: number };
+
+  /** How far past the cushion the measured walk to the first stop runs. */
+  const missedBy = async (plan: RoutePlanResult, origin: Place, destination: Place) => {
+    if (!plan.segments.some((seg) => seg.type === 'bus')) return 0;
+    const hops = walkHopsOf(plan, origin, destination);
+    if (!hops.length) return 0;
+    const [a, b] = hops[0];
+    const route = await routeOnFoot(a, b);
+    if (!route) return 0;
+    // What the plan itself allowed. Once a measured walk has been handed to planTrips the
+    // plan is already built on it, and charging the difference again would move a
+    // departure that is already right.
+    const allowed =
+      plan.segments[0]?.type === 'walk'
+        ? plan.segments[0].durationMinutes
+        : estimateWalk(getDistanceMeters(a[0], a[1], b[0], b[1])).minutes;
+    return Math.max(0, route.minutes - allowed - plan.slackMinutes);
+  };
+
+  let before = 0;
+  let after = 0;
+
+  for (const hour of [7, 9, 14, 19]) {
+    for (const [from, to] of PAIRS) {
+      const now = new Date(2026, 8, 8, hour, 0, 0);
+      const origin = resolveLocationQuery(from);
+      const destination = resolveLocationQuery(to);
+      assert(origin && destination, `${from} -> ${to}: one of the ends is not in the dataset`);
+      let plans = planTrips(from, to, { now }).slice(0, 4);
+      if (!plans.length) continue;
+      if ((await missedBy(plans[0], origin, destination)) === 0) continue;
+
+      before++;
+      const known = new Map<string, number>();
+      for (const plan of plans) {
+        const boarding = plan.segments.find((seg) => seg.type === 'bus')?.fromStop;
+        const first = walkHopsOf(plan, origin, destination)[0];
+        if (!boarding || !first) continue;
+        const route = await routeOnFoot(first[0], first[1]);
+        if (route) known.set(boarding.id, route.minutes);
+      }
+      // Exactly one retry. A second boards somewhere else again and can oscillate.
+      const again = planTrips(from, to, { now, measuredWalkToStop: (id) => known.get(id) }).slice(0, 4);
+      if (again.length) plans = again;
+      if ((await missedBy(plans[0], origin, destination)) > 0) after++;
+    }
+  }
+
+  assert(before > 0, 'the sample no longer contains the case this check exists for');
+  assert(
+    after < before,
+    `telling the planner the measured walks fixed none of the ${before} unreachable answers`,
+  );
+
+  // The other half of the contract: what the retry cannot fix is said, not smoothed over.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const view = readFileSync(join(root, 'src/components/RoutePlannerView.tsx'), 'utf8');
+  assert(
+    /arrival: shiftClock\(plan\.arrivalTime, fix\.after\)/.test(view),
+    'the walk correction is moving the arrival again; a bus you cannot reach does not arrive later, it leaves without you',
+  );
+  assert(
+    (view.match(/unreachableWalk/g) ?? []).length >= 2,
+    'nothing on the row or the headline says the measured walk does not reach that bus',
+  );
+  assert(
+    /replannedRef\.current = true;/.test(view),
+    'the replan is no longer capped at one; plan -> measure -> plan can oscillate forever',
+  );
+  for (const lang of LANGS) {
+    assert(translations(lang).planner.unreachableWalk.trim().length > 0, `${lang}: nothing to say it with`);
+  }
 });
 
 await okAsync('walking up a hill costs more than walking down it', async () => {

@@ -81,7 +81,7 @@ export const gl = {
   },
 
   service: {
-    weekday: 'De luns a venres (laborables)',
+    weekday: 'Laborables',
     weekend: 'Fins de semana e festivos',
     everyday: 'Todos os días',
     checkTimetable: 'Consultar horario',
@@ -194,6 +194,8 @@ export const gl = {
       `${stops} ${stops === 1 ? 'parada' : 'paradas'} · ${minutes} min`,
     viaStops: 'Paradas polas que pasa',
     editTrip: 'Cambiar orixe ou destino',
+    backToAnswer: 'Volver ao resultado',
+    recentRoutes: 'As túas últimas rutas',
     quickDestinations: 'Destinos rápidos habituais:',
     noRouteFound: 'Non se atopou unha combinación óptima. Proba con outra rúa ou parada próxima.',
     transferFreeNotice:
@@ -229,6 +231,8 @@ export const gl = {
     /** The tooltip on a walked leg drawn on the route map. */
     walkLeg: (metres: number, minutes: number) => `A pé · ${metres} m · ${minutes} min`,
     tripInfoTitle: 'Información',
+    unreachableWalk: 'Co paseo medido xa non chegas a este bus',
+    stepByStepTitle: 'Paso a paso',
     timeProvenanceMeasured:
       'Os tramos a pé están medidos polo enrutador peonil de OpenStreetMap, non estimados. As horas de bus seguen a vir do cadro horario oficial; as marcadas con ~ dedúcense do tempo de percorrido medido por estrada.',
     noWaitNoFare: 'sen esperas nin billete',

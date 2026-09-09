@@ -1202,6 +1202,19 @@ interface PlanOptions {
    * appointment or a class.
    */
   arriveBy?: number;
+  /**
+   * How long the walk to a stop really takes, when somebody has measured it.
+   *
+   * Every walk in here is otherwise the straight line times 1.35, which is a good enough
+   * guess to build a plan from and a bad one to promise a bus on. Once `walkRouter` has
+   * traced the pavement, the caller can hand the answer back: minutes from the origin to
+   * that stop, or undefined for a stop nobody has measured yet.
+   *
+   * It matters twice. The candidate list is filtered and ranked on this walk, so a stop
+   * that is really twelve minutes away stops passing for five; and `readyAt` for the
+   * first bus is computed from it, so the boarding time is one the reader can keep.
+   */
+  measuredWalkToStop?: (stopId: string) => number | undefined;
 }
 
 /** How far back to look for a departure that still arrives in time. */
@@ -1214,7 +1227,7 @@ const ARRIVE_BY_STEP_MIN = 5;
  * instead of trusting a single answer.
  */
 export function planTrips(fromQuery: string, toQuery: string, options: PlanOptions = {}): RoutePlanResult[] {
-  const { userLocation, now = new Date(), lang = 'gl' } = options;
+  const { userLocation, now = new Date(), lang = 'gl', measuredWalkToStop } = options;
 
   if (options.arriveBy !== undefined) {
     return planArrivingBy(fromQuery, toQuery, options.arriveBy, options);
@@ -1223,10 +1236,10 @@ export function planTrips(fromQuery: string, toQuery: string, options: PlanOptio
   if (options.departAt !== undefined) {
     const at = new Date(now);
     at.setHours(Math.floor(options.departAt / 60), Math.round(options.departAt % 60), 0, 0);
-    return planDeparting(lang, fromQuery, toQuery, userLocation, at);
+    return planDeparting(lang, fromQuery, toQuery, userLocation, at, options.measuredWalkToStop);
   }
 
-  return planDeparting(lang, fromQuery, toQuery, userLocation, now);
+  return planDeparting(lang, fromQuery, toQuery, userLocation, now, options.measuredWalkToStop);
 }
 
 /** The single best option, for callers that only want an answer. */
@@ -1258,7 +1271,7 @@ function planArrivingBy(
   for (let depart = earliest; depart <= arriveBy; depart += ARRIVE_BY_STEP_MIN) {
     const at = new Date(now);
     at.setHours(Math.floor(depart / 60), depart % 60, 0, 0);
-    for (const plan of planDeparting(options.lang ?? 'gl', fromQuery, toQuery, options.userLocation, at)) {
+    for (const plan of planDeparting(options.lang ?? 'gl', fromQuery, toQuery, options.userLocation, at, options.measuredWalkToStop)) {
       if (!plan.isServiceActive) continue;
       if (parseTimeToMinutes(plan.arrivalTime) > arriveBy) continue;
       const key = plan.segments
@@ -1281,6 +1294,7 @@ function planDeparting(
   toQuery: string,
   userLocation: [number, number] | undefined,
   now: Date,
+  measuredWalkToStop?: (stopId: string) => number | undefined,
 ): RoutePlanResult[] {
   const fromRes = resolveLocationQuery(fromQuery, userLocation, lang);
   const toRes = resolveLocationQuery(toQuery, userLocation, lang);
@@ -1292,7 +1306,7 @@ function planDeparting(
   // could turn a 20-minute trip into a 12-hour wait, or into "no route at all". Walking
   // a few extra minutes to a better-served stop is what a person would do.
   const onFoot = walkingOnlyPlan(lang, fromRes, toRes, now);
-  const starts = boardingCandidates(fromRes, onFoot.durationMinutes);
+  const starts = boardingCandidates(fromRes, onFoot.durationMinutes, measuredWalkToStop);
   const ends = boardingCandidates(toRes, onFoot.durationMinutes);
 
   const all: RoutePlanResult[] = [onFoot];
@@ -1430,14 +1444,26 @@ const ALWAYS_NEAREST = 4;
  * The candidate count is unchanged, so this costs nothing: the same ten slots, spent on
  * ten different answers instead of ten versions of one.
  */
-function boardingCandidates(res: LocationResolution, directWalkMinutes: number): BoardingCandidate[] {
-  const reachable = getNearbyStops(res.lat, res.lng).filter(
-    (s) =>
-      s.lines.length > 0 &&
-      s.walkMeters <= MAX_BOARDING_WALK_M &&
-      // Never walk further to reach the bus than to reach the destination.
-      s.walkMinutes < directWalkMinutes,
-  );
+function boardingCandidates(
+  res: LocationResolution,
+  directWalkMinutes: number,
+  measured?: (stopId: string) => number | undefined,
+): BoardingCandidate[] {
+  const reachable = getNearbyStops(res.lat, res.lng)
+    // A measured walk replaces the estimate before anything is filtered or ranked on it.
+    // Ranking on the estimate and then correcting the clock afterwards is what put a bus
+    // on screen that the reader could not reach.
+    .map((s) => {
+      const real = measured?.(s.id);
+      return real === undefined ? s : { ...s, walkMinutes: real };
+    })
+    .filter(
+      (s) =>
+        s.lines.length > 0 &&
+        s.walkMeters <= MAX_BOARDING_WALK_M &&
+        // Never walk further to reach the bus than to reach the destination.
+        s.walkMinutes < directWalkMinutes,
+    );
 
   const chosen: typeof reachable = [];
   const served = new Set<string>();
