@@ -6,6 +6,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { CSP_META } from './src/security/csp';
+import { THEME_INIT_SOURCE } from './src/security/themeInit';
 import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
 
 // GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
@@ -144,39 +145,25 @@ const injectSeoTags = {
 };
 
 /**
- * The entry chunk and its stylesheet, announced at the top of <head>.
+ * The theme script, in the page rather than beside it.
  *
- * theme-init.js is a classic blocking script and sits above everything Vite injects, and
- * measured on a throttled phone the browser did not ask for the entry chunk until that
- * script had come back: document done at 890 ms, theme-init 954 -> 1538, and only then
- * the chunk at 1548. One whole round trip of nothing, and the stylesheet waited behind it
- * too. Two link tags ahead of the script let all three start together, which took first
- * contentful paint from 3760 ms to 3484 ms at 6x CPU on Slow 4G.
+ * It has to run before the first paint, so it blocks the parser wherever it sits. As a
+ * file that cost a whole round trip on the critical path: measured at 6x CPU on Slow 4G,
+ * the browser did not ask for the entry chunk until theme-init.js had come back, and first
+ * contentful paint was 3760 ms. Inlined it is 3120 ms, with one request fewer.
  *
- * Inlining theme-init.js instead measured 3120 ms -- better again, and not taken: it
- * needs a hash in `script-src`, and public/theme-init.js explains why that file is a file.
- * The number is written down in case that trade is ever worth making.
+ * `script-src` carries the SHA-256 of these exact bytes, computed by security/csp.ts from
+ * the same export inlined here — one source, so the page and the policy cannot disagree
+ * about what is allowed to run.
  *
- * Read out of the finished HTML rather than out of the bundle, because the finished HTML
- * is the thing whose order is wrong, and it says which files it means.
+ * No `apply`, so it runs in dev too: there is no file left to serve.
  */
-const preloadEntry = {
-  name: 'preload-entry',
-  apply: 'build' as const,
-  transformIndexHtml: {
-    order: 'post' as const,
-    handler(html: string) {
-      const script = html.match(/<script type="module"[^>]*\ssrc="([^"]+)"/)?.[1];
-      const styles = [...html.matchAll(/<link rel="stylesheet"[^>]*\shref="([^"]+)"/g)].map((m) => m[1]);
-      if (!script) return html;
-      // `crossorigin` on both, matching the tags Vite emits: a preload whose CORS mode
-      // differs from the real request is a second download, not a head start.
-      const links = [
-        `<link rel="modulepreload" crossorigin href="${script}" />`,
-        ...styles.map((href) => `<link rel="preload" as="style" crossorigin href="${href}" />`),
-      ].join('\n    ');
-      return html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${links}`);
-    },
+const inlineThemeInit = {
+  name: 'inline-theme-init',
+  transformIndexHtml(html: string) {
+    const tag = /<script src="[^"]*theme-init\.js"><\/script>/;
+    if (!tag.test(html)) throw new Error('the theme-init tag is gone; inline-theme-init has nothing to replace');
+    return html.replace(tag, `<script>${THEME_INIT_SOURCE}</script>`);
   },
 };
 
@@ -198,7 +185,7 @@ export default defineConfig({
   // which would strip the imports it needs.
   worker: { format: 'es' as const },
   plugins: [
-    preloadEntry,
+    inlineThemeInit,
     injectCsp,
     injectSeoTags,
     emitSeoFiles,
