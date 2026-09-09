@@ -154,11 +154,13 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           <span>{t.menu.sourceNoGps}</span>
           <span className="mt-2 border-t border-line pt-2 text-ink-2">{t.menu.unofficial}</span>
           <span>{t.menu.privacy}</span>
+          {/* On its own line rather than inline in a sentence, so the 44 applies to it:
+              it measured 156x16, and WCAG's exemption covers links inside running text. */}
           <a
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-0.5 self-start underline decoration-dotted underline-offset-2"
+            className="mt-0.5 flex min-h-11 items-center self-start underline decoration-dotted underline-offset-2"
           >
             {t.menu.sourceCode}
           </a>

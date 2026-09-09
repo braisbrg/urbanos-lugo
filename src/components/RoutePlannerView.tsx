@@ -847,10 +847,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     <span className="text-label font-bold uppercase tracking-wider text-ink-2">
                       {t.planner.recentRoutes}
                     </span>
+                    {/* 44 on both sides: the height was already there, but the word is short
+                        enough in all three languages that the box measured 34 wide. */}
                     <button
                       type="button"
                       onClick={clearRecentRoutes}
-                      className="inline-flex h-11 items-center text-label font-semibold text-accent underline"
+                      className="inline-flex h-11 min-w-11 items-center justify-end text-label font-semibold text-accent underline"
                     >
                       {t.stopHome.clearRecent}
                     </button>

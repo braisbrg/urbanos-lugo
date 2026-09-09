@@ -3921,6 +3921,46 @@ ok('nothing in the dark basemap competes with the line drawn on top of it', () =
   }
 });
 
+ok('the light basemap draws blocks rather than outlines', () => {
+  /*
+   * The light style shipped for one commit as published, on the strength of having
+   * measured the route ink over the streets -- 4,04 at worst, which is fine -- and
+   * nothing else. The ground and the things standing on it had never been compared.
+   *
+   * Published, a building's fill was 1,08 over the ground and its outline 1,24: the
+   * outline separated almost twice as well as the mass did, so every footprint was drawn
+   * as a wireframe and the built-up part of Lugo was the same colour as the fields around
+   * it. Both halves of that are checked here, because the dark map had the identical pair
+   * of defects and only the dark one was fixed.
+   */
+  const light = mapStyles().light;
+  const byId = new Map(light.layers.map((l) => [l.id, l]));
+  const paint = (id: string, property: string): string => {
+    const value = byId.get(id)?.paint?.[property];
+    assert(typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value), `${id}: ${property} is ${String(value)}`);
+    return value as string;
+  };
+
+  const ground = 'rgb(242,243,240)' === String(byId.get('background')?.paint?.['background-color'])
+    ? '#f2f3f0'
+    : String(byId.get('background')?.paint?.['background-color']);
+  assert(/^#[0-9a-f]{6}$/i.test(ground), `the light ground is ${ground}, which this cannot measure`);
+
+  const fill = paint('building', 'fill-color');
+  assert(
+    paint('building', 'fill-outline-color') === fill,
+    'a light building is outlined in a different colour from its fill, so a block reads as linework',
+  );
+  const step = contrast(fill, ground);
+  assert(step >= 1.15, `a light building is ${step.toFixed(2)} over the ground, which reads as the ground`);
+
+  // And the ink still clears the bar non-text contrast asks for over that heavier mass.
+  for (const line of BUS_LINES) {
+    const ratio = contrast(line.color, fill);
+    assert(ratio >= 3, `line ${line.number} (${line.color}) is ${ratio.toFixed(2)} over a light building`);
+  }
+});
+
 ok('the basemap is not being amplified behind the palette', () => {
   // For months the dark map was painted through `filter: brightness(2.8)` on the tile
   // pane, so the ground the style set to #171a1f reached the screen as #404850 and every

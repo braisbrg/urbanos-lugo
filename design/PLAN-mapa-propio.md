@@ -101,6 +101,89 @@ non chega: os nomes de rúa veñen en rgba(80,78,78) e os de lugar en rgb(101,10
 2,3 e 3,0 sobre o chan. O nome da auga vén en negro ao 70 % sobre un mapa case negro,
 que non é tenue, é ausente. Corríxense os tres.
 
+## O tema claro
+
+Este plan dixo primeiro que o claro quedaba como estaba «porque Positron xa mide ben»,
+e enviouse así un commit. O que se medira era a tinta de ruta sobre as rúas — 4,04 no
+peor caso, que está ben — e nada máis. O chan e o que se apoia nel non se compararan
+nunca, e non aguantan:
+
+| | | |
+| :--- | :--- | ---: |
+| rúa maior | `#ffffff` | 1,11 **máis clara** có chan |
+| chan | `rgb(242,243,240)` | 1,00 |
+| recheo do edificio | `rgb(234,234,229)` | 1,08 máis escuro |
+| **contorno do edificio** | `rgb(219,219,218)` | **1,24 máis escuro** |
+| rúa menor | `hsl(0,0%,88%)` | 1,19 máis escura |
+
+Os mesmos dous fallos que tiña o escuro. **O contorno separa case o dobre có recheo**,
+así que unha mazá debuxábase como un alambre e non como unha masa; e o recheo, a 1,08,
+non separa nada, de xeito que a parte edificada de Lugo e os campos de arredor eran a
+mesma cor.
+
+Mesmo arranxo: o contorno colle a cor do recheo e a masa adianta. E como as rúas de
+Positron son cintas brancas — o seu deseño enteiro, e vale a pena conservalo — a rúa
+menor sobe a xuntarse coas maiores en vez de quedar do lado escuro pelexando coas
+mazás:
+
+| Capa | Cor | Sobre o chan |
+| :--- | :--- | ---: |
+| edificio | `#dedcd4` | 1,23 máis escuro |
+| chan | `#f2f3f0` | 1,00 |
+| rúa menor | `#fafaf9` | 1,05 máis clara |
+| rúa maior | `#ffffff` | 1,11 máis clara |
+| auga | publicada | 1,52 máis escura |
+
+A tinta máis apretada queda a 3,28 sobre as mazás novas, por riba do 3:1 que pide o
+contraste do que non é texto. O mapa claro ten marxe que o escuro non ten.
+
+### Dúas cousas que se probaron e están mal
+
+**O verde.** Darlle ao parque e ao bosque o verde real do mapa escuro pintou o **57 %
+da pantalla** — contado sobre o fotograma — porque en OpenStreetMap case todo o que
+rodea Lugo é `landcover_wood`. A cidade saía como un burato nun prado. Sobre un chan
+case negro ese verde é un parque; sobre un case branco é un tinte en todo o mapa.
+
+**Subir máis os edificios.** De 1,23 a 1,30 non moveu nada visible e custa contraste á
+tinta. Queda en 1,23.
+
+## O que o estilo non pode arranxar
+
+Hai barrios que aparecen baleiros e non é cousa do estilo. Contados con Overpass, en
+caixas iguais dun quilómetro cadrado:
+
+| | |
+| :--- | ---: |
+| Centro / Muralla | 4.588 |
+| Fonte dos Ranchos | 1.899 |
+| O Carme / A Ponte | 671 |
+| Albeiros / Campus | 85 |
+| A Piringalla | 57 |
+| Fingoi | 55 |
+
+**A Piringalla con 57 edificios nun quilómetro cadrado non está cartografiada.**
+Ningunha cor debuxa un edificio que non está no dato. O que si era noso era a mancha
+que o disimulaba: `landuse_residential` pintaba un tinte plano ata o zoom 16 no tema
+claro — no escuro corta no 9 — do mesmo peso que as pegadas dos edificios, así que
+tanto daba se había edificios debaixo ou non. Esa capa sae, e agora un barrio baleiro
+ten o aspecto que lle corresponde: baleiro no dato.
+
+## As frechas de sentido único
+
+Sáense as dúas capas, e o motivo non é que estivesen mal debuxadas, aínda que o
+estaban. O icono `oneway` do sprite é unha frecha de 21×21 apuntando **cara arriba**
+cunha cola longa, e a capa colócaa con `symbol-placement: line`, que alinea o icono ao
+longo da rúa: unha frecha debuxada cara arriba acaba **atravesada** na calzada. É a
+mesma familia có `wood-pattern` — o estilo nomeando unha imaxe que o sprite non
+debuxa como a capa supón.
+
+Rotalas era o outro arranxo e é o peor, porque unha frecha correcta segue sendo unha
+frecha que este mapa non usa: **ninguén que lea isto vai conducindo**. Aparecen a
+partir do zoom 15, que é exactamente onde xorde un rótulo ao lado de cada poste e onde
+apagamos os nomes de rúa do basemap para deixarlles sitio. Gastaban o espazo que esa
+decisión acababa de baleirar. Ademais só existían no estilo escuro, así que os dous
+temas nin sequera amosaban o mesmo.
+
 ## Tipografía
 
 No mapa había **tres tipografías**:
@@ -127,8 +210,7 @@ importa á distancia de lectura xa é a nosa.
   van tamén dentro do propio ficheiro, non só no control do mapa.
 - **As fontes de datos.** Teselas, sprites e glifos seguen vindo de
   `tiles.openfreemap.org`: a política de `src/security/csp.ts` non gaña orixes.
-- **O tema claro**, máis alá do arranxo dos rótulos. Positron xa mide ben para este
-  traballo; redeseñalo sería redeseñar por redeseñar.
+- **As cores de liña.** Son as do badge e non se tocan aquí; ver máis abaixo.
 - **As nove capas que nunca poden debuxar en Lugo** — xeleiros, fronteiras de país e
   de estado, cero elementos na caixa segundo Overpass. Quitalas aforra tres kilobytes
   e estropea o mapa se alguén se afasta.
