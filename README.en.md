@@ -27,6 +27,9 @@ that opens in a second and works with no signal.
   routes, and all 417 stops.
 - **You are getting off somewhere you do not know.** Set an alarm and the phone tells you
   when you are close.
+- **You are on the bus and do not want to miss your stop.** Tap **"Vou nesta"** on the trip
+  and the screen counts the stops left against your GPS, gives the minutes from the
+  timetable, and warns you before you get off — at the transfer too.
 - **You have no data.** Once open it works offline. The timetables are inside it.
 
 ## What this app cannot do

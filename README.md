@@ -35,6 +35,10 @@ rúas, as 417 paradas, e a túa posición se lla dás.
 **Vaste baixar nunha parada que non coñeces.** Pon unha alarma e o móbil avísate cando
 estás preto, para non ir mirando pola ventá.
 
+**Vas no bus e non queres pasarte.** Prémelle a **«Vou nesta»** ao traxecto e a pantalla
+conta as paradas que faltan contra o teu GPS, di cantos minutos quedan segundo o cadro, e
+avísate antes de baixar — tamén no transbordo.
+
 **Non tes datos no móbil.** Unha vez aberta, funciona sen conexión. Os horarios van
 dentro; non fai falta rede para consultalos. Que é o normal nunha marquesiña.
 
@@ -930,21 +934,26 @@ cachéanse segundo se van vendo e os avisos oficiais usan rede-primeiro con recu
 
 ### Tamaño de descarga
 
-A xeometría viaria e o renderizador do mapa cárganse só ao abrir un mapa. `index.html` só
-pide tres cousas: `theme-init.js`, unha folla de estilos e o anaco de entrada.
+A xeometría viaria, o renderizador do mapa e a rede peonil cárganse só cando fan falta.
+`index.html` só pide tres cousas: o anaco de entrada, unha folla de estilos e o rexistro
+do service worker; o script que fixa o tema antes do primeiro pintado vai inline, co seu
+hash na política de seguridade.
 
 E a build escribe un `.br` e un `.gz` ao lado de cada activo, que o servidor entrega cando
 o navegador di que sabe lelos. Medido contra a build de produción:
 
 | | sen comprimir | gzip | brotli |
 | :--- | ---: | ---: | ---: |
-| Anaco de entrada | 546 KB | 140 KB | **116 KB** |
-| Folla de estilos | 46 KB | 9 KB | **8 KB** |
+| Anaco de entrada | 569 KB | 149 KB | **123 KB** |
+| Folla de estilos | 52 KB | 10 KB | **9 KB** |
 | `index.html` | 4 KB | 2 KB | **2 KB** |
-| **Primeira carga** | **596 KB** | ~151 KB | **~126 KB** |
-| Tipografía | 51 KB | — | 51 KB, en paralelo |
-| Renderizador do mapa | 1.072 KB | 281 KB | 232 KB, baixo demanda |
-| Xeometría viaria | 511 KB | 82 KB | 28 KB, baixo demanda |
+| **Primeira carga** | **625 KB** | ~161 KB | **~134 KB** |
+| Tipografía | 50 KB | — | 50 KB, en paralelo |
+| Renderizador do mapa, co estilo e a paleta | 1.132 KB | 291 KB | 240 KB, ao abrir un mapa |
+| Estilos do renderizador | 96 KB | 16 KB | 14 KB, ao abrir un mapa |
+| Worker do renderizador | 475 KB | 132 KB | 109 KB, ao abrir un mapa |
+| Xeometría viaria | 511 KB | 82 KB | 28 KB, ao abrir un mapa |
+| Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
 
 A tipografía non leva columnas: o `woff2` xa vén comprimido e volver comprimilo non aforra
 nada, así que a build nin o intenta. Son dous ficheiros e non oito —son fontes variables,
@@ -1564,10 +1573,6 @@ non lle serve a ninguén que non teña unha Pi.
 (persistencia, consultas, agregados). Non ten sentido en memoria: perderíase en cada
 despregue, e rexistrar algo que se esvae sería outra forma de mentir. Se algún día se
 monta backend, faise á vez que o anterior.
-
-### Modo escuro e obxectivos táctiles
-
-Reservados para o redeseño pendente, porque tocan o sistema visual enteiro.
 
 ### Un GTFS municipal
 
