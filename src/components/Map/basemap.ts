@@ -275,7 +275,19 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     return baseOnRemove(map);
   };
 
+  /** The theme the renderer was given, so asking for it again is not a restyle. */
+  let shown = isDark;
   layer.setBasemapTheme = (dark: boolean) => {
+    /*
+     * Every map calls this from an effect on the theme, and an effect also runs on
+     * mount -- a moment after createBasemap handed the renderer the very same style. That
+     * second setStyle arrived while the first was still loading, so the renderer could
+     * not diff the two and rebuilt the whole style from scratch, and said so in the
+     * console on every map the app opened: "Unable to perform style diff: Style is not
+     * done loading". Nothing to do when nothing changed.
+     */
+    if (dark === shown) return;
+    shown = dark;
     // Restyling in place rather than rebuilding the layer, so the view stays where the
     // reader left it instead of snapping back to Lugo centre.
     layer.getMaplibreMap()?.setStyle(dark ? STYLES.dark : STYLES.light);
