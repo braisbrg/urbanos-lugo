@@ -630,3 +630,47 @@ desde Intercentros: o botón é o primeiro fillo da tarxeta, a 56 px. 140 checks
 
 O plan de Estado B queda pechado. O que non está feito é o que se decidiu non facer:
 debuxar o bus, e o modo en segundo plano, que unha páxina web non pode.
+
+---
+
+## Revisión — 13 de setembro de 2026
+
+Brais pediu revisar a entrega. Tres cousas, dúas delas nos ficheiros que o propio plan
+sinalaba como os que podían estar mal.
+
+**O contador saltaba cara adiante e non volvía.** `tripProgress` daba por pasada a
+parada **máis afastada** que tivese a menos de 60 m e tachaba todo o anterior. A nota do
+radio medira os pares consecutivos a menos de 60 m (dez) e xulgounos asumibles; o que
+nunca contou foron os **non consecutivos**:
+
+| | | | |
+| :--- | :--- | ---: | :--- |
+| 4.1 ida | parada 20 → 29 | 38 m | N-640 (Taller López y Vázquez) / Rotonda Rda. Norte |
+| 4.1 volta | parada 7 → 11 | 15 m | Pista Muxa, un poste en cada sentido |
+| 5DS volta | parada 19 → 23 | 26 m | Ramón Ferreiro 31 / 26 |
+| 5.2 volta | parada 20 → 22 | 54 m | Ramón Ferreiro 19 / Anexa |
+| 6 ida | parada 20 → 24 | 59 m | Avda. Magoi 92 / Rúa do Valiño |
+| 3.2 volta | parada 0 → 2 | 37 m | N-VI, Torre de Núñez / Ent. Fortaleza |
+
+Seis dos 48 sentidos van e volven pola súa propia avenida. De pé na 20 da 4.1, o fix
+está tamén a tiro da 29, así que se tachaban da 21 á 29 dunha vez — e como unha parada
+pasada non volve, quedaba así: nove paradas menos na conta e o aviso nove paradas antes.
+Agora o percorrido vai **en orde** desde a última alcanzada e colle a primeira a tiro:
+pode saltar postes sen fix, non pode pasar por riba dun poste que ten a tiro. O que lle
+queda de erro é o inofensivo: un fix que chega de verdade á 29 tras un silencio longo lese
+como a 20, e corríxese na 30. O check proba os seis pares; sen o arranxo cae no primeiro.
+
+**O interruptor da pantalla non existía.** O plan decidiuno o 7 de setembro como a
+resposta ao móbil no peto, e a entrega non o listaba entre o descartado. Vive no hook,
+que dura toda a viaxe: apagado por defecto e sen gardar, `wakeLock.request('screen')`
+mentres está acendido e hai viaxe, soltado polo navegador ao agochar a pestana e pedido
+de novo en `visibilitychange`. Onde a API non existe, o control non se amosa. Texto nos
+tres idiomas, sen a palabra «wake lock». Comprobado nun Chromium de nivel superior contra
+a app: adquirido e liberado; no panel embebido do editor dá `NotAllowedError`, que é o
+panel e non a app. `server.ts` nomea agora `screen-wake-lock=(self)` na
+`Permissions-Policy`, á beira de `geolocation`: era xa o valor por defecto, pero a
+cabeceira di o que a app fai.
+
+**Os círculos das paradas baixo as liñas** non era deste modo pero saíu na mesma revisión:
+o mapa da rede debuxa nun só lienzo e as rutas redebúxanse despois das paradas en cada
+selección. `RouteLayer` mándaas ao fondo en cada redebuxo.

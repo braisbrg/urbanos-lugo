@@ -211,6 +211,26 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
                   : `${t.companion.watching(ALARM_RADIUS_M)} ${t.arrivals.alarmForeground}`}
           </p>
         )}
+
+        {/* The one answer to "the phone in the pocket": a locked phone stops getting
+            positions, so the switch keeps the screen on for the ride. Off by default
+            because it costs battery, said in as many words; absent, not disabled, where
+            the browser has no such thing. Written from the reader's side -- the words
+            "wake lock" appear nowhere. */}
+        {phase !== 'walking' && companion.keepAwake && (
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              className="h-5 w-5 shrink-0 accent-accent"
+              checked={companion.keepAwake.on}
+              onChange={(e) => companion.keepAwake?.set(e.target.checked)}
+            />
+            <span className="text-body">
+              {t.companion.keepAwake}
+              <span className="block text-label text-ink-3">{t.companion.keepAwakeCost}</span>
+            </span>
+          </label>
+        )}
       </div>
 
       {/* The plan, drawn, framed on the leg being made, with the reader on it.

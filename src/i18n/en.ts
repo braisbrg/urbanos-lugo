@@ -236,6 +236,8 @@ export const en: Dict = {
     passed: 'passed',
     next: 'next',
     finish: 'Leave trip',
+    keepAwake: 'Keep the screen on during the trip',
+    keepAwakeCost: 'Uses more battery.',
     onTrip: 'Trip in progress',
   },
 

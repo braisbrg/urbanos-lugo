@@ -332,6 +332,16 @@ polas rúas reais. A viaxe gárdase en `sessionStorage` para sobrevivir a que o 
 desaparece ao pechar a pestana ou premer «Saír da viaxe» — non queda no aparello un rexistro de
 onde fuches.
 
+Un móbil bloqueado deixa de recibir posicións, así que a pantalla ten un interruptor,
+**apagado por defecto**, para manterse acesa durante a viaxe; di debaixo que gasta máis
+batería, e non aparece onde o navegador non o permite (Safari anterior á 16.4). Non pide
+permiso nin garda nada: o navegador sóltao só en canto a pestana deixa de verse, e a app
+volve pedilo ao volver.
+
+As paradas cóntanse **en orde**: a seguinte que teñas a menos de 60 m, non a máis afastada.
+Seis dos 48 sentidos van e volven pola mesma avenida — na 4.1 a parada 20 e a 29 están a
+38 m — e contar a máis afastada tachaba nove de golpe e non volvía atrás.
+
 ### Liñas e horarios
 Ficha de cada liña co seu percorrido en ambos sentidos, cadro horario por tipo de día
 (laborables / sábados / domingos e festivos) e tempo de paso estimado en cada parada.

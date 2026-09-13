@@ -38,7 +38,21 @@ export interface TripCompanion {
   boarded: () => void;
   missed: () => void;
   finish: () => void;
+  /**
+   * The switch that keeps the screen from going dark during the ride. `null` where the
+   * browser has no such thing, so the screen can leave the control out rather than show
+   * one that does nothing.
+   */
+  keepAwake: { on: boolean; set: (on: boolean) => void } | null;
 }
+
+/**
+ * Whether the screen can be asked to stay on at all.
+ *
+ * Asked once: the answer does not change while the page is open, and iOS Safari before
+ * 16.4 -- which this app still supports -- says no. There the control is simply absent.
+ */
+const CAN_KEEP_AWAKE = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
 
 /**
  * The "vou no bus" mode, held above the tabs so a look at the map or a line does not end
@@ -82,6 +96,48 @@ export function useTripCompanion(lang: Lang): TripCompanion {
     };
   }, [active]);
 
+  /*
+   * The screen, kept on -- only while asked, only while there is a trip, and only while
+   * the page is the one being looked at.
+   *
+   * A phone in a hand on a bus locks itself in thirty seconds, and a locked phone stops
+   * getting positions, so the one thing this mode is for stops working exactly when it is
+   * being used. The Screen Wake Lock is the honest fix: no dialog and no permission, the
+   * screen simply stops timing out, and the browser releases it by itself the moment the
+   * tab is hidden -- which is why it is re-requested on `visibilitychange`, when the
+   * reader comes back. What it costs is battery, which is why it is a switch the reader
+   * turns on and not a default; the switch says so in as many words.
+   *
+   * Off by default each trip and not remembered: nothing about it is stored anywhere.
+   */
+  const [keepAwakeOn, setKeepAwakeOn] = useState(false);
+  useEffect(() => {
+    if (!CAN_KEEP_AWAKE || !active || !keepAwakeOn) return;
+    let sentinel: WakeLockSentinel | null = null;
+    let gone = false;
+    const hold = async () => {
+      if (gone || document.visibilityState !== 'visible') return;
+      try {
+        sentinel = await navigator.wakeLock.request('screen');
+      } catch {
+        // Low battery mode, or a browser that has the API and says no: the switch stays
+        // on, the screen behaves as it always did, and nothing is promised in between.
+        sentinel = null;
+      }
+    };
+    void hold();
+    document.addEventListener('visibilitychange', hold);
+    return () => {
+      gone = true;
+      document.removeEventListener('visibilitychange', hold);
+      void sentinel?.release();
+    };
+  }, [active, keepAwakeOn]);
+  // A new trip starts with the switch off, whatever the last one chose.
+  useEffect(() => {
+    if (!active) setKeepAwakeOn(false);
+  }, [active]);
+
   const progress = useMemo(
     () => (trip ? tripProgress(trip.plan, fix, new Set(trip.seen)) : null),
     [trip, fix],
@@ -112,5 +168,10 @@ export function useTripCompanion(lang: Lang): TripCompanion {
   );
   const finish = useCallback(() => setTrip(null), []);
 
-  return { trip, fix, progress, gpsError, now, start, boarded, missed, finish };
+  const keepAwake = useMemo(
+    () => (CAN_KEEP_AWAKE ? { on: keepAwakeOn, set: setKeepAwakeOn } : null),
+    [keepAwakeOn],
+  );
+
+  return { trip, fix, progress, gpsError, now, start, boarded, missed, finish, keepAwake };
 }

@@ -54,7 +54,12 @@ async function startServer() {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(self), microphone=()');
+    // Each feature the app uses, named, and the one it does not, refused. `screen-wake-lock`
+    // is the default already; it is written so the header says what the ride mode does.
+    res.setHeader(
+      'Permissions-Policy',
+      'geolocation=(self), camera=(self), screen-wake-lock=(self), microphone=()',
+    );
     if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
     next();
   });

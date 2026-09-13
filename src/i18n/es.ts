@@ -225,6 +225,8 @@ export const es: Dict = {
     passed: 'pasada',
     next: 'siguiente',
     finish: 'Salir del viaje',
+    keepAwake: 'Mantener la pantalla encendida durante el viaje',
+    keepAwakeCost: 'Gasta más batería.',
     onTrip: 'Viaje en curso',
   },
 
