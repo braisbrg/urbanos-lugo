@@ -151,7 +151,10 @@ enriba — as 24 cores de liña quedan a 1,45 ou máis sobre calquera das tres c
 que cruzan, e ningún rótulo do mapa baixa de 4,5. O plan e as cifras están en
 [`design/PLAN-mapa-propio.md`](design/PLAN-mapa-propio.md).
 
-Cunha liña escollida debúxanse os seus dous sentidos —a volta, descontinua— e os dous levan
+Debúxanse sempre os dous sentidos de cada liña —a volta, descontinua—, cada un ao seu
+lado da rúa. Onde varias comparten calzada van **en paralelo**, cun carril fixo por liña
+de 2 a 4 px segundo o zoom: a mesma liña sempre no mesmo carril, escóllase o que se
+escolla, e ningunha tapa a outra. Cunha liña escollida, os seus dous sentidos levan
 **frechas de sentido** cada 120 px de pantalla, do mesmo trazo e cor que a liña; por
 debaixo do zoom 14 non se amosan, e con varias liñas escollidas só desde o 17, que é onde
 os seus carrís xa se distinguen e unha frecha se lle pode atribuír á súa liña. As paradas
