@@ -4,6 +4,7 @@ import { escapeHtml } from './escapeHtml';
 import { directionLabel } from '../../utils/serviceLabels';
 import L from 'leaflet';
 import { BusLine } from '../../types';
+import { BUS_STOPS } from '../../data/transitData';
 
 /** Tooltip strings are rendered as HTML by Leaflet. */
 interface RouteLayerProps {
@@ -119,6 +120,97 @@ function offsetPath(coords: [number, number][], metres: number): [number, number
 }
 
 /**
+ * How far apart the direction arrows sit along a route, in screen pixels.
+ *
+ * The one thing a drawn route does not say is which way the bus goes along it, and on
+ * a loop like the 1.1 round the walls that is the whole question. Pixels and not metres,
+ * unlike the lane offset: a fixed 200 m was 55 px apart at zoom 14 and 220 at 16, so the
+ * same line was a row of chevrons at one zoom and a hint at the next, and with two lines
+ * up it was a row on four traces. Brais sent the screenshot. At a fixed 120 px the
+ * density is the same at every zoom -- about 840 m apart at 14, 210 at 16, 50 at 18 --
+ * which means re-placing them when the zoom changes, and that is cheap: a few dozen
+ * markers. Below 14 they are hidden altogether, because a whole city of chevrons is
+ * texture, not direction.
+ */
+const ARROW_EVERY_PX = 120;
+/** Below this the arrows come off: the city fits on the screen and they would be noise. */
+const ARROW_MIN_ZOOM = 14;
+/**
+ * With several lines up, arrows only from here. Two subjects share most of their corridor
+ * and their lanes are 9 m apart, which is under 3 px until zoom 17 -- so below it the
+ * traces overlap, one line covers the other, and the arrows of the covered one surface on
+ * the wrong ribbon. Brais saw blue chevrons riding the teal 1.2 at zoom 15. Where the
+ * lanes cannot be told apart, an arrow cannot be attributed, and is left out.
+ */
+const ARROW_MIN_ZOOM_SHARED = 17;
+/** No arrow this close to a pole, so a stop dot is never half hidden under one. */
+const ARROW_CLEAR_OF_STOP_M = 20;
+
+/**
+ * Where to draw the arrows along a path, and which way each one points.
+ *
+ * Walks the path accumulating ground distance and drops a point every `everyMetres`,
+ * starting half a spacing in so neither end is crowded. The bearing is measured in
+ * screen space -- the projected points, not the coordinates -- so an arrow follows the
+ * line as drawn, which is what a rotation in CSS has to match.
+ */
+function arrowsAlong(
+  path: [number, number][],
+  keepClear: { lat: number; lng: number }[],
+  everyMetres: number,
+): { at: [number, number]; deg: number }[] {
+  const M_PER_DEG_LAT = 111_320;
+  const metres = (a: [number, number], b: [number, number]) => {
+    const cos = Math.cos(((a[0] + b[0]) / 2) * (Math.PI / 180));
+    return Math.hypot((b[0] - a[0]) * M_PER_DEG_LAT, (b[1] - a[1]) * M_PER_DEG_LAT * cos);
+  };
+  const out: { at: [number, number]; deg: number }[] = [];
+  let untilNext = everyMetres / 2;
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1];
+    const b = path[i];
+    const length = metres(a, b);
+    if (length === 0) continue;
+    let walked = 0;
+    while (length - walked >= untilNext) {
+      walked += untilNext;
+      untilNext = everyMetres;
+      const t = walked / length;
+      const at: [number, number] = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      if (keepClear.some((s) => metres(at, [s.lat, s.lng]) < ARROW_CLEAR_OF_STOP_M)) continue;
+      // Web Mercator is conformal, so the angle is the same at every zoom: any one will do.
+      const pa = L.CRS.EPSG3857.latLngToPoint(L.latLng(a[0], a[1]), 16);
+      const pb = L.CRS.EPSG3857.latLngToPoint(L.latLng(b[0], b[1]), 16);
+      out.push({ at, deg: (Math.atan2(pb.y - pa.y, pb.x - pa.x) * 180) / Math.PI });
+    }
+    untilNext -= length - walked;
+  }
+  return out;
+}
+
+/**
+ * One arrow, and it is part of the line: an open chevron in the line's own colour, drawn
+ * with the line's own stroke, its point on the centreline and its two arms reaching past
+ * the edges. Where it lies on the line it is the line; what shows is the two arms coming
+ * out of it, which is enough to say which way. The first version was a filled triangle
+ * with a light edge, and Brais called it what it was: a sticker on the line.
+ *
+ * Drawn pointing right and turned by CSS. Not interactive -- the route and the stops
+ * under it answer the taps, and this is the one kind of layer that must never get in
+ * their way.
+ */
+function arrowIcon(color: string, weight: number, deg: number): L.DivIcon {
+  return L.divIcon({
+    className: 'route-arrow',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+    html:
+      `<svg width="16" height="16" viewBox="-8 -8 16 16" style="display:block;transform:rotate(${deg.toFixed(1)}deg)" aria-hidden="true">` +
+      `<path d="M-4 -6 L3 0 L-4 6" fill="none" stroke="${color}" stroke-width="${weight}" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  });
+}
+
+/**
  * The routes under a click, as a node so the buttons can carry real handlers.
  *
  * Built rather than templated because a corridor can carry six lines and the reader
@@ -173,7 +265,6 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   onOpenLine,
 }) => {
   const groupRef = useRef<L.LayerGroup | null>(null);
-
   // The parent passes a fresh arrow every render. Keeping it in a ref stops that
   // from re-running the effect and redrawing the whole map on each live-bus tick.
   const onSelectLineRef = useRef(onSelectLine);
@@ -187,12 +278,54 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     const group = L.layerGroup().addTo(map);
     groupRef.current = group;
 
+    if (!map.getPane('routeArrows')) {
+      // Between the overlay canvas (400) and the shadow pane (500): over the routes and
+      // the stops, under every real marker. Taps pass through -- the pane has no handlers
+      // and the icons are non-interactive -- so the stops underneath still answer.
+      const pane = map.createPane('routeArrows');
+      pane.style.zIndex = '450';
+      pane.style.pointerEvents = 'none';
+    }
+    const arrows = L.layerGroup();
+    const placeArrows = () => {
+      arrows.clearLayers();
+      const zoom = map.getZoom();
+      if (zoom < ARROW_MIN_ZOOM || (arrowed.length > 1 && zoom < ARROW_MIN_ZOOM_SHARED)) {
+        if (map.hasLayer(arrows)) arrows.remove();
+        return;
+      }
+      // Metres per screen pixel at this zoom and latitude, so the spacing is constant on
+      // the screen whatever the scale of the ground.
+      const lat = map.getCenter().lat;
+      const metresPerPx = (156543.03 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+      for (const trace of arrowed) {
+        for (const { at, deg } of arrowsAlong(trace.path, trace.poles, ARROW_EVERY_PX * metresPerPx)) {
+          arrows.addLayer(
+            L.marker(at, {
+              icon: arrowIcon(trace.color, trace.weight, deg),
+              pane: 'routeArrows',
+              interactive: false,
+              keyboard: false,
+            }),
+          );
+        }
+      }
+      if (!map.hasLayer(arrows)) arrows.addTo(map);
+    };
+
     // The path as drawn, not as stored: a click has to be measured against the line the
     // reader can see, which is the offset one.
     const drawn: {
       line: BusLine;
       dir: BusLine['directions'][number];
       path: [number, number][];
+    }[] = [];
+    /** The traces that carry direction arrows, placed and re-placed by placeArrows. */
+    const arrowed: {
+      path: [number, number][];
+      color: string;
+      weight: number;
+      poles: { lat: number; lng: number }[];
     }[] = [];
 
     if (showRoutes) {
@@ -212,13 +345,21 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
         // A backdrop, not a second subject: thin enough to read the chosen line over, dark
         // enough to still say a street carries a bus.
         const muted = emphasised.length > 0 && !isEmphasised;
-        // Ida and volta run the same corridor, so drawing both at once just stacks
-        // one polyline on top of the other. Show the outbound trace in the overview and
-        // only split the two apart when one line is the subject: with two lines up for
-        // comparison, four traces in the same street is the clutter this avoids.
-        const onlyOneEmphasised = emphasised.length === 1;
-        const directions =
-          (isEmphasised && onlyOneEmphasised) || singleLine ? line.directions : line.directions.slice(0, 1);
+        /*
+         * Ida and volta run the same corridor, so in the overview only the outbound
+         * trace is drawn: both would stack one polyline on the other twenty-four times.
+         *
+         * A line that is the subject gets both. That used to be true only when it was
+         * the *only* subject -- two up for comparison drew one direction each, to keep
+         * four traces out of one street -- and it left holes: the stop layer shows every
+         * stop the line serves, in either direction, so a pole served only by the volta
+         * sat on the map with no line through it. Brais sent the screenshot: a row of
+         * stops on O Ceao and nothing under them. A stop with no line is the map lying,
+         * and the clutter it avoided is solved below by giving each subject its own pair
+         * of lanes instead.
+         */
+        const subject = isEmphasised || singleLine;
+        const directions = subject ? line.directions : line.directions.slice(0, 1);
 
         directions.forEach((dir, dirIndex) => {
           if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) return;
@@ -226,21 +367,25 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           const isReturn = dirIndex === 1;
 
           /* Which lane this trace runs in.
-             With one line on screen the two lanes are its own directions, half a lane
-             either side of the centreline — ida and volta share the whole corridor, which
-             is why the return had to be dashed to be told apart at all. With several
-             lines it is one lane each, dealt out around the centre so the group stays
-             centred on the street rather than drifting off one side of it. */
-          const laneMetres =
-            isEmphasised || singleLine
-              ? (isReturn ? 1 : -1) * (LANE_METRES / 2)
-              : ((lineIndex % LANES) - Math.floor(LANES / 2)) * LANE_METRES;
+             A subject line gets a lane of its own, dealt out around the centre when there
+             are several, and its ida and volta run either side of that lane -- ida and
+             volta share the whole corridor, which is why the return is dashed to be told
+             apart at all. Alone, the pair sits half a lane either side of the centreline;
+             two subjects sit a lane apart, each with its pair a quarter-lane around it,
+             so four traces span 9 m and stay four. A backdrop line is one lane each,
+             dealt out the same way so the group stays centred on the street rather than
+             drifting off one side of it. */
+          const laneMetres = subject
+            ? (emphasised.length > 1 ? (emphasised.indexOf(line) - (emphasised.length - 1) / 2) * LANE_METRES : 0) +
+              (isReturn ? 1 : -1) * (emphasised.length > 1 ? LANE_METRES / 4 : LANE_METRES / 2)
+            : ((lineIndex % LANES) - Math.floor(LANES / 2)) * LANE_METRES;
           const path = offsetPath(dir.pathCoordinates as [number, number][], laneMetres);
 
+          const weight = muted ? 2 : subject ? 5 : 3.5;
           const polyline = L.polyline(path, {
             color: line.color,
-            weight: muted ? 2 : isEmphasised || singleLine ? 5 : 3.5,
-            opacity: muted ? 0.35 : isEmphasised || singleLine ? 0.95 : 0.7,
+            weight,
+            opacity: muted ? 0.35 : subject ? 0.95 : 0.7,
             dashArray: isReturn ? '10 7' : undefined,
             lineJoin: 'round',
             lineCap: 'round',
@@ -264,6 +409,27 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
              twenty, which is wider than the invisible line ever was. */
           group.addLayer(polyline);
           drawn.push({ line, dir, path });
+
+          /*
+           * Which way the bus goes, on the lines that are the subject -- and on the ida
+           * only. The volta is the dashed trace and runs the other way; arrowing both
+           * said the same thing twice and, with two lines up, four times. Without an
+           * arrow nothing on the map says which way round the 1.1 goes round the walls.
+           * The path order is the direction of travel -- the OSM relation and the
+           * fallback router both run first stop to last -- so the bearing along the
+           * drawn trace is the answer. Kept clear of the poles so a dot is never half
+           * under one.
+           */
+          if (subject && !isReturn) {
+            arrowed.push({
+              path,
+              color: line.color,
+              weight,
+              poles: dir.stops
+                .map((id) => BUS_STOPS.find((s) => s.id === id))
+                .filter((s): s is (typeof BUS_STOPS)[number] => !!s),
+            });
+          }
         });
       });
     }
@@ -321,9 +487,13 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     // first one. Answering only here means every layer has already had its say, including
     // the stop that was tapped.
     map.on('click', openLinesHere);
+    placeArrows();
+    map.on('zoomend', placeArrows);
 
     return () => {
       map.off('click', openLinesHere);
+      map.off('zoomend', placeArrows);
+      arrows.remove();
       group.remove();
       groupRef.current = null;
     };

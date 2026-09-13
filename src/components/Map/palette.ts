@@ -35,7 +35,7 @@ export interface MapColors {
 }
 
 const LIGHT: MapColors = {
-  stopFill: '#27201d',      // the ink, warmed to match the app
+  stopFill: '#4d4541',      // the ink, warmed to match the app, and no louder than 8,4:1 -- see below
   stopStroke: '#ffffff',
   stopSelected: '#0c72cb',  // the official blue, lifted to carry on Voyager
   userFill: '#08569a',      // the same blue, darker: this one is you
@@ -47,7 +47,7 @@ const LIGHT: MapColors = {
 };
 
 const DARK: MapColors = {
-  stopFill: '#e2dddb',
+  stopFill: '#b9b3af',      // 8,4:1 over the ground -- see below
   stopStroke: '#191514',
   stopSelected: '#57a8ff',  // the dark theme's official blue
   userFill: '#82bcfc',      // lighter than the selection, so the two separate
@@ -58,6 +58,21 @@ const DARK: MapColors = {
   destinationPin: '#34d399',
 };
 
+/*
+ * Why the stop discs are the greys they are.
+ *
+ * They were #e2dddb on the dark ground and #27201d on the light one: 13:1 and 14:1, the
+ * loudest thing on either map by a distance. The routes they sit on run from 1,9:1 to
+ * 3,9:1 over the same ground -- capped there by the badge, which needs white text on the
+ * line colour -- so a stop was three to seven times brighter than the line that serves
+ * it, and the overview read as confetti with lines threaded between. On a map whose whole
+ * job is the lines and the stops, the lines are the shape and the stops are the marks on
+ * it, not the other way round.
+ *
+ * 8,4:1 in both themes: still the crispest object on the screen, no longer shouting over
+ * the route. The ring is what separates a disc from the line beneath it and is untouched;
+ * the selected stop keeps the blue and stays on top.
+ */
 export function mapColors(isDark: boolean): MapColors {
   return isDark ? DARK : LIGHT;
 }
