@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Lang, translations } from '../../i18n';
 import { escapeHtml } from './escapeHtml';
 import { directionLabel } from '../../utils/serviceLabels';
@@ -67,6 +67,33 @@ const HIT_PX = 20;
 const LANE_METRES = 6;
 
 /**
+ * The lane, in screen pixels, from the zoom the lanes start at.
+ *
+ * The offset used to be the six metres above at every zoom, and metres do two wrong
+ * things at once. Far out they vanish -- six metres is under a pixel at zoom 14, so the
+ * corridor the lanes exist to untangle is drawn tangled -- and close in they are wider
+ * than the road bends: a route offset 24 m round a 15 m roundabout turns inside out and
+ * draws a loop, which is the shape Brais photographed. Four pixels is a lane the eye can
+ * separate and never more than the radius of any curve the map draws at a zoom where
+ * lanes are on; it means redrawing on zoom, and that is 24 polylines.
+ */
+const LANE_PX = 4;
+const LANES_FROM_ZOOM = 15;
+
+/**
+ * Whether lanes are worth having for this many lines at once.
+ *
+ * Lanes are dealt by index, not by who actually shares a street, so with the whole
+ * network up a rural line alone on its road was drawn four lanes off the asphalt, and
+ * nine lines that never meet were spread across a corridor none of them uses. Up to
+ * nine -- a stop's lines, the lines near you, the lines that reach the hospital -- the
+ * spread is a bundle you can read. Past that the routes go back to the centreline: a
+ * corridor shows one colour, and the tap on it lists everything that runs there, which
+ * is the popup below and the reason it exists.
+ */
+const LANES_UP_TO = 9;
+
+/**
  * How many distinct lanes there are before they start being reused.
  *
  * Twenty-four lines cannot each have their own lane: at six metres that would spread a
@@ -105,7 +132,7 @@ function offsetPath(coords: [number, number][], metres: number): [number, number
     perpendiculars.push(len === 0 ? (perpendiculars[i - 1] ?? [0, 0]) : [dy / len, -dx / len]);
   }
 
-  return coords.map(([lat, lng], i) => {
+  const shifted: [number, number][] = coords.map(([lat, lng], i) => {
     const before = perpendiculars[i - 1];
     const after = perpendiculars[i];
     const px = ((before?.[0] ?? after?.[0] ?? 0) + (after?.[0] ?? before?.[0] ?? 0)) / 2;
@@ -117,6 +144,35 @@ function offsetPath(coords: [number, number][], metres: number): [number, number
       lng + ((px / norm) * metres) / (M_PER_DEG_LAT * cos),
     ];
   });
+
+  /*
+   * Where the bend is tighter than the offset, the inside of the curve turns inside out:
+   * the shifted vertices come out in the reverse order and the path draws a loop. Such a
+   * segment runs against its own original, so it is found by the sign of a dot product
+   * and dropped, and the path closes straight across the bend instead -- a chord where
+   * the road has a knot. A few passes, because a long loop reverses several in a row.
+   */
+  let out = shifted;
+  for (let pass = 0; pass < 4; pass++) {
+    const keep: [number, number][] = [out[0]];
+    let src = 0;
+    for (let i = 1; i < out.length; i++) {
+      const o = coords[i];
+      const p = coords[src];
+      const cos = Math.cos(o[0] * (Math.PI / 180));
+      const ox = (o[1] - p[1]) * cos;
+      const oy = o[0] - p[0];
+      const sx = (out[i][1] - keep[keep.length - 1][1]) * cos;
+      const sy = out[i][0] - keep[keep.length - 1][0];
+      if (ox * sx + oy * sy >= 0) {
+        keep.push(out[i]);
+        src = i;
+      }
+    }
+    if (keep.length === out.length) break;
+    out = keep;
+  }
+  return out;
 }
 
 /**
@@ -265,6 +321,20 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   onOpenLine,
 }) => {
   const groupRef = useRef<L.LayerGroup | null>(null);
+
+  // The zoom, so the pixel lanes and the arrow spacing are recomputed when it changes.
+  // Fractional, since the basemap lets the map settle at any zoom, and read at the end of
+  // each gesture rather than during it.
+  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 14);
+  useEffect(() => {
+    if (!map) return;
+    const sync = () => setZoom(map.getZoom());
+    sync();
+    map.on('zoomend', sync);
+    return () => {
+      map.off('zoomend', sync);
+    };
+  }, [map]);
   // The parent passes a fresh arrow every render. Keeping it in a ref stops that
   // from re-running the effect and redrawing the whole map on each live-bus tick.
   const onSelectLineRef = useRef(onSelectLine);
@@ -272,8 +342,24 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   const onOpenLineRef = useRef(onOpenLine);
   onOpenLineRef.current = onOpenLine;
 
+  /*
+   * The zoom the drawing actually depends on.
+   *
+   * Lanes are in pixels and arrows are spaced in pixels, so both have to be redone when
+   * the zoom changes -- but only when there are any. With the whole network up there are
+   * no lanes (too many lines) and no arrows (no subject), and a redraw on every zoom step
+   * was 24 dense polylines rebuilt for nothing: measured at 4x CPU, 640 ms of the pause
+   * after a zoom. So the effect follows the zoom only while lanes or arrows are on, and
+   * otherwise sees a constant and stays put.
+   */
+  const shownCount = visibleLineIds === null ? lines.length : visibleLineIds.length;
+  const hasSubject = emphasisLineIds.length > 0 || shownCount === 1;
+  const drawingFollowsZoom = hasSubject || (shownCount <= LANES_UP_TO && zoom >= LANES_FROM_ZOOM);
+  const zoomForDrawing = drawingFollowsZoom ? zoom : LANES_FROM_ZOOM - 1;
+
   useEffect(() => {
     if (!map) return;
+    const zoom = zoomForDrawing;
 
     const group = L.layerGroup().addTo(map);
     groupRef.current = group;
@@ -287,17 +373,11 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       pane.style.pointerEvents = 'none';
     }
     const arrows = L.layerGroup();
+    // Metres per screen pixel at this zoom and latitude: what turns a lane or an arrow
+    // spacing given in pixels into ground distance, for this draw.
+    const metresPerPx = (156543.03 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** zoom;
     const placeArrows = () => {
-      arrows.clearLayers();
-      const zoom = map.getZoom();
-      if (zoom < ARROW_MIN_ZOOM || (arrowed.length > 1 && zoom < ARROW_MIN_ZOOM_SHARED)) {
-        if (map.hasLayer(arrows)) arrows.remove();
-        return;
-      }
-      // Metres per screen pixel at this zoom and latitude, so the spacing is constant on
-      // the screen whatever the scale of the ground.
-      const lat = map.getCenter().lat;
-      const metresPerPx = (156543.03 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+      if (zoom < ARROW_MIN_ZOOM || (arrowed.length > 1 && zoom < ARROW_MIN_ZOOM_SHARED)) return;
       for (const trace of arrowed) {
         for (const { at, deg } of arrowsAlong(trace.path, trace.poles, ARROW_EVERY_PX * metresPerPx)) {
           arrows.addLayer(
@@ -310,7 +390,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           );
         }
       }
-      if (!map.hasLayer(arrows)) arrows.addTo(map);
+      arrows.addTo(map);
     };
 
     // The path as drawn, not as stored: a click has to be measured against the line the
@@ -372,13 +452,17 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
              volta share the whole corridor, which is why the return is dashed to be told
              apart at all. Alone, the pair sits half a lane either side of the centreline;
              two subjects sit a lane apart, each with its pair a quarter-lane around it,
-             so four traces span 9 m and stay four. A backdrop line is one lane each,
-             dealt out the same way so the group stays centred on the street rather than
-             drifting off one side of it. */
+             so four traces span six pixels and stay four. A backdrop line is one lane
+             each, dealt out the same way so the group stays centred on the street rather
+             than drifting off one side of it -- and only while there are few enough of
+             them to lay out; see LANES_UP_TO. */
+          const lane = zoom >= LANES_FROM_ZOOM ? LANE_PX * metresPerPx : 0;
           const laneMetres = subject
-            ? (emphasised.length > 1 ? (emphasised.indexOf(line) - (emphasised.length - 1) / 2) * LANE_METRES : 0) +
-              (isReturn ? 1 : -1) * (emphasised.length > 1 ? LANE_METRES / 4 : LANE_METRES / 2)
-            : ((lineIndex % LANES) - Math.floor(LANES / 2)) * LANE_METRES;
+            ? (emphasised.length > 1 ? (emphasised.indexOf(line) - (emphasised.length - 1) / 2) * lane : 0) +
+              (isReturn ? 1 : -1) * (emphasised.length > 1 ? lane / 4 : lane / 2)
+            : inScope.length <= LANES_UP_TO
+              ? ((lineIndex % LANES) - Math.floor(LANES / 2)) * lane
+              : 0;
           const path = offsetPath(dir.pathCoordinates as [number, number][], laneMetres);
 
           const weight = muted ? 2 : subject ? 5 : 3.5;
@@ -488,16 +572,14 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     // the stop that was tapped.
     map.on('click', openLinesHere);
     placeArrows();
-    map.on('zoomend', placeArrows);
 
     return () => {
       map.off('click', openLinesHere);
-      map.off('zoomend', placeArrows);
       arrows.remove();
       group.remove();
       groupRef.current = null;
     };
-  }, [map, lines, visibleLineIds, emphasisLineIds, showRoutes, lang]);
+  }, [map, lines, visibleLineIds, emphasisLineIds, showRoutes, lang, zoomForDrawing]);
 
   return null;
 };
