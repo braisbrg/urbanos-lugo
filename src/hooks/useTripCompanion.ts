@@ -133,10 +133,6 @@ export function useTripCompanion(lang: Lang): TripCompanion {
       void sentinel?.release();
     };
   }, [active, keepAwakeOn]);
-  // A new trip starts with the switch off, whatever the last one chose.
-  useEffect(() => {
-    if (!active) setKeepAwakeOn(false);
-  }, [active]);
 
   const progress = useMemo(
     () => (trip ? tripProgress(trip.plan, fix, new Set(trip.seen)) : null),
@@ -157,6 +153,8 @@ export function useTripCompanion(lang: Lang): TripCompanion {
 
   const start = useCallback((plan: RoutePlanResult, origin: TripPlace | null, destination: TripPlace | null) => {
     setTrip(startTrip(plan, origin, destination));
+    // A new trip starts with the screen switch off, whatever the last one chose.
+    setKeepAwakeOn(false);
     // The same single permission the board asks for; declining keeps the in-page alert.
     void requestNotificationPermission();
   }, []);

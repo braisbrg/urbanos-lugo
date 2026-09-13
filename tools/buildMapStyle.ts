@@ -58,39 +58,33 @@ type Edit = readonly [layer: string, property: string, value: unknown];
  * borders are on neither. It is that the layer answers a question this screen is not for,
  * or actively works against the one it is.
  */
-const DROP: Record<string, readonly [layer: string, why: string][]> = {
+const DROP: Record<string, readonly string[]> = {
   dark: [
-    [
-      'road_oneway',
-      // Nobody reading this is driving. The arrows arrive at zoom 15, which is exactly
-      // where a stop label appears beside every pole and where the basemap's own street
-      // names are faded out to make room for them -- so they spend the space that
-      // decision had just cleared, on a restriction that matters to a car.
-      //
-      // They are also drawn wrong, which is how they got noticed. The sprite's `oneway`
-      // icon is a 21x21 arrow pointing up with a long tail, and the layer places it with
-      // `symbol-placement: line`, which aligns the icon along the road: an arrow drawn
-      // upwards ends up across the street rather than along it. Same family as the
-      // wood-pattern -- the style naming an image the sprite does not draw the way the
-      // layer assumes. Rotating them was the alternative fix and it is the wrong one,
-      // because a correct arrow is still an arrow this map has no use for.
-      'one-way arrows are for drivers, and land where the stop labels do',
-    ],
-    ['road_oneway_opposite', 'the same arrows, in the other direction'],
+    // Nobody reading this is driving. The arrows arrive at zoom 15, which is exactly
+    // where a stop label appears beside every pole and where the basemap's own street
+    // names are faded out to make room for them -- so they spend the space that
+    // decision had just cleared, on a restriction that matters to a car.
+    //
+    // They are also drawn wrong, which is how they got noticed. The sprite's `oneway`
+    // icon is a 21x21 arrow pointing up with a long tail, and the layer places it with
+    // `symbol-placement: line`, which aligns the icon along the road: an arrow drawn
+    // upwards ends up across the street rather than along it. Same family as the
+    // wood-pattern -- the style naming an image the sprite does not draw the way the
+    // layer assumes. Rotating them was the alternative fix and it is the wrong one,
+    // because a correct arrow is still an arrow this map has no use for.
+    'road_oneway',
+    'road_oneway_opposite',
   ],
   light: [
-    [
-      'landuse_residential',
-      // A flat wash over every residential polygon, at 0.6 to 0.8 opacity, all the way to
-      // zoom 16. It is why whole neighbourhoods came out as one block of tinted
-      // background with no buildings visible in them -- the wash is the same weight as
-      // the footprints, so the footprints stop reading as separate things.
-      //
-      // The dark style already caps it at zoom 9, where it never draws in a city, and the
-      // two themes should show the same things. What says "people live here" is the
-      // buildings, and those are now heavy enough to say it on their own.
-      'a flat wash that swallowed the buildings standing in it; dark caps it at z9',
-    ],
+    // A flat wash over every residential polygon, at 0.6 to 0.8 opacity, all the way to
+    // zoom 16. It is why whole neighbourhoods came out as one block of tinted
+    // background with no buildings visible in them -- the wash is the same weight as
+    // the footprints, so the footprints stop reading as separate things.
+    //
+    // The dark style already caps it at zoom 9, where it never draws in a city, and the
+    // two themes should show the same things. What says "people live here" is the
+    // buildings, and those are now heavy enough to say it on their own.
+    'landuse_residential',
   ],
 };
 
@@ -131,17 +125,16 @@ const FADE_ABOVE_16: unknown = ['interpolate', ['linear'], ['zoom'], 15, 1, 16.5
  * Ground at the bottom, blocks a step up, streets above them, and nothing anywhere near
  * the route drawn on top. Measured against the 21 distinct colours of the 24 lines:
  *
- *     ground     #171a1f  1,00     the floor
- *     building   #1c2027  1,07     mass without linework
- *     park/wood  #1e2a1b  1,16     green enough to be a park
- *     minor      #242932  1,19     no casing, so it carries itself
- *     major      #282d34  1,26     the widest thing on the map
- *     casing     #39404b  1,67     a hairline, 0,65 px a side at zoom 14
+ *     ground        #171a1f  1,00     the floor
+ *     major inner   #1e222a  1,09     where the ink lands: 1,76 at worst
+ *     building      #232830  1,18     mass without linework; was 1,07, not a step
+ *     park/wood     #1e2a1b  1,16     green enough to be a park
+ *     minor         #2b3038  1,31     no casing, so it carries itself
+ *     major casing  #39404b  1,67     a hairline, 0,65 px a side at zoom 14
  *
- * The faintest route colour is line 11 at 1,92 over the ground, so a street at 1,26
- * leaves every one of the 21 at 1,53 or better over the widest thing they cross. The
- * ceiling is not taste: pushing the major street one step further puts line 11 under 1,5
- * and it starts to vanish.
+ * The faintest route colour is line 11 at 1,92 over the ground: 1,76 over the major
+ * street it runs on and 1,46 over a minor one, which is 2,3 px wide at zoom 14. The
+ * ceiling is not taste: one step brighter on either street and the 11 starts to vanish.
  *
  * Line 11 is dark for a reason of its own -- the badge is white text at 10 px on that
  * colour and had to clear 4,5:1 -- so the two requirements pull opposite ways and the map
@@ -308,8 +301,7 @@ async function fetchPublished(): Promise<void> {
 function derive(published: Style, edits: readonly Edit[], theme: string): Style {
   const style: Style = JSON.parse(JSON.stringify(published));
 
-  const dropped = DROP[theme] ?? [];
-  const gone = new Set(dropped.map(([id]) => id));
+  const gone = new Set(DROP[theme] ?? []);
   const absent = [...gone].filter((id) => !style.layers.some((l) => l.id === id));
   if (absent.length) {
     throw new Error(

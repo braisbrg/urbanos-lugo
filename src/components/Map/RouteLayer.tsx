@@ -69,49 +69,6 @@ function laneWidthPx(zoom: number): number {
 }
 
 /**
- * A path to be drawn, with the lane it is dealt.
- */
-interface Trace {
-  coords: [number, number][];
-  /** Which lane out from the kerb, 0 first. */
-  lane: number;
-}
-
-/**
- * The lane of every trace at every vertex, in lanes: positive is right of travel.
- *
- * A fixed lane per line, by its place in the list, along its whole length -- the same
- * lane at every vertex, which is what makes the bundle parallel. Three other deals were
- * built and rendered side by side with Brais on 13 September before this one was kept:
- *
- *   - per street segment, by which traces share exactly that segment: matched shared
- *     streets by identical vertices, and where two traces of one street do not coincide
- *     vertex for vertex the lane flickered segment by segment -- a zigzag;
- *   - to the right of travel, stacked with whoever heads the same way within a street's
- *     width, smoothed over sixty metres: honest about who shares what, and a tangle at
- *     every junction where the ranks change;
- *   - a fixed lane per trace by colouring the graph of who meets whom: a trace that
- *     meets a big bundle anywhere carries that high lane everywhere, and fanned out far
- *     from its own road.
- *
- * The fixed lane's own cost is known and bounded: a backdrop line alone on its road is
- * drawn beside it rather than on it, by at most three and a half lanes -- 10 px at zoom
- * 16 -- and the line being looked at is never that line, because the subject takes the
- * kerb. Every backdrop line keeps its lane however many are chosen, so choosing one does
- * not reshuffle the bundle around it.
- */
-function laneSlots(traces: Trace[]): number[][] {
-  /*
-   * Always to the right of travel. The first version dealt lanes either side of the
-   * centreline, so a line whose lane fell on the left was drawn on the left of its own
-   * direction -- Brais, on the Avenida da Coruña: the trace on the left was the one that
-   * drives on the right in real life. Buses keep right here; the drawn line does too, and
-   * the two directions of a line land on their own kerbs by construction.
-   */
-  return traces.map((t) => t.coords.map(() => t.lane + 0.5));
-}
-
-/**
  * How many lanes there are on each side of a street before they are reused.
  *
  * Four, at three pixels, is twelve pixels a side -- a bundle you can still tell apart
@@ -143,9 +100,8 @@ const SUBJECT_LANE_PX = 6;
  * offsets 1.37 times too wide — checked by measuring a due-north and a due-east street,
  * which both come back at 6.00 m.
  */
-function offsetPath(coords: [number, number][], metres: number | number[]): [number, number][] {
-  const at = (i: number) => (typeof metres === 'number' ? metres : (metres[i] ?? 0));
-  if (coords.length < 2 || (typeof metres === 'number' ? metres === 0 : metres.every((m) => m === 0))) return coords;
+function offsetPath(coords: [number, number][], metres: number): [number, number][] {
+  if (metres === 0 || coords.length < 2) return coords;
   const M_PER_DEG_LAT = 111_320;
   const perpendiculars: [number, number][] = [];
 
@@ -168,8 +124,8 @@ function offsetPath(coords: [number, number][], metres: number | number[]): [num
     const norm = Math.hypot(px, py) || 1;
     const cos = Math.cos(lat * (Math.PI / 180)) || 1;
     return [
-      lat + ((py / norm) * at(i)) / M_PER_DEG_LAT,
-      lng + ((px / norm) * at(i)) / (M_PER_DEG_LAT * cos),
+      lat + ((py / norm) * metres) / M_PER_DEG_LAT,
+      lng + ((px / norm) * metres) / (M_PER_DEG_LAT * cos),
     ];
   });
 
@@ -370,8 +326,6 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
    * otherwise sees a constant and stays put.
    */
   const zoomForDrawing = Math.round(zoom);
-  /** The lanes for the traces on screen; they do not depend on the zoom, so kept across it. */
-  const slotsRef = useRef<{ key: string; slots: number[][] } | null>(null);
 
   useEffect(() => {
     if (!map) return;
@@ -457,25 +411,30 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
        * order they were chosen, and the backdrop lines are dealt the lanes behind them by
        * list position, so choosing one does not reshuffle the others.
        */
+      /*
+       * A fixed lane per line, the same along its whole length, and always to the right of
+       * travel -- the first version dealt lanes either side of the centreline, so a line
+       * whose lane fell on the left was drawn on the left of its own direction; Brais, on
+       * the Avenida da Coruña: the trace on the left was the one that drives on the right
+       * in real life. Buses keep right here; the drawn line does too, and the two
+       * directions of a line land on their own kerbs by construction.
+       *
+       * Three other deals were built and rendered side by side with Brais on 13 September
+       * before this one was kept: per street segment by shared vertices (zig-zagged where
+       * two traces of one street do not coincide vertex for vertex); to the right of
+       * travel by proximity and bearing, smoothed (a tangle at every junction where the
+       * ranks change); a fixed lane by colouring the graph of who meets whom (a trace that
+       * meets a big bundle anywhere carried that high lane everywhere). The fixed lane's
+       * own cost is bounded: a backdrop line alone on its road sits at most three and a
+       * half lanes off it, 10 px at zoom 16, and the chosen line is never that line.
+       */
       const subjects = lines.filter((line) => inScope.includes(line) && (emphasisLineIds.includes(line.id) || singleLine));
-      const laneOf = (line: BusLine, lineIndex: number) => {
+      const laneOf = (line: BusLine) => {
         const s = subjects.indexOf(line);
         if (s >= 0) return Math.min(s, LANES - 1);
-        return subjects.length ? 1 + (lineIndex % (LANES - 1)) : lineIndex % LANES;
+        const i = lines.indexOf(line);
+        return subjects.length ? 1 + (i % (LANES - 1)) : i % LANES;
       };
-      const traces: { line: BusLine; dir: BusLine['directions'][number]; trace: Trace }[] = [];
-      lines.forEach((line, lineIndex) => {
-        if (!inScope.includes(line)) return;
-        for (const dir of line.directions) {
-          if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) continue;
-          traces.push({ line, dir, trace: { coords: dir.pathCoordinates as [number, number][], lane: laneOf(line, lineIndex) } });
-        }
-      });
-      const tracesKey = traces.map((t) => `${t.line.id}/${t.dir.id}:${t.trace.lane}`).join(' ');
-      if (slotsRef.current?.key !== tracesKey) {
-        slotsRef.current = { key: tracesKey, slots: laneSlots(traces.map((t) => t.trace)) };
-      }
-      const slots = slotsRef.current.slots;
       const laneMetres = laneWidthPx(zoom) * metresPerPx;
       const subjectLaneMetres = Math.max(laneWidthPx(zoom), SUBJECT_LANE_PX) * metresPerPx;
 
@@ -487,16 +446,14 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
         const subject = isEmphasised || singleLine;
 
         line.directions.forEach((dir, dirIndex) => {
-          const t = traces.findIndex((x) => x.line === line && x.dir === dir);
-          if (t === -1) return;
+          if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) return;
 
           const isReturn = dirIndex === 1;
 
-          // The lane is the line's, at every vertex -- see laneSlots -- scaled to the
-          // zoom's lane width. Nothing at the zooms where lanes are off.
+          // Half a lane out from the kerb, then whole lanes; nothing where lanes are off.
           const path = offsetPath(
-            traces[t].trace.coords,
-            slots[t].map((slot) => slot * (subject ? subjectLaneMetres : laneMetres)),
+            dir.pathCoordinates as [number, number][],
+            (laneOf(line) + 0.5) * (subject ? subjectLaneMetres : laneMetres),
           );
 
           const weight = muted ? 2 : subject ? 5 : 3.5;

@@ -70,10 +70,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   showStops,
   onTapStop,
 }) => {
-  /** The moveend handler that swaps written names for hover ones at the view's edge. */
-  const relabelRef = useRef<(() => void) | null>(null);
-  /** Cancels the frames still queued to write names, when the layer goes. */
-  const drainRef = useRef<(() => void) | null>(null);
+  /** Undoes what the effect below leaves running between renders: a moveend handler and queued frames. */
+  const teardownRef = useRef<(() => void) | null>(null);
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
   const colors = mapColors(useIsDark());
   // Held in a ref so a fresh arrow from the parent does not rebuild every marker.
@@ -154,7 +152,29 @@ export const StopLayer: React.FC<StopLayerProps> = ({
          names at the edge, and the set of stops whose name is currently written. */
       let labelBounds = map.getBounds().pad(0.2);
       const labelled = new Set<string>();
-      const labelers: Record<string, { writeName: () => L.Layer; hoverName: () => L.Layer; at: L.LatLng }> = {};
+      const placed: Record<string, BusStop> = {};
+      /** Bind the one tooltip a marker carries: the written name, or the one that opens on hover. */
+      const bind = (marker: L.CircleMarker, stop: BusStop, written: boolean) => {
+        marker.unbindTooltip();
+        if (written) {
+          marker.bindTooltip(escapeHtml(stop.name), {
+            permanent: true,
+            direction: 'auto',
+            offset: [rung.radius + 2, 0],
+            className: 'stop-name-label',
+          });
+          labelled.add(stop.id);
+        } else {
+          const code = poleCode(stop);
+          marker.bindTooltip(
+            `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
+              ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
+            </div>`,
+            { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
+          );
+          labelled.delete(stop.id);
+        }
+      };
 
       /*
        * Build only the stops that are in view, and the rest as they come into it.
@@ -190,12 +210,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         for (const stop of toPlace.splice(0, 16)) place(stop);
         if (!toPlace.length) {
           for (const id of toWrite.splice(0, 8)) {
-            const l = labelers[id];
             const marker = markersRef.current[id];
-            if (!l || !marker || labelled.has(id)) continue;
-            marker.unbindTooltip();
-            l.writeName();
-            labelled.add(id);
+            if (placed[id] && marker && !labelled.has(id)) bind(marker, placed[id], true);
           }
         }
         if (toPlace.length || toWrite.length) draining = requestAnimationFrame(drain);
@@ -207,7 +223,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         toWrite.push(id);
         queue();
       };
-      drainRef.current = () => {
+      const stopDraining = () => {
         if (draining) cancelAnimationFrame(draining);
         draining = 0;
         toPlace.length = 0;
@@ -215,7 +231,6 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       };
 
       const place = (stop: BusStop) => {
-        const code = poleCode(stop);
         // 271 of the 417 carry a code on the pole. That used to be drawn — a size up and a
         // heavier ring — and it did not read: two pixels of radius between dots that are
         // four to seven pixels wide is a difference nobody sees, and the thing it was
@@ -241,20 +256,6 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         // 375 px phone put the name off the screen — measured, three of the thirteen on
         // view at zoom 16, the widest of them 157 px. Leaflet's own `auto` flips the side
         // once the marker passes the middle of the map, which is the whole of the fix.
-        const writeName = () =>
-          marker.bindTooltip(escapeHtml(stop.name), {
-            permanent: true,
-            direction: 'auto',
-            offset: [rung.radius + 2, 0],
-            className: 'stop-name-label',
-          });
-        const hoverName = () =>
-          marker.bindTooltip(
-            `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
-              ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
-            </div>`,
-            { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
-          );
         /*
          * Written names only for the stops in view.
          *
@@ -267,8 +268,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
          * that crossed the edge, never the whole set.
          */
         // Hover first, always; the written name replaces it from the queue.
-        hoverName();
-        labelers[stop.id] = { writeName, hoverName, at: L.latLng(stop.lat, stop.lng) };
+        bind(marker, stop, false);
+        placed[stop.id] = stop;
         if (rung.label && labelBounds.contains([stop.lat, stop.lng])) queueName(stop.id);
 
         /* Tapping a stop opens the stop, in a sheet over the map.
@@ -327,32 +328,28 @@ export const StopLayer: React.FC<StopLayerProps> = ({
             if (toPlace.length) queue();
           }
           if (!rung.label) return;
-          for (const [id, l] of Object.entries(labelers)) {
+          for (const [id, stop] of Object.entries(placed)) {
             const marker = markersRef.current[id];
             if (!marker) continue;
-            const should = now.contains(l.at);
+            const should = now.contains([stop.lat, stop.lng]);
             if (should === labelled.has(id)) continue;
-            if (should) {
-              queueName(id);
-            } else {
-              marker.unbindTooltip();
-              l.hoverName();
-              labelled.delete(id);
-            }
+            if (should) queueName(id);
+            else bind(marker, stop, false);
           }
         };
         map.on('moveend', relabel);
-        relabelRef.current = relabel;
+        teardownRef.current = () => {
+          stopDraining();
+          map.off('moveend', relabel);
+        };
+      } else {
+        teardownRef.current = stopDraining;
       }
     }
 
     return () => {
-      drainRef.current?.();
-      drainRef.current = null;
-      if (relabelRef.current) {
-        map.off('moveend', relabelRef.current);
-        relabelRef.current = null;
-      }
+      teardownRef.current?.();
+      teardownRef.current = null;
       group.remove();
       markersRef.current = {};
     };
