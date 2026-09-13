@@ -1462,6 +1462,48 @@ ok('the trip companion counts stops against the list, and never backwards', () =
     }
   }
   assert(tight <= 10, `${tight} consecutive pairs are closer than the ${AT_STOP_RADIUS_M} m radius, up from 10`);
+
+  /*
+   * And the pairs that are NOT consecutive, which the note above never counted.
+   *
+   * Six of the 48 directions double back along their own avenue, so two stops far apart
+   * in the list sit within the radius of each other on the ground: the 4.1 outbound has
+   * stop 20 and stop 29 thirty-eight metres apart, its return has the two Pista Muxa
+   * poles fifteen apart, the 5.2 and 5DS do it on Ramón Ferreiro. The first counter took
+   * the furthest stop in range, so standing at stop 20 ticked 21 to 29 in one go -- and
+   * because a stop once passed stays passed, it never came back: nine stops gone from the
+   * count and the alert nine stops early, on a line people ride every day.
+   *
+   * Every such pair in the dataset is tried here, and at each one the earlier pole must
+   * be the one counted.
+   */
+  let doubledBack = 0;
+  for (const line of BUS_LINES) {
+    for (const direction of line.directions) {
+      const poles = direction.stops.map((id) => BUS_STOPS.find((s) => s.id === id)!).filter(Boolean);
+      for (let i = 0; i < poles.length; i++) {
+        for (let j = i + 2; j < poles.length; j++) {
+          if (getDistanceMeters(poles[i].lat, poles[i].lng, poles[j].lat, poles[j].lng) > AT_STOP_RADIUS_M) continue;
+          doubledBack++;
+          // A ride that boards before the near pair and gets off after it.
+          const from = poles[Math.max(0, i - 1)];
+          const to = poles[poles.length - 1];
+          const synthetic = {
+            segments: [{ type: 'bus', line, directionId: direction.id, fromStop: from, toStop: to }],
+          } as unknown as RoutePlanResult;
+          const behind = new Set(poles.slice(0, i).map((p) => p.id));
+          const here = tripProgress(synthetic, { lat: poles[i].lat, lng: poles[i].lng }, behind);
+          const later = here.stops.find((s) => s.id === poles[j].id);
+          assert(
+            later && !later.passed,
+            `${line.number} ${direction.id}: standing at stop ${i} (${poles[i].name}) marks stop ${j} (${poles[j].name}) passed, ${getDistanceMeters(poles[i].lat, poles[i].lng, poles[j].lat, poles[j].lng).toFixed(0)} m away`,
+          );
+          assert(here.stops.find((s) => s.id === poles[i].id)?.passed, `${line.number} ${direction.id}: stop ${i} itself is not marked`);
+        }
+      }
+    }
+  }
+  assert(doubledBack >= 6, `only ${doubledBack} doubled-back pairs found; the check is not checking`);
 });
 
 ok('the trip companion moves through its phases on fixes alone, rings once a leg, and carries a transfer', () => {

@@ -149,26 +149,52 @@ export function tripProgress(
   const stops = legStops(plan, segmentIndex);
   const alighting = segment?.toStop;
 
-  // No fix yet -- the phone is still asking, or was told no -- shows what is remembered
-  // and nothing more. The list is still the list; only the ticks need a position.
-  const passedNow = new Set(seen);
+  // What was already behind before this fix. No fix yet -- the phone is still asking, or
+  // was told no -- shows what is remembered and nothing more. The list is still the
+  // list; only the ticks need a position.
+  const before = stops.reduce((last, stop, i) => (seen.has(stop.id) ? i : last), -1);
+
+  /*
+   * The next stop in order that this fix is at -- not the furthest one it happens to be
+   * near.
+   *
+   * The first version took the furthest, and the reason it is wrong is measured rather
+   * than imagined: six of the 48 directions double back along their own avenue, so two
+   * stops far apart in the list sit within the radius of each other on the ground. The
+   * worst is the 4.1 outbound, where stop 20 (N-640, Taller López y Vázquez) and stop 29
+   * (Rotonda Rda. Norte) are 38 m apart; the 4.1 return has its Pista Muxa poles 15 m
+   * apart in the two directions, and the 5.2 and 5DS do the same on Ramón Ferreiro.
+   * Standing at stop 20 marked stop 29 reached, ticked 21 to 29 in one go, and -- because
+   * a stop once passed stays passed -- never came back: nine stops gone from the count and
+   * the alert nine stops early.
+   *
+   * Walking forward from the last stop reached and taking the first one within the radius
+   * cannot make that jump. It can still skip stops the phone gave no fix at, because the
+   * scan runs on to whatever is actually in range; what it refuses to do is pass a pole
+   * that is in range to reach one further on. The failure it leaves is the harmless one:
+   * a fix that genuinely arrives at stop 29 after a long silence is read as stop 20 and
+   * corrected at stop 30, one stop later.
+   */
+  let furthest = before;
   if (fix) {
-    for (const stop of stops) {
-      const known = BUS_STOPS.find((s) => s.id === stop.id);
+    for (let i = before + 1; i < stops.length; i++) {
+      const known = BUS_STOPS.find((s) => s.id === stops[i].id);
       if (!known) continue;
-      if (getDistanceMeters(fix.lat, fix.lng, known.lat, known.lng) <= AT_STOP_RADIUS_M) passedNow.add(stop.id);
+      if (getDistanceMeters(fix.lat, fix.lng, known.lat, known.lng) <= AT_STOP_RADIUS_M) {
+        furthest = i;
+        break;
+      }
     }
   }
 
   /*
-   * Everything before the furthest one reached is behind you too.
+   * Everything before the one reached is behind you too.
    *
    * A phone does not report a fix at every pole — the bus does not stop at all of them,
    * and a fix can be a minute apart. Marking only what was within sixty metres left gaps
    * in the middle of the list, so the reader saw stop 3 ticked, 4 and 5 not, and 6 ticked.
    * The bus does not skip backwards: reaching one means every earlier one is done.
    */
-  const furthest = stops.reduce((last, stop, i) => (passedNow.has(stop.id) ? i : last), -1);
   const marked = stops.map((stop, i) => ({
     id: stop.id,
     name: stop.name,
