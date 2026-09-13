@@ -268,6 +268,22 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       });
     }
 
+    /*
+     * Routes are the floor of the overlay, whatever else is drawn and whenever.
+     *
+     * Everything on this map shares one canvas, and a canvas paints in the order layers
+     * were added. The stops are added once, by their own component; the routes are
+     * rebuilt every time a line is chosen or a filter changes, which makes them the newest
+     * layers on the canvas and paints them over the stop dots. That was "the circles are
+     * sometimes under the lines" -- and sometimes was every redraw after the first one.
+     *
+     * Sending each route to the back, last-added first so their own order survives, puts
+     * them under the stops, the vehicles and the reader's position no matter which
+     * component drew what when. A pane of their own would do the same and cost the hover
+     * on whichever canvas ends up underneath, since each canvas only hears its own events.
+     */
+    for (const layer of [...group.getLayers()].reverse()) (layer as L.Path).bringToBack();
+
     const openLinesHere = (e: L.LeafletMouseEvent) => {
       // A stop got there first. Stops sit on routes, so without this the route popup
       // opened over the stop popup a moment after it and the stop was unreachable —
