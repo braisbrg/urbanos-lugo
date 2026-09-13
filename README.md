@@ -151,7 +151,7 @@ enriba — as 24 cores de liña quedan a 1,45 ou máis sobre calquera das tres c
 que cruzan, e ningún rótulo do mapa baixa de 4,5. O plan e as cifras están en
 [`design/PLAN-mapa-propio.md`](design/PLAN-mapa-propio.md).
 
-Cunha liña escollida debúxanse os seus dous sentidos —a volta, descontinua— e a ida leva
+Cunha liña escollida debúxanse os seus dous sentidos —a volta, descontinua— e os dous levan
 **frechas de sentido** cada 120 px de pantalla, do mesmo trazo e cor que a liña; por
 debaixo do zoom 14 non se amosan, e con varias liñas escollidas só desde o 17, que é onde
 os seus carrís xa se distinguen e unha frecha se lle pode atribuír á súa liña. As paradas
