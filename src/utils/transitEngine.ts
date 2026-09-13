@@ -7,7 +7,7 @@ import { getDistanceMeters } from './geo';
 
 // Re-exported because half this file's consumers already import it from here.
 export { getDistanceMeters };
-import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, lineRunsOn, parseTimeToMinutes } from './schedule';
+import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, handoverMinutes, lineRunsOn, parseTimeToMinutes } from './schedule';
 
 
 
@@ -600,8 +600,9 @@ function pointOnPath(
 
 /**
  * Vehicles currently on the road, derived from the timetable: one bus per run that has
- * departed but not yet finished. Outside service hours the fleet is empty, which is
- * what the network actually looks like at 23:00.
+ * departed and not yet handed over to its own return leg (`handoverMinutes`) or
+ * arrived. Outside service hours the fleet is empty, which is what the network actually
+ * looks like at 23:00.
  */
 export function getScheduledBuses(now: Date = new Date()): ScheduledBus[] {
   const nowMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
@@ -610,6 +611,7 @@ export function getScheduledBuses(now: Date = new Date()): ScheduledBus[] {
 
   BUS_LINES.forEach((line) => {
     if (!lineRunsOn(line, today)) return;
+    const handover = handoverMinutes(line, BUS_STOPS, today);
 
     line.directions.forEach((direction, dirIndex) => {
       // Without the geometry chunk a bus still has a schedule and a next stop; it just
@@ -632,8 +634,12 @@ export function getScheduledBuses(now: Date = new Date()): ScheduledBus[] {
         // not on the road any more. Including it put two markers of the same line on one
         // point at every terminus — the bus pulling in and the bus pulling out are the
         // same vehicle turning around, and drawing both says the line runs twice the
-        // service it does.
-        if (t < start || t >= end) return;
+        // service it does. The handover is the same turnaround seen from the other side:
+        // once the return leg this run feeds has left, this marker is that bus's past.
+        // The times below are still the run's own, so the bus sits where the timetable
+        // says right up to the minute it stops being drawn.
+        const drawnUntil = handover.get(`${dirIndex}|${runIndex}`) ?? end;
+        if (t < start || t >= drawnUntil) return;
 
         // Progress follows the scheduled passing times, so the bus slows where the
         // timetable says it does instead of sliding at a constant rate.
@@ -693,8 +699,11 @@ export function getScheduledBuses(now: Date = new Date()): ScheduledBus[] {
 /**
  * When does the next bus of this line leave `stopId`, at or after `targetMinutes`?
  * Reads the published timetable; no synthetic slots.
+ *
+ * Exported for the trip companion, whose answer to a missed bus is this same question
+ * asked again at the pole — not a new plan from a moving position.
  */
-function getNextLineDeparture(
+export function getNextLineDeparture(
   lang: Lang,
   line: BusLine,
   directionId: string,
@@ -961,6 +970,7 @@ function buildLeg(
     line,
     directionId: direction.id,
     precision: departure.precision,
+    arrivalPrecision: departure.arrivalPrecision ?? 'estimated',
     fromStop,
     toStop,
     durationMinutes: shownArrive - shownBoard,

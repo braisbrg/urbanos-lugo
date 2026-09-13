@@ -29,15 +29,34 @@ typed your street, your street is what it holds. It is kept so you do not have t
 the same trip twice, it is capped at four, and "Borrar" beside the list removes it. As
 with everything above, nothing in this project reads it back out or sends it anywhere.
 
+One more is kept in `sessionStorage`, which is different: it survives a reload and is
+gone when the tab closes.
+
+| Key | What it holds |
+| :--- | :--- |
+| `urbanos-lugo-trip` | the trip you are on, if you pressed "Vou nesta": its stops, lines and times, and which stops you have passed |
+
+It is there so that locking your phone on the bus does not end the mode. It is written
+when you start a trip, removed when you press "Saír da viaxe", and — because it is
+`sessionStorage` and not `localStorage` — not left on the device afterwards as a record
+of where you went and when.
+
 Clearing your browser's site data removes all of it. There is no copy anywhere else.
 
 ## Your location
 
-The app asks for it in three places, and never without you pressing something:
-**"stops near me"**, **"use my GPS location"** in the route planner, and the **arrival
-alarm**, which watches your position while it is running so it can tell you when to get
-off. Deny the permission and the app says so and carries on — it does not fall back to a
-guess about where you are.
+The app asks for it in four places, and never without you pressing something:
+**"stops near me"**, **"use my GPS location"** in the route planner, the **arrival
+alarm** on a stop's board, and **"Vou nesta"** on a planned trip, which watches your
+position for the length of the ride so it can count the stops you have passed and tell
+you when to get off. Deny the permission and the app says so and carries on — it does not
+fall back to a guess about where you are.
+
+The alarm and the ride are one and the same watch (`src/services/stopAlarm.ts`): one
+radius, one sound, one permission prompt. The difference is how long it runs — the alarm
+until you reach one stop, the ride until you say you have finished — and in both cases
+it runs only while the page is open, because a web page cannot wake itself in the
+background.
 
 Your position is used in the browser to sort stops by distance and to draw a marker. It
 is **not** sent to this project's server, because there is nothing to send it to: the

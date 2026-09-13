@@ -221,6 +221,24 @@ export const en: Dict = {
       'Departure times come from the official timetable; those marked ~ are the departure plus the driving time measured along the road. This app receives no vehicle positions, so get to the stop a few minutes early.',
   },
 
+  companion: {
+    title: 'On the bus',
+    start: 'I am taking this one',
+    stops: (count: number) => (count === 1 ? 'stop' : 'stops'),
+    walkTo: 'Walk to',
+    arrived: 'You are here',
+    lastOneGone: 'That was the last bus today from this stop.',
+    caughtIt: (line: string, time: string) => `Did you catch the ${line} at ${time}?`,
+    yesOnIt: 'Yes, I am on it',
+    noMissedIt: 'No, I missed it',
+    watching: (metres: number) => `You will be told ${metres} m before your stop.`,
+    alightHere: 'get off here',
+    passed: 'passed',
+    next: 'next',
+    finish: 'Leave trip',
+    onTrip: 'Trip in progress',
+  },
+
   faresContent: {
     faqs: [
       {
@@ -295,7 +313,8 @@ export const en: Dict = {
     layerRoutes: 'Routes',
     documentTitle: 'Urbanos de Lugo | Lines, timetables and stops',
     layers: 'Visible layers',
-    linesList: 'Choose a line',
+    linesList: 'Choose lines',
+    linesPicked: (count: number) => (count === 1 ? '1 chosen' : `${count} chosen`),
     controls: 'Filters and layers',
     closeControls: 'Close filters and layers',
     closeStop: 'Close this stop',
@@ -379,7 +398,7 @@ export const en: Dict = {
     searchLines: 'Search a line by number or name...',
     enRoute: (count: number) => (count === 1 ? '1 running' : `${count} running`),
     enRouteHint:
-      'Runs that should be on the road now according to the timetable. This app receives no vehicle positions.',
+      'Buses that should be on the road now according to the timetable. This app receives no vehicle positions.',
     lineLabel: (number: string) => `Line ${number}`,
     origin: 'Start',
     destination: 'End',

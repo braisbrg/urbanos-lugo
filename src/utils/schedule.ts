@@ -97,6 +97,13 @@ interface ScheduledRun {
    * estimate as a promise.
    */
   publishedStopIndices: number[];
+  /**
+   * Index of the last stop pinned to a printed timing point. From there to the terminus
+   * the clock is measured road time, which is the stretch a bus may be drawn on after
+   * the operator's own table already has it leaving on the return -- see
+   * `handoverMinutes`. 0 when nothing past the departure is printed.
+   */
+  lastTimingPointIndex: number;
 }
 
 const runCache = new Map<string, ScheduledRun[]>();
@@ -282,6 +289,7 @@ export function buildRuns(
       // prints more departures at one timing point than another, the leg time is a median
       // that lands a few minutes off the printed time for some individual runs.
       const anchorTimes = chain.map((a) => new Set(a.times));
+      const lastTimingPointIndex = chain[chain.length - 1].index;
 
       for (const departure of departures) {
         const minutesByStopIndex = offsets.map((o) => departure + o);
@@ -292,6 +300,7 @@ export function buildRuns(
           publishedStopIndices: chain
             .map((a) => a.index)
             .filter((index, j) => anchorTimes[j].has(Math.round(minutesByStopIndex[index]))),
+          lastTimingPointIndex,
         });
       }
     }
@@ -318,12 +327,82 @@ export function buildRuns(
           directionId: direction.id,
           minutesByStopIndex: direction.stops.map((_, i) => t + cum[i] / 60),
           publishedStopIndices: [],
+          lastTimingPointIndex: 0,
         });
       }
     }
   }
 
   runCache.set(key, result);
+  return result;
+}
+
+const handoverCache = new Map<string, Map<string, number>>();
+
+/**
+ * The minute at which each run's marker must give way to the same bus's next leg.
+ *
+ * A run is drawn from its departure to its arrival. But a line's two directions are one
+ * vehicle turning around, and where the modelled arrival lands after the printed
+ * departure of the leg it turns into, the map drew that bus twice: at 07:45 the 7's
+ * 07:30 outbound was still 1.3 minutes short of A Ponte while its 07:45 return had
+ * already left it, 139 m apart. On the 11 to Pías the outbound runs eight minutes past
+ * its last timing point, and the return leaves Pías on that timing point's minute.
+ *
+ * So a run stops being drawn at the earliest departure of the opposite direction that
+ * falls inside it -- with one rail: never before the run's last printed timing point. Up
+ * to there the clock is the operator's, and a departure in that stretch is the other bus
+ * of a line that runs two (the 6's return is pinned through Sindicatos, and the outbound
+ * that leaves ten minutes earlier is the second vehicle, not this one turning). Past it
+ * the clock is our own road time, and a departure the operator's table puts there --
+ * printed, or filled in at its stated cadence -- outranks it.
+ * The same rail is what keeps the last run of the day whole: nothing leaves after it
+ * inside the stretch the operator printed.
+ *
+ * A departure can end only one run, the one whose arrival it is nearest to, so two
+ * markers never vanish into one. The other keeps its full length, which at worst draws
+ * a bus twice for a minute and never loses one.
+ *
+ * Keyed by `${directionIndex}|${runIndex}`; a run absent from the map is drawn until it
+ * arrives. Nothing here moves a time: the runs are untouched, only how long a marker
+ * stays on the road.
+ */
+export function handoverMinutes(line: BusLine, stops: BusStop[], dayType: DayKind): Map<string, number> {
+  const key = `${line.id}|${dayType}`;
+  const cached = handoverCache.get(key);
+  if (cached) return cached;
+
+  const legs = line.directions.flatMap((_, dir) =>
+    buildRuns(line, dir, stops, dayType).map((run, runIndex) => {
+      const t = run.minutesByStopIndex;
+      return {
+        key: `${dir}|${runIndex}`,
+        dir,
+        start: t[0],
+        end: t[t.length - 1],
+        pinnedUntil: t[run.lastTimingPointIndex] ?? t[0],
+      };
+    }),
+  );
+
+  // successor leg index -> the leg it ends, and how far short of that leg's arrival.
+  const claims = new Map<number, { by: number; gap: number }>();
+  legs.forEach((leg, i) => {
+    let best = -1;
+    legs.forEach((other, j) => {
+      if (other.dir === leg.dir) return;
+      if (!(other.start > leg.start && other.start < leg.end && other.start >= leg.pinnedUntil)) return;
+      if (best < 0 || other.start < legs[best].start) best = j;
+    });
+    if (best < 0) return;
+    const gap = leg.end - legs[best].start;
+    const held = claims.get(best);
+    if (!held || gap < held.gap) claims.set(best, { by: i, gap });
+  });
+
+  const result = new Map<string, number>();
+  for (const [successor, { by }] of claims) result.set(legs[by].key, legs[successor].start);
+  handoverCache.set(key, result);
   return result;
 }
 

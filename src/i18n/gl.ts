@@ -246,6 +246,26 @@ export const gl = {
       'As horas de saída veñen do cadro horario oficial; as marcadas con ~ calcúlanse sumando o tempo de percorrido medido por estrada. Esta app non recibe posicións dos vehículos, así que convén chegar á parada uns minutos antes.',
   },
 
+  /* O modo «vou no bus». As paradas cóntanse contra o GPS do lector; as horas son as do
+     cadro e levan a etiqueta de sempre. Nada aquí afirma onde está o bus. */
+  companion: {
+    title: 'Vou no bus',
+    start: 'Vou nesta',
+    stops: (count: number): string => (count === 1 ? 'parada' : 'paradas'),
+    walkTo: 'A pé ata',
+    arrived: 'Chegaches',
+    lastOneGone: 'Ese era o último bus de hoxe nesta parada.',
+    caughtIt: (line: string, time: string) => `Colliches o ${line} das ${time}?`,
+    yesOnIt: 'Si, vou nel',
+    noMissedIt: 'Non, perdino',
+    watching: (metres: number) => `Avisarémoste a ${metres} m da parada de baixada.`,
+    alightHere: 'baixas aquí',
+    passed: 'pasada',
+    next: 'seguinte',
+    finish: 'Saír da viaxe',
+    onTrip: 'Viaxe en curso',
+  },
+
   faresContent: {
     faqs: [
       {
@@ -320,7 +340,8 @@ export const gl = {
     layerRoutes: 'Trazados',
     documentTitle: 'Urbanos de Lugo | Liñas, horarios e paradas',
     layers: 'Capas visibles',
-    linesList: 'Seleccionar liña',
+    linesList: 'Escoller liñas',
+    linesPicked: (count: number) => (count === 1 ? '1 escollida' : `${count} escollidas`),
     controls: 'Filtros e capas',
     closeControls: 'Pechar filtros e capas',
     closeStop: 'Pechar esta parada',
@@ -406,7 +427,7 @@ export const gl = {
     searchLines: 'Buscar liña por número ou nome...',
     enRoute: (count: number) => (count === 1 ? '1 en ruta' : `${count} en ruta`),
     enRouteHint:
-      'Expedicións que segundo o cadro horario deberían estar circulando agora. Esta app non recibe posicións dos vehículos.',
+      'Autobuses que segundo o cadro horario deberían estar circulando agora. Esta app non recibe posicións dos vehículos.',
     lineLabel: (number: string) => `Liña ${number}`,
     origin: 'Orixe',
     destination: 'Destino',

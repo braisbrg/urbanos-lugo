@@ -3,6 +3,8 @@ import { StopArrivalsView } from './components/StopArrivalsView';
 import { StopHome } from './components/StopHome';
 import { LinesView } from './components/LinesView';
 import { RoutePlannerView } from './components/RoutePlannerView';
+import { TripCompanionView } from './components/TripCompanionView';
+import { useTripCompanion } from './hooks/useTripCompanion';
 
 // Leaflet and its layers are only needed on the map tab, so they load with it rather
 // than sitting in the bundle every visitor downloads.
@@ -203,6 +205,13 @@ export default function App() {
   });
   const t = translations(lang);
 
+  /**
+   * The ride in progress, above the tabs on purpose: the planner is unmounted the moment
+   * the reader looks at the map or a line, and a trip that ended there would be no trip.
+   * The hook keeps the position watch and the alert alive; the plan tab shows the screen.
+   */
+  const companion = useTripCompanion(lang);
+
   // index.html hardcodes lang="gl"; keep it truthful when the reader switches so screen
   // readers pronounce the page with the right voice.
   useEffect(() => {
@@ -289,6 +298,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={goToTab}
         alertCount={alerts.announcedIncidents}
+        tripActive={companion.trip !== null}
         lang={lang}
         setLang={setLang}
         theme={theme}
@@ -451,13 +461,15 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'plan' && (
+        {activeTab === 'plan' && companion.trip && <TripCompanionView companion={companion} lang={lang} />}
+        {activeTab === 'plan' && !companion.trip && (
           <RoutePlannerView
             onSelectStop={handleSelectStop}
             onSelectLine={(line) => {
               openLine(line);
             }}
             destinationRequest={placeRequest}
+            onStartTrip={companion.start}
             lang={lang}
           />
         )}
@@ -467,7 +479,7 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      <BottomNav activeTab={activeTab} setActiveTab={goToTab} lang={lang} />
+      <BottomNav activeTab={activeTab} setActiveTab={goToTab} tripActive={companion.trip !== null} lang={lang} />
       </div>
 
       <MenuDrawer

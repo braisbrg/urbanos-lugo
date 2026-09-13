@@ -471,8 +471,8 @@ escribirse antes de facelas, non despois:
 1. **A duración.** Hoxe a alarma acéndese para unha parada concreta e apágase soa. No modo
    novo o seguimento dura toda a viaxe. É o mesmo mecanismo e o mesmo destino —ningún—,
    pero é un feito distinto e o ficheiro debe dicilo.
-2. **Se se garda a viaxe en curso** (pregunta 4), aparece unha **sétima clave** en
-   `localStorage` e a táboa de PRIVACY.md ten unha fila máis.
+2. **Se se garda a viaxe en curso** (pregunta 4), aparece unha **sétima clave** no
+   aparello —quedou en `sessionStorage`, ver «Decidido»— e PRIVACY.md ten unha fila máis.
 
 En ambos casos, un check en `tools/test.ts` no estilo dos que xa hai: que o modo non
 introduza ningunha orixe de rede que non estea xa na táboa do ficheiro. Hoxe son 111
@@ -481,42 +481,152 @@ seguimento.
 
 ---
 
-## Preguntas abertas
+## Decidido — 9 de setembro de 2026
 
-Son de produto, non de código. Non as decido eu.
+Eran de produto, non de código, e xa están respondidas. As cifras son as que se mediron
+para decidilas, sobre 233 plans líderes (5 orixes × 8 destinos × 8 horas do día).
 
-1. ~~**Últimas rutas** no oco que deixan os atallos.~~ **Resolta o 9 de setembro
-   facéndoa.** Entra: as catro últimas consultas que deron resposta, sobre os atallos, coa
-   súa clave en `localStorage` e a súa fila en PRIVACY.md. O documento di ademais o que a
-   táboa non dicía —que esta clave garda texto que alguén escribiu, e pode ser a súa rúa—,
-   e hai check que esixe que toda clave que a app escriba apareza alí.
+1. ~~**Últimas rutas** no oco que deixan os atallos.~~ **Resolta facéndoa.** As catro
+   últimas consultas que deron resposta, coa súa clave en `localStorage` e a súa fila en
+   PRIVACY.md — que di ademais o que a táboa non dicía: esta clave garda texto que alguén
+   escribiu, e pode ser a súa rúa. Hai check que esixe que toda clave que a app escriba
+   apareza nese documento.
 
-2. **Como se entra no modo?** A proposta é un botón explícito. A alternativa, detectar por
-   GPS que xa vas montado, é máis lista e equivócase: adiantar un tramo a pé rápido
-   parécese moito a ir en bus.
+2. **Éntrase por un botón explícito.** Detectar por GPS que xa vas montado sería
+   presentar unha inferencia como un feito, que é o que este proxecto non fai — e a
+   inferencia é mala: a liña 1.1 fai 10,5 km en 38 min, uns 16 km/h de media, pero un bus
+   parado nun semáforo vai a 0 e un paseo vivo vai a 5. O que si fará o botón é saber
+   cando importa: se o GPS di que estás no poste de subida á hora de subida, é o único que
+   ten que haber na pantalla.
 
-3. **E se non colliches ese bus?** Se perdes o que planificaches e colles o seguinte, as
-   horas do plan quedan mal pero as paradas non. Proposta: as paradas mandan, as horas
-   márcanse como desfasadas, e ofrécese «recalcular desde onde estou».
+3. **Se non colles ese bus, pregúntase; non se adiviña.** O modo arranca desde unha
+   expedición concreta e todo o que amosa despois sae desa fila do cadro. Non subir
+   significa que as paradas seguen ben e **todas as horas están mal por unha frecuencia
+   enteira**:
 
-4. **Sobrevive a viaxe a un peche da app?** Se si, é unha clave nova en `localStorage` e
-   unha fila en PRIVACY.md. Se non, quen bloquea o móbil e volve perde o modo.
+   | | |
+   | :--- | ---: |
+   | Oco ata o seguinte bus da mesma liña, no mesmo poste (mediana) | 30 min |
+   | p90 | 90 min |
+   | Máximo | 420 min |
+   | Máis de 30 min fóra | 77 de 220 |
+   | Sen outra expedición ese día | 13 de 233 |
 
-5. **Transbordos.** Un plan pode ter dous buses. O modo ten que levarte tamén na espera do
-   segundo, ou remata no primeiro? Proposta: lévate ata a porta, incluída a espera e o
-   tramo a pé final; é onde máis se agradece e o `segments` xa o describe.
+   Pasada a hora de subida máis a marxe, sen que o GPS se moveu, a folla pregunta
+   «collíchelo?» con dous botóns. A recuperación non é «recalcular desde onde estou»
+   —caro e impreciso sobre unha posición en movemento— senón **o seguinte paso desa liña
+   nese poste**, que é `getNextLineDeparture` e xa existe. E cando non hai outro, o que se
+   di é que ese era o último, non unha hora nova.
 
-6. **Non é o mesmo problema, pero está ao lado:** o taboleiro de parada xa ten alarma e
-   ten «avísame cando falten N minutos». Se o modo novo trae a súa propia alarma, hai dúas
-   maneiras de pedir o mesmo. Convén unificalas antes de duplicar.
+4. **A viaxe sobrevive a que se descarte a pestana, en `sessionStorage`.** Bloquear o
+   móbil e gardalo é o normal nun bus, e en Safari unha pestana en segundo plano
+   descártase con alegría; se iso perde o modo, o modo non serve. Pero `localStorage` sería
+   un rexistro que queda no aparello dicindo que esta persoa ía de X a Y e cando.
+   `sessionStorage` sobrevive a unha recarga e morre coa pestana, que é xusto a vida dunha
+   viaxe. Gárdase o plan escollido —coas liñas reducidas ao seu id, que o resto vai no
+   paquete— e as paradas xa pasadas; bórrase ao rematar, e declárase en PRIVACY.md igual,
+   aínda que non sexa `localStorage`. (Dicía «o índice do plan»: volver calculalo ao
+   restaurar daría outro plan se o reloxo avanzou, e o lector escolleu ese.)
+
+5. **Lévate ata a porta, coa espera e o tramo a pé finais.** 43 dos 233 plans líderes
+   (18 %) poñen un segundo bus, e a espera do medio ten mediana de 5 minutos e p90 de 13:
+   cinco minutos nun intercambio que igual non coñeces é onde máis falta fai que algo diga
+   que poste e que liña. Rematar no primeiro bus sería soltar ao lector exactamente aí. E
+   é máis código, non menos: o modo é un cursor sobre `plan.segments`, e os segmentos xa
+   describen a espera, o segundo bus e o paseo final. Parar antes é escribir un caso
+   especial.
+
+6. **Unha soa alarma, e unifícase primeiro.** `stopAlarm.ts` xa ten radio, vibración, son,
+   notificación e permiso; o modo chámao, non o reimplementa. Se non se unifica antes, o
+   resultado é dous sitios pedindo permiso de notificacións, dous radios que se separan co
+   tempo, e quen puxese alarma no taboleiro dunha parada e ademais arrancase a viaxe
+   recibindo dous avisos para a mesma parada.
 
 ---
 
 ## Se isto se aproba, a orde de traballo
 
-1. Sacar o estado B a `TripCompanionView.tsx`, baleiro, coa cabeceira e o botón de saír.
-2. «Que parada pasei» contra o GPS, con test —é a peza nova e a que pode estar mal.
-3. Mover a alarma do taboleiro ao plan.
-4. Enfoque de segmento en `RouteMap`.
-5. Adelgazar o estado A: barra pregada e alternativa destacada.
-6. PRIVACY.md e o check, no mesmo commit que o que os fai certos.
+1. Sacar o estado B a `TripCompanionView.tsx`, baleiro, coa cabeceira e o botón de saír. — **FEITO** o 13 de setembro
+2. «Que parada pasei» contra o GPS, con test —é a peza nova e a que pode estar mal. — **FEITO** o 9 de setembro
+3. Mover a alarma do taboleiro ao plan. — **FEITO** o 13 de setembro
+4. Enfoque de segmento en `RouteMap`. — **FEITO** o 13 de setembro
+5. Adelgazar o estado A: barra pregada e alternativa destacada. — feito na segunda volta (a barra prégase; dúas opcións e «+N máis»)
+6. PRIVACY.md e o check, no mesmo commit que o que os fai certos. — **FEITO** o 13 de setembro
+
+---
+
+## Estado B, primeira entrega — 13 de setembro de 2026
+
+O que hai, e o que se comprobou nun 375×812 con posicións inxectadas no `watchPosition`
+do navegador (o panel non ten GPS):
+
+**Tres ficheiros novos e ningún grande.** `utils/tripProgress.ts` leva toda a lóxica,
+pura: fases, «collíchelo?», a substitución dun bus perdido e a copia para
+`sessionStorage`. `hooks/useTripCompanion.ts` sostena por riba das pestanas —a vixilancia
+de posición, o aviso e a copia viven en `App`, non na pantalla— porque o planificador
+desmóntase ao tocar Mapa ou Liñas, e unha viaxe que morre aí non é unha viaxe.
+`components/TripCompanionView.tsx` é a pantalla. `RoutePlannerView` medra 20 liñas: o
+botón e a prop.
+
+**Os estados quedaron en catro, non cinco.** `planificando` é o estado A; o modo empeza
+en `agardando` e pasa por `viaxando`, `baixando` e `camiñando` (o tramo a pé final, coa
+espera e o segundo bus polo medio se os hai). Non hai `feito`: feito é que a viaxe
+desapareza ao premer «Saír da viaxe».
+
+**Só se afirma o que se contou.** Vaise no bus cando se dixo («Si, vou nel») ou cando o
+GPS viu pasar a segunda parada do tramo; a primeira é o poste onde se estaba. O aviso soa
+unha vez por tramo, a 300 m ou no propio poste se non houbo posición polo camiño. A
+pregunta «Colliches o X das HH:MM?» sae aos tres minutos da hora impresa se non se viu
+pasar nada; «Non» le do cadro a seguinte saída desa liña nese poste —14:02 cando se
+preguntou ás 13:52 por un 4.1 das 13:12— e cando non queda ningunha di que era a última.
+
+**Un fallo atopado antes de que existise a pantalla.** O cursor sobre os tramos xulgaba
+«tramo rematado» pola distancia á parada de baixada no propio fix: de pé no poste onde
+baixas, saltaba ao seguinte bus no mesmo instante, así que o primeiro tramo nunca chegaba
+e a súa alarma nunca soaba; e ao afastarse 70 m cara ao poste do transbordo, volvía. Agora
+rematado é que `seen` teña esa parada —lembrado do fix anterior—, e o check de transbordo
+en `tools/test.ts` fixa as dúas cousas.
+
+**A alarma é unha.** `stopAlarm.ts` ten agora unha soa vixilancia de posición para toda
+a app, con subscritores; o taboleiro e a viaxe son dous subscritores do mesmo `watch`, co
+mesmo radio, o mesmo son e o mesmo permiso. Un check impide que apareza un segundo
+`RADIUS_M` ou un `watchPosition` propio.
+
+**A copia pesa 3.666 bytes** para un plan de dous buses, coas liñas reducidas ao seu id;
+sobrevive a unha recarga e a cambiar de pestana, e «Saír da viaxe» bórraa. PRIVACY.md ten a
+fila e o parágrafo, e o check de claves le agora tamén `sessionStorage`.
+
+**A segunda ollada, o mesmo día.** Brais pediu ver a viaxe enteira e sinalou tres cousas:
+o mapa quedaba pequeno ao lado do resto, «Rematei» non era a palabra, e o botón de saír
+tiña que estar á man e non ao fondo. Medido nun 375×812 antes de tocar nada: mapa 200 px
+fronte a unha cabeceira de 260 e unha lista de 774; o botón a **1.348 px** do alto, dúas
+pantallas por baixo do pregue. Despois: mapa a 37 vh (300 px aquí, entre 280 e 420), a
+saída nunha barra fixa ao pé de 73 px por riba da navegación, e a palabra é «Saír da
+viaxe» —es «Salir del viaje», en «Leave trip»—, que di o que fai un control que está
+sempre. E un punto na pestana Ruta, no móbil e no rail, mentres hai viaxe: era o único
+sitio onde «enriba das pestanas» non se vía. A viaxe enteira, en pantallas, con GPS
+inxectado por CDP (`tools/_companion.ts`, ignorado por git):
+<https://claude.ai/code/artifact/2ad3bda6-e1e9-46be-91d2-1e699884f783>
+
+**O paso 4, o mesmo día.** `RouteMap` recibe dous props: `focusSegment`, o tramo que se
+está a facer, que se debuxa como sempre e é o que se encadra mentres o resto do plan baixa
+a un cuarto de opacidade; e `position`, a posición do lector, unha capa propia que se
+move con cada fix en vez de redebuxar a viaxe, e que se mantén á vista co `panInside`
+mínimo —non un recentrado a cada fix, que pelexaría con quen acaba de facer zoom, nin un
+reencadre ruta-máis-lector, que un salto do GPS convertería nun mapa de todo Lugo. Ao
+baixar do último bus o foco pasa ao paseo final, que a pantalla traza polas rúas co
+mesmo enrutador do planificador (uns 6 ms por tramo) sen gardalo na copia da viaxe.
+Comprobado nun transbordo 5.2 → 3.2: o encadre salta ao 3.2 ao chegar a Rda. Mercedes 11
+e ao paseo de 371 m ao chegar á última parada.
+
+**E o último, aprobado e feito o mesmo día:** o botón «Vou nesta» sabe cando importa.
+Está sempre —non se agocha nada— e o que cambia é onde: nos dez minutos antes do primeiro
+bus vai ao principio da resposta, de 48 a 56 px e a tamaño de titular; pasada a hora
+impresa volve abaixo, porque o plan xa é vello e quen fala é o replan. A posición do
+planificador, cando o lector a deu, só pode mantelo abaixo («a un quilómetro do poste»),
+nunca subilo: é unha lectura única e pode ser da casa; sen posición decide o reloxo só.
+`boardingIsNow` en `tripProgress.ts`, con check. Comprobado ás 18:59 cun 6 das 19:05
+desde Intercentros: o botón é o primeiro fillo da tarxeta, a 56 px. 140 checks.
+
+O plan de Estado B queda pechado. O que non está feito é o que se decidiu non facer:
+debuxar o bus, e o modo en segundo plano, que unha páxina web non pode.

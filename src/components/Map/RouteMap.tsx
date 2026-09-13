@@ -19,6 +19,14 @@ interface RouteMapProps {
   /** Where the trip starts and ends, for the walking legs at each end. */
   origin?: { lat: number; lng: number; name: string };
   destination?: { lat: number; lng: number; name: string };
+  /**
+   * Index into `plan.segments` of the leg being made right now, for the trip companion.
+   * That leg is drawn in full and framed; the rest of the plan stays, faint, so the
+   * shape of the trip is still there without competing with the part that matters.
+   */
+  focusSegment?: number;
+  /** The reader's own position, when the screen has one: drawn, and kept in view. */
+  position?: { lat: number; lng: number } | null;
   className?: string;
 }
 
@@ -71,6 +79,8 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   origin,
   destination,
   walkPaths = {},
+  focusSegment,
+  position = null,
   className,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -152,25 +162,54 @@ export const RouteMap: React.FC<RouteMapProps> = ({
      * their itinerary. It only ever showed on a routed leg, and until the network shipped
      * a routed leg was rare, which is how it lasted.
      */
-    const walkLine = (a: [number, number], b: [number, number]): L.Polyline => {
+    /**
+     * Which parts are the reader's now, when a screen says so.
+     *
+     * The focused leg is drawn as always and is what the map frames. Everything else
+     * drops to a quarter opacity: still the shape of the trip, no longer competing with
+     * the leg being ridden. A walk is focused through the bus leg it leads into, since
+     * walks are drawn as the join between stops rather than as segments of their own.
+     */
+    const segments = plan?.segments || [];
+    const focused = focusSegment !== undefined && segments[focusSegment] !== undefined;
+    /** The walk segment just before bus leg `index`, skipping a wait; -1 when there is none. */
+    const walkBefore = (index: number): number => {
+      for (let i = index - 1; i >= 0; i--) {
+        if (segments[i].type === 'bus') return -1;
+        if (segments[i].type === 'walk') return i;
+      }
+      return -1;
+    };
+    const legIsFocused = (index: number) => !focused || index === focusSegment;
+    const walkIntoIsFocused = (index: number) => !focused || walkBefore(index) === focusSegment;
+    const lastIndex = segments.length - 1;
+    const finalWalkIsFocused = !focused || (segments[lastIndex]?.type === 'walk' && focusSegment === lastIndex);
+    const faint = 0.25;
+
+    const walkLine = (a: [number, number], b: [number, number], emphasised = true): L.Polyline => {
       const detailed = walkPaths[walkHopKey(a, b)];
       return detailed
-        ? L.polyline(detailed.path, { color: colors.walkRouted, weight: 4, dashArray: '1 7', opacity: 0.9 }).bindTooltip(
+        ? L.polyline(detailed.path, { color: colors.walkRouted, weight: 4, dashArray: '1 7', opacity: emphasised ? 0.9 : faint }).bindTooltip(
             escapeHtml(translations(lang).planner.walkLeg(detailed.meters, detailed.minutes)),
           )
-        : L.polyline([a, b], { color: colors.walkStraight, weight: 3, dashArray: '4 6', opacity: 0.8 });
+        : L.polyline([a, b], { color: colors.walkStraight, weight: 3, dashArray: '4 6', opacity: emphasised ? 0.8 : faint });
     };
 
     // Walking legs have no geometry of their own, so they join the previous point to
     // the next known one: origin -> first stop, last stop -> destination.
     let previous: [number, number] | null = origin ? [origin.lat, origin.lng] : null;
     if (origin) {
-      group.addLayer(L.marker([origin.lat, origin.lng], { icon: pinIcon(colors.originPin, 'A') }).bindTooltip(escapeHtml(origin.name)));
-      bounds.extend([origin.lat, origin.lng]);
+      const firstLeg = segments.findIndex((seg) => seg.type === 'bus');
+      const emphasised = firstLeg === -1 ? finalWalkIsFocused : walkIntoIsFocused(firstLeg);
+      group.addLayer(
+        L.marker([origin.lat, origin.lng], { icon: pinIcon(colors.originPin, 'A'), opacity: emphasised ? 1 : faint }).bindTooltip(escapeHtml(origin.name)),
+      );
+      if (emphasised) bounds.extend([origin.lat, origin.lng]);
     }
 
-    (plan?.segments || []).forEach((segment) => {
+    segments.forEach((segment, index) => {
       if (segment.type === 'bus' && segment.line && segment.fromStop && segment.toStop) {
+        const emphasised = legIsFocused(index);
         const direction =
           segment.line.directions.find((d) => d.id === segment.directionId) || segment.line.directions[0];
         const from = direction.stops.indexOf(segment.fromStop.id);
@@ -189,16 +228,19 @@ export const RouteMap: React.FC<RouteMapProps> = ({
         if (previous) {
           // The hop from wherever we were to the boarding stop, joined stop to stop so
           // it matches the key the pedestrian route was fetched under.
-          group.addLayer(walkLine(previous, [segment.fromStop.lat, segment.fromStop.lng]));
+          const walkEmphasised = walkIntoIsFocused(index);
+          const walk = walkLine(previous, [segment.fromStop.lat, segment.fromStop.lng], walkEmphasised);
+          group.addLayer(walk);
+          if (walkEmphasised && focused) extend((walk.getLatLngs() as L.LatLng[]).map((p) => [p.lat, p.lng]));
         }
 
         group.addLayer(
-          L.polyline(slice, { color: segment.line.color, weight: 6, opacity: 0.95, lineJoin: 'round' }).bindTooltip(
+          L.polyline(slice, { color: segment.line.color, weight: emphasised ? 6 : 4, opacity: emphasised ? 0.95 : faint, lineJoin: 'round' }).bindTooltip(
             escapeHtml(translations(lang).planner.lineWithStops(segment.line.number, segment.stopsCount ?? 0)),
           ),
         );
         group.addLayer(
-          L.marker(slice[0], { icon: pinIcon(segment.line.color, segment.line.number.slice(0, 3)) }).bindTooltip(
+          L.marker(slice[0], { icon: pinIcon(segment.line.color, segment.line.number.slice(0, 3)), opacity: emphasised ? 1 : faint }).bindTooltip(
             `${escapeHtml(translations(lang).planner.board)} ${escapeHtml(segment.fromStop.name)}`,
           ),
         );
@@ -208,7 +250,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
         // Neutral, not the line's colour: an 8 px dot of the same colour on top of a
         // 6 px line of that colour is a bump in the line, not a stop. The same pair the
         // network map uses, so a stop looks like a stop wherever it is drawn.
-        for (let i = from + 1; i < to; i++) {
+        for (let i = from + 1; i < to && emphasised; i++) {
           const stop = BUS_STOPS.find((s) => s.id === direction.stops[i]);
           if (!stop) continue;
           group.addLayer(
@@ -222,7 +264,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
           );
         }
 
-        extend(slice);
+        if (emphasised) extend(slice);
         previous = [segment.toStop.lat, segment.toStop.lng];
       }
     });
@@ -230,12 +272,14 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     if (destination) {
       const end: [number, number] = [destination.lat, destination.lng];
       if (previous) {
-        const line = walkLine(previous, end);
+        const line = walkLine(previous, end, finalWalkIsFocused);
         group.addLayer(line);
-        extend((line.getLatLngs() as L.LatLng[]).map((p) => [p.lat, p.lng]));
+        if (finalWalkIsFocused) extend((line.getLatLngs() as L.LatLng[]).map((p) => [p.lat, p.lng]));
       }
-      group.addLayer(L.marker(end, { icon: pinIcon(colors.destinationPin, 'B') }).bindTooltip(escapeHtml(destination.name)));
-      bounds.extend(end);
+      group.addLayer(
+        L.marker(end, { icon: pinIcon(colors.destinationPin, 'B'), opacity: finalWalkIsFocused ? 1 : faint }).bindTooltip(escapeHtml(destination.name)),
+      );
+      if (finalWalkIsFocused) bounds.extend(end);
     }
 
     if (bounds.isValid()) {
@@ -246,7 +290,41 @@ export const RouteMap: React.FC<RouteMapProps> = ({
     return () => {
       group.remove();
     };
-  }, [map, geometryReady, plan, walkPaths, origin?.lat, origin?.lng, destination?.lat, destination?.lng, colors]);
+  }, [map, geometryReady, plan, walkPaths, origin?.lat, origin?.lng, destination?.lat, destination?.lng, colors, focusSegment]);
+
+  /**
+   * The reader, on the map.
+   *
+   * Its own layer rather than part of the group above, so a fix every few seconds moves a
+   * dot instead of redrawing the trip. Kept in view with the smallest pan that brings it
+   * back inside the box -- not a recentre on every fix, which would fight anyone who had
+   * just zoomed in on their stop, and not a refit to route-plus-reader, which one GPS jump
+   * across town would turn into a map of all of Lugo.
+   */
+  const positionRef = useRef<L.CircleMarker | null>(null);
+  useEffect(() => {
+    if (!map) return;
+    if (!position) {
+      positionRef.current?.remove();
+      positionRef.current = null;
+      return;
+    }
+    const at: [number, number] = [position.lat, position.lng];
+    if (positionRef.current) {
+      positionRef.current.setLatLng(at);
+    } else {
+      positionRef.current = L.circleMarker(at, {
+        radius: 8,
+        fillColor: colors.userFill,
+        color: colors.userStroke,
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.95,
+        interactive: false,
+      }).addTo(map);
+    }
+    map.panInside(at, { padding: [40, 40] });
+  }, [map, position?.lat, position?.lng, colors]);
 
   // Swap the basemap when the theme changes. The layer restyles in place, so the view
   // stays where the reader left it instead of snapping back to Lugo centre.

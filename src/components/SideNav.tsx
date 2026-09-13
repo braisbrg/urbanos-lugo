@@ -8,6 +8,8 @@ interface SideNavProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   alertCount: number;
+  /** A ride is being followed: the Ruta row says so from any other section. */
+  tripActive?: boolean;
   lang: Lang;
   setLang: (lang: Lang) => void;
   theme: ThemeChoice;
@@ -29,6 +31,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   activeTab,
   setActiveTab,
   alertCount,
+  tripActive = false,
   lang,
   setLang,
   theme,
@@ -69,7 +72,14 @@ export const SideNav: React.FC<SideNavProps> = ({
               }`}
             >
               <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
-              {label}
+              <span className="flex-1">{label}</span>
+              {tripActive && id === 'plan' && (
+                <span
+                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${on ? 'bg-bg' : 'bg-accent'}`}
+                  role="status"
+                  aria-label={t.companion.onTrip}
+                />
+              )}
             </button>
           );
         })}

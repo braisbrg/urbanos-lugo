@@ -20,6 +20,7 @@ import { planTrips, resolveLocationQuery, estimateWalk, LONG_WAIT_MIN, LUGO_LAND
 import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 import { useRecentRoutes } from '../hooks/useRecentRoutes';
+import { boardingIsNow, type TripPlace } from '../utils/tripProgress';
 // Same reason as the map tab: Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
@@ -127,6 +128,8 @@ interface RoutePlannerViewProps {
   onSelectLine: (line: BusLine) => void;
   /** A place picked in the search box. The counter makes asking twice two requests. */
   destinationRequest?: { query: string; nonce: number } | null;
+  /** "Vou nesta": hand the plan on screen to the trip companion. */
+  onStartTrip: (plan: RoutePlanResult, origin: TripPlace | null, destination: TripPlace | null) => void;
   lang: Lang;
 }
 
@@ -134,6 +137,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   onSelectStop,
   onSelectLine,
   destinationRequest,
+  onStartTrip,
   lang,
 }) => {
   const [originQuery, setOriginQuery] = useState<string>('Fonte dos Ranchos');
@@ -447,6 +451,17 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
   const t = translations(lang);
 
+  /**
+   * A clock for the one thing on this screen that changes without the reader doing
+   * anything: whether the first bus is now within ten minutes. Thirty seconds is fine
+   * for a ten-minute window, and nothing else here reads it.
+   */
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(tick);
+  }, []);
+
   // Recalculate route whenever queries or user location change
   /**
    * The question the plans on screen are answering.
@@ -576,6 +591,34 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   };
 
   const quickPicks = QUICK_DESTINATIONS;
+
+  /**
+   * The way into the ride. A button, on purpose: the mode starts from this exact plan
+   * and everything it shows afterwards comes from this row of the timetable, so it is
+   * the reader who says which bus they are on. Not offered for a walk, which has nothing
+   * to count, nor once the service is over.
+   *
+   * Where it sits depends on the clock: within ten minutes of the first bus it is the
+   * first thing in the answer, at headline size; otherwise it follows the headline. The
+   * planner's own fix, when the reader gave one, can only keep it down -- see
+   * `boardingIsNow`.
+   */
+  const startTrip =
+    planResult !== null && planResult.isServiceActive && planResult.segments.some((seg) => seg.type === 'bus');
+  const boardingSoon =
+    startTrip && boardingIsNow(planResult, now, userLocation ? { lat: userLocation[0], lng: userLocation[1] } : null);
+  const startTripButton = (prominent: boolean) => (
+    <button
+      type="button"
+      onClick={() => planResult && onStartTrip(planResult, endpoints.origin ?? null, endpoints.destination ?? null)}
+      className={`flex w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 font-semibold text-on-accent ${
+        prominent ? 'h-14 text-emph' : 'h-12 text-body'
+      }`}
+    >
+      <Bus className={prominent ? 'h-[22px] w-[22px] shrink-0' : 'h-[18px] w-[18px] shrink-0'} strokeWidth={2} aria-hidden="true" />
+      {t.companion.start}
+    </button>
+  );
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3.5 py-4 lg:px-6">
@@ -943,6 +986,11 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 </div>
               )}
 
+              {/* When the bus is the next ten minutes, the way in is the first thing on
+                  the screen, at headline size. Nothing else moves or hides: the answer is
+                  still the answer, it just stops being the thing above the button. */}
+              {startTrip && boardingSoon && startTripButton(true)}
+
               {/* The three numbers that answer "should I do this trip": how long it
                   takes, when to leave, when you land. On the page ground rather than a
                   solid slab — a coloured block here fought the provenance chips, which
@@ -982,6 +1030,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   </span>
                 )}
               </div>
+
+              {/* The way into the ride, in its ordinary place: under the answer. See
+                  `startTrip` above for when it is not here but at the top. */}
+              {startTrip && !boardingSoon && startTripButton(false)}
 
                 {/* The small print, folded.
                     Four boxes -- the walk, where the times come from, the fare, the waiting

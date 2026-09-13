@@ -10,10 +10,64 @@ import { getDistanceMeters } from '../utils/transitEngine';
 /** Far enough ahead to stand up and press the button. */
 export const ALARM_RADIUS_M = 300;
 
-type AlarmFailure = 'unavailable' | 'denied';
+export type AlarmFailure = 'unavailable' | 'denied';
 
 export interface AlarmHandle {
   stop: () => void;
+}
+
+export interface PositionFix {
+  lat: number;
+  lng: number;
+}
+
+type Listener = { onFix: (fix: PositionFix) => void; onError: (reason: AlarmFailure) => void };
+
+/**
+ * One position watch for the whole app.
+ *
+ * The stop board's alarm and the trip companion both read the phone's position, and the
+ * companion keeps reading it while the reader looks at another tab. Each opening its own
+ * `watchPosition` would be two GPS clients on one phone, two permission prompts, and two
+ * radii drifting apart over time. So there is one watch, started by whoever asks first
+ * and cleared when the last listener leaves, and every alarm in the app is a listener on
+ * it. It runs only while the page is open: a web page cannot wake itself in the
+ * background, and the UI says so rather than implying otherwise.
+ */
+const listeners = new Set<Listener>();
+let watchId: number | null = null;
+
+export function subscribePosition(
+  onFix: (fix: PositionFix) => void,
+  onError: (reason: AlarmFailure) => void,
+): () => void {
+  if (!navigator.geolocation) {
+    onError('unavailable');
+    return () => {};
+  }
+
+  const listener: Listener = { onFix, onError };
+  listeners.add(listener);
+  if (watchId === null) {
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const fix = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        for (const l of listeners) l.onFix(fix);
+      },
+      () => {
+        for (const l of listeners) l.onError('denied');
+      },
+      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 20_000 },
+    );
+  }
+
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0 && watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+  };
 }
 
 export function watchForStop(
@@ -22,26 +76,17 @@ export function watchForStop(
   onDistance: (distanceMeters: number) => void,
   onError: (reason: AlarmFailure) => void,
 ): AlarmHandle {
-  if (!navigator.geolocation) {
-    onError('unavailable');
-    return { stop: () => {} };
-  }
-
   let fired = false;
-  const watchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      const distance = getDistanceMeters(pos.coords.latitude, pos.coords.longitude, target.lat, target.lng);
-      onDistance(distance);
-      if (!fired && distance <= ALARM_RADIUS_M) {
-        fired = true;
-        onApproach(distance);
-      }
-    },
-    () => onError('denied'),
-    { enableHighAccuracy: true, maximumAge: 5_000, timeout: 20_000 },
-  );
+  const stop = subscribePosition((fix) => {
+    const distance = getDistanceMeters(fix.lat, fix.lng, target.lat, target.lng);
+    onDistance(distance);
+    if (!fired && distance <= ALARM_RADIUS_M) {
+      fired = true;
+      onApproach(distance);
+    }
+  }, onError);
 
-  return { stop: () => navigator.geolocation.clearWatch(watchId) };
+  return { stop };
 }
 
 /**

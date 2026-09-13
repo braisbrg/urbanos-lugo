@@ -210,6 +210,24 @@ export const es: Dict = {
       'Las horas de salida vienen del cuadro horario oficial; las marcadas con ~ se calculan sumando el tiempo de recorrido medido por carretera. Esta app no recibe posiciones de los vehículos, así que conviene llegar a la parada unos minutos antes.',
   },
 
+  companion: {
+    title: 'Voy en el bus',
+    start: 'Voy en esta',
+    stops: (count: number) => (count === 1 ? 'parada' : 'paradas'),
+    walkTo: 'A pie hasta',
+    arrived: 'Llegaste',
+    lastOneGone: 'Ese era el último bus de hoy en esta parada.',
+    caughtIt: (line: string, time: string) => `¿Cogiste el ${line} de las ${time}?`,
+    yesOnIt: 'Sí, voy en él',
+    noMissedIt: 'No, lo perdí',
+    watching: (metres: number) => `Te avisaremos a ${metres} m de la parada de bajada.`,
+    alightHere: 'bajas aquí',
+    passed: 'pasada',
+    next: 'siguiente',
+    finish: 'Salir del viaje',
+    onTrip: 'Viaje en curso',
+  },
+
   faresContent: {
     faqs: [
       {
@@ -284,7 +302,8 @@ export const es: Dict = {
     layerRoutes: 'Trazados',
     documentTitle: 'Urbanos de Lugo | Líneas, horarios y paradas',
     layers: 'Capas visibles',
-    linesList: 'Seleccionar línea',
+    linesList: 'Elegir líneas',
+    linesPicked: (count: number) => (count === 1 ? '1 elegida' : `${count} elegidas`),
     controls: 'Filtros y capas',
     closeControls: 'Cerrar filtros y capas',
     closeStop: 'Cerrar esta parada',
@@ -368,7 +387,7 @@ export const es: Dict = {
     searchLines: 'Buscar línea por número o nombre...',
     enRoute: (count: number) => (count === 1 ? '1 en ruta' : `${count} en ruta`),
     enRouteHint:
-      'Expediciones que según el cuadro horario deberían estar circulando ahora. Esta app no recibe posiciones de los vehículos.',
+      'Autobuses que según el cuadro horario deberían estar circulando ahora. Esta app no recibe posiciones de los vehículos.',
     lineLabel: (number: string) => `Línea ${number}`,
     origin: 'Origen',
     destination: 'Destino',

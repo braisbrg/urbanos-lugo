@@ -6,6 +6,8 @@ import { navSections, type Tab } from './navSections';
 interface BottomNavProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  /** A ride is being followed: the Ruta tab says so from any other tab. */
+  tripActive?: boolean;
   lang: Lang;
 }
 
@@ -17,7 +19,7 @@ interface BottomNavProps {
  * nothing that gets tapped every session belongs up there. Each target is 60 px
  * tall — well past the 44 px floor, because it is aimed at without looking.
  */
-export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, lang }) => {
+export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, tripActive = false, lang }) => {
   const t = translations(lang);
   const items = navSections(t);
 
@@ -37,7 +39,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, l
               on ? 'border-accent text-accent' : 'border-transparent text-ink-3'
             }`}
           >
-            <Icon className="h-[21px] w-[21px]" strokeWidth={2} aria-hidden="true" />
+            <span className="relative">
+              <Icon className="h-[21px] w-[21px]" strokeWidth={2} aria-hidden="true" />
+              {/* The trip goes on while you look at a line or the map; this is the one
+                  place that says so, and the way back to it. */}
+              {tripActive && id === 'plan' && (
+                <span
+                  className="absolute -right-1.5 -top-1 h-2.5 w-2.5 rounded-full border-2 border-bg bg-accent"
+                  role="status"
+                  aria-label={t.companion.onTrip}
+                />
+              )}
+            </span>
             <span className={`text-label ${on ? 'font-semibold' : 'font-normal'}`}>
               {label}
             </span>

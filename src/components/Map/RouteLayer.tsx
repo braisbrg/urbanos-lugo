@@ -19,7 +19,15 @@ interface RouteLayerProps {
    * me" — a route with nothing around it is a shape, not a place. The others stay, thin
    * and faint, so the chosen one is read against the network it belongs to.
    */
-  emphasisLineId?: string | null;
+  /**
+   * The lines lifted out of the network, if any.
+   *
+   * Was a single id, because the map could only ever have one line picked. Comparing two
+   * needs both painted over the backdrop rather than one of them chosen as the subject:
+   * with one emphasised and the other left in the mute, the map answers a question the
+   * reader did not ask.
+   */
+  emphasisLineIds?: string[];
   showRoutes: boolean;
   lang: Lang;
   onSelectLine: (line: BusLine) => void;
@@ -158,7 +166,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   map,
   lines,
   visibleLineIds,
-  emphasisLineId,
+  emphasisLineIds = [],
   showRoutes,
   lang,
   onSelectLine,
@@ -190,24 +198,27 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     if (showRoutes) {
       const showingAll = visibleLineIds === null;
       const inScope = showingAll ? lines : lines.filter((l) => visibleLineIds.includes(l.id));
-      const emphasised = emphasisLineId ? inScope.find((l) => l.id === emphasisLineId) : undefined;
-      // Emphasised last, so it is painted over the network rather than under it.
-      const linesToRender = emphasised
-        ? [...inScope.filter((l) => l.id !== emphasised.id), emphasised]
+      const emphasised = inScope.filter((l) => emphasisLineIds.includes(l.id));
+      // Emphasised last, so they are painted over the network rather than under it.
+      const linesToRender = emphasised.length
+        ? [...inScope.filter((l) => !emphasisLineIds.includes(l.id)), ...emphasised]
         : inScope;
       // Both directions only when there is one line and nothing else competing for the
       // corridor; otherwise ida and volta are two more traces in an already busy street.
       const singleLine = linesToRender.length === 1;
 
       linesToRender.forEach((line, lineIndex) => {
-        const isEmphasised = line.id === emphasisLineId;
+        const isEmphasised = emphasisLineIds.includes(line.id);
         // A backdrop, not a second subject: thin enough to read the chosen line over, dark
         // enough to still say a street carries a bus.
-        const muted = Boolean(emphasised) && !isEmphasised;
+        const muted = emphasised.length > 0 && !isEmphasised;
         // Ida and volta run the same corridor, so drawing both at once just stacks
-        // one polyline on top of the other. Show the outbound trace in the overview
-        // and only split the two apart once a single line is selected.
-        const directions = isEmphasised || singleLine ? line.directions : line.directions.slice(0, 1);
+        // one polyline on top of the other. Show the outbound trace in the overview and
+        // only split the two apart when one line is the subject: with two lines up for
+        // comparison, four traces in the same street is the clutter this avoids.
+        const onlyOneEmphasised = emphasised.length === 1;
+        const directions =
+          (isEmphasised && onlyOneEmphasised) || singleLine ? line.directions : line.directions.slice(0, 1);
 
         directions.forEach((dir, dirIndex) => {
           if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) return;
@@ -300,7 +311,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       group.remove();
       groupRef.current = null;
     };
-  }, [map, lines, visibleLineIds, emphasisLineId, showRoutes, lang]);
+  }, [map, lines, visibleLineIds, emphasisLineIds, showRoutes, lang]);
 
   return null;
 };

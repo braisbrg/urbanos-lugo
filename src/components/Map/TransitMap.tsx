@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ChevronDown,
   SlidersHorizontal,
+  Check,
 } from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
@@ -112,7 +113,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   /** Where the nearby-lines list was last computed, so walking a few metres does not redo it. */
   const lastFixRef = useRef<[number, number] | null>(null);
 
-  const [activeLineId, setActiveLineId] = useState<string>(selectedLine?.id || 'all');
+  /**
+   * The lines the reader has picked out, or none for "show me everything in scope".
+   *
+   * This was one id, so the map could show all of them or exactly one and nothing else.
+   * Comparing two — which of these gets me closer, do they share the stretch I care about
+   * — was the thing you could not ask it. A set costs no more room on the screen because
+   * the rows were already there: they toggle instead of replacing, "Todas" clears, and
+   * one picked line behaves exactly as it did before.
+   */
+  const [pickedLineIds, setPickedLineIds] = useState<string[]>(selectedLine ? [selectedLine.id] : []);
+  const togglePickedLine = (id: string) =>
+    setPickedLineIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const [filterPreset, setFilterPreset] = useState<
     'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao'
   >('all');
@@ -200,7 +212,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   const showLinesHere = (stop: BusStop) => {
     setLinesHereStop(stop);
     setFilterPreset('stop');
-    setActiveLineId('all');
+    setPickedLineIds([]);
     map?.setView([stop.lat, stop.lng], 15, { animate: true });
   };
 
@@ -241,7 +253,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           ? presetAreaLineIds
           : null;
 
-  const visibleLineIds = activeLineId !== 'all' ? [activeLineId] : scopeLineIds;
+  const visibleLineIds = pickedLineIds.length ? pickedLineIds : scopeLineIds;
   // Street geometry arrives as its own chunk; until then the stop layer still works.
   const geometryReady = useRouteGeometry();
   const lines = BUS_LINES;
@@ -356,11 +368,17 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     tilesRef.current?.setBasemapTheme(isDark);
   }, [isDark]);
 
-  // Sync selectedLine prop into activeLineId & zoom into line
+  // Sync selectedLine prop into the picked set & zoom into line
   useEffect(() => {
     if (focus === 'stop') return;
-    if (selectedLine) {
-      setActiveLineId(selectedLine.id);
+    /*
+     * A line chosen somewhere else — the search box, the Líneas tab — becomes the only one
+     * on the map. One picked here must not: `onSelectLine` reports every pick upward, so
+     * this fired on the second tap and threw the first line away, and the map looked as if
+     * picking a second one simply replaced the first.
+     */
+    if (selectedLine && !pickedLineIds.includes(selectedLine.id)) {
+      setPickedLineIds([selectedLine.id]);
       setFilterPreset('all');
 
       if (map && selectedLine.directions[0]?.pathCoordinates?.length) {
@@ -378,7 +396,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   useEffect(() => {
     if (selectedStop && map) {
       if (focus === 'stop') {
-        setActiveLineId('all');
+        setPickedLineIds([]);
         setFilterPreset('all');
         setLinesHereStop(null);
       }
@@ -505,7 +523,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           setFilterPreset('nearby');
           // Show them all. Picking nearby[0] made "preto de min" display a single line
           // and hide the other seven you could equally walk to.
-          setActiveLineId('all');
+          setPickedLineIds([]);
           // If this fix is the one the screen opened on, this is the moment the lines to
           // draw exist. Drawing them any earlier would put all twenty-four on the map for
           // as long as the GPS took to answer. Nothing to guard against a reader outside
@@ -537,8 +555,16 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   };
 
   const handleSelectLine = (line: BusLine) => {
-    setActiveLineId(line.id);
-    onSelectLine(line);
+    const adding = !pickedLineIds.includes(line.id);
+    const next = adding ? [...pickedLineIds, line.id] : pickedLineIds.filter((id) => id !== line.id);
+    setPickedLineIds(next);
+    /*
+     * Only tell the rest of the app about a line being taken up, never about one being put
+     * down. "The reader chose this" is what the prop means, and firing it on a deselect
+     * made the sync effect above read the line back as a fresh choice and put it straight
+     * back on the map — tapping a picked line did nothing at all.
+     */
+    if (adding) onSelectLine(line);
     // Asking for a line is asking to see it. The map opens with no trazados drawn, so
     // without this the first pick would frame the route and then draw nothing in it.
     setShowRoutes(true);
@@ -547,12 +573,22 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     setSheetOpen(false);
     setLinesExpanded(false);
 
-    if (map && line.directions[0]?.pathCoordinates?.length) {
-      const bounds = L.polyline(line.directions[0].pathCoordinates).getBounds();
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    /*
+     * Frame everything picked, not only the one just touched.
+     *
+     * With two lines up the question is how they compare, and a view framed on the second
+     * one puts the first half off the screen — which is the answer to a question nobody
+     * asked. Both directions count: a line is not its outbound half.
+     */
+    if (!map || !next.length) return;
+    const bounds = L.latLngBounds([]);
+    for (const id of next) {
+      const picked = BUS_LINES.find((l) => l.id === id);
+      for (const direction of picked?.directions ?? []) {
+        for (const point of direction.pathCoordinates ?? []) bounds.extend(point as [number, number]);
       }
     }
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
   };
 
   const handlePresetFilter = (preset: 'all' | 'nearby' | 'stop' | 'hula' | 'campus' | 'ceao') => {
@@ -561,15 +597,15 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     setSheetOpen(false);
     if (preset !== 'stop') setLinesHereStop(null);
     if (preset === 'all') {
-      setActiveLineId('all');
+      setPickedLineIds([]);
     } else if (preset === 'hula' || preset === 'campus' || preset === 'ceao') {
       // Frame the area and keep every line that reaches it, instead of silently
       // pinning the map to one hardcoded line ('campus' and 'ceao' both used 1.1).
       const [lat, lng] = PRESET_CENTERS[preset];
-      setActiveLineId('all');
+      setPickedLineIds([]);
       map?.setView([lat, lng], 15, { animate: true });
     } else if (preset === 'nearby') {
-      setActiveLineId('all');
+      setPickedLineIds([]);
       if (!nearbyLinesList.length) handleLocateUser();
     }
   };
@@ -854,15 +890,18 @@ export const TransitMap: React.FC<TransitMapProps> = ({
             <div className="flex items-center justify-between mb-2">
               <span className="text-label font-bold text-ink-3 uppercase tracking-widest">
                 {t.map.linesList}
+                {pickedLineIds.length > 0 && (
+                  <span className="ml-1.5 text-accent">· {t.map.linesPicked(pickedLineIds.length)}</span>
+                )}
               </span>
               <button
                 onClick={() => {
-                  setActiveLineId('all');
+                  setPickedLineIds([]);
                   setFilterPreset('all');
                 }}
-                aria-pressed={activeLineId === 'all'}
+                aria-pressed={pickedLineIds.length === 0}
                 className={`flex h-11 min-w-11 items-center justify-center rounded-[9px] px-3 text-label font-semibold ${
-                  activeLineId === 'all'
+                  pickedLineIds.length === 0
                     ? 'bg-surface text-accent'
                     : 'text-ink-3 hover:text-ink'
                 }`}
@@ -873,7 +912,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
             <div className="space-y-1 max-h-[175px] overflow-y-auto pr-1">
               {listedLines.map((line) => {
-                const isSelected = activeLineId === line.id;
+                const isSelected = pickedLineIds.includes(line.id);
                 return (
                   <div
                     key={line.id}
@@ -900,6 +939,12 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                       <span className="truncate" title={line.name}>
                         {line.name}
                       </span>
+                      {/* The row is a switch, not a choice that replaces the last one, and
+                          a tick is what says so. Without it somebody who picked a second
+                          line would read the first one still being drawn as a bug. */}
+                      {isSelected && (
+                        <Check className="ml-auto h-4 w-4 shrink-0 text-accent" strokeWidth={3} aria-hidden="true" />
+                      )}
                     </button>
 
                     <button
@@ -945,13 +990,16 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                  chosen one over them. The stops still narrow to `visibleLineIds`: a
                  backdrop of routes is context, 417 dots is clutter. */
               visibleLineIds={scopeLineIds}
-              emphasisLineId={activeLineId !== 'all' ? activeLineId : null}
+              /* Every line picked, not one of them: two lines up is a comparison, and
+                 lifting one over the other would answer a question the reader asked of
+                 both. */
+              emphasisLineIds={pickedLineIds}
               lines={lines}
               showRoutes={showRoutes}
               lang={lang}
               onSelectLine={(line) => {
                 onSelectLine(line);
-                setActiveLineId(line.id);
+                togglePickedLine(line.id);
               }}
               onOpenLine={onOpenLine}
             />
@@ -1018,9 +1066,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePresetFilter('all')}
-                  aria-pressed={activeLineId === 'all'}
+                  aria-pressed={pickedLineIds.length === 0}
                   className={`pointer-events-auto flex h-11 shrink-0 items-center rounded-full border px-4 text-label font-semibold shadow-sm backdrop-blur-xs ${
-                    activeLineId === 'all'
+                    pickedLineIds.length === 0
                       ? 'border-accent bg-accent text-on-accent'
                       : 'border-edge bg-bg/95 text-ink-2'
                   }`}
@@ -1053,7 +1101,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                     where twenty-four names would not fit at all. The name goes to the
                     accessible name, since the badge alone reads as a bare number. */}
                 {listedLines.map((line) => {
-                  const isSelected = activeLineId === line.id;
+                  const isSelected = pickedLineIds.includes(line.id);
                   // Only where the number cannot stand alone, so twenty of the chips stay
                   // the width of their number and only the four 11s pay for the ambiguity.
                   const branch = sharedNumbers.has(line.number) ? destinationOf(line) : '';

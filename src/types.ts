@@ -194,6 +194,8 @@ export interface RoutePlanResult {
      * that stop; 'estimated' is derived from the departure plus measured road time.
      */
     precision?: 'published' | 'estimated';
+    /** The same for the alighting time: whether the operator prints it for that stop. */
+    arrivalPrecision?: 'published' | 'estimated';
     fromStop?: BusStop;
     toStop?: BusStop;
     walkMeters?: number;

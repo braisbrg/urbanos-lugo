@@ -130,7 +130,9 @@ Dous avisos, os dous opcionais:
 
 Ambos usan vibración, son e notificación do sistema se a concedes. Funcionan só coa
 pantalla aberta: unha páxina web non pode espertarse en segundo plano, e a interface dío
-en lugar de dar a entender o contrario.
+en lugar de dar a entender o contrario. O segundo é tamén o que soa na pantalla
+[«Vou nesta»](#vou-nesta-a-pantalla-para-a-viaxe) do planificador: a mesma alarma, chamada
+desde outro sitio.
 
 ### A portada son as túas paradas
 O tab de paradas abre nas **gardadas**, xa coas súas próximas saídas: o caso habitual
@@ -187,8 +189,10 @@ As paradas debúxanse en canvas (`preferCanvas`) e non todas á vez: afastado s�
 Amosalas todas sobre a vista de cidade tapaba as propias liñas e creaba 417 nodos DOM.
 
 Os vehículos que se ven proveñen do cadro horario: unha expedición que xa saíu e aínda
-non rematou sitúase sobre o trazado onde debería ir. O globo de cada un dío
-explicitamente; non son posicións medidas.
+non rematou sitúase sobre o trazado onde debería ir. As dúas direccións dunha liña son
+o mesmo bus dando a volta, así que cando o cadro xa o ten saíndo de volta, o marcador da
+ida retírase nese minuto: a ida das 07:30 da liña 7 seguía debuxada a 139 m da súa propia
+volta das 07:45. O globo de cada un dío explicitamente; non son posicións medidas.
 
 ### Planificador de traxectos
 Compara a liña directa contra os transbordos posibles e devolve **o que chega antes**.
@@ -300,6 +304,33 @@ Todo iso vai no mesmo ficheiro que o grafo, codificado en diferenzas: 21.093 alt
 
 Amosa tamén **canto custa o traxecto** cos dous títulos, aplicando a regra dos 75 minutos:
 un transbordo dentro da ventá vai incluído coa Tarxeta Cidadá.
+
+### «Vou nesta»: a pantalla para a viaxe
+Debaixo do resultado hai un botón que converte o plan nunha pantalla para mirar de
+esguello, cunha man, co bus en marcha. Arriba, o que importa: **en que parada baixas,
+cantas faltan e cantos minutos**. As paradas cóntanse contra o GPS do móbil sobre a lista
+do plan — unha parada dáse por pasada cando estiveches a menos de 60 m dela, e unha vez
+pasada non volve atrás —, e os minutos son os do cadro horario, coa etiqueta de sempre.
+Nada nesa pantalla afirma onde está o bus, porque ninguén o publica.
+
+Entra por botón e non por deducción: un bus parado nun semáforo e un paseo vivo son
+iguais para un GPS. O botón está sempre; o que cambia é onde: nos dez minutos antes do
+primeiro bus pasa ao principio da resposta, a tamaño de titular, e pasada a hora impresa
+volve ao seu sitio porque o plan xa é vello. Se déchelle a túa posición ao planificador,
+esa posición só pode baixalo —«non estás no poste»—, nunca subilo: é unha lectura única,
+igual tomada na casa. Se pasan tres minutos da hora de subida sen que o móbil te vise pasar
+ningunha parada, pregunta **«Colliches o bus?»**. «Non» le do cadro a seguinte saída
+desa liña nese poste — non recalcula nada desde unha posición en movemento — e, cando
+non queda ningunha, di que era a última en vez de imprimir a primeira de mañá.
+
+O aviso de baixada é o mesmo do taboleiro (`stopAlarm.ts`): unha soa vixilancia de
+posición para toda a app, un só radio de 300 m, un só permiso. Cos transbordos, a
+pantalla pasa á seguinte liña ao chegar á parada de cambio e remata co tramo a pé ata a
+porta. O mapa encadra o tramo que estás a facer —o resto do plan queda tenue— e leva a
+túa posición enriba, que é a única medición que hai; ao baixar, encadra o paseo final
+polas rúas reais. A viaxe gárdase en `sessionStorage` para sobrevivir a que o móbil se bloquee, e
+desaparece ao pechar a pestana ou premer «Saír da viaxe» — non queda no aparello un rexistro de
+onde fuches.
 
 ### Liñas e horarios
 Ficha de cada liña co seu percorrido en ambos sentidos, cadro horario por tipo de día
@@ -511,6 +542,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── StopArrivalsView.tsx    taboleiro de chegadas
 │   │   ├── LinesView.tsx           liñas e horarios
 │   │   ├── RoutePlannerView.tsx    planificador
+│   │   ├── TripCompanionView.tsx   «vou nesta»: a pantalla para a viaxe
 │   │   ├── AlertsView.tsx          avisos do servizo e novas do Concello
 │   │   ├── FaresView.tsx           tarifas, normas a bordo e contacto
 │   │   ├── FavoritesDrawer.tsx     favoritos
@@ -537,12 +569,15 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── useOperatorTimes.ts     os minutos do operador, se hai servidor
 │   │   ├── useTheme.ts             clara / escura / automática
 │   │   ├── useRecentStops.ts       últimas paradas abertas (só ids)
+│   │   ├── useRecentRoutes.ts      últimas rutas planificadas, tal como se escribiron
+│   │   ├── useTripCompanion.ts     a viaxe en curso, por riba das pestanas
 │   │   └── useDialog.ts            Escape, foco atrapado e foco devolto
 │   ├── utils/
 │   │   ├── schedule.ts             calendario e cadro horario
 │   │   ├── transitEngine.ts        chegadas, vehículos e rutas
 │   │   ├── serviceLabels.ts        días, frecuencia e sentido no idioma da IU
 │   │   ├── geo.ts                  a única Haversine
+│   │   ├── tripProgress.ts         que parada pasei, contra o GPS; e a máquina da viaxe
 │   │   ├── walkRouter.ts           A* sobre a rede peonil, no propio móbil
 │   │   ├── snapshotAge.ts          cando unha copia deixa de falar do presente
 │   │   └── searchUtils.ts          buscador
@@ -670,8 +705,9 @@ Consecuencias en toda a aplicación:
   que ninguén levantou queda baleiro en vez de dicir «non».
 - O pé de páxina xa non anuncia un SAE en tempo real que non existe.
 - O listado de liñas amosaba `1 GPS` cun radar a pulsar ao lado. Non hai GPS ningún: ese
-  número son as expedicións que segundo o cadro deberían estar circulando, e agora
-  chámase **`1 en ruta`**, sen radar e cun texto que o explica ao pousar o rato.
+  número son os autobuses que segundo o cadro deberían estar circulando —unha expedición
+  e a volta na que se converte contan unha vez—, e agora chámase **`1 en ruta`**, sen
+  radar e cun texto que o explica ao pousar o rato.
 
 A etiqueta decídese **por expedición e parada**, non por liña. Unha parada só leva
 `HORARIO OFICIAL` se a hora que calculamos para ese bus concreto está literalmente
@@ -688,6 +724,19 @@ por horas oficiais a ambos os lados, e **797** quedan máis alá do último punt
 dependen do modelo de estrada. Nos 21 tramos que se poden contrastar, o erro fronte ao
 impreso ten mediana de 0,1 min, chega a 8,3 min no peor caso lento e a −7,4 no peor rápido,
 e só o 38% cae dentro de dous minutos. Por iso o `~` non é decorativo.
+
+Ese tramo máis alá do último punto horario é tamén o único que o mapa se permite recortar.
+Cando o cadro imprime a saída da volta antes de que o modelo de estrada faga chegar a
+ida, o marcador da ida retírase nesa saída —nunca antes do último punto horario impreso,
+que é o que garda o segundo vehículo das liñas 2 e 6, onde a viaxe completa dura máis ca
+a cadencia, e o que deixa enteira a última volta do día—. Medido minuto a minuto sobre os
+tres tipos de día (`tools/test.ts`): 288 expedicións recortadas, ningún minuto en que
+unha liña con servizo quede sen marcador, e a frota máxima baixa de 24 a 22 vehículos ás
+09:15 dun laborable. Quedan 27 minutos ao día na liña 11 en que a ida e a volta aínda se
+ven á vez: ou a mediana do tramo impreso pon o bus no punto horario cinco minutos despois
+do que o cadro imprime para esa expedición concreta, ou a saída da volta dedúcese dous
+minutos antes do seu primeiro punto impreso, e recortar iso sería contradicir unha hora
+que a app trata como oficial.
 
 `pnpm test` inclúe comprobacións que fallan se algunha hora volve presentarse sen dicir de
 onde vén, e se algunha parada reclama unha hora oficial que o cadro non imprime.
@@ -1212,12 +1261,14 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-120 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+140 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
-plausibles, que ningunha hora se amose sen dicir de onde vén, e que os filtros contra
-posicións falsas rexeiten o que teñen que rexeitar.
+plausibles, que ningunha hora se amose sen dicir de onde vén, que os filtros contra
+posicións falsas rexeiten o que teñen que rexeitar, e que a pantalla da viaxe conte
+paradas sen andar para atrás, soe unha vez por tramo e pregunte —non adiviñe— se se
+perdeu o bus.
 
 Cada unha naceu dun fallo real, e o comentario de arriba di cal. Que dous postes non
 compartan punto (nove liñas publicábanse como dezaoito paradas); que a conta de códigos

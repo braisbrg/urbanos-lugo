@@ -24,6 +24,25 @@ import { clockDriftFromTimetable } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import type { RoutePlanResult } from '../src/types';
+import {
+  tripProgress,
+  rememberPassed,
+  AT_STOP_RADIUS_M,
+  MISSED_AFTER_MIN,
+  BOARDING_SOON_MIN,
+  boardingIsNow,
+  startTrip,
+  advanceTrip,
+  tripPhase,
+  currentLeg,
+  legTimes,
+  shouldAskIfMissed,
+  confirmBoarded,
+  missedBus,
+  packTrip,
+  unpackTrip,
+} from '../src/utils/tripProgress';
+import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
 import { poleCode, FARES } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
@@ -34,6 +53,7 @@ import { metresBetween } from '../src/utils/geo';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
 import {
   buildRuns,
+  handoverMinutes,
   isWithinServiceWindow,
   lineRunsOn,
   parseTimeToMinutes,
@@ -512,6 +532,66 @@ ok('bus ids are unique', () => {
   for (const b of getScheduledBuses(new Date(2026, 7, 19, 13, 30, 0))) {
     assert(!ids.has(b.id), `duplicate bus id ${b.id}`);
     ids.add(b.id);
+  }
+});
+
+/** The four 11s share a number; the id tells them apart. */
+const fleetOf = (now: Date, number: string, lineId = number) =>
+  getScheduledBuses(now).filter((b) => b.lineNumber === number && b.lineId === lineId);
+
+ok('a bus turning around is drawn once, not as its outbound and its return', () => {
+  // Every minute of the three service days was swept: the 7 drew its 07:30 outbound
+  // still 1.3 minutes short of A Ponte while its 07:45 return had already left it -- one
+  // vehicle, 139 m apart, 58 minutes a day. The 11 to Bóveda ran its outbound eight
+  // minutes past Barbaín, its last timing point, while the return had left Bóveda on
+  // that very minute.
+  assert.strictEqual(fleetOf(new Date(2026, 7, 19, 7, 45, 30), '7').length, 1, 'line 7 at 07:45:30');
+  assert.strictEqual(fleetOf(new Date(2026, 7, 19, 8, 22, 0), '11', '11-Igrexa de Bóveda').length, 1, 'line 11 Bóveda at 08:22');
+  // And it is the return that stays, because that is where the bus is now.
+  assert.strictEqual(fleetOf(new Date(2026, 7, 19, 7, 45, 30), '7')[0].direction, 'volta');
+});
+
+ok('the handover never takes the second bus off a line that runs two', () => {
+  // A departure of the other direction inside a run is not always this bus turning: on
+  // the 2 and the 6 the round trip is longer than the headway, so it is the other
+  // vehicle. The rail is the run's last printed timing point -- the 6's return is pinned
+  // through Sindicatos, and the outbound that leaves ten minutes earlier falls before it.
+  assert.strictEqual(fleetOf(new Date(2026, 7, 19, 9, 15, 0), '2').length, 2, 'line 2 at 09:15');
+  assert.strictEqual(fleetOf(new Date(2026, 7, 19, 17, 15, 0), '6').length, 2, 'line 6 at 17:15');
+  // The same rail keeps the last run of the day whole: without it the 6's 21:05 return
+  // was cut at 21:10 against the 21:10 outbound, which is the other bus leaving.
+  const lastReturn = fleetOf(new Date(2026, 7, 19, 21, 25, 0), '6').filter((b) => b.direction === 'volta');
+  assert.strictEqual(lastReturn.length, 1, 'the 6 has its last return on the road at 21:25');
+});
+
+ok('a handover never loses a bus, cuts a printed stretch, or lands outside its run', () => {
+  // The contract of handoverMinutes, over every run of every line on every day: the
+  // marker stops strictly after departure and no later than arrival, never before the
+  // run's last timing point, and at no minute does a line the timetable has on the
+  // road go dark -- when a marker stops, the leg it handed over to is already drawn.
+  for (const kind of ['laborable', 'sabado', 'domingo'] as const) {
+    for (const line of BUS_LINES) {
+      if (!lineRunsOn(line, kind)) continue;
+      const handover = handoverMinutes(line, BUS_STOPS, kind);
+      const legs = line.directions.flatMap((_, dir) =>
+        buildRuns(line, dir, BUS_STOPS, kind).map((run, i) => {
+          const t = run.minutesByStopIndex;
+          const start = t[0];
+          const end = t[t.length - 1];
+          const until = handover.get(`${dir}|${i}`) ?? end;
+          if (until !== end) {
+            assert(until > start && until < end, `${line.id} ${dir}|${i} ${kind}: handover ${until} outside (${start}, ${end})`);
+            assert(until >= t[run.lastTimingPointIndex], `${line.id} ${dir}|${i} ${kind}: handover before the last timing point`);
+          }
+          return { start, end, until };
+        }),
+      );
+      for (let m = 0; m < 1440; m++) {
+        const onRoad = legs.some((l) => (m >= l.start && m < l.end) || (m + 1440 >= l.start && m + 1440 < l.end));
+        const drawn = legs.some((l) => (m >= l.start && m < l.until) || (m + 1440 >= l.start && m + 1440 < l.until));
+        assert(!onRoad || drawn, `${line.id} ${kind}: no marker at ${formatMinutes(m)} though a run is underway`);
+      }
+    }
   }
 });
 
@@ -1284,7 +1364,9 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
       if (entry.isDirectory()) walk(full);
       else if (/\.tsx?$/.test(entry.name)) {
         const source = readFileSync(full, 'utf8');
-        for (const m of source.matchAll(/localStorage\.(?:setItem|removeItem)\(\s*(?:KEY|storageKey|'([^']+)')/g)) {
+        // sessionStorage too: it dies with the tab, but it is still the device keeping
+        // something, and the trip it keeps is where somebody is going.
+        for (const m of source.matchAll(/(?:local|session)Storage\.(?:setItem|removeItem)\(\s*(?:KEY|storageKey|'([^']+)')/g)) {
           if (m[1]) written.add(m[1]);
         }
         // Keys held in a module constant, which is the shape the hooks use.
@@ -1301,6 +1383,273 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
       `${key} is written to the device and PRIVACY.md does not mention it`,
     );
   }
+});
+
+ok('the trip companion counts stops against the list, and never backwards', () => {
+  // The one piece of the "vou no bus" mode with no equivalent anywhere else, and the one
+  // that can be wrong without looking wrong: a stop counter that slips does not throw, it
+  // shows a plausible number of stops that is not yours. Nothing here is a bus position —
+  // the network publishes none — so this is counting a GPS fix against the plan's own
+  // stop list, and that is exactly what has to be pinned down.
+  const now = new Date(2026, 8, 8, 9, 0, 0);
+  const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
+  assert(plan, 'no plan to follow');
+  const leg = plan.segments.find((seg) => seg.type === 'bus');
+  assert(leg?.fromStop && leg.toStop, 'the plan has no bus leg to ride');
+
+  const direction = leg.line?.directions.find((d) => d.id === leg.directionId) ?? leg.line?.directions[0];
+  const ids = direction?.stops ?? [];
+  const ride = ids.slice(ids.indexOf(leg.fromStop!.id), ids.indexOf(leg.toStop!.id) + 1);
+  assert(ride.length >= 4, `the ride is only ${ride.length} stops; this check needs a few`);
+  const at = (id: string) => {
+    const stop = BUS_STOPS.find((s) => s.id === id)!;
+    return { lat: stop.lat, lng: stop.lng };
+  };
+
+  // At the boarding pole: nothing behind you, the whole ride ahead.
+  const start = tripProgress(plan, at(ride[0]));
+  assert(start.stops.length === ride.length, `${start.stops.length} stops shown for a ride of ${ride.length}`);
+  assert(start.stopsRemaining === ride.length - 1, `${start.stopsRemaining} left at the very first stop`);
+  assert(!start.arrived, 'arrived before the bus moved');
+
+  // Riding: the count falls, and the stops behind are marked.
+  let seen = rememberPassed(start, new Set());
+  const middle = Math.floor(ride.length / 2);
+  const half = tripProgress(plan, at(ride[middle]), seen);
+  assert(
+    half.stopsRemaining < start.stopsRemaining,
+    `the count did not move between stop 0 and stop ${middle}`,
+  );
+  assert(half.stops[0].passed && half.stops[middle].passed, 'the stops behind are not marked');
+  assert(!half.stops[half.stops.length - 1].passed, 'the alighting stop is marked before arriving');
+
+  /*
+   * A fix in the middle of nowhere must not walk the count backwards.
+   *
+   * The bus does not stop at every pole and a phone does not report at every one either,
+   * so between stops there is no stop within range. Without carrying what was already
+   * reached, the list would un-tick itself while somebody watched it.
+   */
+  seen = rememberPassed(half, seen);
+  const nowhere = tripProgress(plan, { lat: 43.05, lng: -7.65 }, seen);
+  assert(
+    nowhere.stopsRemaining === half.stopsRemaining,
+    `the count moved from ${half.stopsRemaining} to ${nowhere.stopsRemaining} on a fix between stops`,
+  );
+
+  // At the alighting pole: nothing left, and it says so.
+  const end = tripProgress(plan, at(ride[ride.length - 1]), seen);
+  assert(end.arrived, 'standing at the alighting stop and the mode has not noticed');
+  assert(end.stopsRemaining === 0, `${end.stopsRemaining} stops left while standing at the last one`);
+  assert(end.metresToAlighting !== null && end.metresToAlighting < AT_STOP_RADIUS_M, 'the distance is wrong at the pole');
+
+  /*
+   * The radius is wider than some of the published gaps, and that is known rather than
+   * tuned away. Ten of the 1,136 consecutive pairs are closer than sixty metres; the
+   * tightest reads five, and that five is a coordinate the operator publishes at a
+   * junction rather than a gap between two poles — see the note on AT_STOP_RADIUS_M.
+   * What must not happen is the count growing quietly, which is what widening the radius,
+   * or a re-import that moves a stop, would do.
+   */
+  let tight = 0;
+  for (const line of BUS_LINES) {
+    for (const direction of line.directions) {
+      for (let i = 1; i < direction.stops.length; i++) {
+        const a = BUS_STOPS.find((s) => s.id === direction.stops[i - 1]);
+        const b = BUS_STOPS.find((s) => s.id === direction.stops[i]);
+        if (a && b && getDistanceMeters(a.lat, a.lng, b.lat, b.lng) < AT_STOP_RADIUS_M) tight++;
+      }
+    }
+  }
+  assert(tight <= 10, `${tight} consecutive pairs are closer than the ${AT_STOP_RADIUS_M} m radius, up from 10`);
+});
+
+ok('the trip companion moves through its phases on fixes alone, rings once a leg, and carries a transfer', () => {
+  // The mode is a cursor over plan.segments driven by GPS fixes. What must hold: nobody
+  // is "on the bus" until the phone has seen them past the pole they boarded at; the
+  // alert rings once per leg and never for the leg being waited for; reaching the end of
+  // the first ride hands the cursor to the second, and walking from one pole to the other
+  // does not hand it back -- judged on distance alone, a fix 70 m from the alighting pole
+  // put the reader back on the bus they had just left.
+  const now = new Date(2026, 8, 8, 9, 0, 0);
+  const plan = planTrips('Intercentros Campus Universitario USC', 'Hospital Lucus Augusti (HULA)', { now })[0];
+  assert(plan, 'no plan to follow');
+  const legs = plan.segments.flatMap((seg, i) => (seg.type === 'bus' ? [i] : []));
+  assert(legs.length === 2, `this check needs a transfer and the plan has ${legs.length} bus legs`);
+  const [first, second] = legs.map((i) => plan.segments[i]);
+  assert(
+    first.toStop && second.fromStop && first.toStop.id !== second.fromStop.id,
+    'this check needs a transfer that walks between two poles',
+  );
+  const at = (stop: { lat: number; lng: number }) => ({ lat: stop.lat, lng: stop.lng });
+  const stopsOf = (leg: number) => {
+    const seg = plan.segments[leg];
+    const dir = seg.line!.directions.find((d) => d.id === seg.directionId)!;
+    return dir.stops.slice(dir.stops.indexOf(seg.fromStop!.id), dir.stops.indexOf(seg.toStop!.id) + 1)
+      .map((id) => BUS_STOPS.find((s) => s.id === id)!);
+  };
+  const ride1 = stopsOf(legs[0]);
+  const ride2 = stopsOf(legs[1]);
+
+  let state = startTrip(plan, null, null);
+  assert(tripPhase(state, null) === 'waiting', 'a trip just started is not waiting');
+  assert(currentLeg(state, null) === legs[0], 'the first leg on screen is not the first bus');
+
+  // Standing at the boarding pole is still waiting: the pole is the first stop.
+  let progress = tripProgress(plan, at(ride1[0]), new Set(state.seen));
+  let step = advanceTrip(state, progress);
+  state = step.state;
+  assert(!step.ring, 'rang at the boarding pole');
+  assert(tripPhase(state, progress) === 'waiting', 'boarding pole counted as riding');
+
+  // Past the second stop: riding, no alert yet.
+  progress = tripProgress(plan, at(ride1[1]), new Set(state.seen));
+  step = advanceTrip(state, progress);
+  state = step.state;
+  assert(!step.ring, 'rang two stops into the ride');
+  assert(tripPhase(state, progress) === 'riding', `phase is ${tripPhase(state, progress)} past the second stop`);
+  assert(state.boardedLeg === legs[0], 'riding, but the leg was not recorded as boarded');
+
+  // At the alighting pole: the alert, once. A second fix at the same pole is silent.
+  progress = tripProgress(plan, at(ride1[ride1.length - 1]), new Set(state.seen));
+  step = advanceTrip(state, progress);
+  state = step.state;
+  assert(step.ring, 'no alert on reaching the alighting pole');
+  assert(state.alertedLeg === legs[0], 'the alert was not recorded against its leg');
+  step = advanceTrip(state, tripProgress(plan, at(ride1[ride1.length - 1]), new Set(state.seen)));
+  assert(!step.ring, 'the alert rang twice for one leg');
+  state = step.state;
+
+  // The cursor is on the second bus now, and stays there on the walk to its pole.
+  progress = tripProgress(plan, at(second.fromStop!), new Set(state.seen));
+  assert(progress.segmentIndex === legs[1], `after alighting the cursor is on segment ${progress.segmentIndex}, not the second bus`);
+  assert(tripPhase(state, progress) === 'waiting', 'arrived at the transfer pole and not waiting');
+  step = advanceTrip(state, progress);
+  assert(!step.ring, 'rang for the second bus while waiting for it');
+  state = step.state;
+
+  // Ride the second bus to the end: the last ride done is the walk to the door.
+  for (const stop of ride2.slice(1)) {
+    progress = tripProgress(plan, at(stop), new Set(state.seen));
+    state = advanceTrip(state, progress).state;
+  }
+  assert(state.alertedLeg === legs[1], 'the second leg never rang');
+  assert(tripPhase(state, progress) === 'walking', `phase is ${tripPhase(state, progress)} at the last pole`);
+});
+
+ok('the trip companion asks about a missed bus and answers with the timetable, or with the truth that there is none', () => {
+  // A missed bus is not guessed from the GPS, it is asked: three minutes past the printed
+  // departure with nobody seen moving, and only then. "Yes" ends the question; "no" reads
+  // the next run of that line from that pole -- not a new plan -- and the times on screen
+  // become that run's. When the timetable has nothing left today, the mode says so
+  // instead of printing tomorrow's first departure as if it were tonight's.
+  const now = new Date(2026, 8, 8, 9, 0, 0);
+  const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
+  assert(plan, 'no plan to follow');
+  const leg = plan.segments.findIndex((seg) => seg.type === 'bus');
+  const state = startTrip(plan, null, null);
+  const departure = legTimes(state, leg).departureMinutes;
+  const clock = (minutes: number) => new Date(2026, 8, 8, Math.floor(minutes / 60), Math.round(minutes % 60), 0);
+
+  assert(!shouldAskIfMissed(state, null, clock(departure)), 'asked at the printed departure itself');
+  assert(!shouldAskIfMissed(state, null, clock(departure + MISSED_AFTER_MIN - 1)), 'asked inside the margin');
+  assert(shouldAskIfMissed(state, null, clock(departure + MISSED_AFTER_MIN)), 'not asked once the margin has passed');
+
+  // "Yes": riding, and the question is gone.
+  const onIt = confirmBoarded(state, null);
+  assert(tripPhase(onIt, null) === 'riding', 'said yes and still waiting');
+  assert(!shouldAskIfMissed(onIt, null, clock(departure + 30)), 'still asking after a yes');
+
+  // "No": the next run of the same line from the same pole, later than the one missed.
+  const later = missedBus(state, null, clock(departure + MISSED_AFTER_MIN), 'gl');
+  const next = legTimes(later, leg);
+  assert(later.replacement && later.replacement.leg === leg, 'no replacement recorded');
+  assert(!next.none, 'the timetable had a later run and the mode said there was none');
+  assert(next.departureMinutes > departure, `the next run (${next.departureMinutes}) is not after the missed one (${departure})`);
+  assert(['published', 'estimated'].includes(next.precision), 'the replacement departure carries no provenance');
+  assert(!shouldAskIfMissed(later, null, clock(next.departureMinutes)), 'asking again before the new departure');
+  assert(shouldAskIfMissed(later, null, clock(next.departureMinutes + MISSED_AFTER_MIN)), 'the new departure can never be missed');
+
+  // Late enough that the line is done for the day: the answer is that it was the last.
+  const lastDeparture = parseTimeToMinutes(plan.segments[leg].line!.lastDeparture);
+  const gone = missedBus(state, null, clock(lastDeparture + 30), 'gl');
+  assert(gone.replacement?.none, 'nothing left today and the mode offered a bus');
+  assert(!shouldAskIfMissed(gone, null, clock(lastDeparture + 90)), 'asking about a bus it already said does not exist');
+});
+
+ok('"Vou nesta" rises to the top in the ten minutes before the bus, and a fix can only keep it down', () => {
+  // Decided before it was built: the button is always there, and what changes is where.
+  // Ten minutes before the first bus it leads the answer; after the printed time it does
+  // not, because the plan is stale and the replan speaks. The planner's fix is a one-shot
+  // the reader asked for, possibly from home, so it is trusted to say "not at the pole"
+  // and never to say "at the pole" -- and with no fix at all the clock decides alone.
+  const now = new Date(2026, 8, 8, 9, 0, 0);
+  const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
+  assert(plan, 'no plan to follow');
+  const first = plan.segments.find((seg) => seg.type === 'bus')!;
+  const departure = parseTimeToMinutes(first.departureTime!);
+  const clock = (minutes: number) => new Date(2026, 8, 8, Math.floor(minutes / 60), Math.round(minutes % 60), 0);
+
+  assert(!boardingIsNow(plan, clock(departure - BOARDING_SOON_MIN - 1)), 'prominent eleven minutes out');
+  assert(boardingIsNow(plan, clock(departure - BOARDING_SOON_MIN)), 'not prominent ten minutes out');
+  assert(boardingIsNow(plan, clock(departure)), 'not prominent at the printed minute');
+  assert(!boardingIsNow(plan, clock(departure + 1)), 'prominent after the bus has gone');
+
+  const pole = first.fromStop!;
+  assert(boardingIsNow(plan, clock(departure - 2), { lat: pole.lat, lng: pole.lng }), 'at the pole, in time, and not prominent');
+  assert(!boardingIsNow(plan, clock(departure - 2), { lat: pole.lat + 0.01, lng: pole.lng }), 'a kilometre away and prominent');
+  assert(boardingIsNow(plan, clock(departure - 2), null), 'no fix, in time, and not prominent');
+});
+
+ok('a trip survives a reload with its lines put back by id, and refuses one it cannot rebuild', () => {
+  // The trip lives in sessionStorage so a locked phone does not end it. A BusLine is the
+  // whole timetable plus both geometries, so the copy carries ids; what comes back has to
+  // be the same plan. And a copy that names a line the dataset no longer has is a trip
+  // from before a rebuild: dropped, not half-rebuilt.
+  const now = new Date(2026, 8, 8, 9, 0, 0);
+  const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
+  assert(plan, 'no plan to follow');
+  const state = { ...startTrip(plan, { name: 'A', lat: 43, lng: -7.5 }, null), seen: ['s1'], boardedLeg: 1 };
+
+  const text = packTrip(state);
+  assert(!/"directions"/.test(text), 'the copy carries whole lines, not ids');
+  const back = unpackTrip(text);
+  assert(back, 'the copy could not be read back');
+  assert(
+    back.plan.segments.every((seg, i) => (seg.line?.id ?? null) === (plan.segments[i].line?.id ?? null)),
+    'lines did not come back by id',
+  );
+  assert(back.plan.arrivalTime === plan.arrivalTime && back.seen[0] === 's1' && back.boardedLeg === 1, 'state lost on the way back');
+  assert(back.origin?.name === 'A', 'the origin was lost');
+
+  assert(unpackTrip('not json') === null, 'garbage came back as a trip');
+  assert(unpackTrip(null) === null, 'nothing came back as a trip');
+  assert(unpackTrip(text.replace(/"lineId":"[^"]+"/, '"lineId":"gone"')) === null, 'a line the dataset lacks was rebuilt');
+});
+
+ok('one alert radius, shared by the board and the trip companion', () => {
+  // Decided before the mode was built: the board's alarm and the ride's alert are the
+  // same alarm, so there is one radius, one ring and one permission prompt. A second
+  // constant creeping in is the two drifting apart.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const src = join(root, 'src');
+  const radii: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.tsx?$/.test(entry.name) && /RADIUS_M\s*=/.test(readFileSync(full, 'utf8'))) {
+        for (const m of readFileSync(full, 'utf8').matchAll(/export const (\w*RADIUS_M) = (\d+)/g)) radii.push(`${m[1]}=${m[2]}`);
+      }
+    }
+  };
+  walk(src);
+  assert(radii.includes(`ALARM_RADIUS_M=${ALARM_RADIUS_M}`), 'the alarm radius moved out of stopAlarm.ts');
+  assert(radii.filter((r) => r.startsWith('ALARM_RADIUS_M')).length === 1, `${radii.join(', ')}: the alert radius is declared more than once`);
+  const companion = readFileSync(join(src, 'components/TripCompanionView.tsx'), 'utf8');
+  const hook = readFileSync(join(src, 'hooks/useTripCompanion.ts'), 'utf8');
+  assert(!/watchPosition\(/.test(companion + hook), 'the companion opened its own GPS watch instead of the shared one');
+  assert(/subscribePosition\(/.test(hook) && /ringAlarm\(\)/.test(hook), 'the companion does not ring the board\'s alarm');
 });
 
 ok('the answer column spaces its blocks in one place', () => {
