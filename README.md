@@ -151,6 +151,13 @@ enriba — as 24 cores de liña quedan a 1,45 ou máis sobre calquera das tres c
 que cruzan, e ningún rótulo do mapa baixa de 4,5. O plan e as cifras están en
 [`design/PLAN-mapa-propio.md`](design/PLAN-mapa-propio.md).
 
+Cunha liña escollida debúxanse os seus dous sentidos —a volta, descontinua— e a ida leva
+**frechas de sentido** cada 120 px de pantalla, do mesmo trazo e cor que a liña; por
+debaixo do zoom 14 non se amosan, e con varias liñas escollidas só desde o 17, que é onde
+os seus carrís xa se distinguen e unha frecha se lle pode atribuír á súa liña. As paradas
+son un disco a 8,4:1 sobre o chan nos dous temas: nítidas, e por debaixo da liña que as
+serve, que é a forma do mapa.
+
 Os trazados **seguen a rede viaria real**: cada
 itinerario está axustado ás rúas no momento de xerar os datos, non interpolado entre
 paradas. Corenta e cinco dos corenta e oito sentidos son o itinerario levantado en
