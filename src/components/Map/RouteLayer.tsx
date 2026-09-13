@@ -47,65 +47,92 @@ interface RouteLayerProps {
 const HIT_PX = 20;
 
 /**
- * How far apart to run routes that share a street, in metres on the ground.
+ * How wide a lane is, in screen pixels, at a given zoom.
  *
- * Lugo's lines converge on the same handful of corridors — Rda. da Muralla, Avda. da
- * Coruña — and drawn on their true geometry they are not close together, they are
- * *identical*, one polyline hiding five. Whichever Leaflet painted last was the only one
- * anybody could see.
- *
- * So each route is shifted sideways off the centreline by a fixed distance on the ground,
- * which is how a transit map has always done this. Metres and not pixels because a ground
- * offset scales with the map for free: separate at the zoom where you are reading street
- * names, merged back into one corridor when you are looking at the whole city, which is
- * the right answer at both ends and needs no redraw on zoom.
- *
- * Six metres is about half a lane. A route drawn that far off the centreline still reads
- * as being on its street — city streets are 10 to 20 m wide — while five of them side by
- * side span 30 m and are plainly five.
+ * Routes that share a street are drawn side by side, and this is the spacing. Pixels
+ * and not metres: six metres a lane was under a pixel at zoom 14, where the map opens,
+ * so the corridor the lanes exist to untangle was drawn tangled -- and wider than the
+ * road bends close in, so a route offset 24 m round a 15 m roundabout turned inside out
+ * and drew a loop. Three pixels from 13, four from 15, nothing further out where the
+ * whole city is a hand wide and the bundle would be texture.
  */
-const LANE_METRES = 6;
+function lanePx(zoom: number): number {
+  return zoom >= 15 ? 4 : zoom >= 13 ? 3 : 0;
+}
+
+/** A path to be drawn, with the id its lane is dealt under. */
+interface Trace {
+  id: string;
+  coords: [number, number][];
+}
 
 /**
- * The lane, in screen pixels, from the zoom the lanes start at.
+ * Which lane each trace runs in, at each of its vertices -- decided per street segment,
+ * by who actually shares it.
  *
- * The offset used to be the six metres above at every zoom, and metres do two wrong
- * things at once. Far out they vanish -- six metres is under a pixel at zoom 14, so the
- * corridor the lanes exist to untangle is drawn tangled -- and close in they are wider
- * than the road bends: a route offset 24 m round a 15 m roundabout turns inside out and
- * draws a loop, which is the shape Brais photographed. Four pixels is a lane the eye can
- * separate and never more than the radius of any curve the map draws at a zoom where
- * lanes are on; it means redrawing on zoom, and that is 24 polylines.
+ * The lane used to be dealt by the line's index in the list, the same offset from the
+ * centreline along its whole length. That put a rural line alone on its road four lanes
+ * off the asphalt, spread nine lines that never meet across a corridor none of them uses,
+ * and with the whole network up was so wrong the routes had to fall back to the
+ * centreline -- where a corridor showed one colour and the others were hidden under it,
+ * which Brais rightly called misleading: it looks as if no other bus goes there.
+ *
+ * So the deal is per segment. Every trace's segments are keyed by their two endpoints
+ * -- routes snapped to the same OpenStreetMap way share vertices to the metre -- and the
+ * traces on a segment are its sharers, in a fixed order. A trace alone on a segment sits
+ * on the centreline; two share it half a lane either side; n spread over n lanes centred
+ * on the street. Where a corridor gains or loses a line the others shift half a lane,
+ * which is the small jog every transit map has and nobody minds.
+ *
+ * Sides are absolute, not per trace: "left" for a trace running one way down a street
+ * is "right" for one running the other, so the frame of each segment is the travel
+ * direction of its first sharer, and a trace running against it takes the opposite
+ * sign. That is what keeps a line's ida and volta on opposite sides of the street and
+ * keeps a line from zig-zagging as the segment keys happen to flip orientation.
+ *
+ * Returned in lanes: multiply by the lane width for the zoom.
  */
-const LANE_PX = 4;
-const LANES_FROM_ZOOM = 15;
+function laneSlots(traces: Trace[]): number[][] {
+  const key = (p: [number, number]) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
+  const sharers = new Map<string, { order: string[]; forward: Map<string, boolean> }>();
+  const segments = traces.map((trace) => {
+    const keys: { k: string; forward: boolean }[] = [];
+    for (let i = 1; i < trace.coords.length; i++) {
+      const a = key(trace.coords[i - 1]);
+      const b = key(trace.coords[i]);
+      const forward = a < b;
+      const k = forward ? `${a}|${b}` : `${b}|${a}`;
+      keys.push({ k, forward });
+      let entry = sharers.get(k);
+      if (!entry) sharers.set(k, (entry = { order: [], forward: new Map() }));
+      if (!entry.forward.has(trace.id)) {
+        entry.order.push(trace.id);
+        entry.forward.set(trace.id, forward);
+      }
+    }
+    return keys;
+  });
+
+  return traces.map((trace, t) => {
+    const perSegment = segments[t].map(({ k, forward }) => {
+      const entry = sharers.get(k)!;
+      const slot = entry.order.indexOf(trace.id) - (entry.order.length - 1) / 2;
+      const frame = entry.forward.get(entry.order[0]);
+      return forward === frame ? slot : -slot;
+    });
+    return trace.coords.map((_, i) => {
+      const before = perSegment[i - 1];
+      const after = perSegment[i];
+      if (before === undefined) return after ?? 0;
+      if (after === undefined) return before;
+      return (before + after) / 2;
+    });
+  });
+}
 
 /**
- * Whether lanes are worth having for this many lines at once.
- *
- * Lanes are dealt by index, not by who actually shares a street, so with the whole
- * network up a rural line alone on its road was drawn four lanes off the asphalt, and
- * nine lines that never meet were spread across a corridor none of them uses. Up to
- * nine -- a stop's lines, the lines near you, the lines that reach the hospital -- the
- * spread is a bundle you can read. Past that the routes go back to the centreline: a
- * corridor shows one colour, and the tap on it lists everything that runs there, which
- * is the popup below and the reason it exists.
- */
-const LANES_UP_TO = 9;
-
-/**
- * How many distinct lanes there are before they start being reused.
- *
- * Twenty-four lines cannot each have their own lane: at six metres that would spread a
- * shared corridor across 144 m, which is no longer a street. Nine lanes span 48 m, which
- * is a wide avenue, and no real corridor here carries nine lines anyway — so in practice
- * the reuse never shows, and where it did the two sharing a lane would be no worse off
- * than every line was before.
- */
-const LANES = 9;
-
-/**
- * Shift a path sideways by `metres`, perpendicular to its own direction.
+ * Shift a path sideways by `metres` -- one figure, or one per vertex -- perpendicular
+ * to its own direction.
  *
  * Each vertex moves along the average of the perpendiculars of the segments meeting
  * there, which keeps corners joined instead of opening a wedge on every turn.
@@ -116,8 +143,9 @@ const LANES = 9;
  * offsets 1.37 times too wide — checked by measuring a due-north and a due-east street,
  * which both come back at 6.00 m.
  */
-function offsetPath(coords: [number, number][], metres: number): [number, number][] {
-  if (metres === 0 || coords.length < 2) return coords;
+function offsetPath(coords: [number, number][], metres: number | number[]): [number, number][] {
+  const at = (i: number) => (typeof metres === 'number' ? metres : (metres[i] ?? 0));
+  if (coords.length < 2 || (typeof metres === 'number' ? metres === 0 : metres.every((m) => m === 0))) return coords;
   const M_PER_DEG_LAT = 111_320;
   const perpendiculars: [number, number][] = [];
 
@@ -140,8 +168,8 @@ function offsetPath(coords: [number, number][], metres: number): [number, number
     const norm = Math.hypot(px, py) || 1;
     const cos = Math.cos(lat * (Math.PI / 180)) || 1;
     return [
-      lat + ((py / norm) * metres) / M_PER_DEG_LAT,
-      lng + ((px / norm) * metres) / (M_PER_DEG_LAT * cos),
+      lat + ((py / norm) * at(i)) / M_PER_DEG_LAT,
+      lng + ((px / norm) * at(i)) / (M_PER_DEG_LAT * cos),
     ];
   });
 
@@ -343,19 +371,17 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   onOpenLineRef.current = onOpenLine;
 
   /*
-   * The zoom the drawing actually depends on.
+   * The zoom the drawing follows: whole levels.
    *
-   * Lanes are in pixels and arrows are spaced in pixels, so both have to be redone when
-   * the zoom changes -- but only when there are any. With the whole network up there are
-   * no lanes (too many lines) and no arrows (no subject), and a redraw on every zoom step
-   * was 24 dense polylines rebuilt for nothing: measured at 4x CPU, 640 ms of the pause
-   * after a zoom. So the effect follows the zoom only while lanes or arrows are on, and
-   * otherwise sees a constant and stays put.
+   * Lanes and arrow spacing are in pixels, so they have to be redone when the zoom
+   * changes -- and redoing 24 dense polylines is the largest piece of the pause after a
+   * zoom, measured at 4x CPU as some 640 ms. A pinch settles at any fraction, but a lane
+   * that is 4 px at 16.0 is 4,6 at 16.2, which nobody can see; so the drawing follows
+   * the rounded level and a pinch that stays inside one costs nothing.
    */
-  const shownCount = visibleLineIds === null ? lines.length : visibleLineIds.length;
-  const hasSubject = emphasisLineIds.length > 0 || shownCount === 1;
-  const drawingFollowsZoom = hasSubject || (shownCount <= LANES_UP_TO && zoom >= LANES_FROM_ZOOM);
-  const zoomForDrawing = drawingFollowsZoom ? zoom : LANES_FROM_ZOOM - 1;
+  const zoomForDrawing = Math.round(zoom);
+  /** The lanes for the traces on screen, which do not depend on the zoom; kept across it. */
+  const slotsRef = useRef<{ key: string; slots: number[][] } | null>(null);
 
   useEffect(() => {
     if (!map) return;
@@ -377,7 +403,10 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     // spacing given in pixels into ground distance, for this draw.
     const metresPerPx = (156543.03 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** zoom;
     const placeArrows = () => {
-      if (zoom < ARROW_MIN_ZOOM || (arrowed.length > 1 && zoom < ARROW_MIN_ZOOM_SHARED)) return;
+      // Lines, not traces: one line now carries arrows on both its directions, and
+      // counting those as "several lines" had put every arrow off until zoom 17.
+      const subjectLines = new Set(arrowed.map((t) => t.lineId)).size;
+      if (zoom < ARROW_MIN_ZOOM || (subjectLines > 1 && zoom < ARROW_MIN_ZOOM_SHARED)) return;
       for (const trace of arrowed) {
         for (const { at, deg } of arrowsAlong(trace.path, trace.poles, ARROW_EVERY_PX * metresPerPx)) {
           arrows.addLayer(
@@ -402,6 +431,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     }[] = [];
     /** The traces that carry direction arrows, placed and re-placed by placeArrows. */
     const arrowed: {
+      lineId: string;
       path: [number, number][];
       color: string;
       weight: number;
@@ -420,50 +450,49 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       // corridor; otherwise ida and volta are two more traces in an already busy street.
       const singleLine = linesToRender.length === 1;
 
-      linesToRender.forEach((line, lineIndex) => {
+      /*
+       * What gets drawn: the ida of every line in scope, and the volta as well for a line
+       * that is the subject. In the overview the two run the same corridor and one of
+       * them is enough to say a bus goes there; for the line being looked at, both, so
+       * that no stop it serves is left on the map with no line through it -- the volta's
+       * poles had been, and Brais sent the screenshot.
+       *
+       * The lanes are dealt over exactly this set, in the order of the full line list and
+       * not of drawing, so choosing a line does not reshuffle the bundle around it.
+       */
+      const subjectOf = (line: BusLine) => emphasisLineIds.includes(line.id) || singleLine;
+      const traces: { line: BusLine; dir: BusLine['directions'][number]; trace: Trace }[] = [];
+      for (const line of lines) {
+        if (!inScope.includes(line)) continue;
+        const dirs = subjectOf(line) ? line.directions : line.directions.slice(0, 1);
+        for (const dir of dirs) {
+          if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) continue;
+          traces.push({ line, dir, trace: { id: `${line.id}/${dir.id}`, coords: dir.pathCoordinates as [number, number][] } });
+        }
+      }
+      const tracesKey = traces.map((t) => t.trace.id).join(' ');
+      if (slotsRef.current?.key !== tracesKey) {
+        slotsRef.current = { key: tracesKey, slots: laneSlots(traces.map((t) => t.trace)) };
+      }
+      const slots = slotsRef.current.slots;
+      const laneMetres = lanePx(zoom) * metresPerPx;
+
+      linesToRender.forEach((line) => {
         const isEmphasised = emphasisLineIds.includes(line.id);
         // A backdrop, not a second subject: thin enough to read the chosen line over, dark
         // enough to still say a street carries a bus.
         const muted = emphasised.length > 0 && !isEmphasised;
-        /*
-         * Ida and volta run the same corridor, so in the overview only the outbound
-         * trace is drawn: both would stack one polyline on the other twenty-four times.
-         *
-         * A line that is the subject gets both. That used to be true only when it was
-         * the *only* subject -- two up for comparison drew one direction each, to keep
-         * four traces out of one street -- and it left holes: the stop layer shows every
-         * stop the line serves, in either direction, so a pole served only by the volta
-         * sat on the map with no line through it. Brais sent the screenshot: a row of
-         * stops on O Ceao and nothing under them. A stop with no line is the map lying,
-         * and the clutter it avoided is solved below by giving each subject its own pair
-         * of lanes instead.
-         */
-        const subject = isEmphasised || singleLine;
-        const directions = subject ? line.directions : line.directions.slice(0, 1);
+        const subject = subjectOf(line);
 
-        directions.forEach((dir, dirIndex) => {
-          if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) return;
+        line.directions.forEach((dir, dirIndex) => {
+          const t = traces.findIndex((x) => x.line === line && x.dir === dir);
+          if (t === -1) return;
 
           const isReturn = dirIndex === 1;
-
-          /* Which lane this trace runs in.
-             A subject line gets a lane of its own, dealt out around the centre when there
-             are several, and its ida and volta run either side of that lane -- ida and
-             volta share the whole corridor, which is why the return is dashed to be told
-             apart at all. Alone, the pair sits half a lane either side of the centreline;
-             two subjects sit a lane apart, each with its pair a quarter-lane around it,
-             so four traces span six pixels and stay four. A backdrop line is one lane
-             each, dealt out the same way so the group stays centred on the street rather
-             than drifting off one side of it -- and only while there are few enough of
-             them to lay out; see LANES_UP_TO. */
-          const lane = zoom >= LANES_FROM_ZOOM ? LANE_PX * metresPerPx : 0;
-          const laneMetres = subject
-            ? (emphasised.length > 1 ? (emphasised.indexOf(line) - (emphasised.length - 1) / 2) * lane : 0) +
-              (isReturn ? 1 : -1) * (emphasised.length > 1 ? lane / 4 : lane / 2)
-            : inScope.length <= LANES_UP_TO
-              ? ((lineIndex % LANES) - Math.floor(LANES / 2)) * lane
-              : 0;
-          const path = offsetPath(dir.pathCoordinates as [number, number][], laneMetres);
+          const path = offsetPath(
+            traces[t].trace.coords,
+            laneMetres === 0 ? 0 : slots[t].map((slot) => slot * laneMetres),
+          );
 
           const weight = muted ? 2 : subject ? 5 : 3.5;
           const polyline = L.polyline(path, {
@@ -495,17 +524,18 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           drawn.push({ line, dir, path });
 
           /*
-           * Which way the bus goes, on the lines that are the subject -- and on the ida
-           * only. The volta is the dashed trace and runs the other way; arrowing both
-           * said the same thing twice and, with two lines up, four times. Without an
-           * arrow nothing on the map says which way round the 1.1 goes round the walls.
-           * The path order is the direction of travel -- the OSM relation and the
-           * fallback router both run first stop to last -- so the bearing along the
-           * drawn trace is the answer. Kept clear of the poles so a dot is never half
-           * under one.
+           * Which way the bus goes, on both traces of the line that is the subject.
+           * Without an arrow nothing on the map says which way round the 1.1 goes round
+           * the walls. Ida only was tried, on the argument that the dashed volta runs the
+           * other way; Brais asked why one direction and not the other, and a convention
+           * that needs explaining is not one. The path order is the direction of travel
+           * -- the OSM relation and the fallback router both run first stop to last -- so
+           * the bearing along the drawn trace is the answer. Kept clear of the poles so a
+           * dot is never half under one.
            */
-          if (subject && !isReturn) {
+          if (subject) {
             arrowed.push({
+              lineId: line.id,
               path,
               color: line.color,
               weight,
