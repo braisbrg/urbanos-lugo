@@ -47,46 +47,34 @@ interface RouteLayerProps {
 const HIT_PX = 20;
 
 /**
- * How far apart to run routes that share a street, in metres on the ground.
+ * The lane, in screen pixels, and where the lanes start.
  *
- * Lugo's lines converge on the same handful of corridors — Rda. da Muralla, Avda. da
- * Coruña — and drawn on their true geometry they are not close together, they are
- * *identical*, one polyline hiding five. Whichever Leaflet painted last was the only one
- * anybody could see.
+ * Lugo's lines converge on the same handful of corridors -- Rda. da Muralla, Avda. da
+ * Coruña -- and drawn on their true geometry they are not close together, they are
+ * identical, one polyline hiding five. So routes that share a street are drawn side by
+ * side, which is how a transit map has always done this.
  *
- * So each route is shifted sideways off the centreline by a fixed distance on the ground,
- * which is how a transit map has always done this. Metres and not pixels because a ground
- * offset scales with the map for free: separate at the zoom where you are reading street
- * names, merged back into one corridor when you are looking at the whole city, which is
- * the right answer at both ends and needs no redraw on zoom.
+ * In pixels. The offset used to be six metres at every zoom, and metres do two wrong
+ * things at once: far out they vanish -- under a pixel at zoom 14 -- and close in they
+ * are wider than the road bends, so a route offset 24 m round a 15 m roundabout turned
+ * inside out and drew a loop, which is the shape Brais photographed.
  *
- * Six metres is about half a lane. A route drawn that far off the centreline still reads
- * as being on its street — city streets are 10 to 20 m wide — while five of them side by
- * side span 30 m and are plainly five.
+ * Three pixels from 16 and two at 15, nothing further out. Brais, on four pixels from
+ * 13: the Ronda carries a dozen lines and the bundle was eating the screen. Below 15 a
+ * corridor is one strand of whatever is painted last, and the tap on it lists everything
+ * that runs there; that is the honest overview, not a plait wider than the street.
  */
-const LANE_METRES = 6;
+function laneWidthPx(zoom: number): number {
+  return zoom >= 16 ? 3 : zoom >= 15 ? 2 : 0;
+}
 
 /**
- * The lane, in screen pixels, from the zoom the lanes start at.
- *
- * The offset used to be the six metres above at every zoom, and metres do two wrong
- * things at once. Far out they vanish -- six metres is under a pixel at zoom 14, so the
- * corridor the lanes exist to untangle is drawn tangled -- and close in they are wider
- * than the road bends: a route offset 24 m round a 15 m roundabout turns inside out and
- * draws a loop, which is the shape Brais photographed. Four pixels is a lane the eye can
- * separate and never more than the radius of any curve the map draws at a zoom where
- * lanes are on; it means redrawing on zoom, and that is 24 polylines.
- */
-const LANE_PX = 4;
-const LANES_FROM_ZOOM = 15;
-
-/**
- * A path to be drawn, with the line it belongs to.
+ * A path to be drawn, with the lane it is dealt.
  */
 interface Trace {
   coords: [number, number][];
-  /** Position in the full line list: the lane is dealt from it. */
-  lineIndex: number;
+  /** Which lane out from the kerb, 0 first. */
+  lane: number;
 }
 
 /**
@@ -106,35 +94,42 @@ interface Trace {
  *     meets a big bundle anywhere carries that high lane everywhere, and fanned out far
  *     from its own road.
  *
- * The fixed lane's own cost is known and bounded: a line alone on its road is drawn
- * beside it rather than on it, by at most four and a half lanes -- 18 px at zoom 16 --
- * and every line stays where it is however many are chosen, so choosing one does not
- * reshuffle the bundle around it. Both directions of a line take the same figure in
- * their own frame, which puts them on opposite sides of the street by construction.
+ * The fixed lane's own cost is known and bounded: a backdrop line alone on its road is
+ * drawn beside it rather than on it, by at most three and a half lanes -- 10 px at zoom
+ * 16 -- and the line being looked at is never that line, because the subject takes the
+ * kerb. Every backdrop line keeps its lane however many are chosen, so choosing one does
+ * not reshuffle the bundle around it.
  */
 function laneSlots(traces: Trace[]): number[][] {
-  return traces.map((t) => {
-    const k = (t.lineIndex % LANES) - Math.floor(LANES / 2);
-    return t.coords.map(() => k + 0.5);
-  });
+  /*
+   * Always to the right of travel. The first version dealt lanes either side of the
+   * centreline, so a line whose lane fell on the left was drawn on the left of its own
+   * direction -- Brais, on the Avenida da Coruña: the trace on the left was the one that
+   * drives on the right in real life. Buses keep right here; the drawn line does too, and
+   * the two directions of a line land on their own kerbs by construction.
+   */
+  return traces.map((t) => t.coords.map(() => t.lane + 0.5));
 }
-
-/** The lane width in pixels: none far out, narrow where the city is a hand wide. */
-function laneWidthPx(zoom: number): number {
-  return zoom >= LANES_FROM_ZOOM ? LANE_PX : zoom >= 14 ? 2.5 : zoom >= 13 ? 2 : 0;
-}
-
 
 /**
- * How many distinct lanes there are before they start being reused.
+ * How many lanes there are on each side of a street before they are reused.
  *
- * Twenty-four lines cannot each have their own lane: at six metres that would spread a
- * shared corridor across 144 m, which is no longer a street. Nine lanes span 48 m, which
- * is a wide avenue, and no real corridor here carries nine lines anyway — so in practice
- * the reuse never shows, and where it did the two sharing a lane would be no worse off
- * than every line was before.
+ * Four, at three pixels, is twelve pixels a side -- a bundle you can still tell apart
+ * without it being wider than the road it is on. Lines beyond the fourth share a lane
+ * and hide one another, and the tap on the corridor lists every one of them; nine lanes
+ * kept them all apart and cost the Ronda seventy pixels.
  */
-const LANES = 9;
+const LANES = 4;
+
+/**
+ * The lane width the line being looked at gets, whatever the zoom: its ida and volta are
+ * drawn half a lane either side of the centreline, so this is the distance between their
+ * centres. Six pixels keeps two 5 px strokes apart. Choosing a line frames it at zoom 13
+ * or 14, where the bundle has no lanes at all, and there the two directions of the one
+ * line the reader asked about sat exactly on top of each other -- Brais: with only one
+ * selected we can surely still split ida and volta.
+ */
+const SUBJECT_LANE_PX = 6;
 
 /**
  * Shift a path sideways by `metres`, perpendicular to its own direction.
@@ -454,20 +449,35 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
        * The lanes are dealt over exactly this set, in the order of the full line list and
        * not of drawing, so choosing a line does not reshuffle the bundle around it.
        */
+      /*
+       * Which lane a line gets. A line that is the subject takes the kerb -- lane 0, the
+       * first out from the centreline -- so its stops sit on it: dealt by list position
+       * it landed three and a half lanes off its own street, and Brais read its stops as
+       * being on the next street over. With several subjects they take 0, 1, 2 in the
+       * order they were chosen, and the backdrop lines are dealt the lanes behind them by
+       * list position, so choosing one does not reshuffle the others.
+       */
+      const subjects = lines.filter((line) => inScope.includes(line) && (emphasisLineIds.includes(line.id) || singleLine));
+      const laneOf = (line: BusLine, lineIndex: number) => {
+        const s = subjects.indexOf(line);
+        if (s >= 0) return Math.min(s, LANES - 1);
+        return subjects.length ? 1 + (lineIndex % (LANES - 1)) : lineIndex % LANES;
+      };
       const traces: { line: BusLine; dir: BusLine['directions'][number]; trace: Trace }[] = [];
       lines.forEach((line, lineIndex) => {
         if (!inScope.includes(line)) return;
         for (const dir of line.directions) {
           if (!dir.pathCoordinates || dir.pathCoordinates.length < 2) continue;
-          traces.push({ line, dir, trace: { coords: dir.pathCoordinates as [number, number][], lineIndex } });
+          traces.push({ line, dir, trace: { coords: dir.pathCoordinates as [number, number][], lane: laneOf(line, lineIndex) } });
         }
       });
-      const tracesKey = traces.map((t) => `${t.line.id}/${t.dir.id}`).join(' ');
+      const tracesKey = traces.map((t) => `${t.line.id}/${t.dir.id}:${t.trace.lane}`).join(' ');
       if (slotsRef.current?.key !== tracesKey) {
         slotsRef.current = { key: tracesKey, slots: laneSlots(traces.map((t) => t.trace)) };
       }
       const slots = slotsRef.current.slots;
       const laneMetres = laneWidthPx(zoom) * metresPerPx;
+      const subjectLaneMetres = Math.max(laneWidthPx(zoom), SUBJECT_LANE_PX) * metresPerPx;
 
       linesToRender.forEach((line) => {
         const isEmphasised = emphasisLineIds.includes(line.id);
@@ -486,7 +496,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           // zoom's lane width. Nothing at the zooms where lanes are off.
           const path = offsetPath(
             traces[t].trace.coords,
-            laneMetres === 0 ? 0 : slots[t].map((slot) => slot * laneMetres),
+            slots[t].map((slot) => slot * (subject ? subjectLaneMetres : laneMetres)),
           );
 
           const weight = muted ? 2 : subject ? 5 : 3.5;
