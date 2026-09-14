@@ -202,8 +202,10 @@ export default defineConfig({
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Urbanos de Lugo',
-        short_name: 'Bus Lugo',
-        description: 'Liñas, paradas e tempos de paso do bus urbano de Lugo',
+        // The home-screen label. It was "Bus Lugo", which is the operator's domain; twelve
+        // characters is the most a launcher shows whole.
+        short_name: 'Urbanos Lugo',
+        description: 'Non oficial. Liñas, paradas e tempos de paso do autobús urbano de Lugo',
         lang: 'gl',
         theme_color: '#d81f26',
         // Dark is the default theme, so the splash has to be dark too -- this was

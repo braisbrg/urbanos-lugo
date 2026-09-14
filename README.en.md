@@ -2,14 +2,14 @@
 
 ### 👉 [**braisbrg.github.io/urbanos-lugo**](https://braisbrg.github.io/urbanos-lugo/)
 
-**When your bus comes in Lugo.** Every line, every stop and the time it passes, on a site
-that opens in a second and works with no signal.
+**When your bus comes in Lugo.** Every line, every stop and when it passes, on a light
+site that works with no signal.
 
 > **This is not the official app.** It is not made, reviewed or endorsed by AULUSA, Grupo
 > Monbus or the Concello de Lugo. It reads the timetables the operator publishes at
 > <https://buslugo.com>. Where a timetable matters, the official source wins.
 
-> 🇪🇸 [Castellano](README.es.md) · 🇬🇦 [Galego — full document](README.md)
+> [Castellano](README.es.md) · [Galego — full document](README.md)
 >
 > This page is a summary. The whole documentation — how the dataset is built, how the
 > times are computed, what each test checks and why — is in the Galician README, and it
@@ -19,7 +19,7 @@ that opens in a second and works with no signal.
 
 ## What it is for
 
-- **You reach a stop and want to know how long.** Scan the code on the pole, or search
+- **You reach a stop and want to know how long you have to wait.** Scan the code on the pole, or search
   the stop by name, and you get the list of what is coming.
 - **You do not know which bus to take.** Type where you are and where you are going — a
   street, a square, the hospital — and it gives you the whole trip.
@@ -41,15 +41,16 @@ on screen says which of the two it is:
 
 | | |
 | :--- | :--- |
-| `HORARIO OFICIAL` | The operator publishes that time for that stop. |
-| `~ ESTIMADO` | Published departure from the terminus, plus road running time. |
+| `HORARIO OFICIAL` — `SCHEDULED` in the English interface | The operator publishes that time for that stop. |
+| `~ ESTIMADO` — `~ ESTIMATED` | Published departure from the terminus, plus road running time. |
 
 ## Privacy
 
 No account, no sign-in, no analytics, no advertising, no cookies, and no server of ours
-that keeps a record of a visit. **Your location does not leave the phone** — not even to
-draw the walking route, because the pedestrian network of Lugo ships inside the app and
-the route is computed on your own device.
+that keeps a record of a visit. **Your location is sent to nobody** — not even to draw
+the walking route, because the pedestrian network of Lugo ships inside the app and the
+route is computed on your own device. The only thing that leaves the phone is the request
+for the map tiles, and PRIVACY.md says to whom.
 
 The full detail, written from the code rather than from intention, is in
 [PRIVACY.md](PRIVACY.md).

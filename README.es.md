@@ -3,13 +3,13 @@
 ### 👉 [**braisbrg.github.io/urbanos-lugo**](https://braisbrg.github.io/urbanos-lugo/)
 
 **Cuándo pasa tu bus en Lugo.** Todas las líneas, todas las paradas y la hora a la que
-pasan, en una web que abre en un segundo y funciona sin cobertura.
+pasan, en una web ligera que funciona sin cobertura.
 
 > **No es la app oficial.** No está hecha, revisada ni respaldada por AULUSA, Grupo
 > Monbus ni el Concello de Lugo. Lee los horarios que el operador publica en
 > <https://buslugo.com>. Si algo depende de un horario, manda la fuente oficial.
 
-> 🇬🇧 [English](README.en.md) · 🇬🇦 [Galego — documento completo](README.md)
+> [English](README.en.md) · [Galego — documento completo](README.md)
 >
 > Esta página es un resumen. La documentación entera —cómo se construye el dataset, cómo
 > se calculan los tiempos, qué comprueba cada test y por qué— está en el README en
@@ -47,9 +47,10 @@ dice cuál de las dos es:
 ## Privacidad
 
 No hay cuenta, ni registro, ni analítica, ni publicidad, ni cookies, ni ningún servidor
-nuestro que guarde constancia de una visita. **Tu ubicación no sale de este móvil** — ni
+nuestro que guarde constancia de una visita. **Tu ubicación no se envía a nadie** — ni
 siquiera para trazar el camino a pie, porque la red peatonal de Lugo va dentro de la
-aplicación y la ruta se calcula en tu propio dispositivo.
+aplicación y la ruta se calcula en tu propio dispositivo. Lo único que sale del móvil es
+la petición de las teselas del mapa, y PRIVACY.md dice a quién.
 
 El detalle completo, escrito desde el código y no desde la intención, está en
 [PRIVACY.md](PRIVACY.md).
