@@ -220,17 +220,30 @@ export default function App() {
 
   // index.html hardcodes lang="gl"; keep it truthful when the reader switches so screen
   // readers pronounce the page with the right voice.
+  /** What the page is about, in the reader's language: the <h1> below says the same. */
+  const screenTitle = (
+    {
+      stops: t.nav.stops,
+      lines: t.nav.lines,
+      map: t.nav.map,
+      plan: t.nav.plan,
+      info: t.menu.alerts,
+      fares: t.menu.fares,
+    } satisfies Record<Tab, string>
+  )[activeTab];
+
   useEffect(() => {
     document.documentElement.lang = lang;
     // index.html ships a Galician title for the crawler; once the app knows who is
-    // reading, the tab should say so too.
-    document.title = t.map.documentTitle;
+    // reading, the tab should say so too -- and which screen it is on. The title was the
+    // same on all six, so a tab strip or a history list could not tell them apart.
+    document.title = activeTab === 'stops' ? t.map.documentTitle : `${screenTitle} · ${t.nav.appName}`;
     try {
       localStorage.setItem('urbanos-lugo-lang', lang);
     } catch {
       // The language still applies; it just will not survive a reload.
     }
-  }, [lang, t]);
+  }, [lang, t, activeTab, screenTitle]);
 
   // Check URL query parameters for direct QR links (e.g. ?parada=xRiq or ?stop=101)
   useEffect(() => {
@@ -300,6 +313,14 @@ export default function App() {
 
   return (
     <div className="flex h-viewport bg-bg text-ink lg:flex-row">
+      {/* First in the document, so it is the first Tab stop. It sat after the rail, which
+          on a desktop put twelve buttons before the link whose job is to skip them. */}
+      <a
+        href="#contido"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[2000] focus:m-2 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-body focus:font-bold focus:text-on-accent"
+      >
+        {t.nav.skipToContent}
+      </a>
       <SideNav
         activeTab={activeTab}
         setActiveTab={goToTab}
@@ -311,12 +332,6 @@ export default function App() {
         setTheme={setTheme}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-      <a
-        href="#contido"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[2000] focus:m-2 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-body focus:font-bold focus:text-on-accent"
-      >
-        {t.nav.skipToContent}
-      </a>
       <TopBar
         onOpenFavorites={() => setIsFavoritesOpen(true)}
         savedCount={favoriteStopIds.length + favoriteLineIds.length}
@@ -381,22 +396,11 @@ export default function App() {
             shell-level heading is correct in both layouts, and a reader jumping by
             heading hears which section they are in before anything else. */}
         <ErrorBoundary t={t} resetKey={activeTab}>
-        {/* A record and not a ternary chain: the chain ended in a catch-all, so when the
-            one screen became two the new tab inherited the old one's heading and
-            announced itself as the wrong screen to anyone navigating by heading.
-            Record<Tab, …> makes the next tab a compile error instead. */}
-        <h1 className="sr-only">
-          {
-            ({
-              stops: t.nav.stops,
-              lines: t.nav.lines,
-              map: t.nav.map,
-              plan: t.nav.plan,
-              info: t.menu.alerts,
-              fares: t.menu.fares,
-            } satisfies Record<Tab, string>)[activeTab]
-          }
-        </h1>
+        {/* `screenTitle` is a record and not a ternary chain: the chain ended in a
+            catch-all, so when the one screen became two the new tab inherited the old
+            one's heading and announced itself as the wrong screen to anyone navigating
+            by heading. Record<Tab, …> makes the next tab a compile error instead. */}
+        <h1 className="sr-only">{screenTitle}</h1>
 
         {/* Below lg the two panes take turns; from lg up the saved stops stay beside the
             board, so choosing another one never costs the board you were reading. */}

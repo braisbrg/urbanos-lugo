@@ -189,6 +189,17 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
+      {/* What the rows below hold, for the ear: the box opens under the field without a
+          word, so a screen reader had no way to know that typing had found anything. The
+          kinds present, or the "nothing matches" sentence, once the rows are current. */}
+      <span role="status" className="sr-only">
+        {open && q.length > 0 && settled
+          ? [stops.length && t.search.stops, lines.length && t.search.lines, places.length && t.search.places]
+              .filter((kind): kind is string => typeof kind === 'string')
+              .join(', ') || t.search.none
+          : ''}
+      </span>
+
       {open && q.length > 0 && (
         /* A medium shadow, not a large one. The first letter typed into a cold page paints
            this box for the first time, and on a 6x-throttled CPU the 15 px blur was 80 to

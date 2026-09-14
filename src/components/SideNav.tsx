@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle, CreditCard, Globe, Moon } from 'lucide-react';
 import { navSections, type Tab } from './navSections';
 import type { ThemeChoice } from '../hooks/useTheme';
-import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
+import { Lang, LANGS, LANG_CODE, LANG_NAME, translations } from '../i18n';
 
 interface SideNavProps {
   activeTab: Tab;
@@ -91,10 +91,13 @@ export const SideNav: React.FC<SideNavProps> = ({
             incidents; "the network is closed for the night" is not one, and the night
             banner already says so. */}
         {asides.map(({ id, Icon, label, badge }) => (
+          // The count is part of the name, with a pause: read from the markup it came out
+          // as one word, "Avisos do servizo1". Same as the menu.
           <button
             key={id}
             onClick={() => setActiveTab(id)}
             aria-current={activeTab === id ? 'page' : undefined}
+            aria-label={badge > 0 ? `${label} (${badge})` : undefined}
             className={`flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body ${
               activeTab === id ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
             }`}
@@ -116,7 +119,8 @@ export const SideNav: React.FC<SideNavProps> = ({
             <Moon className="h-[15px] w-[15px] shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.menu.theme}
           </div>
-          <div className="flex gap-1">
+          {/* Named groups, as in the menu: the heading beside them is only for the eye. */}
+          <div role="group" aria-label={t.menu.theme} className="flex gap-1">
             {themes.map(({ id, label }) => (
               <button
                 key={id}
@@ -137,12 +141,16 @@ export const SideNav: React.FC<SideNavProps> = ({
             <Globe className="h-[15px] w-[15px] shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.menu.language}
           </div>
-          <div className="flex gap-1">
+          <div role="group" aria-label={t.menu.language} className="flex gap-1">
             {LANGS.map((code) => (
+              // Each language named in itself, with the code kept so "click GL" still
+              // finds it by voice, and `lang` so it is pronounced that way.
               <button
                 key={code}
                 onClick={() => setLang(code)}
                 aria-pressed={lang === code}
+                aria-label={`${LANG_CODE[code]}: ${LANG_NAME[code]}`}
+                lang={code}
                 className={`h-11 flex-1 rounded-[7px] border text-label font-semibold ${
                   lang === code ? 'border-ink bg-ink text-bg' : 'border-edge text-ink-2'
                 }`}
