@@ -166,6 +166,12 @@ jobs:
             || $DEPLOY env update-value ALLOWED_ORIGIN "$ORIGIN" \
               --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api
 
+          # Which commit this is, for /api/version: "is the new worker live yet" is a curl.
+          $DEPLOY env add DEPLOY_SHA "$GITHUB_SHA" \
+              --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api \
+            || $DEPLOY env update-value DEPLOY_SHA "$GITHUB_SHA" \
+              --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api
+
           $DEPLOY \
             --json --non-interactive \
             --org "$DENO_DEPLOY_ORG" \

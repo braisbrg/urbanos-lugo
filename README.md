@@ -1230,10 +1230,16 @@ Deno esixe extensión explícita nos imports relativos e todo `src/` está escri
 empaquetador, así que o workflow empaqueta antes con esbuild, que xa está aquí por
 `server.ts`. `pnpm run worker:build` fai o mesmo en local.
 
-Fai falta, unha vez: un proxecto en Deno Deploy chamado `urbanos-lugo-api`, o seu token
-como segredo `DENO_DEPLOY_TOKEN`, e no ambiente do proxecto `ALLOWED_ORIGIN` co enderezo
-do sitio (`https://<usuario>.github.io`, sen barra final) — é o único que poderá chamalo.
-Sen ese valor responde sen cabeceira de CORS e o navegador rexéitao: falla pechado.
+Fai falta, unha vez: o token de Deno Deploy como segredo `DENO_DEPLOY_TOKEN` e a
+organización como variable `DENO_DEPLOY_ORG`. O resto ponno o workflow: crea a app
+`urbanos-lugo-api` se non existe e fixa no seu ambiente `ALLOWED_ORIGIN` co enderezo do
+sitio (`https://<usuario>.github.io`, derivado do dono do repositorio) — é o único que
+poderá chamalo. Sen ese valor o worker responde sen cabeceira de CORS e o navegador
+rexéitao: falla pechado, e desde a mesma rolda tampouco garda esa resposta en ningunha
+caché, porque a do edge de Deno serviu nove días unha resposta sen cabeceira dun arranque
+sen a variable. Tamén fixa `DEPLOY_SHA`, e `GET /api/version` devólveo: «está xa o worker
+novo?» é un `curl`. A páxina leva o mesmo dato en `<meta name="build">` cando a constrúe
+o workflow.
 
 E na build do sitio, a variable de repositorio `API_ORIGIN` co enderezo do despregue. Iso
 fai dúas cousas á vez: as peticións van alí en lugar de a carón da páxina, e ese mesmo

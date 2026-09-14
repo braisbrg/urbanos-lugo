@@ -40,6 +40,8 @@ const EDGE_SECONDS = { alerts: 30 * 60, operator: 20 };
  * carries no allow-origin header at all and a browser refuses it — failing closed.
  */
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '';
+/** The commit this deployment was built from, set by the deploy workflow; null when run by hand. */
+const DEPLOY_SHA = Deno.env.get('DEPLOY_SHA') ?? null;
 
 /**
  * Never store an answer no browser will accept.
@@ -140,6 +142,11 @@ export async function handle(request: Request): Promise<Response> {
     if (status === 200 && cacheableFor(maxAge) > 0) await cache.put(cacheKey, res.clone());
     return res;
   };
+
+  // Which commit is answering. It is the deploy checklist's first question, and the only
+  // way to tell a fresh deployment from an edge cache still serving the last one: the
+  // worker ran nine days without a CORS header before anyone could say which code it was.
+  if (url.pathname === '/api/version') return respond({ sha: DEPLOY_SHA }, 200, 0);
 
   if (url.pathname === '/api/alerts') {
     const force = url.searchParams.get('refresh') === 'true';

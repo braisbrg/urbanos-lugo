@@ -145,6 +145,21 @@ const injectSeoTags = {
 };
 
 /**
+ * Which commit the page is, when a workflow built it: `<meta name="build">`, seven
+ * characters, the same answer the worker gives at /api/version. A local build says
+ * nothing rather than guessing.
+ */
+const stampBuild = {
+  name: 'stamp-build',
+  apply: 'build' as const,
+  transformIndexHtml(html: string) {
+    const sha = process.env.GITHUB_SHA;
+    if (!sha) return html;
+    return html.replace('<meta name="theme-color"', `<meta name="build" content="${sha.slice(0, 7)}" />\n    <meta name="theme-color"`);
+  },
+};
+
+/**
  * The theme script, in the page rather than beside it.
  *
  * It has to run before the first paint, so it blocks the parser wherever it sits. As a
@@ -188,6 +203,7 @@ export default defineConfig({
     inlineThemeInit,
     injectCsp,
     injectSeoTags,
+    stampBuild,
     emitSeoFiles,
     emitSpaFallback,
     emitCompressedAssets,
