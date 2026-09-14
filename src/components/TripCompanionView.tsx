@@ -1,17 +1,20 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Bus, Check, Footprints, MapPin } from 'lucide-react';
 import { Lang, translations } from '../i18n';
-import { TripCompanion } from '../hooks/useTripCompanion';
+import { TripCompanion, useTripPosition } from '../hooks/useTripCompanion';
 import { ALARM_RADIUS_M } from '../services/stopAlarm';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 import { formatMinutes, minutesNow } from '../utils/schedule';
-import { currentLeg, legTimes, shouldAskIfMissed, tripPhase } from '../utils/tripProgress';
+import { currentLeg, legTimes, shouldAskIfMissed, tripPhase, tripProgress } from '../utils/tripProgress';
 
 // Same reason as the planner: Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 
 /** See the map block below for the numbers. */
 const MAP_HEIGHT = 'h-[37vh] min-h-[280px] max-h-[420px]';
+
+/** How often the minutes in the header are recounted against the clock. */
+const TICK_MS = 15_000;
 
 interface TripCompanionViewProps {
   companion: TripCompanion;
@@ -44,7 +47,19 @@ const Provenance: React.FC<{ precision: 'published' | 'estimated'; lang: Lang }>
  */
 export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion, lang }) => {
   const t = translations(lang);
-  const { trip, fix, progress, gpsError, now } = companion;
+  const { trip } = companion;
+  // The position comes from its own store, so a fix redraws this screen and nothing
+  // above it; the clock is this screen's too, for "~ 11 min" to count down without one.
+  const { fix, gpsError } = useTripPosition();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), TICK_MS);
+    return () => clearInterval(tick);
+  }, []);
+  const progress = useMemo(
+    () => (trip ? tripProgress(trip.plan, fix, new Set(trip.seen)) : null),
+    [trip, fix],
+  );
 
   /*
    * The real pavement for every walked hop, so the walk to the door is drawn along
@@ -72,6 +87,12 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
     return () => controller.abort();
   }, [hops]);
 
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const active = trip !== null;
+  useEffect(() => {
+    if (active) headingRef.current?.focus();
+  }, [active]);
+
   if (!trip) return null;
 
   const phase = tripPhase(trip, progress);
@@ -97,7 +118,11 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-3.5 pt-4 lg:px-6">
-      <h2 className="sr-only">{t.companion.title}</h2>
+      {/* Focusable so the mode's arrival is announced: the planner's button is gone and
+          this heading is what the cursor lands on. Not in the tab order otherwise. */}
+      <h2 ref={headingRef} tabIndex={-1} className="sr-only">
+        {t.companion.title}
+      </h2>
 
       {/* The one thing that matters, first and biggest: where you get off, and how far
           that is in stops -- counted -- and in minutes -- the timetable's, labelled. */}
@@ -174,7 +199,7 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
         {/* Asked, not guessed: the printed departure plus three minutes has gone by and the
             phone has not seen the bus move. Either answer is one tap. */}
         {asking && segment?.line && (
-          <div className="space-y-2 rounded-md border border-warn bg-warn/40 p-3">
+          <div role="group" aria-live="polite" className="space-y-2 rounded-md border border-warn bg-warn/40 p-3">
             <p className="text-body font-semibold text-ink">
               {t.companion.caughtIt(segment.line.number, formatMinutes(times.departureMinutes))}
             </p>

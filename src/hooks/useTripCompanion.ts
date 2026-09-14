@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Lang, translations } from '../i18n';
 import { AlarmFailure, notify, requestNotificationPermission, ringAlarm, subscribePosition } from '../services/stopAlarm';
 import { RoutePlanResult } from '../types';
 import {
   TripFix,
   TripPlace,
-  TripProgress,
   TripState,
   advanceTrip,
   confirmBoarded,
@@ -23,17 +22,8 @@ import {
  */
 const KEY = 'urbanos-lugo-trip';
 
-/** How often the minutes in the header are recounted against the clock. */
-const TICK_MS = 15_000;
-
 export interface TripCompanion {
   trip: TripState | null;
-  /** The last position the phone gave, or null before the first one. */
-  fix: TripFix | null;
-  progress: TripProgress | null;
-  gpsError: AlarmFailure | null;
-  /** Re-read every TICK_MS so "~ 11 min" counts down without a fix. */
-  now: Date;
   start: (plan: RoutePlanResult, origin: TripPlace | null, destination: TripPlace | null) => void;
   boarded: () => void;
   missed: () => void;
@@ -54,6 +44,40 @@ export interface TripCompanion {
  */
 const CAN_KEEP_AWAKE = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
 
+/*
+ * The phone's position, outside React.
+ *
+ * The trip is held above the tabs so a look at the map does not end it, which put this
+ * hook in `App` -- and a GPS fix held in `App`'s state re-rendered every tab underneath
+ * on every fix. Measured on a 6x-throttled CPU with the map mounted: 40 ms of script per
+ * fix, 1.2 React commits per fix, and the same 42 ms with the companion not even on
+ * screen. A bus gives a fix a second, so that was a minute of work per half-hour ride
+ * spent redrawing lists nobody was looking at.
+ *
+ * So the fix lives here, in a store the companion screen subscribes to on its own. `App`
+ * re-renders when the trip changes -- a handful of times per ride -- and nothing else.
+ */
+interface PositionSnapshot {
+  fix: TripFix | null;
+  gpsError: AlarmFailure | null;
+}
+let snapshot: PositionSnapshot = { fix: null, gpsError: null };
+const listeners = new Set<() => void>();
+const publish = (next: PositionSnapshot) => {
+  snapshot = next;
+  for (const listener of listeners) listener();
+};
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
+const getSnapshot = () => snapshot;
+
+/** The last position the phone gave and whether it refused, for the screen that shows them. */
+export function useTripPosition(): PositionSnapshot {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
 /**
  * The "vou no bus" mode, held above the tabs so a look at the map or a line does not end
  * the ride. The screen that shows it is `TripCompanionView`; this is everything it needs
@@ -68,9 +92,11 @@ export function useTripCompanion(lang: Lang): TripCompanion {
       return null;
     }
   });
-  const [fix, setFix] = useState<TripFix | null>(null);
-  const [gpsError, setGpsError] = useState<AlarmFailure | null>(null);
-  const [now, setNow] = useState(() => new Date());
+  // The watch's callback outlives any one render; it reads the trip through here.
+  const tripRef = useRef(trip);
+  tripRef.current = trip;
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   // Every change is written through, and the end of the trip removes it.
   useEffect(() => {
@@ -82,17 +108,36 @@ export function useTripCompanion(lang: Lang): TripCompanion {
     }
   }, [trip]);
 
-  // The position watch and the clock run for exactly as long as there is a trip.
+  /*
+   * The position watch runs for exactly as long as there is a trip. Each fix is counted
+   * against the plan right here, and the trip only changes when the count did -- a stop
+   * reached, a boarding seen, the one alert per leg -- so most fixes end in the store
+   * above and nowhere else.
+   */
   const active = trip !== null;
   useEffect(() => {
     if (!active) return;
-    setGpsError(null);
-    const unsubscribe = subscribePosition(setFix, setGpsError);
-    const tick = setInterval(() => setNow(new Date()), TICK_MS);
+    publish({ fix: null, gpsError: null });
+    const unsubscribe = subscribePosition(
+      (fix) => {
+        publish({ fix, gpsError: null });
+        const current = tripRef.current;
+        if (!current) return;
+        const progress = tripProgress(current.plan, fix, new Set(current.seen));
+        const { state, ring } = advanceTrip(current, progress);
+        if (ring) {
+          const stop = current.plan.segments[progress.segmentIndex]?.toStop;
+          const t = translations(langRef.current);
+          ringAlarm();
+          if (stop) notify(t.arrivals.watchTitle, t.arrivals.alarmFired(stop.name));
+        }
+        if (state !== current) setTrip(state);
+      },
+      (gpsError) => publish({ ...snapshot, gpsError }),
+    );
     return () => {
       unsubscribe();
-      clearInterval(tick);
-      setFix(null);
+      publish({ fix: null, gpsError: null });
     };
   }, [active]);
 
@@ -133,36 +178,29 @@ export function useTripCompanion(lang: Lang): TripCompanion {
       void sentinel?.release();
     };
   }, [active, keepAwakeOn]);
-
-  const progress = useMemo(
-    () => (trip ? tripProgress(trip.plan, fix, new Set(trip.seen)) : null),
-    [trip, fix],
-  );
-
-  // What the fix changed, and the one alert per leg.
+  // A new trip starts with the switch off, whatever the last one chose.
   useEffect(() => {
-    if (!trip || !progress || !fix) return;
-    const { state, ring } = advanceTrip(trip, progress);
-    if (ring) {
-      const stop = trip.plan.segments[progress.segmentIndex]?.toStop;
-      ringAlarm();
-      if (stop) notify(translations(lang).arrivals.watchTitle, translations(lang).arrivals.alarmFired(stop.name));
-    }
-    if (state !== trip) setTrip(state);
-  }, [progress]);
+    if (!active) setKeepAwakeOn(false);
+  }, [active]);
 
   const start = useCallback((plan: RoutePlanResult, origin: TripPlace | null, destination: TripPlace | null) => {
     setTrip(startTrip(plan, origin, destination));
-    // A new trip starts with the screen switch off, whatever the last one chose.
-    setKeepAwakeOn(false);
     // The same single permission the board asks for; declining keeps the in-page alert.
     void requestNotificationPermission();
   }, []);
 
-  const boarded = useCallback(() => setTrip((t) => (t ? confirmBoarded(t, progress) : t)), [progress]);
+  // Both answers are about the leg on screen, which is the one the last fix put the
+  // reader on -- so they are read against that fix, not against a render.
+  const boarded = useCallback(
+    () => setTrip((t) => (t ? confirmBoarded(t, tripProgress(t.plan, snapshot.fix, new Set(t.seen))) : t)),
+    [],
+  );
   const missed = useCallback(
-    () => setTrip((t) => (t ? missedBus(t, progress, new Date(), lang) : t)),
-    [progress, lang],
+    () =>
+      setTrip((t) =>
+        t ? missedBus(t, tripProgress(t.plan, snapshot.fix, new Set(t.seen)), new Date(), langRef.current) : t,
+      ),
+    [],
   );
   const finish = useCallback(() => setTrip(null), []);
 
@@ -171,5 +209,5 @@ export function useTripCompanion(lang: Lang): TripCompanion {
     [keepAwakeOn],
   );
 
-  return { trip, fix, progress, gpsError, now, start, boarded, missed, finish, keepAwake };
+  return { trip, start, boarded, missed, finish, keepAwake };
 }

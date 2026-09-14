@@ -102,7 +102,6 @@ export function useServiceAlerts(): ServiceAlerts {
   useEffect(() => {
     refresh(false);
     // Once, on mount. Later refreshes are the reader asking.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

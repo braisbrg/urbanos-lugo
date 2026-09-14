@@ -49,18 +49,18 @@ const HIT_PX = 20;
 /**
  * The lane, in screen pixels, and where the lanes start.
  *
- * Lugo's lines converge on the same handful of corridors -- Rda. da Muralla, Avda. da
- * Coruña -- and drawn on their true geometry they are not close together, they are
+ * Lugo's lines converge on the same handful of corridors, and drawn on their true
+ * geometry they are not close together, they are
  * identical, one polyline hiding five. So routes that share a street are drawn side by
  * side, which is how a transit map has always done this.
  *
  * In pixels. The offset used to be six metres at every zoom, and metres do two wrong
  * things at once: far out they vanish -- under a pixel at zoom 14 -- and close in they
  * are wider than the road bends, so a route offset 24 m round a 15 m roundabout turned
- * inside out and drew a loop, which is the shape Brais photographed.
+ * inside out and drew a loop, which is the shape that was reported.
  *
- * Three pixels from 16 and two at 15, nothing further out. Brais, on four pixels from
- * 13: the Ronda carries a dozen lines and the bundle was eating the screen. Below 15 a
+ * Three pixels from 16 and two at 15, nothing further out. At four pixels from 13 the
+ * densest corridor, a dozen lines, had a bundle eating the screen. Below 15 a
  * corridor is one strand of whatever is painted last, and the tap on it lists everything
  * that runs there; that is the honest overview, not a plait wider than the street.
  */
@@ -74,7 +74,7 @@ function laneWidthPx(zoom: number): number {
  * Four, at three pixels, is twelve pixels a side -- a bundle you can still tell apart
  * without it being wider than the road it is on. Lines beyond the fourth share a lane
  * and hide one another, and the tap on the corridor lists every one of them; nine lanes
- * kept them all apart and cost the Ronda seventy pixels.
+ * kept them all apart and cost the densest corridor seventy pixels.
  */
 const LANES = 4;
 
@@ -83,8 +83,8 @@ const LANES = 4;
  * drawn half a lane either side of the centreline, so this is the distance between their
  * centres. Six pixels keeps two 5 px strokes apart. Choosing a line frames it at zoom 13
  * or 14, where the bundle has no lanes at all, and there the two directions of the one
- * line the reader asked about sat exactly on top of each other -- Brais: with only one
- * selected we can surely still split ida and volta.
+ * line the reader asked about sat exactly on top of each other; with only one line
+ * selected there is room to split ida and volta, so they are.
  */
 const SUBJECT_LANE_PX = 6;
 
@@ -155,7 +155,7 @@ function offsetPath(coords: [number, number][], metres: number): [number, number
  * a loop like the 1.1 round the walls that is the whole question. Pixels and not metres,
  * unlike the lane offset: a fixed 200 m was 55 px apart at zoom 14 and 220 at 16, so the
  * same line was a row of chevrons at one zoom and a hint at the next, and with two lines
- * up it was a row on four traces. Brais sent the screenshot. At a fixed 120 px the
+ * up it was a row on four traces. At a fixed 120 px the
  * density is the same at every zoom -- about 840 m apart at 14, 210 at 16, 50 at 18 --
  * which means re-placing them when the zoom changes, and that is cheap: a few dozen
  * markers. Below 14 they are hidden altogether, because a whole city of chevrons is
@@ -168,7 +168,7 @@ const ARROW_MIN_ZOOM = 14;
  * With several lines up, arrows only from here. Two subjects share most of their corridor
  * and their lanes are 9 m apart, which is under 3 px until zoom 17 -- so below it the
  * traces overlap, one line covers the other, and the arrows of the covered one surface on
- * the wrong ribbon. Brais saw blue chevrons riding the teal 1.2 at zoom 15. Where the
+ * the wrong ribbon: blue chevrons riding the teal 1.2 at zoom 15. Where the
  * lanes cannot be told apart, an arrow cannot be attributed, and is left out.
  */
 const ARROW_MIN_ZOOM_SHARED = 17;
@@ -222,7 +222,7 @@ function arrowsAlong(
  * with the line's own stroke, its point on the centreline and its two arms reaching past
  * the edges. Where it lies on the line it is the line; what shows is the two arms coming
  * out of it, which is enough to say which way. The first version was a filled triangle
- * with a light edge, and Brais called it what it was: a sticker on the line.
+ * with a light edge, which read as a sticker on the line.
  *
  * Drawn pointing right and turned by CSS. Not interactive -- the route and the stops
  * under it answer the taps, and this is the one kind of layer that must never get in
@@ -398,7 +398,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
        * The overview used to draw the ida alone, on the reasoning that both would stack
        * one polyline on the other. With sides, they do not: each direction is drawn on
        * its own side of the street. And a street served only by the volta was showing no
-       * bus at all -- Brais: "parece que no pasan buses porque pasan en la vuelta".
+       * bus at all, so a street the buses only ever return along looked unserved.
        *
        * The lanes are dealt over exactly this set, in the order of the full line list and
        * not of drawing, so choosing a line does not reshuffle the bundle around it.
@@ -406,21 +406,20 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
       /*
        * Which lane a line gets. A line that is the subject takes the kerb -- lane 0, the
        * first out from the centreline -- so its stops sit on it: dealt by list position
-       * it landed three and a half lanes off its own street, and Brais read its stops as
-       * being on the next street over. With several subjects they take 0, 1, 2 in the
+       * it landed three and a half lanes off its own street, and its stops read as being
+       * on the next street over. With several subjects they take 0, 1, 2 in the
        * order they were chosen, and the backdrop lines are dealt the lanes behind them by
        * list position, so choosing one does not reshuffle the others.
        */
       /*
        * A fixed lane per line, the same along its whole length, and always to the right of
        * travel -- the first version dealt lanes either side of the centreline, so a line
-       * whose lane fell on the left was drawn on the left of its own direction; Brais, on
-       * the Avenida da Coruña: the trace on the left was the one that drives on the right
-       * in real life. Buses keep right here; the drawn line does too, and the two
+       * whose lane fell on the left was drawn on the left of its own direction -- on a
+       * two-way avenue the trace on the left was the one that drives on the right in real
+       * life. Buses keep right here; the drawn line does too, and the two
        * directions of a line land on their own kerbs by construction.
        *
-       * Three other deals were built and rendered side by side with Brais on 13 September
-       * before this one was kept: per street segment by shared vertices (zig-zagged where
+       * Three other deals were built and rendered side by side before this one was kept: per street segment by shared vertices (zig-zagged where
        * two traces of one street do not coincide vertex for vertex); to the right of
        * travel by proximity and bearing, smoothed (a tangle at every junction where the
        * ranks change); a fixed lane by colouring the graph of who meets whom (a trace that

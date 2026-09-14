@@ -334,6 +334,7 @@ export const gl = {
     occupancyHigh: 'Alta',
     occupancyLabel: 'Ocupación prevista',
     nextStop: 'Seguinte parada',
+    busMarker: (line: string, destination: string) => `Bus da liña ${line} cara a ${destination}, posición estimada`,
     estimatedPosition: 'Posición <b>estimada</b> a partir do cadro horario, non medida por GPS.',
     stopCode: 'Cód. QR',
     quickFilters: 'Filtros rápidos',

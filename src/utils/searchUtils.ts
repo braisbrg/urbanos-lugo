@@ -63,7 +63,8 @@ function computeNormalizeText(str: string): string {
  * threshold and threw the number away. Computing it in full is what made typing
  * expensive: the fuzzy tier is reached by the stops that matched at no higher tier, which
  * on any real query is nearly all 417, and each one runs this over every word of its
- * name. Measured in a throttled browser typing "Ronda da Muralla" one letter at a time,
+ * name. Measured in a throttled browser typing a fifteen-letter street name one letter
+ * at a time,
  * that was 264 ms in here alone, plus the garbage from a fresh (n+1)x(m+1) array of
  * arrays on every call — about seventeen thousand throwaway arrays per keystroke.
  *
@@ -269,6 +270,26 @@ function computeSearchForm(str: string): string {
 // whole search box down with it.
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/**
+ * The word-boundary pattern for a query, built once per query rather than once per stop.
+ *
+ * `calculateRelevanceScore` runs over every stop on every keystroke, and each call was
+ * compiling the same two regular expressions from the same query -- 834 compilations a
+ * keystroke for 417 stops, all identical. In the browser sampler that function was the
+ * single largest self time of the typing round, 258 ms at 6x CPU over sixteen letters.
+ * One entry is enough: consecutive calls share the query until the next keystroke.
+ */
+let boundaryFor = { key: '', regex: /(?:)/ };
+const wordBoundary = (q: string): RegExp => {
+  if (boundaryFor.key !== q) boundaryFor = { key: q, regex: new RegExp(`\\b${escapeRegex(q)}`, 'i') };
+  return boundaryFor.regex;
+};
+let boundaryExpFor = { key: '', regex: /(?:)/ };
+const wordBoundaryExp = (q: string): RegExp => {
+  if (boundaryExpFor.key !== q) boundaryExpFor = { key: q, regex: new RegExp(`\\b${escapeRegex(q)}`, 'i') };
+  return boundaryExpFor.regex;
+};
+
 // Calculate relevance score between a target string and search query (higher = more relevant)
 export function calculateRelevanceScore(name: string, code: string, id: string, query: string, context?: string): number {
   if (!query) return 0;
@@ -293,9 +314,7 @@ export function calculateRelevanceScore(name: string, code: string, id: string, 
   if (n.startsWith(q) || nExp.startsWith(qExp)) return 800;
 
   // Exact word boundary in name (e.g. "americas" matches "Avda. Americas")
-  const regex = new RegExp(`\\b${escapeRegex(q)}`, 'i');
-  const regexExp = new RegExp(`\\b${escapeRegex(qExp)}`, 'i');
-  if (regex.test(n) || regexExp.test(nExp) || nExp.includes(qExp)) return 600;
+  if (wordBoundary(q).test(n) || wordBoundaryExp(qExp).test(nExp) || nExp.includes(qExp)) return 600;
 
   // Name contains query
   if (n.includes(q)) return 400;

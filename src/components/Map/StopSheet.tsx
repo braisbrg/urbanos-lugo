@@ -64,7 +64,6 @@ export const StopSheet: React.FC<StopSheetProps> = ({
   const arrivals = useMemo(
     () => getArrivalsForStop(stop.id).arrivals.slice(0, SHOWN),
     // `tick` is the dependency that matters; the ids only change when the stop does.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [stop.id, tick],
   );
 
@@ -171,7 +170,7 @@ export const StopSheet: React.FC<StopSheetProps> = ({
 
       {/* No row of every line that serves this stop.
           It was the one part of the sheet whose height nobody could predict — nine badges
-          here, fourteen at Rda. da Muralla, wrapping to as many rows as it took — and it
+          here, fourteen at the busiest pole, wrapping to as many rows as it took — and it
           was the part that pushed the sheet into scrolling. Measured at 462 px against a
           476 px cap with nine of them: fitting by fourteen pixels, and not fitting at the
           next stop along.

@@ -54,7 +54,9 @@ export const SideNav: React.FC<SideNavProps> = ({
   ];
 
   return (
-    <div className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
+    // A landmark: the name at the top and the two settings at the foot sat outside every
+    // region, which is how a screen reader moving by landmark met a rail with holes in it.
+    <aside aria-label={t.nav.appName} className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
       <div className="px-5 pb-4 pt-5">
         <span className="text-emph font-semibold tracking-[-0.012em]">{t.nav.appName}</span>
       </div>
@@ -74,11 +76,10 @@ export const SideNav: React.FC<SideNavProps> = ({
               <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
               <span className="flex-1">{label}</span>
               {tripActive && id === 'plan' && (
-                <span
-                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${on ? 'bg-bg' : 'bg-accent'}`}
-                  role="status"
-                  aria-label={t.companion.onTrip}
-                />
+                <>
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${on ? 'bg-bg' : 'bg-accent'}`} aria-hidden="true" />
+                  <span className="sr-only">{t.companion.onTrip}</span>
+                </>
               )}
             </button>
           );
@@ -156,6 +157,6 @@ export const SideNav: React.FC<SideNavProps> = ({
           {t.menu.sourceShort}
         </p>
       </div>
-    </div>
+    </aside>
   );
 };

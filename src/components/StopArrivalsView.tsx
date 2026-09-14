@@ -201,7 +201,6 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
   useEffect(() => stopAlarm, []);
   useEffect(() => {
     if (alarmOn) stopAlarm();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStop.id]);
 
   /**

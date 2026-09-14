@@ -147,6 +147,7 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
       };
     });
 
+    const t = translations(lang);
     placed.forEach((bus) => {
       const existing = markersRef.current[bus.id];
       if (existing) {
@@ -155,12 +156,18 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
         existing.setLatLng([bus.currentLat, bus.currentLng]);
         existing.setIcon(busIcon(bus));
         existing.setPopupContent(popupNode(bus, onOpenLineRef.current, lang));
+        // setIcon rebuilds the element, and the name lives on the element.
+        existing.getElement()?.setAttribute('aria-label', t.map.busMarker(bus.lineNumber, bus.destination));
       } else {
         const marker = L.marker([bus.currentLat, bus.currentLng], {
           icon: busIcon(bus),
           zIndexOffset: 1000,
         }).addTo(map);
         marker.bindPopup(popupNode(bus, onOpenLineRef.current, lang));
+        // Leaflet makes the icon a keyboard-reachable button with no name of its own; the
+        // number drawn inside the SVG is not one. Say what it is, and that the position
+        // is worked out, not measured.
+        marker.getElement()?.setAttribute('aria-label', t.map.busMarker(bus.lineNumber, bus.destination));
         markersRef.current[bus.id] = marker;
       }
     });

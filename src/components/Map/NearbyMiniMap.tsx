@@ -79,7 +79,6 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
       mapRef.current = null;
     };
     // Built once: `at` changing moves the view below rather than rebuilding the map.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Swap the basemap when the theme changes. The layer restyles in place, so the view
@@ -123,7 +122,6 @@ export const NearbyMiniMap: React.FC<NearbyMiniMapProps> = ({
       group.addLayer(marker);
     }
     if (stops.length) map.fitBounds(bounds, { padding: [28, 28], maxZoom: 17 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [centre.lat, centre.lng, label, kind, stops, colors]);
 
   useMapChrome(built ? containerRef.current : null, {

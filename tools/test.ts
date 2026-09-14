@@ -1626,7 +1626,7 @@ ok('the trip companion asks about a missed bus and answers with the timetable, o
 });
 
 ok('"Vou nesta" rises to the top in the ten minutes before the bus, and a fix can only keep it down', () => {
-  // Decided before it was built: the button is always there, and what changes is where.
+  // The button is always there, and what changes is where.
   // Ten minutes before the first bus it leads the answer; after the printed time it does
   // not, because the plan is stale and the replan speaks. The planner's fix is a one-shot
   // the reader asked for, possibly from home, so it is trusted to say "not at the pole"
@@ -1676,7 +1676,7 @@ ok('a trip survives a reload with its lines put back by id, and refuses one it c
 });
 
 ok('one alert radius, shared by the board and the trip companion', () => {
-  // Decided before the mode was built: the board's alarm and the ride's alert are the
+  // The board's alarm and the ride's alert are the
   // same alarm, so there is one radius, one ring and one permission prompt. A second
   // constant creeping in is the two drifting apart.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -2967,8 +2967,8 @@ ok('a bus whose time has passed stays on the board, marked', () => {
 
 ok('a line\u2019s trip time comes from the timetable, not from a road model', () => {
   // The card showed the sum of `legSeconds` -- free-flow driving between consecutive
-  // stops -- under a heading a reader took for the length of the journey. Brais spotted
-  // it: the 1.1 stop list ran 06:58 to 07:36 and the card beside it said 25 min.
+  // stops -- under a heading a reader took for the length of the journey: the 1.1 stop
+  // list ran 06:58 to 07:36 and the card beside it said 25 min.
   //
   // The property that was broken is simple and does not depend on any particular number:
   // a bus that stops 39 times cannot do the route faster than a car that never stops.
@@ -2990,7 +2990,7 @@ ok('a line\u2019s trip time comes from the timetable, not from a road model', ()
   }
 
   // And the card has to be the thing asking. The property above held perfectly well while
-  // the view went on summing legSeconds on its own, which is exactly the state Brais found.
+  // the view went on summing legSeconds on its own, which is exactly the state found.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const view = readFileSync(join(root, 'src/components/LinesView.tsx'), 'utf8');
   assert(

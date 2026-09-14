@@ -84,8 +84,8 @@ export default function App() {
   /**
    * The board needs a stop from the first render, so it starts on the busiest one.
    * The map must not: it draws the selected stop as a big blue dot, and drawing that
-   * over a stop nobody chose put a mark on Rda. Muralla (Sindicatos) that blinked in
-   * and out as the layer rebuilt on every zoom.
+   * over a stop nobody chose put a mark on the busiest stop that blinked in and out as
+   * the layer rebuilt on every zoom.
    */
   const [stopWasChosen, setStopWasChosen] = useState(false);
   /**

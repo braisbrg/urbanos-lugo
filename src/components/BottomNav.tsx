@@ -44,11 +44,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, t
               {/* The trip goes on while you look at a line or the map; this is the one
                   place that says so, and the way back to it. */}
               {tripActive && id === 'plan' && (
-                <span
-                  className="absolute -right-1.5 -top-1 h-2.5 w-2.5 rounded-full border-2 border-bg bg-accent"
-                  role="status"
-                  aria-label={t.companion.onTrip}
-                />
+                <>
+                  <span
+                    className="absolute -right-1.5 -top-1 h-2.5 w-2.5 rounded-full border-2 border-bg bg-accent"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">{t.companion.onTrip}</span>
+                </>
               )}
             </span>
             <span className={`text-label ${on ? 'font-semibold' : 'font-normal'}`}>

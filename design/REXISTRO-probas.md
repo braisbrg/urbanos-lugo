@@ -1054,3 +1054,105 @@ Tiña **todas** as súas palabras na lista de xenéricas, así que a consulta bu
 A lista recortouse: só se descartan as ligazóns, a cidade e os catro tipos de vía que
 encabezan medio mapa. Buscar de máis non fai dano aquí, porque os candidatos ordénanse por
 distancia e só se imprimen os tres máis próximos.
+
+---
+
+## Rolda 13: auditoría completa — 14 de setembro de 2026
+
+Seguridade, rendemento, accesibilidade, datos e comentarios, todo medido contra a build
+de `HEAD` (`8140662`) servida por `npm start` en 3002. As probas van en `tools/_*.ts`,
+ignoradas por git: `_axe.ts` (axe-core 4.10.3 inxectado por CDP, que a CSP non goberna),
+`_targets.ts` (obxectivos táctiles), `_companionPerf.ts` (custo dun fix de GPS) e as de
+sempre `measure:browser`, `data:audit` e `check:deep`.
+
+### Seguridade: nada que arranxar
+
+`pnpm audit`: **0 vulnerabilidades** en 7 dependencias e 13 de desenvolvemento. As
+cabeceiras do servidor construído, lidas con `curl -I`: CSP con `script-src 'self'` e un
+só hash (o script do tema), `frame-ancestors 'none'`, `object-src 'none'`,
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`
+e `Permissions-Policy: geolocation=(self), camera=(self), screen-wake-lock=(self),
+microphone=()`. Os tres `innerHTML` que hai (`RouteLayer`, `VehicleLayer`, `StopLayer`)
+pasan cada valor por `escapeHtml`. Ningún `eval`, ningún `http://` en código, ningún
+segredo; `.env` e `.env.local` ignorados. `unpackTrip` valida o que le de
+`sessionStorage` e descarta o que non pode reconstruír. Oito paquetes con versión menor
+nova (React 19.3, Vite 8.3, MapLibre 6.9); ningún por seguridade.
+
+### Rendemento: un arranxo, e dous avisos
+
+**Arranxado: un fix de GPS redebuxaba a app enteira.** O modo «vou nesta» vive en `App`
+para sobrevivir ás pestanas, e a posición vivía no seu estado. Medido a 6× de CPU co mapa
+montado detrás, 40 fixes:
+
+| | Antes | Despois |
+| :--- | ---: | ---: |
+| Script por fix, na pestana Ruta | 39,6 ms | **26,2 ms** |
+| Script por fix, en Liñas (modo fóra de pantalla) | 42,2 ms | **6,5 ms** |
+| Script por fix, en Mapa | 18,1 ms | **5,2 ms** |
+| Commits de React por fix, en Liñas | 1,13 | **0,10** |
+
+A posición pasou a un almacén fóra de React (`useSyncExternalStore`) ao que só se
+subscribe a pantalla do modo; `App` só cambia cando cambia a viaxe, que son catro veces
+por traxecto. Un bus dá un fix por segundo: era un minuto de traballo por media hora de
+viaxe redebuxando listas que ninguén miraba.
+
+**Aviso: o mapa pasa dous orzamentos de `measure:browser`.** Fío principal bloqueado ao
+abrir o mapa **1.827 ms (orzamento 1.200)** e nos catro pasos de zoom **2.773 ms
+(orzamento 900)**, en dúas execucións seguidas. Vén do traballo de carrís por liña
+(`RouteLayer`, commits do 13 de setembro) e é da sesión que o está a facer; queda aquí
+coas cifras, non tocado.
+
+**Aviso: o teclado oscila.** «Primeira letra, fío bloqueado» deu 244 ms e logo 336 ms
+(orzamento 250); «bloqueado tecleando» 342 e logo 432 (orzamento 400). Mesma build, dúas
+execucións: é variación da máquina, non unha regresión, pero o orzamento está xusto na
+raia do ruído.
+
+**Documentado, non cambiado:** o service worker garda os 32 ficheiros da build na
+primeira visita — 4,21 MB / 1,24 MB gz — sen esperar a que fagan falta. O README dicía
+«só cando fan falta» e non dicía isto; agora di as dúas cousas.
+
+### Accesibilidade: axe a cero, tras catro arranxos
+
+axe-core sobre once pantallas (móbil e escritorio, WCAG 2.0/2.1 A e AA e boas prácticas):
+**0 violacións en todas**, 31–41 regras pasadas por pantalla. Antes de tocar nada había
+unha, a mesma en todas: `region`, o buscador (`#site-search`) e, en escritorio, o nome e
+os axustes do rail fóra de todo landmark. Arranxos:
+
+1. `TopBar` é `<header>` e o rail é `<aside>`: landmark para o buscador e para o rail.
+2. O punto da pestana Ruta era un `role="status"` dentro dun botón — unha rexión viva
+   dentro dun control. Agora é decoración (`aria-hidden`) e o texto vai `sr-only` no
+   propio botón, así o nome é «Ruta, Viaxe en curso».
+3. A liña «A pé, medido» do resumo levaba `aria-label` nun `span` sen rol, que ARIA 1.2
+   prohibe e ningún lector le. O texto vai `sr-only`.
+4. Ao entrar no modo «vou nesta» o foco pasa ao título da pantalla (`tabIndex={-1}`),
+   para que un lector de pantalla oia que o planificador foi substituído; e a pregunta
+   «Colliches o bus?» é `aria-live="polite"`, porque aparece soa minutos despois de
+   calquera pulsación.
+
+Contraste dos 24 números de liña en branco sobre a súa cor: todos ≥ 4,5:1; o máis xusto
+é o 5ES, `#52840b`, a **4,50**. Obxectivos táctiles en dez pantallas a 375 px: **0** por
+baixo de 44 px fóra de tres cousas que o son a propósito — a ligazón «Ir ao contido»
+(1×1 ata que recibe foco), os pins do mapa de ruta (28 px, só amosan un rótulo) e a
+casiña de «manter a pantalla acesa» (20 px dentro dunha etiqueta de 44). O que axe deixa
+sen decidir son `color-contrast` en texto sobre fondos translúcidos (as tarxetas de
+liña: 117 nodos en Liñas), que hai que mirar a ollo e que a paleta xa mediu noutra rolda.
+
+### Datos e motor: verdes
+
+`data:audit`: 24 liñas, 48 sentidos, 417 paradas, 48/48 con xeometría, 45/48 levantados,
+777 expedicións diarias, 2 de 1.136 tramos sospeitosos (0,2 %). `check:deep`: 180.144
+taboleiros e 401.755 saídas examinadas, 630 pares e 24.921 viaxes, todo en pé; os dous
+analizadores non tiñan nada que comparar ás 00:10 (sen saídas, sen avisos). `pnpm test`:
+140 comprobacións.
+
+### Comentarios: o que saíu
+
+Pedido expresamente: nada vello, nada de notas para a revisión ou para as decisións.
+Fóronse **35** cousas: 15 atribucións e citas da conversa en comentarios de
+`RouteLayer`, `StopLayer` e `tools/test.ts` (a observación queda, o nome e a cita non);
+dúas marcas `ponytail:` dun modo de traballo do asistente; dúas frases «Decidido antes de
+construílo» en checks; e **8** directivas `eslint-disable` para un linter que este
+repositorio non executa (`lint` é `tsc`). Un varrido automático de nomes en acento grave
+dentro de comentarios contra o que existe no código non atopou ningún que faga
+referencia a algo desaparecido: os que non existen son historia contada a propósito
+(«chamábase `LiveBus`»).

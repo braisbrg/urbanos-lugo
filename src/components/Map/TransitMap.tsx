@@ -652,7 +652,6 @@ export const TransitMap: React.FC<TransitMapProps> = ({
       // opens on its usual line is the fallback, which is what happens if this never runs.
       .catch(() => {});
     // Once, on mount: this is about how the screen opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

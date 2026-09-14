@@ -37,8 +37,8 @@ const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000; // 60 seconds minimum cooldown betwe
  * The site-wide feed at `/rss.xml` is ten press releases across fifteen months and mostly
  * about other things. What is actually published is a feed per subject tag, which the tag
  * pages link to as `/all/feed` — a path that answers with HTML. `/es/taxonomy/term/N/feed`
- * is the one that answers with RSS, and it is current: the works feed was carrying the
- * Conde Fontao closure fifteen days after it was written.
+ * is the one that answers with RSS, and it is current: the works feed was carrying a
+ * street closure fifteen days after it was written.
  *
  * Three tags, because three are what a passenger is affected by. The rest of the taxonomy
  * is the ordinary business of a council.
@@ -68,7 +68,7 @@ const CONCELLO_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
  * about road-safety courses for schoolchildren -- a body with the word in its name, not a
  * condition on the street. The tag already says the story is about traffic; the headline
  * has to say something changed. Nothing genuine is lost: a real closure says corte, a
- * real diversion says desvío, and Conde Fontao reopening says apertura.
+ * real diversion says desvío, and a reopening says apertura.
  */
 const ABOUT_GETTING_AROUND =
   /\b(bus|buses|autobús|autobuses|autobus|transporte|parada|paradas|marquesina|corte|cortes|cortad[oa]s?|desv[íi]os?|desvi[oó]s?|circulaci[óo]n|peonaliza\w*|peatonaliza\w*|reapertura|apertura)\b/i;

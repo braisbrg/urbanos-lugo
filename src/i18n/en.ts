@@ -307,6 +307,7 @@ export const en: Dict = {
     occupancyHigh: 'High',
     occupancyLabel: 'Expected crowding',
     nextStop: 'Next stop',
+    busMarker: (line: string, destination: string) => `Line ${line} bus towards ${destination}, estimated position`,
     estimatedPosition: 'Position <b>estimated</b> from the timetable, not measured by GPS.',
     stopCode: 'Stop code',
     quickFilters: 'Quick filters',

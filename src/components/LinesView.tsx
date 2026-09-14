@@ -554,8 +554,8 @@ export const LinesView: React.FC<LinesViewProps> = ({
                     >
                       <div className="min-w-0 flex-1">
                         {/* The stop name is not shortened.
-                            Squeezing the row to one line cut names like "Rda. Muralla
-                            (Obras Públicas)" in half, and the name is the only thing on
+                            Squeezing the row to one line cut the longer names in half,
+                            and the name is the only thing on
                             the row a reader has to match against a pole. Wrapping costs a
                             few pixels on the long ones; truncating costs the answer. */}
                         <div className="flex min-w-0 flex-wrap items-center gap-x-2">

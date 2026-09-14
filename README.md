@@ -963,6 +963,15 @@ que descarga o lector son os mesmos; o que cambia é a quen llos pide.
 GitHub Pages comprime por si mesmo, así que o sitio publicado sempre foi o da columna da
 dereita. `npm start` non o facía: enviaba a da esquerda ata que se engadiu isto.
 
+**O que si baixa enteiro, en segundo plano.** «Só cando fan falta» describe o que a
+páxina pide para pintarse; o service worker é outra cousa. Para que a app funcione sen
+cobertura, na primeira visita garda **todo** o que a build produce — os 32 ficheiros,
+4,21 MB sen comprimir e 1,24 MB en gzip, medidos sobre `dist/sw.js` — sen esperar a que
+se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
+pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
+mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
+carga de 134 KB.
+
 ### Rigor de tipos
 
 `strict` está activado. Non o estaba: o proxecto herdara un `tsconfig.json` de andamio
@@ -1311,7 +1320,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-140 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+141 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

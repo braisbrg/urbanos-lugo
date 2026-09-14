@@ -49,7 +49,6 @@ export function useTabRoute(initial: Tab): [Tab, (tab: Tab) => void] {
       window.history.replaceState({ tab }, '', urlForTab(tab));
     }
     // Once, on mount. Later changes go through `go` below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

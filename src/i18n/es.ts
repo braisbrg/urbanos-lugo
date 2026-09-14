@@ -296,6 +296,7 @@ export const es: Dict = {
     occupancyHigh: 'Alta',
     occupancyLabel: 'Ocupación prevista',
     nextStop: 'Siguiente parada',
+    busMarker: (line: string, destination: string) => `Bus de la línea ${line} hacia ${destination}, posición estimada`,
     estimatedPosition: 'Posición <b>estimada</b> a partir del cuadro horario, no medida por GPS.',
     stopCode: 'Cód. QR',
     quickFilters: 'Filtros rápidos',

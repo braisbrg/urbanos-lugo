@@ -119,7 +119,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
        * The rungs cut by how many lines a stop serves, and that read as arbitrary on the
        * screen: every pole on a five-line corridor drawn, and the street beside it -- one
        * line, same distance from you -- empty until zoom 16, when all 417 arrived at
-       * once. Brais: "it does not know which ones to show me." What the eye wants from
+       * once -- a scatter that looked arbitrary rather than chosen. What the eye wants from
        * an overview is an even scatter that fills in as you come closer.
        *
        * So: most-served first, and each stop is kept if no kept stop is within
@@ -180,8 +180,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
        * Build only the stops that are in view, and the rest as they come into it.
        *
        * Crossing into a dense rung used to build every marker of the set in one go -- all
-       * 417 at zoom 16 -- and that single task is the freeze Brais felt when he tried to
-       * pan right after zooming: measured at 4x CPU, 2,9 s blocked, of which the stops were
+       * 417 at zoom 16 -- and that single task is the freeze felt when panning right after
+       * zooming: measured at 4x CPU, 2,9 s blocked, of which the stops were
        * 2,7. Written names were part of it and are handled above; the rest was the markers
        * themselves. A phone at that zoom has sixty of the 417 on screen, so the other 350
        * are work done for nothing the reader can see. They are built when a pan brings
@@ -261,7 +261,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
          *
          * At the zoom where names appear the overview still holds all 417 stops, and each
          * written name is a DOM element Leaflet lays out on creation and moves on every
-         * pan. All 417 at once is the freeze Brais hit: zoom in, the names arrive, and the
+         * pan. All 417 at once is the freeze: zoom in, the names arrive, and the
          * map will not move until they have. A phone shows sixty of them at most. So the
          * name is written for the stops inside the view plus a margin, the rest keep the
          * hover label, and `relabel` below swaps them as the view moves -- only the ones

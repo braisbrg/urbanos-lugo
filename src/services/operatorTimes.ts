@@ -60,7 +60,7 @@ export function parseOperatorTimes(html: string): OperatorDeparture[] {
     return m ? plainText(m[1], '') : '';
   };
 
-  // ponytail: this scan is quadratic on markup whose blocks never close -- 101 ms for
+  // This scan is quadratic on markup whose blocks never close -- 101 ms for
   // 256 KB, 1.6 s for a megabyte. The ceiling is readCapped's 512 KB, so the worst case is
   // about 400 ms, once per stop per 20 s cache window, on a self-hosted server only. Left
   // as it is because the bound is real and the linear rewrite is fiddlier than the regex;

@@ -300,7 +300,7 @@ export function resolveLocationQuery(
  * `?parada=` link, an API path — and none of them is searching. A ranked fallback used
  * to run when the exact match failed, which meant a damaged sticker or a mistyped link
  * produced somebody else's arrival board rather than an error: "../" and "." both came
- * back as As Pedreiras, "-1" as Rda. Muralla 163-164, "NaN" as Rúa Dinán. A board that
+ * back as one stop, "-1" and "NaN" as two others. A board that
  * is confidently wrong is worse than a board that says it does not know that code.
  *
  * A full name still resolves, exactly, because a shared link can carry one. What is
@@ -412,8 +412,8 @@ export function getArrivalsForStop(
 
       // The last stop of a direction is where the run ends. Those buses arrive here and
       // go out of service; listing them on a departure board offers a ride nobody can
-      // take — and at a terminus like HULA it reads as "the 4.1 to HULA leaves in 10
-      // min" to somebody already standing at HULA.
+      // take — and at a terminus it reads as "the bus to here leaves in 10 min" to
+      // somebody already standing there.
       if (stopIndex === direction.stops.length - 1) return;
 
       const runs = buildRuns(line, dirIndex, BUS_STOPS, today);
@@ -805,8 +805,8 @@ function rideBetween(
 
 /**
  * Of every line serving both stops in the right order, the one that gets you there
- * soonest. The planner used to take `lines[0]`, so at a hub like Sindicatos with 14
- * lines it could pick one that had stopped running and then report the whole trip as
+ * soonest. The planner used to take `lines[0]`, so at a hub with fourteen lines it
+ * could pick one that had stopped running and then report the whole trip as
  * "servizo finalizado".
  */
 function pickBestBoarding(
@@ -1106,9 +1106,9 @@ function buildTransfer(
   const buffer = first.arrivalPrecision === 'published' ? TRANSFER_BUFFER_MIN : TRANSFER_BUFFER_ESTIMATED_MIN;
 
   // Getting off at one pole and on at another a couple of streets away is a normal
-  // change, and it is how half the network connects: line 8 ends at Bolaño Ribadeneira
-  // and the 1.x family runs along Ronda da Muralla, 275 m away. Requiring one shared
-  // pole meant the planner walked people 700 m to a different line instead.
+  // change, and it is how half the network connects: one line ends inside the walls
+  // and a whole family of lines runs along the ring road 275 m away. Requiring one
+  // shared pole meant the planner walked people 700 m to a different line instead.
   const change: RoutePlanResult['segments'] = [];
   let boardAt = first.arrivalMinutes + buffer;
   if (hubIn.id !== hubOut.id) {
@@ -1173,7 +1173,7 @@ function buildTransfer(
 /**
  * Interchanges that genuinely connect these two stops: reachable onward from the
  * origin AND able to reach the destination. Six hardcoded "central" stops missed most
- * real connections, e.g. anything crossing town without touching Ronda da Muralla.
+ * real connections, e.g. anything crossing town without touching the ring road.
  */
 function connectingHubs(startStop: BusStop, endStop: BusStop): [BusStop, BusStop][] {
   const forward = reachableFrom(startStop.id, startStop.lines);
@@ -1193,9 +1193,9 @@ function connectingHubs(startStop: BusStop, endStop: BusStop): [BusStop, BusStop
     .slice(0, MAX_SAME_POLE_HUBS)
     .map((s): [BusStop, BusStop] => [s, s]);
 
-  // Then pairs a short walk apart. Line 8 ends at Bolaño Ribadeneira and the 1.x
-  // family runs along Ronda da Muralla, 275 m away; without this the planner cannot
-  // see that change at all, and walks people 700 m to a different line instead.
+  // Then pairs a short walk apart. One line ends inside the walls and a whole family
+  // of lines runs along the ring road 275 m away; without this the planner cannot see
+  // that change at all, and walks people 700 m to a different line instead.
   const pairs: { pair: [BusStop, BusStop]; walk: number }[] = [];
   for (const a of arrivals) {
     if (backward.has(a.id)) continue; // already covered as a same-pole hub
@@ -1368,8 +1368,8 @@ function planDeparting(
  * How much sooner a bus has to get you there before walking stops being the answer.
  *
  * This used to be an absolute ceiling: any walk over 45 minutes was pushed below every
- * bus plan. That is wrong whenever the buses are worse. On Avda. Américas to As Termas
- * at half past one, walking takes 55 minutes and the best bus itinerary takes 95 — and
+ * bus plan. That is wrong whenever the buses are worse. On one cross-town pair at half
+ * past one, walking takes 55 minutes and the best bus itinerary takes 95 — and
  * the walk was ranked last, off the end of a four-card list, so the fastest way to get
  * there was the one option the reader never saw.
  *
@@ -1383,8 +1383,8 @@ export const WALK_MUST_BEAT_BUS_BY_MIN = 5;
 /**
  * And past this, a walk stays in the list but stops leading it, however bad the bus is.
  *
- * Ranking on duration alone once put a 168-minute walk to Calde above a bus 285 minutes
- * out, because the rural branch runs twice a day. Both things are true at once: an
+ * Ranking on duration alone once put a 168-minute walk to a rural terminus above a bus
+ * 285 minutes out, because that branch runs twice a day. Both things are true at once: an
  * hour on foot that beats a five-hour wait is the honest answer, and three hours on
  * foot is not an answer at all. Seventy-five minutes is about 5.6 km at the calibrated
  * pace — a long walk somebody might choose, and the far edge of one they might not.
@@ -1399,7 +1399,7 @@ const isWalkOnly = (p: RoutePlanResult) => !p.segments.some((seg) => seg.type ==
  *
  * Ranking on duration alone is arithmetically right and practically wrong on the rural
  * branches: a line that runs twice a day puts the next bus 285 minutes out, so a
- * 168-minute walk to Calde won the comparison and became the headline suggestion. No
+ * 168-minute walk won the comparison and became the headline suggestion. No
  * map app answers "walk for two hours and forty-eight minutes". The walk is still
  * offered — somebody may genuinely prefer it — it just stops being the answer.
  */
@@ -1409,8 +1409,8 @@ const busLegCount = (p: RoutePlanResult) => p.segments.filter((s) => s.type === 
  * When this plan puts you there, counted from the moment the question was asked.
  *
  * Not the same as its duration any more. A plan sets off at `now + slackMinutes`, so a
- * short ride that leaves in five hours is short and useless: at 09:00 the fastest way to
- * reach HULA on the clock is a 22-minute 5ES that departs at 14:08. Ranking on duration
+ * short ride that leaves in five hours is short and useless: at 09:00 the fastest ride
+ * on the clock for one pair was a 22-minute one that departs at 14:08. Ranking on duration
  * put it first. This is what the reader is actually choosing between.
  */
 const reachedAt = (p: RoutePlanResult): number => p.slackMinutes + p.durationMinutes;
@@ -1430,8 +1430,8 @@ function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
   // There at the same minute, so the tie goes to the one that costs less of your day:
   // leaving later for the same arrival is strictly better than waiting at the pole.
   if (a.durationMinutes !== b.durationMinutes) return a.durationMinutes < b.durationMinutes;
-  // Still level, so the tie goes to the simpler trip. Two ways of reaching HULA both
-  // took 36 minutes: one rode line 9 for a single stop to reach the wall, the other
+  // Still level, so the tie goes to the simpler trip. Two ways of making one trip both
+  // took 36 minutes: one rode a bus for a single stop to reach the wall, the other
   // walked to the same place. A change you do not need is still a change you can miss.
   return busLegCount(a) < busLegCount(b);
 }
@@ -1461,11 +1461,11 @@ const ALWAYS_NEAREST = 4;
 /**
  * The stops worth walking to — chosen for the lines they reach, not for being close.
  *
- * Taking the ten nearest looked reasonable and was not. From Fonte dos Ranchos the ten
- * nearest are all on the same corridor and between them serve eight lines; the twelfth,
- * Rda. Muralla (Obras Públicas) at 535 m, serves nine more, including every line on the
- * wall. So the planner could not see a one-bus trip to HULA and instead offered to ride
- * line 9 for a single stop — one minute on the bus after three waiting — just to reach
+ * Taking the ten nearest looked reasonable and was not. From one origin the ten nearest
+ * are all on the same corridor and between them serve eight lines; the twelfth, at
+ * 535 m, serves nine more, including every line on the ring road. So the planner could
+ * not see a one-bus trip and instead offered to ride a bus for a single stop — one
+ * minute on the bus after three waiting — just to reach
  * the stop a seven-minute walk would have reached anyway.
  *
  * The point of walking further is to reach a line you cannot reach nearer, so past the

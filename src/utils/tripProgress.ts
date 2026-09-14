@@ -88,7 +88,7 @@ function currentBusLeg(plan: RoutePlanResult, seen: ReadonlySet<string>): number
    * to arrive and its alert never rang; and once off, walking seventy metres towards the
    * next pole moved it back. The fix marks the arrival; the next call acts on it.
    *
-   * ponytail: a ride with no fix at all at the transfer pole leaves the cursor on the
+   * A ride with no fix at all at the transfer pole leaves the cursor on the
    * first bus while the second is being ridden. The "yes, I am on it" answer is the way
    * out if that turns up in use.
    */

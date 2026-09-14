@@ -64,8 +64,8 @@ const NO_CORRECTION: WalkCorrection = { before: 0, after: 0 };
  * The bus leaves when it leaves, so a walk that turns out longer than the estimate does
  * not delay the arrival — it delays *you*, and the only thing it can eat is the cushion
  * the plan already handed back as a later departure. This used to add the whole
- * correction to the arrival, which put the reader at HULA two minutes after a bus that
- * gets there at 09:50 whatever anybody walks.
+ * correction to the arrival, which put the reader at the destination two minutes after
+ * a bus that gets there at the same printed minute whatever anybody walks.
  *
  * A shorter walk is the same fact the other way round: set off later, land at the same
  * minute. Only a correction bigger than the cushion can move the arrival, and then it
@@ -541,7 +541,6 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     setDestQuery(destinationRequest.query);
     handleCalculate(originQuery, destinationRequest.query);
     // Only when a new request arrives: `originQuery` changing is the reader typing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destinationRequest?.nonce]);
 
   const handleSwap = () => {
@@ -736,7 +735,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
                   {/* Origin Autocomplete Suggestions */}
                   {activeInput === 'origin' && originSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
                       {originSuggestions.map((sug) => (
                         <button
                           key={sug.id || sug.name}
@@ -804,7 +803,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
                   {/* Dest Autocomplete Suggestions */}
                   {activeInput === 'dest' && destSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-lg z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
                       {destSuggestions.map((sug) => (
                         <button
                           key={sug.id || sug.name}
@@ -1086,10 +1085,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           says it in the width the line has; the label under it says it in
                           words for a screen reader. */}
                       {measuredWalk && (
-                        <span
-                          className="flex items-baseline gap-1.5 text-ink"
-                          aria-label={`${t.planner.measuredWalkTitle}: ${measuredWalk.minutes} min, ${(measuredWalk.meters / 1000).toFixed(1).replace('.', ',')} km`}
-                        >
+                        <span className="flex items-baseline gap-1.5 text-ink">
+                          {/* The words the footprint stands for, as text: an aria-label on a
+                              plain span is prohibited by ARIA 1.2 and read by nothing. */}
+                          <span className="sr-only">{t.planner.measuredWalkTitle}: </span>
                           <Footprints className="h-[13px] w-[13px] shrink-0 self-center text-ink-3" aria-hidden="true" />
                           {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1).replace('.', ',')} km
                         </span>
@@ -1420,20 +1419,17 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                                 {seg.line.number}
                               </button>
                               {/* Where this bus is going, not what the line is called.
-                                  The line's own name is "Rda. Muralla 56 (Sindicatos) -
-                                  HULA (Ent. Principal)" — 355 px of it in a 103 px slot,
-                                  so 29% of it showed and it broke off mid-word. It is also
+                                  A line's own name is its two termini joined by a dash —
+                                  355 px of it in a 103 px slot, so 29% of it showed and it
+                                  broke off mid-word. It is also
                                   the wrong fact: the row below already says where you get
                                   on, and what is missing is which way it runs. The full
                                   name stays on the badge's tooltip. */}
-                              <span
-                                className="min-w-0 flex-1 truncate text-body font-semibold"
-                                title={seg.line.name}
-                                aria-label={t.service.towards(
-                                  seg.line.directions.find((d) => d.id === seg.directionId)?.destination ??
-                                    seg.line.name,
-                                )}
-                              >
+                              {/* "Sentido" is said, not labelled: an aria-label on a plain
+                                  span is prohibited by ARIA 1.2 and read by nothing, so the
+                                  word goes in as hidden text before the arrow. */}
+                              <span className="min-w-0 flex-1 truncate text-body font-semibold" title={seg.line.name}>
+                                <span className="sr-only">{t.service.towards('')}</span>
                                 <span aria-hidden="true" className="text-ink-3">→ </span>
                                 {seg.line.directions.find((d) => d.id === seg.directionId)?.destination ??
                                   seg.line.name}
@@ -1444,8 +1440,8 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             </div>
 
                             {/* The label and the time move off the name's line.
-                                "Sube en" plus a clock left 132 px for "Rda. Muralla (Obras
-                                Publicas)", which needs 204 -- so the stop you have to walk
+                                "Sube en" plus a clock left 132 px for a stop name that needs
+                                204 -- so the stop you have to walk
                                 to and recognise was the thing being cut. Nothing here is
                                 worth truncating a stop name for. */}
                             <div className="mt-3">
