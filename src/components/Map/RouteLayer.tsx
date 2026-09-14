@@ -5,6 +5,7 @@ import { directionLabel } from '../../utils/serviceLabels';
 import L from 'leaflet';
 import { BusLine } from '../../types';
 import { BUS_STOPS } from '../../data/transitData';
+import { metresBetween } from '../../utils/geo';
 
 /** Tooltip strings are rendered as HTML by Leaflet. */
 interface RouteLayerProps {
@@ -225,11 +226,7 @@ function arrowsAlong(
   keepClear: { lat: number; lng: number }[],
   everyMetres: number,
 ): { at: [number, number]; deg: number }[] {
-  const M_PER_DEG_LAT = 111_320;
-  const metres = (a: [number, number], b: [number, number]) => {
-    const cos = Math.cos(((a[0] + b[0]) / 2) * (Math.PI / 180));
-    return Math.hypot((b[0] - a[0]) * M_PER_DEG_LAT, (b[1] - a[1]) * M_PER_DEG_LAT * cos);
-  };
+  const metres = (a: [number, number], b: [number, number]) => metresBetween(a[0], a[1], b[0], b[1]);
   const out: { at: [number, number]; deg: number }[] = [];
   let untilNext = everyMetres / 2;
   for (let i = 1; i < path.length; i++) {

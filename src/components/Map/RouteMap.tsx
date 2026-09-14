@@ -101,6 +101,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   const geometryReady = useRouteGeometry();
   const tilesRef = useRef<BasemapLayer | null>(null);
   const isDark = useIsDark();
+  const t = translations(lang);
   const colors = mapColors(isDark);
 
   useEffect(() => {
@@ -191,7 +192,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
       const detailed = walkPaths[walkHopKey(a, b)];
       return detailed
         ? L.polyline(detailed.path, { color: colors.walkRouted, weight: 4, dashArray: '1 7', opacity: emphasised ? 0.9 : faint }).bindTooltip(
-            escapeHtml(translations(lang).planner.walkLeg(detailed.meters, detailed.minutes)),
+            escapeHtml(t.planner.walkLeg(detailed.meters, detailed.minutes)),
           )
         : L.polyline([a, b], { color: colors.walkStraight, weight: 3, dashArray: '4 6', opacity: emphasised ? 0.8 : faint });
     };
@@ -237,12 +238,12 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 
         group.addLayer(
           L.polyline(slice, { color: segment.line.color, weight: emphasised ? 6 : 4, opacity: emphasised ? 0.95 : faint, lineJoin: 'round' }).bindTooltip(
-            escapeHtml(translations(lang).planner.lineWithStops(segment.line.number, segment.stopsCount ?? 0)),
+            escapeHtml(t.planner.lineWithStops(segment.line.number, segment.stopsCount ?? 0)),
           ),
         );
         group.addLayer(
           L.marker(slice[0], { icon: pinIcon(segment.line.color, segment.line.number.slice(0, 3)), opacity: emphasised ? 1 : faint }).bindTooltip(
-            `${escapeHtml(translations(lang).planner.board)} ${escapeHtml(segment.fromStop.name)}`,
+            `${escapeHtml(t.planner.board)} ${escapeHtml(segment.fromStop.name)}`,
           ),
         );
 
@@ -335,7 +336,6 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 
   // The third map got the chrome last: the network map and the stop mini map were
   // named and translated, and this one still said "Zoom in" under a Galician itinerary.
-  const t = translations(lang);
   useMapChrome(map ? containerRef.current : null, {
     region: t.planner.routeMap,
     zoomIn: t.map.zoomIn,
