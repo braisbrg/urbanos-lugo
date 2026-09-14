@@ -178,6 +178,7 @@ export const en: Dict = {
     backToAnswer: 'Back to the answer',
     recentRoutes: 'Your recent trips',
     quickDestinations: 'Common destinations:',
+    suggestionsCount: (n: number) => (n === 1 ? '1 suggestion' : `${n} suggestions`),
     noRouteFound: 'No good combination found. Try another street or a nearby stop.',
     transferFreeNotice:
       'Remember that changing bus within 75 minutes is free with the Tarxeta Cidadá or the TMG card.',

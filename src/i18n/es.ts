@@ -167,6 +167,7 @@ export const es: Dict = {
     backToAnswer: 'Volver al resultado',
     recentRoutes: 'Tus últimas rutas',
     quickDestinations: 'Destinos rápidos habituales:',
+    suggestionsCount: (n: number) => (n === 1 ? '1 sugerencia' : `${n} sugerencias`),
     noRouteFound: 'No se encontró una combinación óptima. Prueba con otra calle o parada cercana.',
     transferFreeNotice:
       'Recuerda que el transbordo dentro de los 75 minutos es gratuito con la Tarjeta Ciudadana o TMG.',

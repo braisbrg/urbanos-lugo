@@ -197,6 +197,8 @@ export const gl = {
     backToAnswer: 'Volver ao resultado',
     recentRoutes: 'As túas últimas rutas',
     quickDestinations: 'Destinos rápidos habituais:',
+    /** Read out when the list under a field appears or changes; the rows themselves are buttons. */
+    suggestionsCount: (n: number) => (n === 1 ? '1 suxestión' : `${n} suxestións`),
     noRouteFound: 'Non se atopou unha combinación óptima. Proba con outra rúa ou parada próxima.',
     transferFreeNotice:
       'Lembra que o transbordo dentro dos 75 minutos é gratuíto coa Tarxeta Cidadá ou TMG.',

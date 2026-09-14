@@ -736,6 +736,18 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     <LocateFixed className={`h-4.5 w-4.5 ${isLocating ? 'animate-pulse' : ''}`} />
                   </button>
 
+                  {/* How many rows opened under the field, for the ear: the list appears
+                      without a word, so a screen reader had no way to know that typing
+                      had found anything. One line for both fields, so the count is
+                      announced when it changes and not when the focus moves. */}
+                  <span role="status" className="sr-only">
+                    {activeInput === 'origin' && originSuggestions.length > 0
+                      ? t.planner.suggestionsCount(originSuggestions.length)
+                      : activeInput === 'dest' && destSuggestions.length > 0
+                        ? t.planner.suggestionsCount(destSuggestions.length)
+                        : ''}
+                  </span>
+
                   {/* Origin Autocomplete Suggestions */}
                   {activeInput === 'origin' && originSuggestions.length > 0 && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
