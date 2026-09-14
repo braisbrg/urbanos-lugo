@@ -4425,4 +4425,13 @@ ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoo
   assert(/stopNamesLayer\(/.test(stopsLayer) && !/permanent: true/.test(stopsLayer), 'the stop names are DOM tooltips again');
 });
 
+ok('the letter paints before the search rows do', () => {
+  // The first keystroke scored the whole network and drew the rows in the same render as
+  // the character: 400 ms from key to paint at 6x CPU, 219 of them blocked. The rows are
+  // built from a deferred copy of the query and kept until it changes.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const topBar = readFileSync(join(root, 'src/components/TopBar.tsx'), 'utf8');
+  assert(/useDeferredValue\(q\)/.test(topBar) && /useMemo\(\(\) => searchAll\(dq\), \[dq\]\)/.test(topBar), 'the search rows render in the same task as the keystroke again');
+});
+
 console.log(`\n${checks} checks passed\n`);

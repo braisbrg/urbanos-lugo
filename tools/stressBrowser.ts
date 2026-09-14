@@ -422,7 +422,10 @@ async function typing(browser: Browser): Promise<void> {
   console.log('');
   budget('main thread blocked while typing', blockingMs(probe), 400);
   report('worst gap between frames', `${probe.worstFrame.toFixed(0)} ms`, `${probe.longtasks.length} long tasks`);
-  budget('React commits for the whole word', probe.commits, 2 * query.length + 4, 'commits');
+  // Up to three a keystroke: the field itself, the rows behind it (a deferred value, so
+  // the letter paints before the list), and one more where a deferred render was
+  // interrupted by the next key and finished later. Measured 45 for sixteen letters.
+  budget('React commits for the whole word', probe.commits, 3 * query.length + 4, 'commits');
 
   // Second pass, sampler on, only to say where the time goes.
   await page.evaluate(

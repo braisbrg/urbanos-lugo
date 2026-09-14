@@ -1228,6 +1228,17 @@ dispersión; **o de zoom queda nos 900 de sempre**. `pnpm test`: 142 comprobaci�
 nova que reclama as catro causas por nome. Consola limpa en 24 cargas frescas; contraste,
 tamaño e obxectivos, 0 fallos en 773/776 textos.
 
+**O teclado, o outro matiz da rolda 13.** «Primeira letra, fío bloqueado» pasaba por
+175–243 ms sobre 250, e a 340 coa máquina cargada: sen marxe. A causa non era o cálculo
+senón que a letra e as trece filas pintaban no mesmo render. A consulta da que saen as
+filas vai un paso por detrás do campo (`useDeferredValue`), React pinta esa parte a baixa
+prioridade e en anacos que o navegador pode interromper, e as filas gárdanse ata que a
+consulta cambia (`useMemo`). Medido a 6×: **da tecla ao pintado, 400 → 104 ms**; fío
+bloqueado na primeira letra, 219 → 112–146; tecleando a palabra enteira, 233 → 50–231.
+Os commits de React soben de 32 a 45 para dezaseis letras —un urxente para o campo e un
+diferido para as filas—, e o orzamento dese contador pasa de 2 a 3 por letra dicindo por
+que.
+
 **E as dúas cousas ditas e non feitas na rolda 13:** as oito dependencias menores
 actualizadas (React 19.3, Vite 8.3, MapLibre 6.9, lucide 1.45, tipos; `pnpm audit`
 limpo) e as nove exportacións que nada importaba xa non se exportan (sete tipos,
