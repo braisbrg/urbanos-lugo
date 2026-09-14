@@ -8,6 +8,7 @@ import { BUS_STOPS, LUGO_CENTER } from '../../data/transitData';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { WalkingPath, walkHopKey } from '../../services/walkingPath';
 import { useIsDark } from '../../hooks/useIsDark';
+import { useMapChrome } from '../../hooks/useMapChrome';
 import { createBasemap, type BasemapLayer } from './basemap';
 import { mapColors } from './palette';
 
@@ -331,6 +332,15 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   useEffect(() => {
     tilesRef.current?.setBasemapTheme(isDark);
   }, [isDark]);
+
+  // The third map got the chrome last: the network map and the stop mini map were
+  // named and translated, and this one still said "Zoom in" under a Galician itinerary.
+  const t = translations(lang);
+  useMapChrome(map ? containerRef.current : null, {
+    region: t.planner.routeMap,
+    zoomIn: t.map.zoomIn,
+    zoomOut: t.map.zoomOut,
+  });
 
   return <div ref={containerRef} className={className} />;
 };

@@ -442,6 +442,22 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
    */
   const [asked, setAsked] = useState(false);
 
+  /**
+   * Where the keyboard goes once there is an answer.
+   *
+   * Pressing "Calcular ruta" folds the form away, and the button with it, so focus fell
+   * to the top of the document: a screen reader heard nothing, and a keyboard had to walk
+   * the whole page back down to find out whether there was a route. Focus lands on the
+   * answer column instead, which reads its first line -- the three figures, or the
+   * sentence saying there is nothing -- and scrolls it into view on a phone. Counted, not
+   * a flag, because the second question deserves the same as the first.
+   */
+  const answerRef = useRef<HTMLDivElement>(null);
+  const [answered, setAnswered] = useState(0);
+  useEffect(() => {
+    if (answered) answerRef.current?.focus();
+  }, [answered]);
+
   // "Now" is the common case, but the question before an appointment is the other one.
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now');
   const [timeValue, setTimeValue] = useState(() => {
@@ -496,13 +512,16 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     setChosenOption(0);
     // A new question gets the short list again.
     setShowAllOptions(false);
-    // Answering is what folds the form away. A search that found nothing leaves it
-    // open, because the next thing to do is change what you asked for.
+    // Answering is what folds the form away -- also when the answer is that there is
+    // nothing. A search that found nothing used to leave the form open, on the theory
+    // that the next thing to do is change what you asked for; but on a phone the
+    // "no route" sentence lives in the answer column, which is hidden while the form is
+    // up, so the reader pressed the button and watched nothing happen. The row above the
+    // answer reopens the fields in one tap.
     setAsked(true);
-    if (plans.length) {
-      setFormOpen(false);
-      rememberRoute({ from: orig, to: dest });
-    }
+    setAnswered((n) => n + 1);
+    setFormOpen(false);
+    if (plans.length) rememberRoute({ from: orig, to: dest });
     setEndpoints({
       origin: toPoint(resolveLocationQuery(orig, gps)),
       destination: toPoint(resolveLocationQuery(dest, gps)),
@@ -965,7 +984,11 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
             row above keeps the trip in sight while you edit, so nothing is lost by
             standing the detail down until there is a new answer. From `lg` up both fit
             side by side and neither hides. */}
-        <div className={`space-y-4 lg:col-span-7 lg:block ${asked && !formOpen ? '' : 'hidden'}`}>
+        <div
+          ref={answerRef}
+          tabIndex={-1}
+          className={`space-y-4 lg:col-span-7 lg:block ${asked && !formOpen ? '' : 'hidden'}`}
+        >
           {planResult ? (
             /* One rhythm, declared once.
                Every block in here carried its own bottom margin -- mb-4, mb-5, mt-3, mt-6

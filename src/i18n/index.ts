@@ -22,6 +22,13 @@ export const LANGS: Lang[] = ['gl', 'es', 'en'];
 /** Short code for a two- or three-way toggle. */
 export const LANG_CODE: Record<Lang, string> = { gl: 'GL', es: 'ES', en: 'EN' };
 
+/**
+ * Each language named in itself, for the toggle's accessible name. Not translated on
+ * purpose: "Galego" is what the person looking for Galician recognises whatever the
+ * interface is speaking, and the button carries `lang` so it is pronounced that way.
+ */
+export const LANG_NAME: Record<Lang, string> = { gl: 'Galego', es: 'Español', en: 'English' };
+
 export function translations(lang: Lang): Dict {
   return DICTIONARIES[lang] ?? gl;
 }

@@ -1216,6 +1216,12 @@ ok('every map gets its chrome from the one place that has it', () => {
       !/setPrefix\(/.test(source),
       `${file} sets the attribution prefix itself; that belongs in basemap.ts for all of them`,
     );
+    // And its name and control titles in the reader's language. The route map was born
+    // after the other two got theirs, and said "Zoom in" under a Galician itinerary.
+    assert(
+      /useMapChrome\(/.test(source),
+      `${file} builds a map without useMapChrome, so it is an unnamed tab stop with English zoom buttons`,
+    );
   }
 
   // The two maps that live inside something the reader scrolls have to let them scroll.
@@ -4364,6 +4370,31 @@ ok('the basemap is not being amplified behind the palette', () => {
     !rule || !/filter\s*:/.test(rule[0]),
     `the tile pane is filtered again: ${rule?.[0].replace(/\s+/g, ' ')}`,
   );
+});
+
+ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer takes the focus', () => {
+  // Three things a screen reader or a keyboard found on 14 September 2026 that no
+  // contrast or target measurement could see.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const read = (path: string) => readFileSync(join(root, path), 'utf8');
+
+  // With the menu open, fourteen Tab presses put focus on the QR button behind the
+  // drawer: `aria-modal` hides the page from a screen reader, not from the Tab key. Every
+  // overlay goes through one hook, so the wrap lives there and only there.
+  const dialog = read('src/hooks/useDialog.ts');
+  assert(/event\.key !== 'Tab'/.test(dialog) && /event\.shiftKey/.test(dialog), 'useDialog no longer wraps Tab inside the overlay');
+
+  // The arrivals lists were `aria-live`: the minute tick changed every row at once, so
+  // each minute announced up to fifteen bare numbers with no line and no way to stop it.
+  const board = read('src/components/StopArrivalsView.tsx');
+  assert(!/<ul[^>]*aria-live/.test(board), 'an arrivals list is a live region again');
+
+  // "Calcular ruta" unmounted the button under the focus, which fell to the top of the
+  // document; and with no route the sentence saying so sat in a column hidden behind the
+  // form on a phone. The answer column takes focus after every question, found or not.
+  const planner = read('src/components/RoutePlannerView.tsx');
+  assert(/ref=\{answerRef\}\s+tabIndex=\{-1\}/.test(planner), 'the answer column can no longer take focus');
+  assert(/setAnswered\(\(n\) => n \+ 1\);\s+setFormOpen\(false\);/.test(planner), 'a question without an answer leaves the form covering the sentence that says so');
 });
 
 console.log(`\n${checks} checks passed\n`);

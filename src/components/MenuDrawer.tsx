@@ -2,7 +2,7 @@ import React from 'react';
 import { useDialog } from '../hooks/useDialog';
 import { AlertTriangle, ChevronRight, CreditCard, Globe, Moon, X } from 'lucide-react';
 import type { ThemeChoice } from '../hooks/useTheme';
-import { Lang, LANGS, LANG_CODE, translations } from '../i18n';
+import { Lang, LANGS, LANG_CODE, LANG_NAME, translations } from '../i18n';
 import type { Tab } from './navSections';
 import { REPO_URL } from '../project';
 
@@ -61,10 +61,13 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
       aria-label={t.menu.open}
       className="fixed inset-0 z-[1500]"
     >
+      {/* For the finger, not the Tab key: it was the first thing focus landed on, a
+          full-screen button nobody can see, and the X beside the title is the same action. */}
       <button
         className="absolute inset-0 bg-scrim"
         onClick={onClose}
         aria-label={t.menu.close}
+        tabIndex={-1}
       />
       <div className="absolute inset-y-0 right-0 flex w-[306px] max-w-[85vw] flex-col border-l border-line bg-bg">
         <div className="flex items-center justify-between border-b border-line px-[18px] py-4">
@@ -81,12 +84,15 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
         <div className="flex flex-col gap-0.5 px-2.5 py-3">
           {/* One row per screen. What is happening, and how the thing works. */}
           {asides.map(({ id, Icon, tint, label, badge }) => (
+            // The count is part of the name, with a pause: read from the markup it came
+            // out as one word, "Avisos do servizo1".
             <button
               key={id}
               onClick={() => {
                 onOpenTab(id);
                 onClose();
               }}
+              aria-label={badge > 0 ? `${label} (${badge})` : undefined}
               className="flex h-14 items-center gap-4 rounded-xl px-3 text-left"
             >
               <Icon className={`h-[21px] w-[21px] shrink-0 ${tint}`} strokeWidth={2} aria-hidden="true" />
@@ -103,12 +109,21 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           <div className="flex min-h-14 items-center gap-4 px-3 py-2">
             <Globe className="h-[21px] w-[21px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1 text-body font-semibold">{t.menu.language}</span>
-            <div className="flex shrink-0 overflow-hidden rounded-[9px] border border-edge">
+            {/* Named groups, so "GL, pressed" arrives as a language and "Auto, not
+                pressed" as an appearance: the heading beside them is only for the eye. */}
+            <div
+              role="group"
+              aria-label={t.menu.language}
+              className="flex shrink-0 overflow-hidden rounded-[9px] border border-edge"
+            >
               {LANGS.map((code) => (
+                // The code stays in the name so "click GL" still finds it by voice.
                 <button
                   key={code}
                   onClick={() => setLang(code)}
                   aria-pressed={lang === code}
+                  aria-label={`${LANG_CODE[code]}: ${LANG_NAME[code]}`}
+                  lang={code}
                   className={`h-11 w-12 text-label font-semibold ${
                     lang === code ? 'bg-ink text-bg' : 'text-ink-2'
                   }`}
@@ -124,7 +139,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
               <Moon className="h-[21px] w-[21px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
               <span className="flex-1 text-body font-semibold">{t.menu.theme}</span>
             </div>
-            <div className="flex gap-1.5">
+            <div role="group" aria-label={t.menu.theme} className="flex gap-1.5">
               {themes.map(({ id, label }) => (
                 <button
                   key={id}

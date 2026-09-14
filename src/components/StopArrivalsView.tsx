@@ -427,13 +427,15 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       </span>
     );
 
+  // The line is in the name, not only on the badge: fourteen of these in a row read as
+  // "7, button" with the purpose left to a tooltip nobody hears.
   const lineButton = (id: string, number: string, color: string) => (
     <button
       onClick={() => {
         const line = BUS_LINES.find((l) => l.id === id);
         if (line) onSelectLine(line);
       }}
-      title={t.arrivals.seeLine}
+      aria-label={`${t.arrivals.seeLine} ${number}`}
       className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-[7px] text-body font-bold text-white"
       style={{ backgroundColor: color }}
     >
@@ -529,6 +531,11 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
               <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
             )}
           </button>
+          {/* The tick is the confirmation for the eye; this is the one for the ear. A
+              button whose label changes under focus is not announced. */}
+          <span role="status" className="sr-only">
+            {copiedLink ? t.arrivals.copied : ''}
+          </span>
         </div>
       </header>
 
@@ -723,8 +730,11 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         </section>
       )}
 
-      {/* The board recomputes every 15 s; without a live region a screen reader user
-          never hears that the times changed. "polite" waits for a pause. */}
+      {/* Not a live region. The lists carried `aria-live="polite"` so a screen reader
+          would hear the times change -- and it did: the minute tick moves every row's
+          count at once, so each minute announced up to fifteen bare numbers with no line
+          and no destination, and nothing on the screen could stop it. The board is read
+          on demand, like any list; the alarm is the channel for being told. */}
       {arrivals.length === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed border-edge px-5 py-10 text-center">
           <Clock className="mx-auto mb-3 h-7 w-7 text-ink-3" strokeWidth={1.6} aria-hidden="true" />
@@ -740,7 +750,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           )}
         </div>
       ) : view === 'next' ? (
-        <ul aria-live="polite" aria-atomic="false" className="mt-1">
+        <ul className="mt-1">
           {soon.map((a, idx) => (
             <li
               key={`${a.lineId}-${a.etaTime}-${idx}`}
@@ -765,7 +775,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           ))}
         </ul>
       ) : (
-        <ul aria-live="polite" aria-atomic="false" className="mt-3 flex flex-col gap-2.5">
+        <ul className="mt-3 flex flex-col gap-2.5">
           {groups.map((g) => (
             <li
               key={g.key}

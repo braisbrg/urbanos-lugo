@@ -1036,9 +1036,23 @@ do mapa escápanse.
 
 ### Accesibilidade
 
-`lang` do documento segue o idioma elixido, hai ligazón de salto ao contido, o taboleiro
-de chegadas é unha rexión `aria-live` (actualízase cada 15 s) e as filas clicables son
-alcanzables co teclado.
+`lang` do documento segue o idioma elixido, hai ligazón de salto ao contido e as filas
+clicables son alcanzables co teclado.
+
+O taboleiro de chegadas **non** é unha rexión `aria-live`. Foino, para que un lector de
+pantalla oíse cambiar as horas, e oíaas: o tic de cada minuto move a conta de todas as
+filas á vez, así que cada minuto anunciaba ata quince números soltos —«4», «9», «14»—
+sen liña nin destino e sen maneira de calalo. O taboleiro lese cando se quere, coma
+calquera lista; para que che avisen está a alarma.
+
+**Teclado nos diálogos.** O menú, os favoritos, o lector de QR, a ficha de parada no
+mapa e os seus filtros son diálogos modais: Escape pecha, o foco entra ao abrir e volve
+ao que os abriu ao pechar, e **Tab non sae deles**. Saía: `aria-modal` esconde a páxina
+ao lector de pantalla, non ao tabulador, e co menú aberto catorce pulsacións deixaban o
+foco no botón do QR detrás do caixón. Todo pasa por un só hook, `useDialog`, e
+`pnpm test` reclama o envoltorio por nome. Ao calcular unha ruta, o foco vai á resposta
+—as tres cifras, ou a frase que di que non hai— en lugar de caer ao principio do
+documento cando o formulario se prega debaixo do botón.
 
 Esa última frase estivo aquí antes de ser certa. A sonda que daba por boa a aplicación
 buscaba `button`, `a[href]`, `[role=button]` e `summary` sen nome accesible, e un `div`
@@ -1048,7 +1062,10 @@ listas de suxestións do planificador tiñan o mesmo problema. Tampouco vía o c
 Leaflet, que é un `div` ao que a librería lle pon `tabindex="0"`: os dous mapas eran unha
 parada de tabulación sen nome e os seus controis dicían "Zoom in" en inglés baixo unha
 interface en galego. Está todo arranxado, e a sonda marca agora `cursor: pointer` sobre
-calquera cousa que non sexa interactiva.
+calquera cousa que non sexa interactiva. O mapa do traxecto, que naceu despois, quedou
+fóra dese arranxo ata a auditoría do 14 de setembro de 2026 —dicía "Zoom in" outra vez—;
+agora `pnpm test` esixe o mesmo nome e os mesmos títulos a calquera ficheiro que chame a
+`L.map(`.
 
 **Contraste.** A insignia dunha liña é texto branco sobre a cor da liña a 10 px, e o número
 que leva é o único que hai que ler dun golpe de vista. Cinco das vinte e catro non chegaban
@@ -1069,10 +1086,11 @@ a WCAG 2.5.5 exime expresamente.
 
 **Modo escuro e escala do sistema.** **O tema por defecto é o escuro**, e claro ou automático lémbranse só se se escollen:
 isto lese de pé nun poste, moitas veces xa de noite, e un móbil en claro todo o día
-non é unha opinión sobre como debe verse un cadro horario ás once. `public/theme-init.js`
-resólveo antes do primeiro pintado —un ficheiro á parte, non un script en liña, porque
-a política de seguridade é `script-src 'self'`— e `<html>` xa vén con `class="dark"`,
-así que non hai destello branco nin sequera sen JavaScript. A escala tipográfica está en `rem` (12·15·19·23·29·46 px sobre unha
+non é unha opinión sobre como debe verse un cadro horario ás once. O script que o resolve
+antes do primeiro pintado vai en liña na páxina, co SHA-256 dos seus bytes exactos na
+política de seguridade (`src/security/themeInit.ts` é a única fonte das dúas cousas), e
+`<html>` xa vén con `class="dark"`, así que non hai destello branco nin sequera sen
+JavaScript. A escala tipográfica está en `rem` (12·15·19·23·29·46 px sobre unha
 base de 16), así que o axuste de tamaño de letra do sistema operativo funciona en toda
 a aplicación en lugar de quedar conxelado en píxeles. `prefers-reduced-motion` desactiva
 transicións e animacións.
