@@ -199,34 +199,32 @@ export const StopLayer: React.FC<StopLayerProps> = ({
        * reflow per name, forty in a row at the zoom where names appear, and the thread is
        * held for all of them. Eight a frame lets the pan start between batches; the names
        * fill in over five frames, which is under a tenth of a second and not a freeze.
+       *
+       * The markers themselves are not spread out like this. They were, sixteen a frame,
+       * and it cost more than it saved: every batch added to the shared canvas asks for a
+       * redraw, and a redraw repaints every route under the batch's bounds -- forty-eight
+       * polylines, half of them dashed. Measured at 6x CPU over four zoom steps, the main
+       * thread was blocked 2,2 s with the stops spread and 1,3 s with them off; with the
+       * routes off the same stops cost nothing at all. Built in one task they are one
+       * redraw, and the pause is the one repaint rather than a dozen.
        */
-      const toPlace: BusStop[] = [];
       const toWrite: string[] = [];
       let draining = 0;
       const drain = () => {
         draining = 0;
-        // Markers first, sixteen a frame: even in view there can be sixty, and building
-        // them in one task was the largest single pause left once the names were spread.
-        for (const stop of toPlace.splice(0, 16)) place(stop);
-        if (!toPlace.length) {
-          for (const id of toWrite.splice(0, 8)) {
-            const marker = markersRef.current[id];
-            if (placed[id] && marker && !labelled.has(id)) bind(marker, placed[id], true);
-          }
+        for (const id of toWrite.splice(0, 8)) {
+          const marker = markersRef.current[id];
+          if (placed[id] && marker && !labelled.has(id)) bind(marker, placed[id], true);
         }
-        if (toPlace.length || toWrite.length) draining = requestAnimationFrame(drain);
-      };
-      const queue = () => {
-        if (!draining) draining = requestAnimationFrame(drain);
+        if (toWrite.length) draining = requestAnimationFrame(drain);
       };
       const queueName = (id: string) => {
         toWrite.push(id);
-        queue();
+        if (!draining) draining = requestAnimationFrame(drain);
       };
       const stopDraining = () => {
         if (draining) cancelAnimationFrame(draining);
         draining = 0;
-        toPlace.length = 0;
         toWrite.length = 0;
       };
 
@@ -299,19 +297,11 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         if (stop.id === selectedStop?.id) marker.bringToFront();
       };
 
-      // The first sixteen land in this task, so the map is never empty for a frame; the
-      // rest of what is in view follows frame by frame, and what is not waits for a pan.
-      const firstBatch: BusStop[] = [];
+      // What is in view lands in this task, one redraw; what is not waits for a pan.
       for (const stop of visible) {
-        if (visible.length <= BUILD_ALL_UP_TO || drawBounds.contains([stop.lat, stop.lng])) {
-          if (firstBatch.length < 16) firstBatch.push(stop);
-          else toPlace.push(stop);
-        } else {
-          pending.set(stop.id, stop);
-        }
+        if (visible.length <= BUILD_ALL_UP_TO || drawBounds.contains([stop.lat, stop.lng])) place(stop);
+        else pending.set(stop.id, stop);
       }
-      for (const stop of firstBatch) place(stop);
-      if (toPlace.length) queue();
 
       if (rung.label || pending.size) {
         const relabel = () => {
@@ -323,9 +313,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
             for (const [id, stop] of pending) {
               if (!reach.contains([stop.lat, stop.lng])) continue;
               pending.delete(id);
-              toPlace.push(stop);
+              place(stop);
             }
-            if (toPlace.length) queue();
           }
           if (!rung.label) return;
           for (const [id, stop] of Object.entries(placed)) {
@@ -355,13 +344,16 @@ export const StopLayer: React.FC<StopLayerProps> = ({
     };
   }, [map, stops, visibleLineIds, showStops, rung, selectedStop?.id]);
 
-  // Selection restyles one marker rather than rebuilding the layer.
+  // Selection restyles one marker rather than rebuilding the layer. The others go back
+  // to the rung's radius, not to a fixed one: this ran after every rebuild and set the
+  // markers that already existed to 5 px while the rung asked for 7, so two sizes of dot
+  // shared the screen at zoom 16.
   useEffect(() => {
     const selectedId = selectedStop?.id;
     Object.entries(markersRef.current).forEach(([id, marker]: [string, L.CircleMarker]) => {
       const isSelected = id === selectedId;
       marker.setStyle({
-        radius: isSelected ? 9 : 5,
+        radius: isSelected ? 9 : rung.radius,
         color: colors.stopStroke,
         fillColor: isSelected ? colors.stopSelected : colors.stopFill,
         weight: isSelected ? 3 : 2,

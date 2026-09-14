@@ -96,7 +96,13 @@ export default function App() {
    * were hidden, and if the stop was not on that line it was not there at all.
    */
   const [mapFocus, setMapFocus] = useState<'stop' | 'line'>('line');
-  const [selectedLine, setSelectedLine] = useState<BusLine | null>(BUS_LINES[0]);
+  /**
+   * No line until somebody opens one. The lines screen falls back to the first line on
+   * its own; the map must not, for the same reason as the stop above: it started with
+   * 1.1 chosen, drawn on the kerb with its arrows -- 199 of them at zoom 16, rebuilt on
+   * every zoom step -- over a choice nobody had made.
+   */
+  const [selectedLine, setSelectedLine] = useState<BusLine | null>(null);
   /**
    * Asking for a line, rather than for the list of lines.
    *

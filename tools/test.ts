@@ -4397,4 +4397,27 @@ ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer take
   assert(/setAnswered\(\(n\) => n \+ 1\);\s+setFormOpen\(false\);/.test(planner), 'a question without an answer leaves the form covering the sentence that says so');
 });
 
+ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoom changes', () => {
+  // measure:browser had four zoom steps at 2,133-4,055 ms of blocked main thread against
+  // a budget of 900. Three things, each of which would come back quietly.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const read = (path: string) => readFileSync(join(root, path), 'utf8');
+
+  // The map started with line 1.1 chosen -- the lines screen's default, passed through --
+  // so a fresh map drew a subject line with its arrows over a choice nobody had made.
+  const app = read('src/App.tsx');
+  assert(/useState<BusLine \| null>\(null\)/.test(app), 'App starts with a line selected again, and the map will draw it as chosen');
+
+  // 26,175 vertices projected and stroked whole at every zoom; now the ones the zoom can
+  // show, remembered per direction and zoom. And arrows only for the part in view.
+  const routes = read('src/components/Map/RouteLayer.tsx');
+  assert(/verticesAt\.set\(/.test(routes) && /LineUtil\.simplify\(/.test(routes), 'route vertices are no longer simplified per zoom before drawing');
+  assert(/offsetPath\(\s*verticesFor\(/.test(routes), 'the offset runs over the full geometry again');
+  assert(/reach\.contains\(at\)/.test(routes) && /map\.on\('moveend', placeArrows\)/.test(routes), 'arrows are built for the whole line again, not for the view');
+
+  // Every bus icon was rebuilt every three seconds whether or not anything about it changed.
+  const buses = read('src/components/Map/VehicleLayer.tsx');
+  assert(/drawn\?\.icon !== iconKey/.test(buses), 'bus icons are rebuilt on every tick again');
+});
+
 console.log(`\n${checks} checks passed\n`);

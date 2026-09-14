@@ -239,11 +239,11 @@ export async function launch(executable: string, headless = true): Promise<Brows
     '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
     // The map needs WebGL2 and there is no GPU behind a headless run; SwiftShader is the
-    // software path, and without the unsafe flag Chromium refuses it outright.
-    '--use-gl=angle',
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    ...(headless ? ['--headless=new'] : []),
+    // software path, and without the unsafe flag Chromium refuses it outright. It also
+    // makes every canvas a CPU cost, which a phone with a GPU does not pay: CDP_GPU=1
+    // leaves the flags out and opens a window, to tell the two apart.
+    ...(process.env.CDP_GPU ? [] : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
+    ...(headless && !process.env.CDP_GPU ? ['--headless=new'] : []),
     'about:blank',
   ];
   const child: ChildProcess = spawn(executable, args, { stdio: ['ignore', 'ignore', 'ignore'] });

@@ -1156,3 +1156,67 @@ repositorio non executa (`lint` é `tsc`). Un varrido automático de nomes en ac
 dentro de comentarios contra o que existe no código non atopou ningún que faga
 referencia a algo desaparecido: os que non existen son historia contada a propósito
 («chamábase `LiveBus`»).
+
+---
+
+## Rolda 14: o mapa, de volta dentro do orzamento — 14 de setembro de 2026
+
+A rolda 13 deixou dúas cifras de `measure:browser` fóra de orzamento e sen tocar: fío
+principal bloqueado ao abrir o mapa (1.489–3.038 ms sobre 1.200) e nos catro pasos de
+zoom (2.133–4.055 sobre 900). Todo a 6× de CPU, 390×844, contra a build servida por
+`npm start` en 3002.
+
+### Atribuír antes de tocar
+
+O mostreador cargaba case todo a «(program)». Tres ferramentas de rascuño (`.claude/`,
+fóra de git) puxéronlle nome:
+
+| Configuración (catro zooms) | Bloqueado |
+| :--- | ---: |
+| Todo acendido | 2.198 ms |
+| Sen paradas | 1.254 ms |
+| Sen buses | 1.286 ms |
+| **Sen trazados** | **1 ms** |
+| Só o mapa base | 52 ms |
+
+Co GPU da máquina en lugar de SwiftShader (`CDP_GPU=1`, novo en `tools/cdp.ts`) as
+cifras eran as mesmas: non era un artefacto do renderizado por software. Unha traza
+(`Tracing`) sumada por evento e un perfil co mapa de fontes déronlle a causa a tres
+cousas, todas nosas:
+
+1. **O mapa abría coa liña 1.1 escollida.** `App` arrancaba con `selectedLine =
+   BUS_LINES[0]` para que a pestana Liñas tivese algo que amosar, e o mapa recibíao como
+   elección: trazado de suxeito no bordo e **199 frechas** a zoom 16, 199 marcadores DOM
+   reconstruídos en cada paso de zoom. `placeArrows` levaba 513 ms dos catro pasos.
+2. **26.175 vértices proxectados e trazados enteiros en cada zoom.** A xeometría vén da
+   rede viaria a unha resolución que a cidade en 600 px non pode amosar.
+3. **Cada icona de bus reconstruída cada tres segundos**, cambiase ou non: un parse de
+   `innerHTML`, un cambio de nodo e un layout por bus, por un rumbo que se movera unha
+   fracción de grao.
+
+### O que cambiou
+
+- `App`: `selectedLine` empeza en `null`; a pestana Liñas xa caía por si mesma na
+  primeira liña. Mapa recén aberto: 0 frechas, ningunha liña premida.
+- `RouteLayer`: Douglas-Peucker a 0,7 px no marco de píxeles do zoom que se debuxa,
+  Mercator calculado no sitio e os superviventes escollidos por índice (nada se
+  desproxecta), lembrado por sentido e zoom. As frechas só dentro da vista máis media
+  pantalla, e refeitas en `moveend`: 13 a zoom 16 onde había 199.
+- `VehicleLayer`: a icona só se reconstrúe cando cambia liña, cor ou rumbo redondeado a
+  5°; o popup só cando cambian destino, seguinte parada ou ocupación.
+- `StopLayer`: os marcadores constrúense nunha soa tarefa (un só redebuxo do lenzo);
+  só os nomes escritos van por lotes. E os primeiros dezaseis marcadores levaban radio 5
+  mentres o chanzo pedía 7: dous tamaños de punto na mesma pantalla a zoom 16.
+
+### Medido despois
+
+Catro pasos de zoom: **626 / 641 / 689 / 897 ms** (era 2.133–4.055). Abrir o mapa:
+**1.893–2.858 ms**, do que o renderizador vectorial —análise do estilo e primeiro
+pintado, con SwiftShader tamén pintando en CPU— é uns tres cuartos, e a sonda de WebGL2
+200 ms. O orzamento de apertura de 1.200 era o dos tesela raster; vai a 3.000, por riba
+da dispersión, e o de zoom a 1.200 polo mesmo criterio. `pnpm test`: 142 comprobacións,
+unha nova que reclama as tres causas por nome. Consola limpa en 24 cargas frescas.
+
+**Descartado:** `fadeDuration: 0` no renderizador (menos cadros tras cada tesela, a
+cambio de etiquetas que aparecen sen fundido) e saltar a sonda de WebGL2 apoiándose no
+erro do renderizador (a excepción salta en `onAdd`, non onde se crea a capa).

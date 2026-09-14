@@ -109,6 +109,8 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
   onOpenLine,
 }) => {
   const markersRef = useRef<Record<string, L.Marker>>({});
+  /** What each marker was last drawn from, keyed like the markers. */
+  const drawnRef = useRef<Record<string, { icon: string; popup: string }>>({});
   const onOpenLineRef = useRef(onOpenLine);
   onOpenLineRef.current = onOpenLine;
 
@@ -126,6 +128,7 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
       if (!visibleIds.has(id)) {
         markersRef.current[id].remove();
         delete markersRef.current[id];
+        delete drawnRef.current[id];
       }
     });
 
@@ -150,14 +153,24 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
     const t = translations(lang);
     placed.forEach((bus) => {
       const existing = markersRef.current[bus.id];
+      // What the icon and the popup are made of, so a tick that changed neither costs
+      // neither. Every three seconds this rebuilt every bus's icon -- an innerHTML parse,
+      // a DOM swap and a layout each -- and its popup, for a heading that had moved by a
+      // fraction of a degree. Five degrees is under what the chip can show.
+      const iconKey = `${bus.lineNumber}|${bus.lineColor}|${Math.round(bus.bearing / 5) * 5}|${lang}`;
+      const popupKey = `${bus.destination}|${bus.nextStopName}|${bus.occupancy}|${lang}`;
       if (existing) {
         // Markers used to be created once and never refreshed, so heading, next stop
         // and occupancy stayed frozen at whatever they were on first sight.
         existing.setLatLng([bus.currentLat, bus.currentLng]);
-        existing.setIcon(busIcon(bus));
-        existing.setPopupContent(popupNode(bus, onOpenLineRef.current, lang));
-        // setIcon rebuilds the element, and the name lives on the element.
-        existing.getElement()?.setAttribute('aria-label', t.map.busMarker(bus.lineNumber, bus.destination));
+        const drawn = drawnRef.current[bus.id];
+        if (drawn?.icon !== iconKey) {
+          existing.setIcon(busIcon(bus));
+          // setIcon rebuilds the element, and the name lives on the element.
+          existing.getElement()?.setAttribute('aria-label', t.map.busMarker(bus.lineNumber, bus.destination));
+        }
+        if (drawn?.popup !== popupKey) existing.setPopupContent(popupNode(bus, onOpenLineRef.current, lang));
+        drawnRef.current[bus.id] = { icon: iconKey, popup: popupKey };
       } else {
         const marker = L.marker([bus.currentLat, bus.currentLng], {
           icon: busIcon(bus),
@@ -169,6 +182,7 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
         // is worked out, not measured.
         marker.getElement()?.setAttribute('aria-label', t.map.busMarker(bus.lineNumber, bus.destination));
         markersRef.current[bus.id] = marker;
+        drawnRef.current[bus.id] = { icon: iconKey, popup: popupKey };
       }
     });
   }, [map, buses, visibleLineIds, showBuses, lang]);
@@ -178,6 +192,7 @@ export const VehicleLayer: React.FC<VehicleLayerProps> = ({
     () => () => {
       Object.values(markersRef.current).forEach((m: L.Marker) => m.remove());
       markersRef.current = {};
+      drawnRef.current = {};
     },
     [map],
   );

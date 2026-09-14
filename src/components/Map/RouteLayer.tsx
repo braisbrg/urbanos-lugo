@@ -89,6 +89,43 @@ const LANES = 4;
 const SUBJECT_LANE_PX = 6;
 
 /**
+ * Only the vertices a zoom can show, remembered per direction and zoom.
+ *
+ * The geometry ships 26,175 vertices over the 48 directions, about 545 each, drawn from
+ * the road network at a resolution the city fits in 600 px cannot use: at zoom 13 most
+ * of them are under a pixel apart. Leaflet projects every one of them on every zoom and
+ * strokes every one on every redraw, and there are several redraws a zoom step -- its
+ * own, and the one the rebuild asks for. Measured at 6x CPU over four zoom steps, the
+ * routes were the whole of the 2,2 s the main thread was blocked; with them off, the
+ * same stops and buses cost 8 ms.
+ *
+ * Douglas-Peucker at 0.7 px, in the pixel frame of the zoom being drawn, keeps the
+ * shape the eye sees and takes the rest out before the offset and the renderer see it.
+ * The frame is Web Mercator worked out in place -- `map.project` builds two objects a
+ * vertex through the CRS and cost a quarter of the rebuild on its own -- and the
+ * survivors are the original coordinates, picked by index, so nothing is unprojected.
+ * The geometry never changes, so a zoom level visited twice is not simplified twice.
+ */
+const verticesAt = new Map<string, [number, number][]>();
+function verticesFor(key: string, coords: [number, number][], zoom: number): [number, number][] {
+  const cached = verticesAt.get(`${key}@${zoom}`);
+  if (cached) return cached;
+  const scale = 256 * 2 ** zoom;
+  const points = coords.map(([lat, lng], i) => {
+    const sin = Math.sin((lat * Math.PI) / 180);
+    return {
+      x: ((lng + 180) / 360) * scale,
+      y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale,
+      i,
+    };
+  });
+  // LineUtil.simplify only reads x and y, and hands back the same objects it was given.
+  const kept = (L.LineUtil.simplify(points as unknown as L.Point[], 0.7) as unknown as typeof points).map((p) => coords[p.i]);
+  verticesAt.set(`${key}@${zoom}`, kept);
+  return kept;
+}
+
+/**
  * Shift a path sideways by `metres`, perpendicular to its own direction.
  *
  * Each vertex moves along the average of the perpendiculars of the segments meeting
@@ -346,11 +383,27 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     // Metres per screen pixel at this zoom and latitude: what turns a lane or an arrow
     // spacing given in pixels into ground distance, for this draw.
     const metresPerPx = (156543.03 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** zoom;
+    /*
+     * Arrows for the part of the line in view, and again when the view moves.
+     *
+     * Every arrow is a DOM marker, and a line has some two hundred of them at zoom 16 --
+     * of which a phone shows a dozen. Building all of them on every zoom step was the
+     * largest single cost of zooming with a line chosen: measured at 6x CPU, half a
+     * second of the four steps went to placing arrows nobody could see. So only the ones
+     * inside the view plus half a screen are built, and a pan rebuilds that set, which is
+     * a few dozen markers at most.
+     */
     const placeArrows = () => {
+      // A zoom step fires moveend too, with this draw already stale: the rebuild that
+      // follows places the arrows for the new zoom, so there is nothing to do here.
+      if (Math.round(map.getZoom()) !== zoom) return;
+      arrows.clearLayers();
       const subjectLines = new Set(arrowed.map((t) => t.lineId)).size;
       if (zoom < ARROW_MIN_ZOOM || (subjectLines > 1 && zoom < ARROW_MIN_ZOOM_SHARED)) return;
+      const reach = map.getBounds().pad(0.5);
       for (const trace of arrowed) {
         for (const { at, deg } of arrowsAlong(trace.path, trace.poles, ARROW_EVERY_PX * metresPerPx)) {
+          if (!reach.contains(at)) continue;
           arrows.addLayer(
             L.marker(at, {
               icon: arrowIcon(trace.color, trace.weight, deg),
@@ -451,7 +504,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
 
           // Half a lane out from the kerb, then whole lanes; nothing where lanes are off.
           const path = offsetPath(
-            dir.pathCoordinates as [number, number][],
+            verticesFor(`${line.id}/${dirIndex}`, dir.pathCoordinates as [number, number][], zoom),
             (laneOf(line) + 0.5) * (subject ? subjectLaneMetres : laneMetres),
           );
 
@@ -563,9 +616,11 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
     // the stop that was tapped.
     map.on('click', openLinesHere);
     placeArrows();
+    if (arrowed.length) map.on('moveend', placeArrows);
 
     return () => {
       map.off('click', openLinesHere);
+      map.off('moveend', placeArrows);
       arrows.remove();
       group.remove();
       groupRef.current = null;
