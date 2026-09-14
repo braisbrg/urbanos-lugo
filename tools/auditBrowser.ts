@@ -234,8 +234,10 @@ interface Report {
 async function audit(browser: Browser, theme: 'light' | 'dark') {
   const page = await browser.newPage();
   await page.send('Emulation.setDeviceMetricsOverride', VIEW);
+  // The theme under test, and the language the state setups match their buttons in: a
+  // runner's Chrome speaks English, and "filtros|capas" found nothing there.
   await page.onNewDocument(
-    `try { localStorage.setItem('urbanos-lugo-theme', ${JSON.stringify(theme)}); } catch (e) {}`,
+    `try { localStorage.setItem('urbanos-lugo-theme', ${JSON.stringify(theme)}); localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}`,
   );
 
   // The console, per state. Errors and warnings the page logs, and exceptions nobody

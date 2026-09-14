@@ -42,6 +42,10 @@ const budget = (label: string, value: number, max: number, unit = 'ms'): void =>
 async function phonePage(browser: Browser, opts: { cpu?: number; network?: boolean } = {}): Promise<Session> {
   const page = await browser.newPage();
   await page.onNewDocument(PROBE_SOURCE);
+  // The tabs are found by their Galician labels below, so the app is told to speak it,
+  // whatever the browser's own language: on a runner Chrome speaks English, the tab was
+  // "Map", and the map round stopped before it started.
+  await page.onNewDocument("try { localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}");
   await page.send('Emulation.setDeviceMetricsOverride', PHONE);
   await page.send('Emulation.setCPUThrottlingRate', { rate: opts.cpu ?? CPU_THROTTLE });
   if (opts.network !== false) await page.send('Network.emulateNetworkConditions', SLOW_4G);
