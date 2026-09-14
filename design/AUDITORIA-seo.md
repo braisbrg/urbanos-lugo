@@ -1,8 +1,9 @@
 # Auditoría SEO: por que ninguén atopa o sitio, e que facer
 
 Auditoría do 14 de setembro de 2026 sobre <https://braisbrg.github.io/urbanos-lugo/>.
-**Nada disto está feito**: é a lista de cousas para máis adiante, coa medida de cada unha
-para que quen a retome saiba de onde parte e poida comprobar se cambiou.
+**Case nada disto está feito** —só a descrición, ver o punto 4 de «Esta semana»—: é a
+lista de cousas para máis adiante, coa medida de cada unha para que quen a retome saiba de
+onde parte e poida comprobar se cambiou.
 
 Método: o HTML tal e como o serve Pages (`curl`), as cabeceiras, `robots.txt` e
 `sitemap.xml`; o DOM renderizado no navegador cun viewport de 375×812; e tres buscadores
@@ -195,6 +196,9 @@ ferramenta (bloquean a descarga): o que se di deles vén dos títulos da SERP.
 3. **Barra final no sitemap e en `urlForTab`.** Quita os seis 301.
 4. **Descrición ≤ 155 con «non oficial», título con «bus», `og:image` co icono.** Coherente
    coas tres portadas: o que non é oficial dise en todas partes.
+   *Feita a descrición o 14 de setembro de 2026 (`7a7bf3b`): 154 caracteres, empeza por
+   «Non oficial.», igual na `og:description` e no manifest, e `test.ts` compróbao. Quedan o
+   «bus» no título e a `og:image`.*
 5. **Bloque estático na portada** (parágrafo + 24 liñas ligadas). Depende de decidir onde
    vai nunha app a pantalla completa: a proposta é que viva no HTML e a app o substitúa
    ao montar; para Google conta o renderizado, así que as mesmas 24 liñas teñen que

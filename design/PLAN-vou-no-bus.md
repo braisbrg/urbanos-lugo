@@ -1,7 +1,8 @@
 # Plan: a pantalla Ruta en dous estados, e o modo «vou no bus»
 
-Proposta de deseño, 7 de setembro de 2026. **Nada disto está implementado**: é o paso
-previo, para decidir antes de escribir código. `RoutePlannerView.tsx` son 1.108 liñas e é
+Proposta de deseño, 7 de setembro de 2026, escrita **antes de implementar nada**: o paso
+previo, para decidir antes de escribir código. Implementouse entre o 9 e o 13 de setembro;
+o que se entregou, e o que se decidiu non facer, vai ao final, nas notas de cada entrega. `RoutePlannerView.tsx` son 1.108 liñas e é
 o ficheiro máis grande do proxecto, así que convén saber a onde vai antes de abrilo.
 
 O encargo, tal e como quedou acordado: unha vez escollido un plan e subido ao bus, a
