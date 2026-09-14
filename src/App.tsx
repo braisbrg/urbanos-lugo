@@ -65,7 +65,7 @@ function usePersistedIds(
 function MapLoading({ lang }: { lang: Lang }) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex h-[540px] animate-pulse items-center justify-center rounded-xl bg-surface text-body font-medium text-ink-3">
+      <div className="flex h-[540px] animate-pulse items-center justify-center rounded-card bg-surface text-body font-medium text-ink-3">
         {translations(lang).map.loadingMap}
       </div>
     </div>
@@ -365,7 +365,7 @@ export default function App() {
             onClick={() => setActiveTab('info')}
             className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left"
           >
-            <Moon className="h-[18px] w-[18px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+            <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-body font-semibold">
                 {t.nightBanner.closed(firstDepartureTomorrow)}
@@ -381,9 +381,9 @@ export default function App() {
           <button
             onClick={() => setIsNightBannerDismissed(true)}
             aria-label={t.nightBanner.dismiss}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] text-ink-3"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-3"
           >
-            <X className="h-[17px] w-[17px]" strokeWidth={2} aria-hidden="true" />
+            <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
       )}

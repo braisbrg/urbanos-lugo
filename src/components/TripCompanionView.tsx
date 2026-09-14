@@ -1,5 +1,8 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Bus, Check, Footprints, MapPin } from 'lucide-react';
+import { Provenance } from './ui/Provenance';
+import { LineBadge } from './ui/LineBadge';
+import { SectionLabel } from './ui/SectionLabel';
 import { Lang, translations } from '../i18n';
 import { TripCompanion, useTripPosition } from '../hooks/useTripCompanion';
 import { ALARM_RADIUS_M } from '../services/stopAlarm';
@@ -11,7 +14,7 @@ import { currentLeg, legTimes, shouldAskIfMissed, tripPhase, tripProgress } from
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 
 /** See the map block below for the numbers. */
-const MAP_HEIGHT = 'h-[37vh] min-h-[280px] max-h-[420px]';
+const MAP_HEIGHT = 'h-[37vh] min-h-[280px] max-h-[420px] lg:min-h-[360px]';
 
 /** How often the minutes in the header are recounted against the clock. */
 const TICK_MS = 15_000;
@@ -21,20 +24,6 @@ interface TripCompanionViewProps {
   lang: Lang;
 }
 
-/** The two shapes the whole app uses for where a time came from. */
-const Provenance: React.FC<{ precision: 'published' | 'estimated'; lang: Lang }> = ({ precision, lang }) => {
-  const t = translations(lang);
-  return precision === 'published' ? (
-    <span className="inline-flex items-center gap-1.5 rounded bg-official px-2 py-1 text-on-official">
-      <Check className="h-2.5 w-2.5 shrink-0" strokeWidth={3.4} aria-hidden="true" />
-      <span className="tnum text-label font-semibold tracking-[0.05em]">{t.common.officialBadge}</span>
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1.5 rounded border-[1.5px] border-dashed border-estimated-line px-[7px] py-[3px] text-estimated">
-      <span className="tnum text-label font-semibold tracking-[0.05em]">{t.common.estimatedBadge}</span>
-    </span>
-  );
-};
 
 /**
  * "Vou no bus": the screen for the ride itself.
@@ -90,7 +79,12 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
   const headingRef = useRef<HTMLHeadingElement>(null);
   const active = trip !== null;
   useEffect(() => {
-    if (active) headingRef.current?.focus();
+    if (!active) return;
+    headingRef.current?.focus();
+    // The planner scrolls its column to the answer before this screen replaces it, and
+    // the scroll position carries over: the ride opened 76 px down, with the stop name
+    // cut off at the top. Start at the top, which is where the answer is.
+    headingRef.current?.closest('main')?.scrollTo({ top: 0 });
   }, [active]);
 
   if (!trip) return null;
@@ -110,6 +104,9 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
     phase === 'walking' && trip.plan.segments[lastSegment]?.type === 'walk' ? lastSegment : leg;
   const minutesToAlighting =
     times.arrivalMinutes !== null ? Math.round(times.arrivalMinutes - minutesNow(now)) : null;
+  // The same arithmetic for the bus being waited for. Past the printed minute it says
+  // nothing: the "did you catch it?" prompt is what speaks then.
+  const minutesToDeparture = Math.round(times.departureMinutes - minutesNow(now));
 
   // Ticks mean "the bus took you past this"; standing at the boarding pole is not that,
   // so while waiting the list is plain and only the alighting stop is marked.
@@ -125,8 +122,21 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
       </h2>
 
       {/* The one thing that matters, first and biggest: where you get off, and how far
-          that is in stops -- counted -- and in minutes -- the timetable's, labelled. */}
-      <div className="space-y-4 rounded-xl border border-edge bg-bg p-6 shadow-sm">
+          that is in stops -- counted -- and in minutes -- the timetable's, labelled.
+          While the alert stands the whole card turns: it is the one moment this screen
+          has to be read from across the aisle, and a strip between two rows was not. */}
+      <div
+        className={`space-y-4 rounded-card border p-6 shadow-sm ${
+          phase === 'alighting' ? 'border-warn bg-warn/40' : 'border-edge bg-bg'
+        }`}
+      >
+        {/* The alert, in words, when it has rung. The same sentence the board uses. */}
+        {phase === 'alighting' && segment?.toStop && (
+          <p role="alert" className="rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
+            {t.arrivals.alarmFired(segment.toStop.name)}
+          </p>
+        )}
+
         {phase === 'walking' ? (
           <div>
             <span className="text-label font-bold uppercase tracking-wider text-ink-2">
@@ -147,21 +157,27 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
             <span className="text-label font-bold uppercase tracking-wider text-ink-2">{t.planner.board}</span>
             <p className="mt-1 text-title font-bold leading-tight text-ink">{segment?.fromStop?.name}</p>
             {segment?.line && (
-              <div className="mt-3 flex flex-wrap items-center gap-2.5">
-                <span
-                  className="tnum flex h-9 min-w-9 shrink-0 items-center justify-center rounded-[7px] px-1.5 text-body font-bold text-white"
-                  style={{ backgroundColor: segment.line.color }}
-                >
-                  {segment.line.number}
-                </span>
-                <span className="flex items-baseline gap-2">
+              <>
+                {/* One line for the line, the clock and how far off it is; the chip on its
+                    own line under them. Everything on one wrapping row put the badge alone
+                    on a line and folded the chip in two, at 375 px wide. */}
+                <div className="mt-3 flex items-center gap-2.5">
+                  <LineBadge number={segment.line.number} color={segment.line.color} size="md" />
                   <span className="sr-only">{t.planner.departureLabel}</span>
                   <span className="tnum text-emph font-semibold text-ink">
                     {times.none ? '—' : formatMinutes(times.departureMinutes)}
                   </span>
-                  {!times.none && <Provenance precision={times.precision} lang={lang} />}
-                </span>
-              </div>
+                  {/* How long that is from now, so nobody subtracts against the clock. */}
+                  {!times.none && minutesToDeparture >= 0 && (
+                    <span className="tnum text-body text-ink-3">{t.companion.inMinutes(minutesToDeparture)}</span>
+                  )}
+                </div>
+                {!times.none && (
+                  <div className="mt-2">
+                    <Provenance precision={times.precision} lang={lang} />
+                  </div>
+                )}
+              </>
             )}
             {times.none && <p className="mt-2 text-body font-semibold text-warn-ink">{t.companion.lastOneGone}</p>}
           </div>
@@ -181,19 +197,21 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
                       ? `~${minutesToAlighting} ${t.common.min}`
                       : t.common.overdue(-minutesToAlighting)}
                   </span>
+                  <span className="text-ink-3" aria-hidden="true">·</span>
                   <span className="tnum text-body text-ink-3">{formatMinutes(times.arrivalMinutes ?? 0)}</span>
                   <Provenance precision={times.arrivalPrecision} lang={lang} />
                 </span>
               )}
             </div>
+            {/* The next pole, here as well as in the list: on a 375x812 the list starts
+                703 px down, and this is the one row of it that gets looked for. */}
+            {nextStop && !nextStop.isAlighting && (
+              <p className="mt-3">
+                <span className="block text-label font-bold uppercase tracking-wider text-ink-3">{t.map.nextStop}</span>
+                <span className="block text-body font-semibold text-ink">{nextStop.name}</span>
+              </p>
+            )}
           </div>
-        )}
-
-        {/* The alert, in words, when it has rung. The same sentence the board uses. */}
-        {phase === 'alighting' && segment?.toStop && (
-          <p role="alert" className="rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
-            {t.arrivals.alarmFired(segment.toStop.name)}
-          </p>
         )}
 
         {/* Asked, not guessed: the printed departure plus three minutes has gone by and the
@@ -207,14 +225,14 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
               <button
                 type="button"
                 onClick={companion.boarded}
-                className="flex min-h-11 items-center justify-center rounded-[10px] bg-accent px-3 text-body font-semibold text-on-accent"
+                className="flex min-h-11 items-center justify-center rounded-control bg-accent px-3 text-body font-semibold text-on-accent"
               >
                 {t.companion.yesOnIt}
               </button>
               <button
                 type="button"
                 onClick={companion.missed}
-                className="flex min-h-11 items-center justify-center rounded-[10px] border border-edge bg-bg px-3 text-body font-semibold text-ink"
+                className="flex min-h-11 items-center justify-center rounded-control border border-edge bg-bg px-3 text-body font-semibold text-ink"
               >
                 {t.companion.noMissedIt}
               </button>
@@ -222,10 +240,36 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
           </div>
         )}
 
-        {/* What the phone is doing, in one line: the position is the only measurement
-            here, so its absence is said rather than hidden. Nothing left to watch for
-            once the last bus is behind you. */}
-        {phase !== 'walking' && (
+      </div>
+
+      {/* The plan, drawn, framed on the leg being made, with the reader on it.
+          As tall as the answer above it: at 200 px it was the smallest block on a screen
+          where it carries as much as the others -- 37vh is 300 on a 375x812, held between
+          280 and 420 so a short phone and a tall desktop both get a map and not a strip. */}
+      <div>
+        <SectionLabel icon={MapPin}>{t.planner.routeMap}</SectionLabel>
+        <Suspense fallback={<div className={`${MAP_HEIGHT} w-full animate-pulse rounded-card bg-surface`} />}>
+          <RouteMap
+            plan={trip.plan}
+            lang={lang}
+            origin={trip.origin ?? undefined}
+            destination={trip.destination ?? undefined}
+            focusSegment={focusSegment}
+            position={fix}
+            walkPaths={walkPaths}
+            className={`z-0 ${MAP_HEIGHT} w-full overflow-hidden rounded-card border border-edge`}
+          />
+        </Suspense>
+      </div>
+
+      {/* The phone, not the trip: whether it has a position and whether it will stay
+          awake. These sat inside the card above and read as part of the answer -- three
+          lines of small print between the count and the map. Under the map they are what
+          they are, the instrument's state beside the thing it draws, and the card is only
+          the answer. Nothing to watch for once the last bus is behind you. */}
+      {phase !== 'walking' && (
+        <div className="space-y-2 px-1">
+          {/* The position is the only measurement here, so its absence is said, not hidden. */}
           <p className="text-label text-ink-3">
             {gpsError === 'denied'
               ? t.arrivals.alarmDenied
@@ -235,61 +279,34 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
                   ? t.planner.locating
                   : `${t.companion.watching(ALARM_RADIUS_M)} ${t.arrivals.alarmForeground}`}
           </p>
-        )}
-
-        {/* The one answer to "the phone in the pocket": a locked phone stops getting
-            positions, so the switch keeps the screen on for the ride. Off by default
-            because it costs battery, said in as many words; absent, not disabled, where
-            the browser has no such thing. Written from the reader's side -- the words
-            "wake lock" appear nowhere. */}
-        {phase !== 'walking' && companion.keepAwake && (
-          <label className="flex min-h-11 cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              className="h-5 w-5 shrink-0 accent-accent"
-              checked={companion.keepAwake.on}
-              onChange={(e) => companion.keepAwake?.set(e.target.checked)}
-            />
-            <span className="text-body">
-              {t.companion.keepAwake}
-              <span className="block text-label text-ink-3">{t.companion.keepAwakeCost}</span>
-            </span>
-          </label>
-        )}
-      </div>
-
-      {/* The plan, drawn, framed on the leg being made, with the reader on it.
-          As tall as the answer above it: at 200 px it was the smallest block on a screen
-          where it carries as much as the others -- 37vh is 300 on a 375x812, held between
-          280 and 420 so a short phone and a tall desktop both get a map and not a strip. */}
-      <div>
-        <span className="mb-2 flex items-center gap-1.5 text-label font-bold uppercase tracking-wider text-ink-2">
-          <MapPin className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-          {t.planner.routeMap}
-        </span>
-        <Suspense fallback={<div className={`${MAP_HEIGHT} w-full animate-pulse rounded-xl bg-surface`} />}>
-          <RouteMap
-            plan={trip.plan}
-            lang={lang}
-            origin={trip.origin ?? undefined}
-            destination={trip.destination ?? undefined}
-            focusSegment={focusSegment}
-            position={fix}
-            walkPaths={walkPaths}
-            className={`z-0 ${MAP_HEIGHT} w-full overflow-hidden rounded-xl border border-edge`}
-          />
-        </Suspense>
-      </div>
+          {/* The one answer to "the phone in the pocket": a locked phone stops getting
+              positions, so the switch keeps the screen on for the ride. Off by default
+              because it costs battery, said in as many words; absent, not disabled, where
+              the browser has no such thing. Written from the reader's side -- the words
+              "wake lock" appear nowhere. */}
+          {companion.keepAwake && (
+            <label className="flex min-h-11 cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                className="h-5 w-5 shrink-0 accent-accent"
+                checked={companion.keepAwake.on}
+                onChange={(e) => companion.keepAwake?.set(e.target.checked)}
+              />
+              <span className="text-body">
+                {t.companion.keepAwake}
+                <span className="block text-label text-ink-3">{t.companion.keepAwakeCost}</span>
+              </span>
+            </label>
+          )}
+        </div>
+      )}
 
       {/* The stops still to come, which is the part that replaces looking out of the
           window. Ticked against the GPS, never against the clock. */}
       {progress && progress.stops.length > 0 && phase !== 'walking' && (
         <div>
-          <span className="mb-2 flex items-center gap-1.5 text-label font-bold uppercase tracking-wider text-ink-2">
-            <Bus className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-            {t.planner.viaStops}
-          </span>
-          <ol className="divide-y divide-line rounded-xl border border-edge bg-bg">
+          <SectionLabel icon={Bus}>{t.planner.viaStops}</SectionLabel>
+          <ol className="divide-y divide-line rounded-card border border-edge bg-bg">
             {progress.stops.map((stop) => {
               const passed = riding && stop.passed;
               const isNext = stop.id === nextStop?.id;
@@ -330,11 +347,11 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
         <button
           type="button"
           onClick={companion.finish}
-          className={`flex min-h-12 w-full items-center justify-center rounded-[10px] px-4 text-body font-semibold ${
+          className={`flex min-h-12 w-full items-center justify-center rounded-control px-4 text-body font-semibold ${
             phase === 'walking' ? 'bg-accent text-on-accent' : 'border border-edge bg-bg text-ink'
           }`}
         >
-          {t.companion.finish}
+          {phase === 'walking' ? t.companion.arrivedDone : t.companion.finish}
         </button>
       </div>
     </div>

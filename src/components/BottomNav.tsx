@@ -40,7 +40,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, t
             }`}
           >
             <span className="relative">
-              <Icon className="h-[21px] w-[21px]" strokeWidth={2} aria-hidden="true" />
+              <Icon className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
               {/* The trip goes on while you look at a line or the map; this is the one
                   place that says so, and the way back to it. */}
               {tripActive && id === 'plan' && (

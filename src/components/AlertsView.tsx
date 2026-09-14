@@ -81,7 +81,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Night service information banner */}
       {isNightWindow && (
-        <div className="p-4 rounded-xl bg-surface border border-edge shadow-sm flex items-start gap-3">
+        <div className="p-4 rounded-card bg-surface border border-edge shadow-sm flex items-start gap-3">
           <Clock className="w-5 h-5 text-ink-2 shrink-0 mt-0.5" />
           <div className="text-label">
             <div className="text-body font-semibold">
@@ -114,7 +114,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
             id="sync-alerts-btn"
             onClick={() => refresh(true)}
             disabled={isSyncing || cooldown > 0}
-            className={`flex h-11 shrink-0 items-center gap-1.5 self-start rounded-[9px] px-4 text-body font-semibold sm:self-auto ${
+            className={`flex h-11 shrink-0 items-center gap-1.5 self-start rounded-control px-4 text-body font-semibold sm:self-auto ${
               cooldown > 0
                 ? 'cursor-not-allowed border border-edge bg-surface text-ink-3'
                 : 'bg-accent hover:bg-accent text-on-accent disabled:opacity-50'
@@ -152,7 +152,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
             mistakes, and it was the branch without the warning. */}
         {liveAlerts.length > 0 && (snapshotAt || unreachable) && (
           <p
-            className={`rounded-xl border px-4 py-3 text-label leading-relaxed ${
+            className={`rounded-card border px-4 py-3 text-label leading-relaxed ${
               stale ? 'border-warn bg-warn/60 text-warn-ink' : 'border-edge bg-surface text-ink-2'
             }`}
           >
@@ -170,7 +170,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
               return (
                 <div
                   key={alert.id}
-                  className={`p-5 rounded-xl border transition-all ${
+                  className={`p-5 rounded-card border transition-all ${
                     isWarning ? 'bg-warn/60 border-warn' : 'bg-surface/60 border-edge'
                   }`}
                 >
@@ -246,11 +246,11 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
             })}
           </div>
         ) : (
-          <div className="p-5 rounded-xl bg-surface border border-edge flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-5 rounded-card bg-surface border border-edge flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
               {/* A green tick is a claim. It only goes on the state we actually verified. */}
               <div
-                className={`shrink-0 rounded-lg p-2 mt-0.5 ${
+                className={`shrink-0 rounded-control p-2 mt-0.5 ${
                   unreachable ? 'bg-surface text-ink-2 border border-edge' : 'bg-official text-on-official'
                 }`}
               >
@@ -293,7 +293,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
               href="https://buslugo.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-11 shrink-0 items-center justify-center rounded-[9px] border border-edge px-4 text-body font-semibold text-accent"
+              className="flex h-11 shrink-0 items-center justify-center rounded-control border border-edge px-4 text-body font-semibold text-accent"
             >
               {t.fares.checkOnBuslugo} &rarr;
             </a>
@@ -321,7 +321,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
               return (
                 <div
                   key={alert.id}
-                  className={`p-5 rounded-xl border transition-all ${
+                  className={`p-5 rounded-card border transition-all ${
                     isWarning ? 'bg-warn/60 border-warn' : 'bg-surface border-edge'
                   }`}
                 >
@@ -396,7 +396,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
             </h2>
             <p className="text-label text-ink-3 mt-0.5">{t.fares.newsSubtitle}</p>
           </div>
-          <ul className="divide-y divide-line rounded-xl border border-edge bg-surface/60">
+          <ul className="divide-y divide-line rounded-card border border-edge bg-surface/60">
             {councilNews.map((item) => (
               <li key={item.id} className="p-4 sm:p-5">
                 <span className="text-label font-bold uppercase tracking-wider text-ink-3">

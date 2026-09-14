@@ -7,6 +7,7 @@ import { Lang, translations } from '../i18n';
 // Leaflet is heavy and this screen opens cold: the map arrives only once you ask to be
 // located, and then only once it is actually on screen.
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
+import { LineBadge } from './ui/LineBadge';
 
 interface StopHomeProps {
   favoriteStopIds: string[];
@@ -116,20 +117,20 @@ export const StopHome: React.FC<StopHomeProps> = ({
   return (
     <div className="mx-auto w-full max-w-3xl px-3.5 pb-8 pt-4" data-tick={tick}>
       <h2 className="flex items-center gap-2 text-title font-semibold tracking-[-0.012em]">
-        <Star className="h-[21px] w-[21px] shrink-0 text-warn-ink" strokeWidth={1.8} fill="currentColor" aria-hidden="true" />
+        <Star className="h-5 w-5 shrink-0 text-warn-ink" strokeWidth={1.8} fill="currentColor" aria-hidden="true" />
         {t.stopHome.saved}
       </h2>
 
       {saved.length === 0 ? (
-        <div className="mt-4 rounded-xl border border-dashed border-edge p-5">
+        <div className="mt-4 rounded-card border border-dashed border-edge p-5">
           <p className="text-body font-semibold">{t.stopHome.emptyTitle}</p>
           <p className="mt-1.5 text-body leading-relaxed text-ink-2">{t.stopHome.emptyBody}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               onClick={onOpenQrScanner}
-              className="flex h-11 items-center gap-2 rounded-[10px] bg-accent px-4 text-body font-semibold text-on-accent"
+              className="flex h-11 items-center gap-2 rounded-control bg-accent px-4 text-body font-semibold text-on-accent"
             >
-              <QrCode className="h-[18px] w-[18px] shrink-0" strokeWidth={2} aria-hidden="true" />
+              <QrCode className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
               {t.stopHome.scan}
             </button>
             {/* A link, not a second chip.
@@ -157,7 +158,7 @@ export const StopHome: React.FC<StopHomeProps> = ({
             <li key={stop.id}>
               <button
                 onClick={() => onSelectStop(stop)}
-                className="w-full rounded-xl border border-edge bg-surface p-3.5 text-left"
+                className="w-full rounded-card border border-edge bg-surface p-3.5 text-left"
               >
                 <span className="flex items-baseline justify-between gap-2">
                   <span title={stop.name} className="truncate text-emph font-semibold">
@@ -204,7 +205,7 @@ export const StopHome: React.FC<StopHomeProps> = ({
       {savedLines.length > 0 && (
         <section className="mt-7">
           <h2 className="flex items-center gap-2 text-emph font-semibold">
-            <Route className="h-[19px] w-[19px] shrink-0 text-accent" strokeWidth={1.8} aria-hidden="true" />
+            <Route className="h-4.5 w-4.5 shrink-0 text-accent" strokeWidth={1.8} aria-hidden="true" />
             {t.stopHome.savedLines}
           </h2>
           <ul className="mt-2 flex flex-col gap-1.5">
@@ -213,14 +214,9 @@ export const StopHome: React.FC<StopHomeProps> = ({
                 <button
                   onClick={() => onSelectLine(line)}
                   style={{ '--line': line.color } as React.CSSProperties}
-                  className="tint tint-edge tint-strong flex w-full items-center gap-3 rounded-[10px] border px-2.5 py-2 text-left"
+                  className="tint tint-edge tint-strong flex w-full items-center gap-3 rounded-control border px-2.5 py-2 text-left"
                 >
-                  <span
-                    className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-[7px] text-body font-bold text-white"
-                    style={{ backgroundColor: line.color }}
-                  >
-                    {line.number}
-                  </span>
+                  <LineBadge number={line.number} color={line.color} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-body font-semibold" title={line.name}>
                       {line.name}
@@ -252,7 +248,7 @@ export const StopHome: React.FC<StopHomeProps> = ({
         <>
           <div className="mt-7 flex items-center gap-3">
             <h2 className="flex flex-1 items-center gap-2 text-emph font-semibold">
-              <History className="h-[19px] w-[19px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+              <History className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
               {t.stopHome.recent}
             </h2>
             <button onClick={onClearRecent} className="h-11 px-2 text-label font-medium text-ink-2 underline">
@@ -268,7 +264,7 @@ export const StopHome: React.FC<StopHomeProps> = ({
                 <li key={stop.id}>
                   <button
                     onClick={() => onSelectStop(stop)}
-                    className="flex w-full items-center gap-3 rounded-[10px] border border-edge px-3.5 py-3 text-left"
+                    className="flex w-full items-center gap-3 rounded-control border border-edge px-3.5 py-3 text-left"
                   >
                     <span className="min-w-0 flex-1">
                       <span title={stop.name} className="block truncate text-body font-semibold">
@@ -286,12 +282,12 @@ export const StopHome: React.FC<StopHomeProps> = ({
       )}
 
       <h2 className="mt-7 flex items-center gap-2 text-emph font-semibold">
-        <Compass className="h-[19px] w-[19px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+        <Compass className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
         {t.stopHome.near}
       </h2>
 
       {locatedAt && (
-        <div className="mt-2.5 overflow-hidden rounded-[10px] border border-edge">
+        <div className="mt-2.5 overflow-hidden rounded-control border border-edge">
           <LazyNearbyMiniMap
             centre={{
               lat: locatedAt[0],
@@ -312,9 +308,9 @@ export const StopHome: React.FC<StopHomeProps> = ({
           <button
             onClick={locate}
             disabled={locating}
-            className="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-edge bg-surface text-body font-semibold text-ink-2 disabled:opacity-60"
+            className="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-control border border-edge bg-surface text-body font-semibold text-ink-2 disabled:opacity-60"
           >
-            <Compass className="h-[17px] w-[17px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            <Compass className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             {locating ? t.stopHome.locating : t.stopHome.locate}
           </button>
           {locationError && (
@@ -329,7 +325,7 @@ export const StopHome: React.FC<StopHomeProps> = ({
             <li key={stop.id}>
               <button
                 onClick={() => onSelectStop(stop)}
-                className="flex w-full items-center gap-3 rounded-[10px] border border-edge px-3.5 py-3 text-left"
+                className="flex w-full items-center gap-3 rounded-control border border-edge px-3.5 py-3 text-left"
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-body font-semibold">{stop.name}</span>

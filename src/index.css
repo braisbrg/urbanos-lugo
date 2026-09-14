@@ -154,6 +154,10 @@
 }
 
 @theme inline {
+  /* Two radii for the whole app: a card and a control. Four values -- 8, 9, 10 and 12 px
+     -- were in use for the same things, 120 times, with no rule deciding which. */
+  --radius-card: 0.75rem;
+  --radius-control: 0.625rem;
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
   --color-line: var(--c-line);

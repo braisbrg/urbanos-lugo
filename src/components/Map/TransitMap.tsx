@@ -270,7 +270,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * place; the colour only has to say which one is on.
    */
   const presetButtonClass = (active: boolean) =>
-    `flex min-h-11 items-center justify-center rounded-[9px] px-2.5 py-1.5 text-center text-label font-semibold ${
+    `flex min-h-11 items-center justify-center rounded-control px-2.5 py-1.5 text-center text-label font-semibold ${
       active ? 'bg-accent text-on-accent shadow-xs' : 'border border-edge bg-surface text-ink-2'
     }`;
   // The list has to agree with the banner above it. It used to offer all twenty-four
@@ -709,7 +709,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           </div>
 
           {/* Header Card with Telemetry */}
-          <div className="bg-bg rounded-xl p-4 shadow-sm border border-edge">
+          <div className="bg-bg rounded-card p-4 shadow-sm border border-edge">
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-line">
               <div>
                 <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-1.5">
@@ -737,7 +737,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 onClick={handleLocateUser}
                 disabled={isLocating}
                 aria-pressed={isFollowing}
-                className={`flex h-11 items-center justify-center gap-1.5 rounded-[9px] px-3.5 text-label font-bold shadow-xs transition-colors disabled:opacity-50 ${
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-control px-3.5 text-label font-bold shadow-xs transition-colors disabled:opacity-50 ${
                   isFollowing ? 'bg-surface text-ink border border-accent' : 'bg-accent text-on-accent'
                 }`}
               >
@@ -752,7 +752,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               <button
                 id="btn-map-center"
                 onClick={handleCenterLugo}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-[9px] px-3.5 bg-surface text-label font-bold text-ink-2 border border-edge transition-colors"
+                className="flex h-11 items-center justify-center gap-1.5 rounded-control px-3.5 bg-surface text-label font-bold text-ink-2 border border-edge transition-colors"
               >
                 {t.map.centerLugo}
               </button>
@@ -766,7 +766,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
 
           {/* Filter Presets Panel. First of the panels on a phone, so the map has its
               own controls directly under it rather than past the telemetry card. */}
-          <div className="order-first bg-bg rounded-xl p-3.5 shadow-sm border border-edge lg:order-none">
+          <div className="order-first bg-bg rounded-card p-3.5 shadow-sm border border-edge lg:order-none">
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.quickFilters}
             </span>
@@ -799,13 +799,13 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               ))}
             </div>
             {filterPreset === 'stop' && linesHereStop && (
-              <div className="mt-2.5 rounded-[10px] border border-accent bg-accent/10 p-3">
+              <div className="mt-2.5 rounded-control border border-accent bg-accent/10 p-3">
                 <p className="text-label leading-relaxed text-ink">
                   {t.map.aroundStopActive(linesHereStop.name, AROUND_STOP_RADIUS_M)}
                 </p>
                 <button
                   onClick={() => handlePresetFilter('all')}
-                  className="mt-2 flex h-9 items-center rounded-[8px] border border-edge bg-bg px-3 text-label font-semibold text-ink-2"
+                  className="mt-2 flex h-9 items-center rounded-control border border-edge bg-bg px-3 text-label font-semibold text-ink-2"
                 >
                   {t.map.aroundStopClear}
                 </button>
@@ -816,7 +816,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           {/* Which lines are actually within walking distance. This was computed and
               then thrown away, so "preto de min" gave no way to see what was nearby. */}
           {filterPreset === 'nearby' && nearbyLinesList.length > 0 && (
-            <div className="bg-bg rounded-xl p-3.5 shadow-sm border border-edge">
+            <div className="bg-bg rounded-card p-3.5 shadow-sm border border-edge">
               <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
                 {t.map.nearbyTitle(NEARBY_RADIUS_M)}
               </span>
@@ -844,7 +844,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           )}
 
           {/* Layer Toggles */}
-          <div className="bg-bg rounded-xl p-3.5 shadow-sm border border-edge">
+          <div className="bg-bg rounded-card p-3.5 shadow-sm border border-edge">
             <span className="text-label font-bold text-ink-3 uppercase tracking-widest block mb-2">
               {t.map.layers}
             </span>
@@ -852,7 +852,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               <button
                 onClick={() => setShowStops(!showStops)}
                 aria-pressed={showStops}
-                className={`h-11 rounded-[9px] font-semibold flex items-center justify-center gap-1 transition-all ${
+                className={`h-11 rounded-control font-semibold flex items-center justify-center gap-1 transition-all ${
                   showStops ? 'bg-bg text-ink shadow-xs' : 'text-ink-3'
                 }`}
               >
@@ -863,7 +863,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               <button
                 onClick={() => setShowBuses(!showBuses)}
                 aria-pressed={showBuses}
-                className={`h-11 rounded-[9px] font-semibold flex items-center justify-center gap-1 transition-all ${
+                className={`h-11 rounded-control font-semibold flex items-center justify-center gap-1 transition-all ${
                   showBuses ? 'bg-bg text-ink shadow-xs' : 'text-ink-3'
                 }`}
               >
@@ -874,7 +874,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               <button
                 onClick={() => setShowRoutes(!showRoutes)}
                 aria-pressed={showRoutes}
-                className={`h-11 rounded-[9px] font-semibold flex items-center justify-center gap-1 transition-all ${
+                className={`h-11 rounded-control font-semibold flex items-center justify-center gap-1 transition-all ${
                   showRoutes ? 'bg-bg text-ink shadow-xs' : 'text-ink-3'
                 }`}
               >
@@ -885,7 +885,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
           </div>
 
           {/* Lines Selector List */}
-          <div className="bg-bg rounded-xl p-3.5 shadow-sm border border-edge">
+          <div className="bg-bg rounded-card p-3.5 shadow-sm border border-edge">
             <div className="flex items-center justify-between mb-2">
               <span className="text-label font-bold text-ink-3 uppercase tracking-widest">
                 {t.map.linesList}
@@ -899,7 +899,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                   setFilterPreset('all');
                 }}
                 aria-pressed={pickedLineIds.length === 0}
-                className={`flex h-11 min-w-11 items-center justify-center rounded-[9px] px-3 text-label font-semibold ${
+                className={`flex h-11 min-w-11 items-center justify-center rounded-control px-3 text-label font-semibold ${
                   pickedLineIds.length === 0
                     ? 'bg-surface text-accent'
                     : 'text-ink-3 hover:text-ink'
@@ -915,7 +915,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
                 return (
                   <div
                     key={line.id}
-                    className={`flex items-stretch gap-1 rounded-[9px] text-label transition-all border ${
+                    className={`flex items-stretch gap-1 rounded-control text-label transition-all border ${
                       isSelected
                         ? 'bg-surface border-accent font-bold shadow-xs'
                         : 'bg-surface border-line text-ink-2'
@@ -976,7 +976,7 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               a `vh` line first for anything too old to know the unit. The card, the
               border and the fixed height all come back at `lg`, where there is room for
               a genuine two-column layout. */}
-          <div className="h-map-viewport relative z-0 w-full overflow-hidden bg-surface sm:rounded-xl sm:border sm:border-edge sm:shadow-sm">
+          <div className="h-map-viewport relative z-0 w-full overflow-hidden bg-surface sm:rounded-card sm:border sm:border-edge sm:shadow-sm">
             <div ref={mapContainerRef} className="w-full h-full" />
 
             {/* Route, Stop, and Vehicle Layers */}

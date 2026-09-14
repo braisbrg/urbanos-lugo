@@ -78,7 +78,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
             </div>
 
             {/* Sub-tabs for Stops & Lines */}
-            <div className="flex rounded-lg bg-surface/80 p-1">
+            <div className="flex rounded-control bg-surface/80 p-1">
               <button
                 onClick={() => setActiveSubTab('stops')}
                 className={`flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-label font-bold transition-all ${
@@ -119,7 +119,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                   favoriteStops.map((stop) => (
                     <div
                       key={stop.id}
-                      className="p-3.5 rounded-lg border border-edge hover:border-accent hover:bg-surface/40 transition-all flex items-center justify-between gap-3 group bg-bg shadow-xs"
+                      className="p-3.5 rounded-control border border-edge hover:border-accent hover:bg-surface/40 transition-all flex items-center justify-between gap-3 group bg-bg shadow-xs"
                     >
                       <button
                         type="button"
@@ -197,7 +197,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                   favoriteLines.map((line) => (
                     <div
                       key={line.id}
-                      className="p-3.5 rounded-lg border border-edge hover:border-accent hover:bg-surface/40 transition-all flex items-center justify-between gap-3 group bg-bg shadow-xs"
+                      className="p-3.5 rounded-control border border-edge hover:border-accent hover:bg-surface/40 transition-all flex items-center justify-between gap-3 group bg-bg shadow-xs"
                     >
                       <button
                         type="button"

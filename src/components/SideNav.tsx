@@ -69,11 +69,11 @@ export const SideNav: React.FC<SideNavProps> = ({
               key={id}
               onClick={() => setActiveTab(id)}
               aria-current={on ? 'page' : undefined}
-              className={`flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body ${
+              className={`flex h-11 items-center gap-3 rounded-control px-3 text-left text-body ${
                 on ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
               }`}
             >
-              <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
+              <Icon className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
               <span className="flex-1">{label}</span>
               {tripActive && id === 'plan' && (
                 <>
@@ -98,14 +98,14 @@ export const SideNav: React.FC<SideNavProps> = ({
             onClick={() => setActiveTab(id)}
             aria-current={activeTab === id ? 'page' : undefined}
             aria-label={badge > 0 ? `${label} (${badge})` : undefined}
-            className={`flex h-11 items-center gap-3 rounded-[9px] px-3 text-left text-body ${
+            className={`flex h-11 items-center gap-3 rounded-control px-3 text-left text-body ${
               activeTab === id ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
             }`}
           >
-            <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            <Icon className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1">{label}</span>
             {badge > 0 && (
-              <span className="tnum rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
+              <span className="tnum rounded-control bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
                 {badge}
               </span>
             )}
@@ -116,7 +116,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       <div className="mt-auto flex flex-col gap-3 border-t border-line p-3.5">
         <div>
           <div className="mb-1.5 flex items-center gap-2 px-1 text-label text-ink-3">
-            <Moon className="h-[15px] w-[15px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            <Moon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.menu.theme}
           </div>
           {/* Named groups, as in the menu: the heading beside them is only for the eye. */}
@@ -138,7 +138,7 @@ export const SideNav: React.FC<SideNavProps> = ({
 
         <div>
           <div className="mb-1.5 flex items-center gap-2 px-1 text-label text-ink-3">
-            <Globe className="h-[15px] w-[15px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            <Globe className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.menu.language}
           </div>
           <div role="group" aria-label={t.menu.language} className="flex gap-1">

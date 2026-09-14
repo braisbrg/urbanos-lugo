@@ -127,8 +127,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     // any region, so a screen reader jumping by landmark skipped straight past it.
     <header ref={boxRef} className="relative border-b border-line bg-bg px-3.5 py-3 lg:px-6">
       <div className="flex items-center gap-2">
-        <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-[10px] border border-edge bg-surface pl-3">
-          <Search className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+        <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-control border border-edge bg-surface pl-3">
+          <Search className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           <input
             // Named so the empty state of the stops screen can send you here — it used
             // to point at this field in words and do nothing when pressed.
@@ -155,7 +155,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-3"
               aria-label={t.search.clear}
             >
-              <X className="h-[17px] w-[17px]" strokeWidth={2} aria-hidden="true" />
+              <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
             </button>
           )}
           <button
@@ -165,7 +165,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             title={t.favourites.title}
           >
             <Star
-              className={`h-[19px] w-[19px] ${savedCount > 0 ? 'text-warn-ink' : ''}`}
+              className={`h-4.5 w-4.5 ${savedCount > 0 ? 'text-warn-ink' : ''}`}
               strokeWidth={1.8}
               fill={savedCount > 0 ? 'currentColor' : 'none'}
               aria-hidden="true"
@@ -177,12 +177,12 @@ export const TopBar: React.FC<TopBarProps> = ({
             aria-label={t.search.qr}
             title={t.search.qr}
           >
-            <QrCode className="h-[19px] w-[19px]" strokeWidth={2} aria-hidden="true" />
+            <QrCode className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
         <button
           onClick={onOpenMenu}
-          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[10px] border border-edge bg-surface text-ink-2 lg:hidden"
+          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-control border border-edge bg-surface text-ink-2 lg:hidden"
           aria-label={t.menu.open}
         >
           <Menu className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
@@ -205,7 +205,7 @@ export const TopBar: React.FC<TopBarProps> = ({
            this box for the first time, and on a 6x-throttled CPU the 15 px blur was 80 to
            100 ms of that one long task -- 302 ms as shipped, 208 with this shadow, 226 with
            none. The border does the separating; the shadow only has to lift the box. */
-        <div className="absolute inset-x-3.5 top-full z-[1300] mt-1 max-h-[60vh] overflow-y-auto rounded-xl border border-edge bg-bg shadow-md">
+        <div className="absolute inset-x-3.5 top-full z-[1300] mt-1 max-h-[60vh] overflow-y-auto rounded-card border border-edge bg-bg shadow-md">
           {settled && stops.length === 0 && lines.length === 0 && places.length === 0 && (
             <p className="px-4 py-4 text-body text-ink-3">{t.search.none}</p>
           )}
@@ -225,7 +225,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
               className="flex w-full items-center gap-3 border-t border-line-soft px-4 py-3 text-left"
             >
-              <MapPin className="h-[19px] w-[19px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+              <MapPin className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span title={stop.name} className="block truncate text-emph font-semibold">
                   {stop.name}
@@ -284,7 +284,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
               className="flex w-full items-center gap-3 border-t border-line-soft px-4 py-3 text-left"
             >
-              <Landmark className="h-[19px] w-[19px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+              <Landmark className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span title={lm.name} className="block truncate text-emph font-semibold">
                   {lm.name}

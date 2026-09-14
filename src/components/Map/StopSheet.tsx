@@ -182,7 +182,7 @@ export const StopSheet: React.FC<StopSheetProps> = ({
         <button
           type="button"
           onClick={() => onOpenFullBoard(stop)}
-          className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[9px] bg-accent px-3 text-label font-bold text-on-accent"
+          className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-control bg-accent px-3 text-label font-bold text-on-accent"
         >
           {t.map.viewStopDepartures}
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -190,7 +190,7 @@ export const StopSheet: React.FC<StopSheetProps> = ({
         <button
           type="button"
           onClick={() => onShowLinesHere(stop)}
-          className="flex min-h-11 w-full items-center justify-center rounded-[9px] border border-edge bg-surface px-3 text-label font-bold text-ink-2"
+          className="flex min-h-11 w-full items-center justify-center rounded-control border border-edge bg-surface px-3 text-label font-bold text-ink-2"
         >
           {t.map.onlyLinesHere}
         </button>

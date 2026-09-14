@@ -16,6 +16,8 @@ import { Lang, LOCALE, translations } from '../i18n';
 import { newIssueUrl } from '../project';
 import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';
 import { useOperatorTimes } from '../hooks/useOperatorTimes';
+import { Provenance } from './ui/Provenance';
+import { LineBadge } from './ui/LineBadge';
 import {
   watchForStop,
   ringAlarm,
@@ -404,42 +406,27 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
    * stated flatly on solid ground; 'estimated' wears a dashed outline and a tilde, so
    * the shape says "computed" without relying on colour alone.
    */
-  const provenance = (a: StopArrival) =>
-    a.precision === 'published' ? (
-      <span
-        title={t.arrivals.publishedHint}
-        className="inline-flex items-center gap-1.5 rounded bg-official px-2 py-1 text-on-official"
-      >
-        <Check className="h-2.5 w-2.5 shrink-0" strokeWidth={3.4} aria-hidden="true" />
-        <span className="tnum text-label font-semibold tracking-[0.05em]">
-          {t.common.officialBadge} {a.etaTime}
-        </span>
-      </span>
-    ) : (
-      <span
-        title={t.arrivals.estimatedHint}
-        className="inline-flex items-center gap-1.5 rounded border-[1.5px] border-dashed border-estimated-line px-[7px] py-[3px] text-estimated"
-      >
-        <span className="tnum text-label font-semibold tracking-[0.05em]">
-          {t.common.estimatedBadge} {a.etaTime}
-        </span>
-      </span>
-    );
+  const provenance = (a: StopArrival) => (
+    <Provenance
+      precision={a.precision}
+      lang={lang}
+      extra={a.etaTime}
+      title={a.precision === 'published' ? t.arrivals.publishedHint : t.arrivals.estimatedHint}
+    />
+  );
 
   // The line is in the name, not only on the badge: fourteen of these in a row read as
   // "7, button" with the purpose left to a tooltip nobody hears.
   const lineButton = (id: string, number: string, color: string) => (
-    <button
+    <LineBadge
+      number={number}
+      color={color}
+      aria-label={`${t.arrivals.seeLine} ${number}`}
       onClick={() => {
         const line = BUS_LINES.find((l) => l.id === id);
         if (line) onSelectLine(line);
       }}
-      aria-label={`${t.arrivals.seeLine} ${number}`}
-      className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-[7px] text-body font-bold text-white"
-      style={{ backgroundColor: color }}
-    >
-      {number}
-    </button>
+    />
   );
 
   const watchButton = (a: StopArrival) =>
@@ -448,13 +435,13 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         onClick={() => toggleWatch(a.lineId, WATCH_LEAD_MINUTES)}
         title={t.arrivals.watchHint(WATCH_LEAD_MINUTES)}
         aria-pressed={watches[a.lineId] !== undefined}
-        className={`flex h-11 items-center gap-1.5 rounded-[9px] border px-3 text-label font-semibold ${
+        className={`flex h-11 items-center gap-1.5 rounded-control border px-3 text-label font-semibold ${
           watches[a.lineId] !== undefined
             ? 'border-warn bg-warn text-warn-ink'
             : 'border-edge text-ink-2'
         }`}
       >
-        <Bell className="h-[15px] w-[15px] shrink-0" strokeWidth={2} aria-hidden="true" />
+        <Bell className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
         {watches[a.lineId] !== undefined ? t.arrivals.watchOn : t.arrivals.watchCta(WATCH_LEAD_MINUTES)}
       </button>
     ) : null;
@@ -465,7 +452,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         onClick={onBack}
         className="-ml-1 mb-1 flex h-11 items-center gap-1.5 pr-3 text-body font-medium text-ink-2 lg:hidden"
       >
-        <ArrowLeft className="h-[18px] w-[18px] shrink-0" strokeWidth={2} aria-hidden="true" />
+        <ArrowLeft className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
         {t.arrivals.back}
       </button>
 
@@ -490,12 +477,12 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             onClick={() => onToggleFavorite(selectedStop.id)}
             aria-pressed={isFavorite}
             aria-label={isFavorite ? t.arrivals.unfav : t.arrivals.fav}
-            className={`flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+            className={`flex h-11 w-11 items-center justify-center rounded-control border ${
               isFavorite ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-surface text-ink-2'
             }`}
           >
             <Star
-              className="h-[19px] w-[19px]"
+              className="h-4.5 w-4.5"
               strokeWidth={1.8}
               fill={isFavorite ? 'currentColor' : 'none'}
               aria-hidden="true"
@@ -504,30 +491,30 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           <button
             onClick={() => onViewOnMap(selectedStop)}
             aria-label={t.arrivals.map}
-            className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-edge bg-surface text-ink-2"
+            className="flex h-11 w-11 items-center justify-center rounded-control border border-edge bg-surface text-ink-2"
           >
-            <MapIcon className="h-[19px] w-[19px]" strokeWidth={2} aria-hidden="true" />
+            <MapIcon className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
           <button
             onClick={toggleAlarm}
             aria-pressed={alarmOn}
             aria-label={alarmOn ? t.arrivals.alarmOn : t.arrivals.alarmCta}
             title={t.arrivals.alarmHelp}
-            className={`flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+            className={`flex h-11 w-11 items-center justify-center rounded-control border ${
               alarmOn ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-surface text-ink-2'
             }`}
           >
-            <Bell className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+            <Bell className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
           <button
             onClick={handleCopyShareLink}
             aria-label={copiedLink ? t.arrivals.copied : t.arrivals.share}
-            className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-edge bg-surface text-ink-2"
+            className="flex h-11 w-11 items-center justify-center rounded-control border border-edge bg-surface text-ink-2"
           >
             {copiedLink ? (
-              <Check className="h-[19px] w-[19px] text-official" strokeWidth={2.4} aria-hidden="true" />
+              <Check className="h-4.5 w-4.5 text-official" strokeWidth={2.4} aria-hidden="true" />
             ) : (
-              <Share2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+              <Share2 className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
             )}
           </button>
           {/* The tick is the confirmation for the eye; this is the one for the ear. A
@@ -552,7 +539,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             onClick={() => setView(id)}
             aria-pressed={view === id}
             title={hint}
-            className={`h-11 flex-1 rounded-[9px] border text-body ${
+            className={`h-11 flex-1 rounded-control border text-body ${
               view === id
                 ? 'border-ink bg-ink font-semibold text-bg'
                 : 'border-edge font-medium text-ink-2'
@@ -571,13 +558,13 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             type="time"
             value={atTime}
             onChange={(e) => setAtTime(e.target.value)}
-            className="h-11 rounded-[9px] border border-edge bg-bg px-2 font-mono text-body text-ink"
+            className="h-11 rounded-control border border-edge bg-bg px-2 font-mono text-body text-ink"
           />
         </label>
         {atTime && (
           <button
             onClick={() => setAtTime('')}
-            className="h-11 rounded-[9px] border border-edge px-3 text-label font-semibold text-ink-2"
+            className="h-11 rounded-control border border-edge px-3 text-label font-semibold text-ink-2"
           >
             {t.arrivals.backToNow}
           </button>
@@ -588,10 +575,10 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           with fourteen lines the list runs past the fold, and something you have to
           scroll to find is something nobody finds. The count does the advertising. */}
       {nearbyLines.length > 0 && (
-        <details className="mt-3 rounded-[10px] border border-edge bg-surface">
+        <details className="mt-3 rounded-control border border-edge bg-surface">
           <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
             {t.arrivals.nearbyLinesTitle}
-            <span className="tnum rounded-[9px] border border-edge px-1.5 py-0.5 text-ink-3">
+            <span className="tnum rounded-control border border-edge px-1.5 py-0.5 text-ink-3">
               {nearbyLines.length}
             </span>
           </summary>
@@ -602,7 +589,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
                 <li
                   key={line.id}
                   style={{ '--line': line.color } as React.CSSProperties}
-                  className="tint tint-edge flex items-center gap-3 rounded-[10px] border px-2.5 py-2"
+                  className="tint tint-edge flex items-center gap-3 rounded-control border px-2.5 py-2"
                 >
                   {lineButton(line.id, line.number, line.color)}
                   <span className="min-w-0 flex-1">
@@ -622,7 +609,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           reader chose, and the countdown beside it counts from that hour, not from
           now — which would read as live if nothing said otherwise. */}
       {atTime && (
-        <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label font-semibold text-ink-2">
+        <p className="mt-3 rounded-control border border-edge bg-surface p-3 text-label font-semibold text-ink-2">
           {t.arrivals.showingAt(atTime)}
         </p>
       )}
@@ -630,7 +617,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       {(alarmOn || alarmError) && (
         <div
           role={alarmFired ? 'alert' : undefined}
-          className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label"
+          className="mt-3 rounded-control border border-edge bg-surface p-3 text-label"
         >
           {alarmError ? (
             alarmError
@@ -649,7 +636,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       )}
 
       {copyFailedUrl && (
-        <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label text-ink-2">
+        <p className="mt-3 rounded-control border border-edge bg-surface p-3 text-label text-ink-2">
           {t.arrivals.copyFailed}{' '}
           <span className="tnum block break-all pt-1 text-ink select-all">{copyFailedUrl}</span>
         </p>
@@ -658,7 +645,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       {clockDrift !== 0 && (
         <p
           role="alert"
-          className="mt-3 rounded-[10px] border border-warn bg-warn p-3 text-label leading-relaxed text-warn-ink"
+          className="mt-3 rounded-control border border-warn bg-warn p-3 text-label leading-relaxed text-warn-ink"
         >
           {t.arrivals.clockDrift(
             (clockDrift > 0 ? t.arrivals.clockAhead : t.arrivals.clockBehind)(
@@ -672,7 +659,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       {firedMessage && (
         <div
           role="alert"
-          className="mt-3 flex items-start justify-between gap-3 rounded-[10px] bg-official p-3 text-label font-semibold text-on-official"
+          className="mt-3 flex items-start justify-between gap-3 rounded-control bg-official p-3 text-label font-semibold text-on-official"
         >
           <span>{firedMessage}</span>
           <button
@@ -702,7 +689,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           It appears only where there is a server to ask: the operator sends no CORS
           header, so the static build never sees this. */}
       {operatorTimes && operatorTimes.departures.length > 0 && (
-        <section className="mt-4 rounded-xl border border-edge bg-surface/60 p-3.5">
+        <section className="mt-4 rounded-card border border-edge bg-surface/60 p-3.5">
           <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">
             {t.arrivals.operatorSaysTitle}
           </h3>
@@ -735,7 +722,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           and no destination, and nothing on the screen could stop it. The board is read
           on demand, like any list; the alarm is the channel for being told. */}
       {arrivals.length === 0 ? (
-        <div className="mt-6 rounded-xl border border-dashed border-edge px-5 py-10 text-center">
+        <div className="mt-6 rounded-card border border-dashed border-edge px-5 py-10 text-center">
           <Clock className="mx-auto mb-3 h-7 w-7 text-ink-3" strokeWidth={1.6} aria-hidden="true" />
           <p className="text-body text-ink-2">
             {atTime ? t.arrivals.noneAtTime(atTime) : t.arrivals.noArrivals}
@@ -778,7 +765,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           {groups.map((g) => (
             <li
               key={g.key}
-              className="tint tint-edge overflow-hidden rounded-xl border"
+              className="tint tint-edge overflow-hidden rounded-card border"
               style={{ '--line': g.lineColor } as React.CSSProperties}
             >
               <div className="flex items-center gap-3 p-3">
@@ -822,7 +809,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       )}
 
       {Object.keys(watches).length > 0 && (
-        <p className="mt-3 rounded-[10px] border border-edge bg-surface p-3 text-label leading-relaxed text-ink-2">
+        <p className="mt-3 rounded-control border border-edge bg-surface p-3 text-label leading-relaxed text-ink-2">
           {t.arrivals.watchForeground}
         </p>
       )}
@@ -832,7 +819,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           is yours -- the same reason the stops home got a map. */}
       <section className="mt-4 border-t border-line pt-3">
         <h2 className="text-label font-semibold text-ink-2">{t.arrivals.stopMapTitle}</h2>
-        <div className="mt-2 overflow-hidden rounded-[10px] border border-edge">
+        <div className="mt-2 overflow-hidden rounded-control border border-edge">
           <LazyNearbyMiniMap
             centre={{
               lat: selectedStop.lat,

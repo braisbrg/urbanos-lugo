@@ -150,7 +150,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
         <div
           className={`space-y-4 lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? 'hidden' : ''}`}
         >
-          <div className="space-y-4 bg-bg rounded-xl border border-edge p-4 lg:p-5">
+          <div className="space-y-4 bg-bg rounded-card border border-edge p-4 lg:p-5">
             <div>
               <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
                 <Route className="w-4 h-4 text-accent" />
@@ -165,7 +165,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                   key={category}
                   onClick={() => setCategoryFilter(category)}
                   aria-pressed={categoryFilter === category}
-                  className={`flex h-11 items-center whitespace-nowrap rounded-[9px] border px-3.5 text-label font-semibold ${categoryFilter === category ? FILTER_ON : FILTER_OFF}`}
+                  className={`flex h-11 items-center whitespace-nowrap rounded-control border px-3.5 text-label font-semibold ${categoryFilter === category ? FILTER_ON : FILTER_OFF}`}
                 >
                   {t.lines.categories[category as keyof typeof t.lines.categories] || category}
                 </button>
@@ -180,7 +180,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.lines.searchLines}
               aria-label={t.lines.searchLines}
-              className="h-11 w-full rounded-[9px] border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3 focus:outline-none"
+              className="h-11 w-full rounded-control border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3 focus:outline-none"
             />
 
             <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
@@ -201,7 +201,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       setShowDetail(true);
                     }}
                     style={{ '--line': line.color } as React.CSSProperties}
-                    className={`tint tint-strong w-full px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-between gap-2.5 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
+                    className={`tint tint-strong w-full px-3 py-2.5 rounded-control cursor-pointer border transition-all flex items-center justify-between gap-2.5 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
@@ -272,15 +272,15 @@ export const LinesView: React.FC<LinesViewProps> = ({
             onClick={() => setShowDetail(false)}
             className="-ml-1 flex h-11 items-center gap-1.5 pr-3 text-body font-medium text-ink-2 lg:hidden"
           >
-            <ArrowLeft className="h-[18px] w-[18px] shrink-0" strokeWidth={2} aria-hidden="true" />
+            <ArrowLeft className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.lines.backToLines}
           </button>
 
-          <div className="space-y-4 bg-bg rounded-xl p-6 shadow-sm border border-edge">
+          <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
             <div className="flex flex-col justify-between gap-4 border-b border-line pb-5 xl:flex-row xl:items-center">
               <div className="flex items-center gap-4">
                 <span
-                  className="w-14 h-14 rounded-lg flex items-center justify-center font-black text-white text-title shadow-sm shrink-0"
+                  className="w-14 h-14 rounded-control flex items-center justify-center font-black text-white text-title shadow-sm shrink-0"
                   style={{ backgroundColor: currentLine.color }}
                 >
                   {currentLine.number}
@@ -314,7 +314,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                   <button
                     onClick={() => onToggleFavoriteLine(currentLine.id)}
                     aria-pressed={favoriteLineIds.includes(currentLine.id)}
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border ${favoriteLineIds.includes(currentLine.id) ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-bg text-ink-2'}`}
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-control border ${favoriteLineIds.includes(currentLine.id) ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-bg text-ink-2'}`}
                     title={
                       favoriteLineIds.includes(currentLine.id)
                         ? t.lines.unsaveLine
@@ -322,7 +322,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                     }
                   >
                     <Star
-                      className="h-[19px] w-[19px]"
+                      className="h-4.5 w-4.5"
                       strokeWidth={1.8}
                       fill={favoriteLineIds.includes(currentLine.id) ? 'currentColor' : 'none'}
                       aria-hidden="true"
@@ -335,7 +335,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
                   // min-h rather than h: at a narrow column width the label wraps to two
                   // lines, and a fixed 44 px box let the second line spill out of the
                   // button. The floor is the touch target; the ceiling is the content.
-                  className="flex min-h-11 items-center gap-1.5 rounded-[9px] bg-accent px-4 py-2 text-body font-semibold text-on-accent"
+                  className="flex min-h-11 items-center gap-1.5 rounded-control bg-accent px-4 py-2 text-body font-semibold text-on-accent"
                 >
                   <MapPin className="w-4 h-4" />
                   <span>{t.lines.viewOnMap}</span>
@@ -426,7 +426,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
             )}
           </div>
 
-          <div className="bg-bg rounded-xl p-5 shadow-sm border border-edge">
+          <div className="bg-bg rounded-card p-5 shadow-sm border border-edge">
             <h3 className="font-bold text-ink text-label uppercase tracking-wider mb-2 flex items-center gap-2">
               <Clock className="w-4 h-4 text-accent" />
               {t.lines.scheduleTable} &mdash; {direction.origin.slice(0, 28)} ({departures.length})
@@ -445,7 +445,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
             </div>
           </div>
 
-          <div className="space-y-4 bg-bg rounded-xl p-6 shadow-sm border border-edge">
+          <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
@@ -472,11 +472,11 @@ export const LinesView: React.FC<LinesViewProps> = ({
             </div>
 
             {shownRun ? (
-              <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-surface border border-edge">
+              <div className="flex items-center justify-between gap-3 p-2.5 rounded-control bg-surface border border-edge">
                 <button
                   onClick={() => setPickedRunIndex(Math.max(0, runIndex - 1))}
                   disabled={runIndex === 0}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[9px] border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40"
                 >
                   &larr;
                 </button>
@@ -508,13 +508,13 @@ export const LinesView: React.FC<LinesViewProps> = ({
                 <button
                   onClick={() => setPickedRunIndex(Math.min(runs.length - 1, runIndex + 1))}
                   disabled={runIndex >= runs.length - 1}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[9px] border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40"
                 >
                   &rarr;
                 </button>
               </div>
             ) : (
-              <div className="p-2.5 rounded-lg bg-surface border border-edge text-label font-semibold text-ink-2">
+              <div className="p-2.5 rounded-control bg-surface border border-edge text-label font-semibold text-ink-2">
                 {t.lines.noRunsToday}
               </div>
             )}
@@ -544,13 +544,13 @@ export const LinesView: React.FC<LinesViewProps> = ({
                       }
                     }}
                     aria-label={`${stop.name}. ${passingMinutes === undefined ? t.lines.noService : formatMinutes(passingMinutes)}`}
-                    className="relative group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
+                    className="relative group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control"
                   >
                     <div
                       className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center transition-transform group-hover:scale-125 ${busHere ? 'bg-estimated ring-2 ring-estimated animate-pulse' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'}`}
                     />
                     <div
-                      className={`px-3 py-2 rounded-lg border transition-all flex items-center justify-between gap-2.5 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}
+                      className={`px-3 py-2 rounded-control border transition-all flex items-center justify-between gap-2.5 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}
                     >
                       <div className="min-w-0 flex-1">
                         {/* The stop name is not shortened.

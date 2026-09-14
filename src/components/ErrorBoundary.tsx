@@ -65,7 +65,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={() => window.location.reload()}
-            className="flex h-11 items-center rounded-[10px] bg-accent px-4 text-body font-semibold text-on-accent"
+            className="flex h-11 items-center rounded-control bg-accent px-4 text-body font-semibold text-on-accent"
           >
             {t.error.reload}
           </button>
@@ -73,7 +73,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             href="https://buslugo.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-11 items-center rounded-[10px] border border-edge px-4 text-body font-semibold text-accent"
+            className="flex h-11 items-center rounded-control border border-edge px-4 text-body font-semibold text-accent"
           >
             {t.error.official}
           </a>

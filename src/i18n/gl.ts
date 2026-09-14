@@ -263,6 +263,8 @@ export const gl = {
     passed: 'pasada',
     next: 'seguinte',
     finish: 'Saír da viaxe',
+    arrivedDone: 'Cheguei',
+    inMinutes: (minutes: number) => (minutes === 0 ? 'agora' : `en ${minutes} min`),
     keepAwake: 'Manter a pantalla acesa durante a viaxe',
     keepAwakeCost: 'Gasta máis batería.',
     onTrip: 'Viaxe en curso',

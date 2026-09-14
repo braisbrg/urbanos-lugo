@@ -64,7 +64,7 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
             return (
             <div
               key={fare.id}
-              className="p-5 rounded-xl bg-bg border border-edge shadow-sm flex flex-col justify-between"
+              className="p-5 rounded-card bg-bg border border-edge shadow-sm flex flex-col justify-between"
             >
               <div>
                 <span className="text-label font-bold text-accent bg-surface border border-edge px-2 py-0.5 rounded uppercase tracking-wider">
@@ -97,7 +97,7 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
           and a wholesale reproduction would go stale the day they change a line. The two
           worth knowing before you get on are the €5 note and the €60 fine, so those keep
           their numbers. */}
-      <div className="rounded-xl border border-edge bg-bg p-5 shadow-sm">
+      <div className="rounded-card border border-edge bg-bg p-5 shadow-sm">
         <h2 className="flex items-center gap-2 text-emph font-bold uppercase tracking-wider text-ink">
           <Info className="h-5 w-5 text-accent" aria-hidden="true" />
           {t.rules.title}
@@ -142,14 +142,14 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
       {/* FAQs & Contact */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* FAQs */}
-        <div className="bg-bg rounded-xl p-5 border border-edge shadow-sm space-y-3">
+        <div className="bg-bg rounded-card p-5 border border-edge shadow-sm space-y-3">
           <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
             <HelpCircle className="w-4 h-4 text-accent" />
             {t.fares.faqTitle}
           </h3>
           <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="p-3 bg-surface rounded-lg border border-line">
+              <div key={i} className="p-3 bg-surface rounded-control border border-line">
                 <div className="text-label font-bold text-ink">{faq.q}</div>
                 <div className="text-label text-ink-2 mt-1">{faq.a}</div>
               </div>
@@ -158,14 +158,14 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
         </div>
 
         {/* Customer Care & Official Links */}
-        <div className="bg-bg rounded-xl p-5 border border-edge shadow-sm space-y-4">
+        <div className="bg-bg rounded-card p-5 border border-edge shadow-sm space-y-4">
           <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
             <Info className="w-4 h-4 text-accent" />
             {t.fares.contactTitle}
           </h3>
 
           <div className="space-y-3 text-label text-ink-2">
-            <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-line">
+            <div className="flex items-start gap-3 p-3 bg-surface rounded-control border border-line">
               <Phone className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <div>
                 <div className="font-bold text-ink">{t.fares.phones}</div>
@@ -174,7 +174,7 @@ export const FaresView: React.FC<FaresViewProps> = ({ lang }) => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-line">
+            <div className="flex items-start gap-3 p-3 bg-surface rounded-control border border-line">
               <Globe className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <div className="min-w-0">
                 <div className="font-bold text-ink">{t.fares.portals}</div>

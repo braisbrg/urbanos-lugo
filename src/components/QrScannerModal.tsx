@@ -148,7 +148,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
       aria-label={t.qr.title}
       className="fixed inset-0 z-[2000] overflow-y-auto bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4"
     >
-      <div className="bg-bg rounded-xl max-w-lg w-full p-6 shadow-2xl border border-edge relative">
+      <div className="bg-bg rounded-card max-w-lg w-full p-6 shadow-2xl border border-edge relative">
         <button
           onClick={() => {
             stopCamera();
@@ -161,7 +161,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
         </button>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-lg bg-accent text-on-accent flex items-center justify-center">
+          <div className="w-12 h-12 rounded-control bg-accent text-on-accent flex items-center justify-center">
             <QrCode className="w-6 h-6" />
           </div>
           <div>
@@ -172,9 +172,9 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
 
         {/* Camera scanner */}
         {isScanning && (
-          <div className="relative rounded-lg overflow-hidden bg-ink mb-3 aspect-video">
+          <div className="relative rounded-control overflow-hidden bg-ink mb-3 aspect-video">
             <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
-            <div className="absolute inset-0 border-[3px] border-white/70 m-10 rounded-lg pointer-events-none" />
+            <div className="absolute inset-0 border-[3px] border-white/70 m-10 rounded-control pointer-events-none" />
             <span className="absolute bottom-2 inset-x-0 text-center text-label font-bold text-white drop-shadow">
               {t.qr.scanning}
             </span>

@@ -74,10 +74,10 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           <span className="text-emph font-semibold">{t.nav.appName}</span>
           <button
             onClick={onClose}
-            className="flex h-11 w-11 items-center justify-center rounded-[10px] text-ink-2"
+            className="flex h-11 w-11 items-center justify-center rounded-control text-ink-2"
             aria-label={t.menu.close}
           >
-            <X className="h-[19px] w-[19px]" strokeWidth={2} aria-hidden="true" />
+            <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 
@@ -93,28 +93,28 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
                 onClose();
               }}
               aria-label={badge > 0 ? `${label} (${badge})` : undefined}
-              className="flex h-14 items-center gap-4 rounded-xl px-3 text-left"
+              className="flex h-14 items-center gap-4 rounded-card px-3 text-left"
             >
-              <Icon className={`h-[21px] w-[21px] shrink-0 ${tint}`} strokeWidth={2} aria-hidden="true" />
+              <Icon className={`h-5 w-5 shrink-0 ${tint}`} strokeWidth={2} aria-hidden="true" />
               <span className="flex-1 text-emph font-semibold">{label}</span>
               {badge > 0 && (
-                <span className="tnum shrink-0 rounded-[10px] bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
+                <span className="tnum shrink-0 rounded-control bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">
                   {badge}
                 </span>
               )}
-              <ChevronRight className="h-[17px] w-[17px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+              <ChevronRight className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
             </button>
           ))}
 
           <div className="flex min-h-14 items-center gap-4 px-3 py-2">
-            <Globe className="h-[21px] w-[21px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+            <Globe className="h-5 w-5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1 text-body font-semibold">{t.menu.language}</span>
             {/* Named groups, so "GL, pressed" arrives as a language and "Auto, not
                 pressed" as an appearance: the heading beside them is only for the eye. */}
             <div
               role="group"
               aria-label={t.menu.language}
-              className="flex shrink-0 overflow-hidden rounded-[9px] border border-edge"
+              className="flex shrink-0 overflow-hidden rounded-control border border-edge"
             >
               {LANGS.map((code) => (
                 // The code stays in the name so "click GL" still finds it by voice.
@@ -136,7 +136,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
 
           <div className="flex flex-col gap-2 px-3 py-2">
             <div className="flex items-center gap-4">
-              <Moon className="h-[21px] w-[21px] shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+              <Moon className="h-5 w-5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
               <span className="flex-1 text-body font-semibold">{t.menu.theme}</span>
             </div>
             <div role="group" aria-label={t.menu.theme} className="flex gap-1.5">
@@ -145,7 +145,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
                   key={id}
                   onClick={() => setTheme(id)}
                   aria-pressed={theme === id}
-                  className={`h-11 flex-1 rounded-[9px] border text-label font-semibold ${
+                  className={`h-11 flex-1 rounded-control border text-label font-semibold ${
                     theme === id ? 'border-ink bg-ink text-bg' : 'border-edge text-ink-2'
                   }`}
                 >

@@ -225,6 +225,8 @@ export const es: Dict = {
     passed: 'pasada',
     next: 'siguiente',
     finish: 'Salir del viaje',
+    arrivedDone: 'Llegué',
+    inMinutes: (minutes: number) => (minutes === 0 ? 'ahora' : `en ${minutes} min`),
     keepAwake: 'Mantener la pantalla encendida durante el viaje',
     keepAwakeCost: 'Gasta más batería.',
     onTrip: 'Viaje en curso',

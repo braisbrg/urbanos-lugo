@@ -21,6 +21,9 @@ import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 import { useRecentRoutes } from '../hooks/useRecentRoutes';
 import { boardingIsNow, type TripPlace } from '../utils/tripProgress';
+import { Provenance } from './ui/Provenance';
+import { LineBadge } from './ui/LineBadge';
+import { SectionLabel } from './ui/SectionLabel';
 // Same reason as the map tab: Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
@@ -629,11 +632,11 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     <button
       type="button"
       onClick={() => planResult && onStartTrip(planResult, endpoints.origin ?? null, endpoints.destination ?? null)}
-      className={`flex w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 font-semibold text-on-accent ${
+      className={`flex w-full items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-on-accent ${
         prominent ? 'h-14 text-emph' : 'h-12 text-body'
       }`}
     >
-      <Bus className={prominent ? 'h-[22px] w-[22px] shrink-0' : 'h-[18px] w-[18px] shrink-0'} strokeWidth={2} aria-hidden="true" />
+      <Bus className={prominent ? 'h-5 w-5 shrink-0' : 'h-4.5 w-4.5 shrink-0'} strokeWidth={2} aria-hidden="true" />
       {t.companion.start}
     </button>
   );
@@ -676,7 +679,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
           )}
 
           <div
-            className={`bg-bg rounded-xl p-3.5 sm:p-6 shadow-sm border border-edge ${
+            className={`bg-bg rounded-card p-3.5 sm:p-6 shadow-sm border border-edge ${
               asked && !formOpen ? 'hidden lg:block' : ''
             }`}
           >
@@ -694,7 +697,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 for a screen reader; the dot and the ring say the same thing to an eye, and
                 the placeholders already carry "street, place or stop". */}
             <div className="relative">
-              <div className="relative rounded-xl border border-edge bg-surface">
+              <div className="relative rounded-card border border-edge bg-surface">
                 {/* Origin Input */}
                 <div className="relative">
                   <label htmlFor="input-origin-query" className="sr-only">
@@ -730,12 +733,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     title={isLocating ? t.planner.locating : t.planner.useMyLocation}
                     className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-accent"
                   >
-                    <LocateFixed className={`h-[18px] w-[18px] ${isLocating ? 'animate-pulse' : ''}`} />
+                    <LocateFixed className={`h-4.5 w-4.5 ${isLocating ? 'animate-pulse' : ''}`} />
                   </button>
 
                   {/* Origin Autocomplete Suggestions */}
                   {activeInput === 'origin' && originSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
                       {originSuggestions.map((sug) => (
                         <button
                           key={sug.id || sug.name}
@@ -803,7 +806,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
                   {/* Dest Autocomplete Suggestions */}
                   {activeInput === 'dest' && destSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-lg shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
                       {destSuggestions.map((sug) => (
                         <button
                           key={sug.id || sug.name}
@@ -851,7 +854,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       key={mode}
                       onClick={() => setTimeMode(mode)}
                       aria-pressed={timeMode === mode}
-                      className={`h-11 rounded-[9px] text-label font-semibold ${
+                      className={`h-11 rounded-control text-label font-semibold ${
                         timeMode === mode ? 'bg-bg text-ink shadow-xs' : 'text-ink-2 hover:text-ink'
                       }`}
                     >
@@ -879,10 +882,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   answer than the one this app gives. */}
               <button
                 onClick={() => handleCalculate()}
-                className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 text-body font-semibold text-on-accent transition-colors"
+                className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-control bg-accent px-4 text-body font-semibold text-on-accent transition-colors"
               >
                 <span>{t.planner.calculate}</span>
-                <ArrowRight className="h-[18px] w-[18px]" strokeWidth={2.5} aria-hidden="true" />
+                <ArrowRight className="h-4.5 w-4.5" strokeWidth={2.5} aria-hidden="true" />
               </button>
             </div>
 
@@ -996,10 +999,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                everything else breathed. Nobody can keep six numbers in step by hand. The
                column owns the spacing now, the way every other view in this app already
                does, and the blocks say nothing about it. */
-            <div className="space-y-4 bg-bg rounded-xl p-6 shadow-sm border border-edge">
+            <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
               {/* Out of service notice */}
               {!planResult.isServiceActive && planResult.serviceNotice && (
-                <div className="p-3.5 rounded-lg bg-warn border border-warn text-warn-ink text-label font-bold flex items-start gap-2.5 shadow-xs">
+                <div className="p-3.5 rounded-control bg-warn border border-warn text-warn-ink text-label font-bold flex items-start gap-2.5 shadow-xs">
                   <AlertCircle className="w-4 h-4 text-estimated shrink-0 mt-0.5" />
                   <div>
                     <div className="font-extrabold uppercase tracking-wide text-estimated">{t.planner.serviceNoticeTitle}</div>
@@ -1036,7 +1039,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   <span className="tnum text-emph font-semibold">
                     {withMeasuredWalk(planResult, walkCorrection).departure}
                   </span>
-                  <ArrowRight className="h-[15px] w-[15px] shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
+                  <ArrowRight className="h-4 w-4 shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
                   <span className="sr-only">{t.planner.arrivalLabel}</span>
                   <span className="tnum text-emph font-semibold">
                     ~{withMeasuredWalk(planResult, walkCorrection).arrival}
@@ -1071,7 +1074,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                         lines. What is left says it without it: a footprint, a walk, a fare.
                         The word stays for a screen reader, which has no icon to read. */}
                     <span className="sr-only">{t.planner.tripInfoTitle}</span>
-                    <ChevronDown className="h-[15px] w-[15px] shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
                     {/* Spread, not flushed right. Both figures were pushed to the right
                         edge, which left the whole middle of a 44 px row empty and the
                         chevron stranded on its own at the far left. They are two separate
@@ -1089,7 +1092,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           {/* The words the footprint stands for, as text: an aria-label on a
                               plain span is prohibited by ARIA 1.2 and read by nothing. */}
                           <span className="sr-only">{t.planner.measuredWalkTitle}: </span>
-                          <Footprints className="h-[13px] w-[13px] shrink-0 self-center text-ink-3" aria-hidden="true" />
+                          <Footprints className="h-3.5 w-3.5 shrink-0 self-center text-ink-3" aria-hidden="true" />
                           {measuredWalk.minutes} min · {(measuredWalk.meters / 1000).toFixed(1).replace('.', ',')} km
                         </span>
                       )}
@@ -1301,10 +1304,9 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   of the trip, so it is shown by default and can be folded away. */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-label font-bold text-ink-2 uppercase tracking-wider flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-accent" />
+                  <SectionLabel icon={MapPin} className="">
                     {t.planner.routeMap}
-                  </span>
+                  </SectionLabel>
                   <span className="flex items-center gap-3">
                     {/* "Ver camiño a pé" stood here. It bought a drawn pavement route in
                         exchange for sending both ends of every walking leg to a third
@@ -1321,7 +1323,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                 {showMap && (
                   <div className="relative">
                     <Suspense
-                      fallback={<div className="w-full h-[240px] sm:h-[280px] rounded-xl bg-surface animate-pulse" />}
+                      fallback={<div className="w-full h-[240px] sm:h-[280px] rounded-card bg-surface animate-pulse" />}
                     >
                       <RouteMap
                         plan={planResult}
@@ -1331,7 +1333,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                         /* Every leg the router answered for; the ones it could not are
                            drawn as the straight dashed hint they always were. */
                         walkPaths={walkPaths}
-                        className="w-full h-[240px] sm:h-[280px] rounded-xl overflow-hidden border border-edge z-0"
+                        className="w-full h-[240px] sm:h-[280px] rounded-card overflow-hidden border border-edge z-0"
                       />
                     </Suspense>
                     {/* Say that the trip is written out further down.
@@ -1400,7 +1402,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                         )}
                       </div>
 
-                      <div className={`p-4 rounded-xl border transition-all ${
+                      <div className={`p-4 rounded-card border transition-all ${
                         isBus
                           ? 'border-edge bg-surface/30'
                           : isWait
@@ -1410,14 +1412,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                         {isBus && seg.line ? (
                           <div>
                             <div className="flex items-center gap-2.5">
-                              <button
-                                onClick={() => seg.line && onSelectLine(seg.line)}
+                              <LineBadge
+                                number={seg.line.number}
+                                color={seg.line.color}
                                 title={seg.line.name}
-                                className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-[7px] text-body font-bold text-white"
-                                style={{ backgroundColor: seg.line.color }}
-                              >
-                                {seg.line.number}
-                              </button>
+                                onClick={() => seg.line && onSelectLine(seg.line)}
+                              />
                               {/* Where this bus is going, not what the line is called.
                                   A line's own name is its two termini joined by a dash —
                                   355 px of it in a 103 px slot, so 29% of it showed and it
@@ -1483,7 +1483,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                               return (
                                 <details className="mt-1.5 border-l-2 border-line pl-3">
                                   <summary className="flex h-11 cursor-pointer items-center gap-1.5 text-label text-ink-2">
-                                    <ChevronDown className="h-[15px] w-[15px] shrink-0" strokeWidth={2} aria-hidden="true" />
+                                    <ChevronDown className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
                                     {t.planner.ride(count, seg.durationMinutes)}
                                   </summary>
                                   <ol className="pb-2 pl-[21px]" aria-label={t.planner.viaStops}>
@@ -1523,20 +1523,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                             {/* Where the boarding time came from, in the same two shapes the
                                 stop board uses — solid for published, dashed for derived. */}
                             <div className="mt-2.5">
-                              {seg.precision === 'published' ? (
-                                <span className="inline-flex items-center gap-1.5 rounded bg-official px-2 py-1 text-on-official">
-                                  <Check className="h-2.5 w-2.5 shrink-0" strokeWidth={3.4} aria-hidden="true" />
-                                  <span className="tnum text-label font-semibold tracking-[0.05em]">
-                                    {t.common.officialBadge}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 rounded border-[1.5px] border-dashed border-estimated-line px-[7px] py-[3px] text-estimated">
-                                  <span className="tnum text-label font-semibold tracking-[0.05em]">
-                                    {t.common.estimatedBadge}
-                                  </span>
-                                </span>
-                              )}
+                              <Provenance precision={seg.precision ?? 'estimated'} lang={lang} />
                             </div>
                           </div>
                         ) : isWait ? (
@@ -1558,7 +1545,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                                 </span>
                               </div>
                             </div>
-                            <p className="text-label text-warn-ink font-medium bg-bg/80 p-2.5 rounded-lg border border-warn">
+                            <p className="text-label text-warn-ink font-medium bg-bg/80 p-2.5 rounded-control border border-warn">
                               {seg.instruction}
                             </p>
                           </div>
@@ -1592,13 +1579,13 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               </div>
 
               {/* Notice */}
-              <div className="p-3 rounded-lg bg-warn border border-warn flex items-start gap-2.5 text-label text-warn-ink font-medium">
+              <div className="p-3 rounded-control bg-warn border border-warn flex items-start gap-2.5 text-label text-warn-ink font-medium">
                 <AlertCircle className="w-4 h-4 text-estimated shrink-0 mt-0.5" />
                 <span>{t.planner.transferFreeNotice}</span>
               </div>
             </div>
           ) : (
-            <div className="bg-bg rounded-xl p-8 text-center border border-edge">
+            <div className="bg-bg rounded-card p-8 text-center border border-edge">
               <AlertCircle className="w-8 h-8 text-ink-3 mx-auto mb-2" />
               <p className="text-body text-ink-2 font-medium">
                 {timeMode === 'arrive' ? t.planner.noArriveOption : t.planner.noRouteFound}
