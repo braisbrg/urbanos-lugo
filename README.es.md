@@ -49,8 +49,9 @@ dice cuál de las dos es:
 No hay cuenta, ni registro, ni analítica, ni publicidad, ni cookies, ni ningún servidor
 nuestro que guarde constancia de una visita. **Tu ubicación no se envía a nadie** — ni
 siquiera para trazar el camino a pie, porque la red peatonal de Lugo va dentro de la
-aplicación y la ruta se calcula en tu propio dispositivo. Lo único que sale del móvil es
-la petición de las teselas del mapa, y PRIVACY.md dice a quién.
+aplicación y la ruta se calcula en tu propio dispositivo. Lo único que sale del móvil
+sobre dónde estás es qué teselas del mapa pides y, si escaneas un poste, cuál; PRIVACY.md
+dice a quién.
 
 El detalle completo, escrito desde el código y no desde la intención, está en
 [PRIVACY.md](PRIVACY.md).

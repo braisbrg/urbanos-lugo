@@ -49,8 +49,9 @@ on screen says which of the two it is:
 No account, no sign-in, no analytics, no advertising, no cookies, and no server of ours
 that keeps a record of a visit. **Your location is sent to nobody** — not even to draw
 the walking route, because the pedestrian network of Lugo ships inside the app and the
-route is computed on your own device. The only thing that leaves the phone is the request
-for the map tiles, and PRIVACY.md says to whom.
+route is computed on your own device. The only thing that leaves the phone about where you
+are is which map tiles you ask for and, if you scan a pole, which one; PRIVACY.md says to
+whom.
 
 The full detail, written from the code rather than from intention, is in
 [PRIVACY.md](PRIVACY.md).
