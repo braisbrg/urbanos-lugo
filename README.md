@@ -1579,3 +1579,12 @@ monta backend, faise á vez que o anterior.
 O de máis impacto e o menos técnico: o Concello concede o servizo e pode esixir que se
 publique GTFS e GTFS-Realtime. Iso resolvería de golpe os datos e o tempo real, e
 substituír o scraper por un lector de GTFS afectaría só a `tools/importOfficialData.ts`.
+
+### Que os buscadores atopen o sitio
+
+A 14 de setembro de 2026 ningún buscador devolve o sitio: as sete URL do sitemap levan
+o mesmo título e a mesma canónica, as pestanas son botóns que un rastrexador non pode
+seguir, e as 24 liñas e 417 paradas non teñen páxina propia. A auditoría, coas medidas e
+o plan por orde —verificar o sitio, título e canónica por pestana, páxinas estáticas por
+liña—, está en [`design/AUDITORIA-seo.md`](design/AUDITORIA-seo.md). Nada diso cambia
+as regras: ningún título prometerá tempo real, e «non oficial» vai na descrición.
