@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { scheduledDuration } from '../src/utils/schedule';
 import { operatorTimesForStop, parseOperatorTimes } from '../src/services/operatorTimes';
+import { operatorTimesResponse } from '../src/services/operatorTimesRoute';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
@@ -3367,6 +3368,48 @@ await okAsync('fifty people at one pole are one request to the operator, not fif
     assert((await operatorTimesForStop(failing)) === null, 'a failed read did not answer null');
     assert((await operatorTimesForStop(failing)) === null, 'a failed read did not answer null the second time');
     assert(calls === 2, `a failed read was cached instead of retried (${calls} attempts, expected 2)`);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await okAsync('the two servers answer the pole question the same way, and only for poles they know', async () => {
+  // Express and the Deno worker share one decision (src/services/operatorTimesRoute.ts)
+  // so the same code cannot get a 404 from one deployment and a 502 from the other. It
+  // was the one piece of services/ the suite never called; this walks its four answers
+  // with the operator stubbed, and makes sure no request leaves for a code we cannot
+  // resolve -- that is what keeps either server from being a relay for arbitrary codes.
+  const realFetch = globalThis.fetch;
+  const asked: string[] = [];
+  // Read through a call: after assert(asked.length === 0) TypeScript narrows the length
+  // to the literal 0 and rejects the later comparison with 1.
+  const requests = () => asked.length;
+  const withCode = BUS_STOPS.find((s) => poleCode(s));
+  const withoutCode = BUS_STOPS.find((s) => !poleCode(s));
+  assert(withCode && withoutCode, 'the dataset no longer has both kinds of stop');
+  try {
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      asked.push(String(input));
+      throw new Error('the operator is down');
+    }) as typeof fetch;
+
+    const unknown = await operatorTimesResponse('no-such-stop');
+    assert(unknown.status === 404 && requests() === 0, 'an unknown code was not refused before asking the operator');
+    const noCode = await operatorTimesResponse(withoutCode!.id);
+    assert(noCode.status === 404 && requests() === 0, 'a stop with no operator code was not refused before asking');
+    const down = await operatorTimesResponse(withCode!.id);
+    assert(down.status === 502 && requests() === 1, `an unreadable operator page did not answer 502 (${down.status}, ${requests()} requests)`);
+    assert(asked[0].endsWith(encodeURIComponent(poleCode(withCode!)!)), `the operator was asked for ${asked[0]}, not for the pole code`);
+
+    globalThis.fetch = (async () =>
+      new Response(
+        '<div class="sae-content-info"><div class="sae-content-info-line"><p>13</p></div>' +
+          '<div class="sae-content-info-time"><p>7</p></div></div></div>',
+        { status: 200 },
+      )) as typeof fetch;
+    const up = await operatorTimesResponse(withCode!.id);
+    assert(up.status === 200, `a readable operator page did not answer 200 (${up.status})`);
+    assert((up.body as { departures: unknown[] }).departures.length === 1, 'the 200 answer lost its departures');
   } finally {
     globalThis.fetch = realFetch;
   }

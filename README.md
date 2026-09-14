@@ -560,7 +560,14 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   │   ├── RouteLayer.tsx      polilinas de percorrido
 │   │   │   ├── RouteMap.tsx        mapa dun traxecto planificado
 │   │   │   ├── StopLayer.tsx       marcadores de parada
-│   │   │   └── VehicleLayer.tsx    marcadores de vehículo
+│   │   │   ├── VehicleLayer.tsx    marcadores de vehículo
+│   │   │   ├── NearbyMiniMap.tsx   as poucas paradas arredor de ti, debuxadas
+│   │   │   ├── LazyNearbyMiniMap.tsx  o minimapa, e nada del ata que está en pantalla
+│   │   │   ├── StopSheet.tsx       a parada aberta onde a tocaches, co seu taboleiro
+│   │   │   ├── StopNames.ts        os nomes das paradas, nun canvas propio
+│   │   │   ├── basemap.ts          o mapa de fondo, debaixo de todo o demais
+│   │   │   ├── palette.ts          as cores do mapa, nun sitio, para as dúas paletas
+│   │   │   └── escapeHtml.ts       escapa o que vai a un popup ou tooltip de Leaflet
 │   │   ├── TopBar.tsx              buscador único + escáner QR
 │   │   ├── BottomNav.tsx           navegación en móbil
 │   │   ├── SideNav.tsx             rail de navegación en escritorio
@@ -575,13 +582,15 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── FavoritesDrawer.tsx     favoritos
 │   │   ├── QrScannerModal.tsx      escáner QR
 │   │   ├── ErrorBoundary.tsx       illa un fallo nunha pestana sen tirar a app
-│   │   └── navSections.tsx         as seccións, nun sitio: rail, barra e menú
+│   │   └── navSections.ts          as seccións, nun sitio: rail, barra e menú
 │   ├── data/                       SÓ o que viaxa no paquete
 │   │   ├── stops.json              XERADO — o que le a app
 │   │   ├── lines.json              XERADO — o que le a app
 │   │   ├── route-geometry.json     XERADO — trazados, baixo demanda
 │   │   ├── alerts.json             INSTANTÁNEA — avisos, refrescada por CI
 │   │   ├── walk-network.json       XERADO — 21.093 cruces, 29.489 arestas
+│   │   ├── map-style-light.json    XERADO — o estilo do mapa base, paleta clara
+│   │   ├── map-style-dark.json     XERADO — o mesmo, paleta escura
 │   │   ├── routeGeometry.ts        carga os trazados baixo demanda
 │   │   └── transitData.ts          carga dos datos + tarifas
 │   ├── services/
@@ -589,7 +598,9 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── operatorTimes.ts        os minutos do operador detrás do QR
 │   │   ├── readCapped.ts           teito de 512 KB en cada lectura de fóra
 │   │   ├── stopAlarm.ts            alarma de proximidade á parada
-│   │   └── walkingPath.ts          onde camiña un plan; a ruta faina walkRouter
+│   │   ├── walkingPath.ts          onde camiña un plan; a ruta faina walkRouter
+│   │   ├── apiUrl.ts               onde pedir `/api/…`: co servidor ao lado ou co worker
+│   │   └── operatorTimesRoute.ts   a resposta aos minutos do operador, unha para servidor e worker
 │   ├── hooks/
 │   │   ├── useTabRoute.ts          unha ruta por pestana, para o xesto de atrás
 │   │   ├── useServiceAlerts.ts     avisos, ou a instantánea coa súa data
@@ -598,7 +609,9 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── useRecentStops.ts       últimas paradas abertas (só ids)
 │   │   ├── useRecentRoutes.ts      últimas rutas planificadas, tal como se escribiron
 │   │   ├── useTripCompanion.ts     a viaxe en curso, por riba das pestanas
-│   │   └── useDialog.ts            Escape, foco atrapado e foco devolto
+│   │   ├── useDialog.ts            Escape, foco atrapado e foco devolto
+│   │   ├── useIsDark.ts            se a paleta escura está activa agora mesmo
+│   │   └── useMapChrome.ts         nome e controis do mapa no idioma da IU, para o lector de pantalla
 │   ├── utils/
 │   │   ├── schedule.ts             calendario e cadro horario
 │   │   ├── transitEngine.ts        chegadas, vehículos e rutas
@@ -607,11 +620,16 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── tripProgress.ts         que parada pasei, contra o GPS; e a máquina da viaxe
 │   │   ├── walkRouter.ts           A* sobre a rede peonil, no propio móbil
 │   │   ├── snapshotAge.ts          cando unha copia deixa de falar do presente
-│   │   └── searchUtils.ts          buscador
+│   │   ├── searchUtils.ts          buscador
+│   │   ├── clock.ts                se o reloxo do dispositivo coincide co de Lugo
+│   │   └── html.ts                 quitar as etiquetas ao HTML alleo
 │   ├── fonts/                      as dúas caras variables + OFL.txt
 │   ├── fonts.css                   XERADO por tools/importFonts.ts
 │   ├── i18n/                       gl.ts · es.ts · en.ts
-│   ├── security/csp.ts             unha política, para a meta e para a cabeceira
+│   ├── security/
+│   │   ├── csp.ts                  unha política, para a meta e para a cabeceira
+│   │   ├── rateLimit.ts            teito de peticións por enderezo, servidor e worker
+│   │   └── themeInit.ts            o script do tema antes do primeiro pintado, e o seu hash
 │   ├── routes.ts                   os slugs das pestanas, nunha soa lista
 │   ├── seo.ts                      canonical, sitemap e datos estruturados
 │   ├── types.ts
@@ -643,18 +661,24 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── checkFares.ts               SEMANAL — as tarifas seguen sendo esas?
 │   ├── checkParsersUnchanged.ts    o HTML de fóra segue tendo a forma esperada
 │   ├── osm.ts                      Overpass, coseduras e metros restrinxidos
+│   ├── hydrateGeometry.ts          pon a xeometría viaria nas liñas, como fai o navegador
+│   ├── buildMapStyle.ts            o estilo do mapa base, derivado do par de OpenFreeMap
+│   ├── cdp.ts                      un navegador dirixido por cable, para medir onde corre a app
 │   ├── buildDiagrams.ts            redebuxa os diagramas deste README
 │   ├── importFonts.ts              baixa a tipografía e escribe os @font-face
 │   ├── stress*.ts                  carga e disparates: parsers, motor, HTTP,
 │   │                               planificador e invariantes
+│   ├── auditBrowser.ts             contraste, tamaños, obxectivos e consola, por pantalla e tema
 │   ├── fullAudit.ts                informe de calidade de datos
 │   └── test.ts                     comprobacións executables
 ├── .github/workflows/
 │   ├── deploy-pages.yml            publica en Pages: push, cada hora e a man
 │   ├── deploy-worker.yml           publica a API en Deno Deploy, se hai token
-│   └── check-source.yml            luns: reconcile + xeometría + tarifas
+│   ├── check-source.yml            luns: reconcile + xeometría + tarifas
+│   ├── measure.yml                 luns: measure:browser e audit:browser, cifras como artefacto
+│   └── ci.yml                      en cada push: lint, test, check:deep e build
 ├── worker/                         a API que Pages non pode servir (opcional)
-├── design/                         artboards do redeseño (.dc.html) + canvas.json
+├── design/                         artboards do redeseño (.dc.html), canvas.json e as notas de deseño (.md)
 ├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts
 ├── DATA.md                         procedencia e condicións dos datos
@@ -1326,7 +1350,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-145 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+146 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1442,6 +1466,24 @@ sentido), estado en vivo e taboleiro nas paradas máis conectadas.
 ```bash
 pnpm lint
 ```
+
+```bash
+pnpm build && PORT=3002 pnpm start   # noutra terminal
+pnpm run measure:browser             # start | map | typing | session
+pnpm run audit:browser               # light | dark
+```
+
+O que `pnpm test` non pode ver: un Chromium real, dirixido por `tools/cdp.ts`, acelerado
+6× e con rede «Slow 4G», contra o sitio construído. `measure:browser` mide o que custa
+arrincar, abrir o mapa, catro pasos de zoom, teclear no buscador e doce voltas entre
+pestanas, e compara cada cifra co orzamento que ten escrito ao lado, co porqué.
+`audit:browser` mide, en doce estados e nos dous temas, o contraste de cada texto (as
+cores en `oklch()` resólvense pintándoas nun lenzo, non cunha expresión regular), os
+textos por baixo de 12 px, os obxectivos por baixo de 44 px, e o que a consola rexistra
+en cada carga fresca. Ningún dos dous é unha porta de CI: os orzamentos son relativos á
+máquina. `.github/workflows/measure.yml` execútaos os luns e garda a saída como artefacto,
+para que unha regresión coma a do mapa —catro veces o orzamento durante días— non dependa
+de que alguén se lembre.
 
 ---
 

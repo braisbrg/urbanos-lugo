@@ -1,0 +1,94 @@
+name: Measure in a browser
+
+# What the app costs on a phone, and how it looks against its own bar, once a week.
+#
+# `pnpm test` cannot see a keystroke waiting behind a render or a map rebuilding on a
+# zoom, and `measure:browser` and `audit:browser` can -- but they only ran when somebody
+# remembered. The map's zoom cost sat at three to four times its budget for days before a
+# hand-run found it. This runs both against the built site on a runner, and keeps the
+# numbers.
+#
+# Not a gate, on purpose. The budgets in stressBrowser.ts are machine-relative and a
+# shared runner is not the laptop they were set on, so a run over budget is a report to
+# read, not a red mark to chase. The full output is the artifact; the summary shows the
+# lines that carry a budget.
+#
+# Network: the built server answers /api/alerts by reading buslugo.com and the Concello's
+# three feeds once, then from memory for half an hour -- the same handful of requests
+# check-source.yml makes, once a week, and nothing in a loop. The map round also fetches
+# OpenFreeMap tiles as any visit does.
+on:
+  schedule:
+    - cron: '41 6 * * 1' # Mondays, after check-source, off the hour
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: measure
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v6
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run build
+
+      # The built server, as `npm start` runs it, on the port the tools expect.
+      - name: Start the built server
+        run: |
+          PORT=3002 node dist-server/server.cjs > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3002/ > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://localhost:3002/ > /dev/null
+
+      # The runner image ships Google Chrome at /usr/bin/google-chrome, which is one of
+      # the places tools/cdp.ts looks. No GPU: the tools launch it with SwiftShader.
+      - name: Measure on a throttled phone
+        continue-on-error: true
+        run: pnpm run measure:browser 2>&1 | tee measure.txt
+
+      - name: Audit contrast, sizes, targets and the console
+        continue-on-error: true
+        run: pnpm run audit:browser 2>&1 | tee audit.txt
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## measure:browser -- the lines with a budget'
+            echo '```'
+            grep -E 'budget|over ' measure.txt || echo '(no budget lines: the run did not get that far)'
+            echo '```'
+            echo '## audit:browser -- totals and console'
+            echo '```'
+            grep -A4 '=== totals' audit.txt || true
+            grep -A2 '=== console' audit.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-measurements-${{ github.run_number }}
+          path: |
+            measure.txt
+            audit.txt
+            server.log
+          retention-days: 90

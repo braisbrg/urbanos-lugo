@@ -46,7 +46,9 @@ Everyday: `pnpm dev` (Express + Vite on `server.ts`), `pnpm start` (built server
 Offline, cheap, safe to run any time: `pnpm run data:build` (reshape `data/` into
 `src/data/`), `pnpm run data:audit`, `pnpm run reconcile:selftest`,
 `pnpm run measure:engine`, `pnpm run measure:parsers`, `pnpm run validate:times`,
-`pnpm run diagrams`, `pnpm run measure:browser`.
+`pnpm run diagrams`. With a built server on 3002 (`pnpm build && PORT=3002 pnpm start`):
+`pnpm run measure:browser` and `pnpm run audit:browser`, which `.github/workflows/measure.yml`
+also runs weekly and keeps as an artifact.
 
 Hit somebody else's server — see the network block before running any of these:
 `pnpm run data:fetch`, `pnpm run data:osm`, `pnpm run data:amenities`,
