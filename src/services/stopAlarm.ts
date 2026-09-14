@@ -16,7 +16,7 @@ export interface AlarmHandle {
   stop: () => void;
 }
 
-export interface PositionFix {
+interface PositionFix {
   lat: number;
   lng: number;
 }

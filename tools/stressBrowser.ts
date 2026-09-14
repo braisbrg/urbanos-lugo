@@ -237,10 +237,10 @@ async function mapTab(browser: Browser): Promise<void> {
   budget('tap to first drawn map', drawn, 6000);
   // 1,200 when the basemap was raster tiles. The vector basemap parses its style and
   // paints its first frame on this thread, and under SwiftShader -- see launch() -- the
-  // paint is CPU too: measured 2,114 to 2,858 ms across nine runs on 14 September 2026,
-  // of which the renderer is about three quarters and the WebGL2 probe 200 ms. Set above
-  // that spread; the sampled profile is printed below for whoever wants to move it.
-  budget('main thread blocked while opening', blockingMs(probe), 3000);
+  // paint is CPU too: measured 1,610 to 1,883 ms across four runs on 14 September 2026
+  // (MapLibre 6.9), of which the renderer is about three quarters and the WebGL2 probe
+  // 200 ms. Set above that spread; the profile below is for whoever wants to move it.
+  budget('main thread blocked while opening', blockingMs(probe), 2500);
   report('longest single task while opening', `${Math.max(0, ...probe.longtasks.map(([, d]) => d)).toFixed(0)} ms`, `${probe.longtasks.length} long tasks`);
   report('worst gap between frames', `${probe.worstFrame.toFixed(0)} ms`, 'the freeze a finger feels');
   budget('ResizeObserver callbacks while opening', probe.resizes, 12, 'calls');
@@ -263,10 +263,12 @@ async function mapTab(browser: Browser): Promise<void> {
   // work took it to 2,133-4,055: a line nobody had chosen was drawn as the subject with
   // its arrows -- 199 DOM markers at zoom 16, rebuilt every step -- the 26,175 route
   // vertices were projected and stroked whole at every zoom, and every bus icon was
-  // rebuilt every three seconds. With those gone it measures 626-897 ms over four runs,
-  // with the renderer's own frames under SwiftShader making up most of it. Above that
-  // spread, as before: a guard against the next regression, not a target.
-  budget('main thread blocked over four zoom steps', blockingMs(probe), 1200);
+  // rebuilt every three seconds; and the written stop names were DOM tooltips, each a
+  // forced layout on every zoom. With those gone -- the names are a canvas -- it measures
+  // 249-607 ms over four runs, most of it the renderer's own frames under SwiftShader.
+  // So the budget stands where it was set: above the spread, a guard against the next
+  // regression rather than a target.
+  budget('main thread blocked over four zoom steps', blockingMs(probe), 900);
   report('worst frame during zooming', `${probe.worstFrame.toFixed(0)} ms`, `${probe.longtasks.length} long tasks`);
   budget('ResizeObserver callbacks over four zooms', probe.resizes, 8, 'calls');
   console.log('\n  where the zooming went, self time, top 12');

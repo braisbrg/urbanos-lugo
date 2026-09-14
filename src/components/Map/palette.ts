@@ -18,11 +18,14 @@
  * that reads on the light basemap is invisible on the dark one and the other way round.
  * Which basemap that is lives in basemap.ts; this file only says what to draw on top.
  */
-export interface MapColors {
+interface MapColors {
   /** Stop circles: a dot with a ring, so both have to flip together. */
   stopFill: string;
   stopStroke: string;
   stopSelected: string;
+  /** The names written beside the dots from zoom 16: the app's ink, haloed in its ground. */
+  nameInk: string;
+  nameHalo: string;
   /** Where the reader is, when they allow it. */
   userFill: string;
   userStroke: string;
@@ -38,6 +41,8 @@ const LIGHT: MapColors = {
   stopFill: '#4d4541',      // the ink, warmed to match the app, and no louder than 8,4:1 -- see below
   stopStroke: '#ffffff',
   stopSelected: '#0c72cb',  // the official blue, lifted to carry on Voyager
+  nameInk: '#1e1917',       // --c-ink, light
+  nameHalo: '#fefdfd',      // --c-bg, light
   userFill: '#08569a',      // the same blue, darker: this one is you
   userStroke: '#ffffff',
   walkRouted: '#534b48',
@@ -50,6 +55,8 @@ const DARK: MapColors = {
   stopFill: '#b9b3af',      // 8,4:1 over the ground -- see below
   stopStroke: '#191514',
   stopSelected: '#57a8ff',  // the dark theme's official blue
+  nameInk: '#eeeae9',       // --c-ink, dark
+  nameHalo: '#110d0d',      // --c-bg, dark
   userFill: '#82bcfc',      // lighter than the selection, so the two separate
   userStroke: '#191514',
   walkRouted: '#d0c9c7',

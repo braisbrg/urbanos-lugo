@@ -49,7 +49,7 @@ const SECONDS_PER_METRE_CLIMBED = 6;
 const CELL_LAT = 0.002;
 const CELL_LNG = 0.0025;
 
-export interface WalkRoute {
+interface WalkRoute {
   path: [number, number][];
   meters: number;
   minutes: number;
@@ -191,7 +191,7 @@ function decode(raw: {
   };
 }
 
-export function loadWalkNetwork(): Promise<Graph> {
+function loadWalkNetwork(): Promise<Graph> {
   if (graph) return Promise.resolve(graph);
   if (!inFlight) {
     inFlight = import('../data/walk-network.json')

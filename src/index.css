@@ -327,30 +327,8 @@
     border-right-color: var(--c-border) !important;
   }
 
-  /* Stop names, written on the map from zoom 16 in.
-     Not the card above: that treatment is right for one label you asked for by hovering,
-     and wrong for every stop at once — a hundred bordered boxes with shadows read as
-     objects sitting on the city rather than as its labels. This is what a map label is:
-     type with a halo, no box, no arrow, and nothing to click through. */
-  .leaflet-tooltip.stop-name-label {
-    background: none !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    color: var(--c-ink) !important;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-    pointer-events: none;
-    /* A halo in the map's own ground colour, so it holds over roads, parks and water in
-       either theme without a plate behind it. */
-    text-shadow:
-      0 0 3px var(--c-bg), 0 0 3px var(--c-bg), 0 0 3px var(--c-bg),
-      1px 1px 2px var(--c-bg), -1px -1px 2px var(--c-bg);
-  }
-  .leaflet-tooltip.stop-name-label::before {
-    display: none !important;
-  }
+  /* The stop names written on the map from zoom 16 in are not tooltips any more: they
+     are painted on a canvas of their own, in Map/StopNames.ts, which also says why. */
 
   /* Leaflet's attribution is required, and at its default 11 px grey on a translucent
      white it fails contrast in both themes. Keep it, make it readable. */

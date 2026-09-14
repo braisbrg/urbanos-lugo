@@ -5,7 +5,7 @@ const KEY = 'urbanos-lugo-recent-routes';
 /** Four fills the width of the form without pushing the fields off a phone. */
 const LIMIT = 4;
 
-export interface RecentRoute {
+interface RecentRoute {
   from: string;
   to: string;
 }

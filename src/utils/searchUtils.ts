@@ -254,7 +254,7 @@ function expandAbbreviations(str: string): string {
  * what is left is collapsed. Both sides go through it, so nothing here changes what is
  * displayed — only what counts as the same name.
  */
-export const searchForm = remembering(computeSearchForm);
+const searchForm = remembering(computeSearchForm);
 
 function computeSearchForm(str: string): string {
   const plain = normalizeText(str);

@@ -5,6 +5,7 @@ import { BusStop } from '../../types';
 import { poleCode } from '../../data/transitData';
 import { useIsDark } from '../../hooks/useIsDark';
 import { mapColors } from './palette';
+import { stopNamesLayer } from './StopNames';
 
 /**
  * Stop and line names come from a scraped source and are written into innerHTML below.
@@ -148,85 +149,45 @@ export const StopLayer: React.FC<StopLayerProps> = ({
               });
             })();
 
-      /* The view with a margin of a fifth on each side, so a small pan does not swap
-         names at the edge, and the set of stops whose name is currently written. */
-      let labelBounds = map.getBounds().pad(0.2);
-      const labelled = new Set<string>();
       const placed: Record<string, BusStop> = {};
-      /** Bind the one tooltip a marker carries: the written name, or the one that opens on hover. */
-      const bind = (marker: L.CircleMarker, stop: BusStop, written: boolean) => {
-        marker.unbindTooltip();
-        if (written) {
-          marker.bindTooltip(escapeHtml(stop.name), {
-            permanent: true,
-            direction: 'auto',
-            offset: [rung.radius + 2, 0],
-            className: 'stop-name-label',
-          });
-          labelled.add(stop.id);
-        } else {
-          const code = poleCode(stop);
-          marker.bindTooltip(
-            `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
-              ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
-            </div>`,
-            { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
-          );
-          labelled.delete(stop.id);
-        }
+      /** The label that opens on hover: the pole code and the name. */
+      const hoverLabel = (marker: L.CircleMarker, stop: BusStop) => {
+        const code = poleCode(stop);
+        marker.bindTooltip(
+          `<div style="font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--c-ink); padding: 3px 5px;">
+            ${code ? `<span style="color: var(--c-accent); margin-right: 5px;">${escapeHtml(code)}</span>` : ''}${escapeHtml(stop.name)}
+          </div>`,
+          { direction: 'top', offset: [0, -8], opacity: 0.95, className: 'stop-hover-tooltip' },
+        );
       };
+      /*
+       * The written names, from the rung that has them. One canvas for all of them --
+       * StopNames.ts says why it is not a tooltip per stop -- fed the stops that exist
+       * and painting the ones in view, on its own, whenever the map settles.
+       */
+      const names = rung.label
+        ? stopNamesLayer({ ink: colors.nameInk, halo: colors.nameHalo, radius: rung.radius }).addTo(map)
+        : null;
 
       /*
        * Build only the stops that are in view, and the rest as they come into it.
        *
        * Crossing into a dense rung used to build every marker of the set in one go -- all
        * 417 at zoom 16 -- and that single task is the freeze felt when panning right after
-       * zooming: measured at 4x CPU, 2,9 s blocked, of which the stops were
-       * 2,7. Written names were part of it and are handled above; the rest was the markers
+       * zooming: measured at 4x CPU, 2,9 s blocked, of which the stops were 2,7. The
+       * written names were most of it and are a canvas now; the rest was the markers
        * themselves. A phone at that zoom has sixty of the 417 on screen, so the other 350
        * are work done for nothing the reader can see. They are built when a pan brings
-       * them within the margin, a handful at a time, and never taken down again -- the
-       * count is bounded by the set and only grows as far as somebody actually pans.
+       * them within the margin, and never taken down again -- the count is bounded by the
+       * set and only grows as far as somebody actually pans.
+       *
+       * The markers in view land in one task, not sixteen a frame. They were spread out,
+       * and it cost more than it saved: every batch added to the shared canvas asks for a
+       * redraw, and a redraw repaints every route under the batch's bounds -- forty-eight
+       * polylines, half of them dashed. Built together they are one redraw.
        */
       const drawBounds = map.getBounds().pad(0.3);
       const pending = new Map<string, BusStop>();
-
-      /*
-       * Names are written a few per frame, not all in one task.
-       *
-       * A written name with `direction: 'auto'` has to know its own width to choose its
-       * side, so Leaflet reads the layout back the moment it is inserted: one forced
-       * reflow per name, forty in a row at the zoom where names appear, and the thread is
-       * held for all of them. Eight a frame lets the pan start between batches; the names
-       * fill in over five frames, which is under a tenth of a second and not a freeze.
-       *
-       * The markers themselves are not spread out like this. They were, sixteen a frame,
-       * and it cost more than it saved: every batch added to the shared canvas asks for a
-       * redraw, and a redraw repaints every route under the batch's bounds -- forty-eight
-       * polylines, half of them dashed. Measured at 6x CPU over four zoom steps, the main
-       * thread was blocked 2,2 s with the stops spread and 1,3 s with them off; with the
-       * routes off the same stops cost nothing at all. Built in one task they are one
-       * redraw, and the pause is the one repaint rather than a dozen.
-       */
-      const toWrite: string[] = [];
-      let draining = 0;
-      const drain = () => {
-        draining = 0;
-        for (const id of toWrite.splice(0, 8)) {
-          const marker = markersRef.current[id];
-          if (placed[id] && marker && !labelled.has(id)) bind(marker, placed[id], true);
-        }
-        if (toWrite.length) draining = requestAnimationFrame(drain);
-      };
-      const queueName = (id: string) => {
-        toWrite.push(id);
-        if (!draining) draining = requestAnimationFrame(drain);
-      };
-      const stopDraining = () => {
-        if (draining) cancelAnimationFrame(draining);
-        draining = 0;
-        toWrite.length = 0;
-      };
 
       const place = (stop: BusStop) => {
         // 271 of the 417 carry a code on the pole. That used to be drawn — a size up and a
@@ -252,23 +213,10 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         //
         // `auto` and not `right` for the written name: a dot near the right edge of a
         // 375 px phone put the name off the screen — measured, three of the thirteen on
-        // view at zoom 16, the widest of them 157 px. Leaflet's own `auto` flips the side
-        // once the marker passes the middle of the map, which is the whole of the fix.
-        /*
-         * Written names only for the stops in view.
-         *
-         * At the zoom where names appear the overview still holds all 417 stops, and each
-         * written name is a DOM element Leaflet lays out on creation and moves on every
-         * pan. All 417 at once is the freeze: zoom in, the names arrive, and the
-         * map will not move until they have. A phone shows sixty of them at most. So the
-         * name is written for the stops inside the view plus a margin, the rest keep the
-         * hover label, and `relabel` below swaps them as the view moves -- only the ones
-         * that crossed the edge, never the whole set.
-         */
-        // Hover first, always; the written name replaces it from the queue.
-        bind(marker, stop, false);
+        // view at zoom 16, the widest of them 157 px. The names canvas measures each one
+        // and writes it on the side that fits, which is the whole of the fix.
+        hoverLabel(marker, stop);
         placed[stop.id] = stop;
-        if (rung.label && labelBounds.contains([stop.lat, stop.lng])) queueName(stop.id);
 
         /* Tapping a stop opens the stop, in a sheet over the map.
            It used to open a Leaflet popup built here as an HTML string, whose only real
@@ -302,38 +250,26 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         if (visible.length <= BUILD_ALL_UP_TO || drawBounds.contains([stop.lat, stop.lng])) place(stop);
         else pending.set(stop.id, stop);
       }
+      names?.setStops(Object.values(placed));
 
-      if (rung.label || pending.size) {
-        const relabel = () => {
-          const now = map.getBounds().pad(0.2);
-          labelBounds = now;
-          // Newcomers first, so a stop that just arrived gets its name in the same pass.
-          if (pending.size) {
-            const reach = map.getBounds().pad(0.3);
-            for (const [id, stop] of pending) {
-              if (!reach.contains([stop.lat, stop.lng])) continue;
-              pending.delete(id);
-              place(stop);
-            }
-          }
-          if (!rung.label) return;
-          for (const [id, stop] of Object.entries(placed)) {
-            const marker = markersRef.current[id];
-            if (!marker) continue;
-            const should = now.contains([stop.lat, stop.lng]);
-            if (should === labelled.has(id)) continue;
-            if (should) queueName(id);
-            else bind(marker, stop, false);
-          }
-        };
-        map.on('moveend', relabel);
-        teardownRef.current = () => {
-          stopDraining();
-          map.off('moveend', relabel);
-        };
-      } else {
-        teardownRef.current = stopDraining;
-      }
+      // A pan brings the stops it uncovered within the margin, and their names with them.
+      const arrive = () => {
+        if (!pending.size) return;
+        const reach = map.getBounds().pad(0.3);
+        let any = false;
+        for (const [id, stop] of pending) {
+          if (!reach.contains([stop.lat, stop.lng])) continue;
+          pending.delete(id);
+          place(stop);
+          any = true;
+        }
+        if (any) names?.setStops(Object.values(placed));
+      };
+      map.on('moveend', arrive);
+      teardownRef.current = () => {
+        map.off('moveend', arrive);
+        names?.remove();
+      };
     }
 
     return () => {
@@ -342,7 +278,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       group.remove();
       markersRef.current = {};
     };
-  }, [map, stops, visibleLineIds, showStops, rung, selectedStop?.id]);
+    // `colors` too: the names canvas bakes the theme in when it is built, like the dots.
+  }, [map, stops, visibleLineIds, showStops, rung, selectedStop?.id, colors]);
 
   // Selection restyles one marker rather than rebuilding the layer. The others go back
   // to the rung's radius, not to a fixed one: this ran after every rebuild and set the

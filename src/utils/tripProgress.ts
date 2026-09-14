@@ -51,7 +51,7 @@ export interface TripFix {
   lng: number;
 }
 
-export interface TripProgress {
+interface TripProgress {
   /** Index into `plan.segments` of the leg the reader is on. */
   segmentIndex: number;
   /** The stops of the current bus leg, in order, with the ones already behind marked. */
@@ -238,7 +238,7 @@ export interface TripPlace {
  * honest end of that road: the bus that was missed was the last one today, and the mode
  * says so rather than printing tomorrow's first departure as if it were tonight's.
  */
-export interface LegReplacement {
+interface LegReplacement {
   leg: number;
   departureMinutes: number;
   arrivalMinutes: number | null;
@@ -268,7 +268,7 @@ export interface TripState {
  * Where the mode is. `walking` is the stretch after the last bus: to the door, on foot,
  * with the button that ends the trip. There is no `done`: done is the trip being gone.
  */
-export type TripPhase = 'waiting' | 'riding' | 'alighting' | 'walking';
+type TripPhase = 'waiting' | 'riding' | 'alighting' | 'walking';
 
 /**
  * Minutes past the printed departure before the mode asks whether the bus was caught.

@@ -1204,18 +1204,36 @@ cousas, todas nosas:
   pantalla, e refeitas en `moveend`: 13 a zoom 16 onde había 199.
 - `VehicleLayer`: a icona só se reconstrúe cando cambia liña, cor ou rumbo redondeado a
   5°; o popup só cando cambian destino, seguinte parada ou ocupación.
-- `StopLayer`: os marcadores constrúense nunha soa tarefa (un só redebuxo do lenzo);
-  só os nomes escritos van por lotes. E os primeiros dezaseis marcadores levaban radio 5
-  mentres o chanzo pedía 7: dous tamaños de punto na mesma pantalla a zoom 16.
+- `StopLayer`: os marcadores constrúense nunha soa tarefa (un só redebuxo do lenzo). E
+  os primeiros dezaseis marcadores levaban radio 5 mentres o chanzo pedía 7: dous
+  tamaños de punto na mesma pantalla a zoom 16.
+- **Os nomes escritos, nun lenzo propio** (`StopNames.ts`). Con as tres causas fóra, o
+  cadro máis grande que quedaba era `Tooltip._setPosition`, 261–553 ms por catro zooms:
+  cada nome era un elemento DOM que Leaflet mide ao inserilo e en cada zoom, e cada
+  medida é un layout forzado da páxina; e as medicións saltaban entre 330 e 1.726 ms
+  segundo cando caían eses layouts. `measureText` di canto mide un nome sen layout
+  ningún, o lado escóllese con iso, e o conxunto píntase dunha vez. O lenzo escóndese
+  durante a animación do zoom e repíntase ao asentar, como fan as capas non animadas de
+  Leaflet. De paso, os nomes pasan de 11 a 12 px, o chan da casa, e a fonte, a tinta e o
+  halo lense do tema (o halo é un trazo na cor do chan, non un `text-shadow`).
 
 ### Medido despois
 
-Catro pasos de zoom: **626 / 641 / 689 / 897 ms** (era 2.133–4.055). Abrir o mapa:
-**1.893–2.858 ms**, do que o renderizador vectorial —análise do estilo e primeiro
-pintado, con SwiftShader tamén pintando en CPU— é uns tres cuartos, e a sonda de WebGL2
-200 ms. O orzamento de apertura de 1.200 era o dos tesela raster; vai a 3.000, por riba
-da dispersión, e o de zoom a 1.200 polo mesmo criterio. `pnpm test`: 142 comprobacións,
-unha nova que reclama as tres causas por nome. Consola limpa en 24 cargas frescas.
+Catro pasos de zoom: **249 / 524 / 607 / 525 / 294 ms** (era 2.133–4.055; cos nomes
+aínda en tooltips, 626–897 e algún 1.4xx). Abrir o mapa: **1.610–1.967 ms** con MapLibre
+6.9, do que o renderizador vectorial —análise do estilo e primeiro pintado, con
+SwiftShader tamén pintando en CPU— é uns tres cuartos, e a sonda de WebGL2 200 ms. O
+orzamento de apertura de 1.200 era o dos tesela raster; vai a 2.500, por riba da
+dispersión; **o de zoom queda nos 900 de sempre**. `pnpm test`: 142 comprobacións, unha
+nova que reclama as catro causas por nome. Consola limpa en 24 cargas frescas; contraste,
+tamaño e obxectivos, 0 fallos en 773/776 textos.
+
+**E as dúas cousas ditas e non feitas na rolda 13:** as oito dependencias menores
+actualizadas (React 19.3, Vite 8.3, MapLibre 6.9, lucide 1.45, tipos; `pnpm audit`
+limpo) e as nove exportacións que nada importaba xa non se exportan (sete tipos,
+`searchForm` e `loadWalkNetwork`). Vite 8.3 avisa de que o cargador de configuración
+nativo dunha versión futura quererá extensións nos imports de `vite.config.ts`; non é de
+agora.
 
 **Descartado:** `fadeDuration: 0` no renderizador (menos cadros tras cada tesela, a
 cambio de etiquetas que aparecen sen fundido) e saltar a sonda de WebGL2 apoiándose no

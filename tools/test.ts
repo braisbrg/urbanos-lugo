@@ -4418,6 +4418,11 @@ ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoo
   // Every bus icon was rebuilt every three seconds whether or not anything about it changed.
   const buses = read('src/components/Map/VehicleLayer.tsx');
   assert(/drawn\?\.icon !== iconKey/.test(buses), 'bus icons are rebuilt on every tick again');
+
+  // The written stop names were permanent tooltips: a DOM element each, and a forced
+  // layout each on every zoom -- the largest frame left once the three above were gone.
+  const stopsLayer = read('src/components/Map/StopLayer.tsx');
+  assert(/stopNamesLayer\(/.test(stopsLayer) && !/permanent: true/.test(stopsLayer), 'the stop names are DOM tooltips again');
 });
 
 console.log(`\n${checks} checks passed\n`);
