@@ -3,13 +3,13 @@
 ### 👉 [**braisbrg.github.io/urbanos-lugo**](https://braisbrg.github.io/urbanos-lugo/)
 
 **Cando pasa o teu bus en Lugo.** Todas as liñas, todas as paradas e a hora á que
-pasan, nunha web que se abre nun segundo e funciona sen cobertura.
+pasan, nunha web lixeira que funciona sen cobertura.
 
 > **Non é a app oficial.** Non está feita, revisada nin respaldada por AULUSA, Grupo
 > Monbus nin o Concello de Lugo. Le os horarios que o operador publica en
 > <https://buslugo.com>. Se algo depende dun horario, manda a fonte oficial.
 
-> 🇪🇸 [Castellano](README.es.md) · 🇬🇧 [English](README.en.md)
+> [Castellano](README.es.md) · [English](README.en.md)
 >
 > Esas dúas son resumos dunha pantalla, non traducións deste documento. Aquí hai preto de
 > mil cincocentas liñas cheas de cifras medidas, e tres copias delas serían tres sitios
@@ -1320,7 +1320,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-141 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+144 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

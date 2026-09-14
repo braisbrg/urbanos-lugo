@@ -3909,6 +3909,30 @@ ok('the three front doors say the same true things', () => {
   assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
 });
 
+ok('the surfaces seen before the README say "non oficial" first', () => {
+  // A search result, a link preview and the install prompt each show one line, and none
+  // of them shows the README. The meta description opened with "Horarios oficiais" and
+  // the manifest called the app "Bus Lugo" -- the operator's domain -- so the one line a
+  // reader saw was the one the whole README exists to deny. The rule README.md states,
+  // that "non oficial" goes in the description, is held here for the three lines that
+  // carry it; and the meta description stays under 160 characters, past which a search
+  // result cuts it and the word could fall off the end.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const config = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  const meta = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? '';
+  const og = /<meta property="og:description" content="([^"]*)"/.exec(html)?.[1] ?? '';
+  const manifest = /description: '([^']*)'/.exec(config)?.[1] ?? '';
+  const shortName = /short_name: '([^']*)'/.exec(config)?.[1] ?? '';
+
+  for (const [where, text] of [['meta description', meta], ['og:description', og], ['manifest description', manifest]]) {
+    assert(/^Non oficial\./.test(text), `${where} does not open with "Non oficial."`);
+  }
+  assert(meta.length <= 160, `meta description is ${meta.length} characters; 160 is where a result cuts it`);
+  assert(!/\bbus ?lugo\b/i.test(shortName), `manifest short_name "${shortName}" reads as the operator's`);
+  assert(shortName.length <= 12, `manifest short_name "${shortName}" is longer than a launcher shows`);
+});
+
 await okAsync('no option promises a bus the measured walk cannot reach', async () => {
   // The plan is built from the estimated walk -- the straight line times 1.35 -- and the
   // router then measures the pavement. When the walk to the first stop turns out longer
@@ -4432,6 +4456,15 @@ ok('the letter paints before the search rows do', () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const topBar = readFileSync(join(root, 'src/components/TopBar.tsx'), 'utf8');
   assert(/useDeferredValue\(q\)/.test(topBar) && /useMemo\(\(\) => searchAll\(dq\), \[dq\]\)/.test(topBar), 'the search rows render in the same task as the keystroke again');
+});
+
+// Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which
+// is the kind of figure the front-doors rule exists for and the one nobody re-reads.
+ok('the README quotes the number of checks this file runs', () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const readme = readFileSync(join(root, 'README.md'), 'utf8');
+  const quoted = readme.match(/^(\d+) comprobacións con asercións/m)?.[1];
+  assert(quoted === String(checks + 1), `README says ${quoted ?? 'nothing'} checks; this file runs ${checks + 1}`);
 });
 
 console.log(`\n${checks} checks passed\n`);
