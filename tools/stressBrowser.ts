@@ -204,8 +204,9 @@ async function coldStart(browser: Browser): Promise<void> {
 
 /** Click one of the bottom-nav destinations by its visible label. */
 const tapNav = (page: Session, label: string): Promise<boolean> =>
-  page.evaluate<boolean>(
-    `(() => { const b = [...document.querySelectorAll('nav a, nav button')].find((e) => e.textContent.trim() === ${JSON.stringify(label)}); if (!b) return false; b.click(); return true; })()`,
+  page.call<boolean>(
+    `(label) => { const b = [...document.querySelectorAll('nav a, nav button')].find((e) => e.textContent.trim() === label); if (!b) return false; b.click(); return true; }`,
+    label,
   );
 
 const MAP_READY = `document.querySelector('.leaflet-container canvas, .leaflet-container img.leaflet-tile')`;

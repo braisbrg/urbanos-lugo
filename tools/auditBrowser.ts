@@ -236,8 +236,12 @@ async function audit(browser: Browser, theme: 'light' | 'dark') {
   await page.send('Emulation.setDeviceMetricsOverride', VIEW);
   // The theme under test, and the language the state setups match their buttons in: a
   // runner's Chrome speaks English, and "filtros|capas" found nothing there.
+  // Two fixed scripts rather than one built around the argument: the theme is one of two
+  // words, and code assembled from a value is what CodeQL flags, rightly, elsewhere.
   await page.onNewDocument(
-    `try { localStorage.setItem('urbanos-lugo-theme', ${JSON.stringify(theme)}); localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}`,
+    theme === 'dark'
+      ? "try { localStorage.setItem('urbanos-lugo-theme', 'dark'); localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}"
+      : "try { localStorage.setItem('urbanos-lugo-theme', 'light'); localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}",
   );
 
   // The console, per state. Errors and warnings the page logs, and exceptions nobody
@@ -350,7 +354,7 @@ async function keyboard(browser: Browser): Promise<{ failures: string[]; visited
   return { failures, visited };
 }
 
-const only = process.argv[2] as 'light' | 'dark' | undefined;
+const only = process.argv[2] === 'light' || process.argv[2] === 'dark' ? process.argv[2] : undefined;
 const themes: ('light' | 'dark')[] = only ? [only] : ['light', 'dark'];
 
 const exe = findChromium();

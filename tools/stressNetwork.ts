@@ -30,9 +30,13 @@ const VIEW = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
 const t = translations('gl');
 
 /** The snapshot is on screen when the page says so above the notices; the sentence names the date. */
-const SNAPSHOT_SHOWN = `document.body.innerText.includes(${JSON.stringify(t.fares.snapshotNotice('').split('.')[0])})`;
+const SNAPSHOT_SENTENCE = t.fares.snapshotNotice('').split('.')[0];
+/** Probes run in the page with `page.call`, so the strings they look for travel as arguments, never as code. */
+// Case-insensitive: innerText carries the CSS text-transform, and the notice labels are set in capitals.
+const PAGE_SAYS = '(s) => document.body.innerText.toLowerCase().includes(s.toLowerCase())';
+const snapshotShown = (page: Session) => page.call<boolean>(PAGE_SAYS, SNAPSHOT_SENTENCE);
 /** A departure board has at least one clock time on it. */
-const BOARD_SHOWN = `/\\b\\d{1,2}:\\d{2}\\b/.test(document.querySelector('main')?.innerText ?? '')`;
+const boardShown = (page: Session) => page.call<boolean>("() => /\\b\\d{1,2}:\\d{2}\\b/.test(document.querySelector('main')?.innerText ?? '')");
 
 let failures = 0;
 function report(label: string, value: string, bad = false): void {
@@ -40,11 +44,11 @@ function report(label: string, value: string, bad = false): void {
   console.log(`  ${label.padEnd(58)} ${value}${bad ? '   <-- look' : ''}`);
 }
 
-/** Milliseconds until `expression` is true, or -1 after `limit`. */
-async function timeUntil(page: Session, expression: string, limit: number): Promise<number> {
+/** Milliseconds until `probe` answers true, or -1 after `limit`. */
+async function timeUntil(probe: () => Promise<boolean>, limit: number): Promise<number> {
   const started = Date.now();
   while (Date.now() - started < limit) {
-    if (await page.evaluate<boolean>(`!!(${expression})`)) return Date.now() - started;
+    if (await probe()) return Date.now() - started;
     await sleep(100);
   }
   return -1;
@@ -115,14 +119,14 @@ async function apiTrouble(browser: Browser, trouble: Trouble): Promise<void> {
 
   // The board first: it is computed on the device and must not wait for anyone.
   await page.goto(`${BASE}/paradas/?parada=uilP`);
-  const board = await timeUntil(page, BOARD_SHOWN, 5000);
+  const board = await timeUntil(() => boardShown(page), 5000);
   report('timetable board on screen, pole times pending', ms(board), board < 0 || board > 3000);
 
   await page.goto(`${BASE}/avisos/`);
-  const shown = await timeUntil(page, SNAPSHOT_SHOWN, 8000);
+  const shown = await timeUntil(() => snapshotShown(page), 8000);
   report(`notices screen shows the dated snapshot (bar ${trouble.noticesWithin} ms)`, ms(shown), shown < 0 || shown > trouble.noticesWithin);
   if (trouble.liveLater) {
-    const replaced = await timeUntil(page, `!(${SNAPSHOT_SHOWN})`, 10_000);
+    const replaced = await timeUntil(async () => !(await snapshotShown(page)), 10_000);
     report('the late answer replaces the snapshot', ms(replaced), replaced < 0);
   }
   report('API requests intercepted', String(intercepted), intercepted === 0);
@@ -144,23 +148,30 @@ async function offlineSecondVisit(browser: Browser): Promise<void> {
 
   await browser.offline(true);
   await page.send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-  const dead = await page.evaluate<boolean>(`fetch(${JSON.stringify(`${BASE}/api/version`)}).then(() => false, () => true)`);
+  const dead = await page.call<boolean>('(u) => fetch(u).then(() => false, () => true)', `${BASE}/api/version`);
   report('the page really is offline', dead ? 'yes' : 'no: a fetch still went through', !dead);
 
   await page.goto(`${BASE}/paradas/?parada=uilP`);
-  const board = await timeUntil(page, BOARD_SHOWN, 5000);
+  const board = await timeUntil(() => boardShown(page), 5000);
   report('timetable board on screen, from the cache', ms(board), board < 0);
   const online = await page.evaluate<boolean>('navigator.onLine');
   report('navigator.onLine', String(online));
 
   // Offline, the service worker answers /api/alerts with the last answer it saw -- the
-  // app asks on every screen, so the first visit left one -- and the screen shows it with
-  // its own time. Only when it has none does the hook's snapshot appear. Either is a dated
+  // app asks on every screen, so the first visit left one -- and the screen shows it: as
+  // notice cards when it carried any, as the "last check" line when it did not. Only when
+  // the worker has nothing does the hook's snapshot appear. Any of the three is a dated
   // answer; an empty list is the failure.
   await page.goto(`${BASE}/avisos/`);
-  const dated = `(${SNAPSHOT_SHOWN}) || document.body.innerText.includes(${JSON.stringify(t.fares.lastCheck)})`;
-  const shown = await timeUntil(page, dated, 8000);
-  const which = shown < 0 ? ' (the list is empty)' : (await page.evaluate<boolean>(SNAPSHOT_SHOWN)) ? ' (the committed snapshot)' : " (the worker's last cached answer)";
+  const cards = () => page.call<boolean>(PAGE_SAYS, t.fares.sourceOperator);
+  const checked = () => page.call<boolean>(PAGE_SAYS, t.fares.lastCheck);
+  const dated = async () => (await snapshotShown(page)) || (await checked()) || (await cards());
+  const shown = await timeUntil(dated, 8000);
+  // When nothing dated shows, say what the screen does say: it is the difference between
+  // an empty list and a page that never rendered.
+  const which = shown < 0
+    ? ` (nothing dated; the screen reads: ${JSON.stringify(await page.call<string>("() => (document.querySelector('main')?.innerText ?? '').replace(/\\s+/g, ' ').slice(0, 160)"))})`
+    : (await snapshotShown(page)) ? ' (the committed snapshot)' : " (the worker's last cached answer)";
   report('notices screen shows a dated answer', ms(shown) + which, shown < 0 || shown > 3500);
   report('uncaught exceptions', thrown.length ? thrown.join(' | ') : 'none', thrown.length > 0);
   await browser.offline(false);
@@ -168,6 +179,10 @@ async function offlineSecondVisit(browser: Browser): Promise<void> {
 
 const exe = findChromium();
 if (!exe) throw new Error('no Chromium found');
+// A dead server would read as every probe timing out, which looks like the app failing.
+// It happened: the server had been stopped under the tool and every row said "never".
+const alive = await fetch(`${BASE}/`).then((r) => r.ok, () => false);
+if (!alive) throw new Error(`${BASE} does not answer: start the built server first (pnpm build && PORT=3002 pnpm start)`);
 console.log(`against ${BASE}; committed snapshot from ${alertSnapshot.fetchedAt}, ${alertSnapshot.alerts.length} notice(s)`);
 const browser = await launch(exe, true);
 try {

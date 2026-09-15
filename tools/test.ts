@@ -2353,7 +2353,9 @@ ok('the content security policy still refuses what it was written to refuse', ()
   const built = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'index.html');
   if (existsSync(built)) {
     const html = readFileSync(built, 'utf8');
-    const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    // Case-insensitive not because the build would ever write <SCRIPT>, but because a
+    // tag match that is not is what CodeQL flags, and it costs a flag to be right.
+    const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
     assert(inline.length === 1, `the built page has ${inline.length} inline scripts, not exactly 1`);
     const digest = `sha256-${createHash('sha256').update(inline[0], 'utf8').digest('base64')}`;
     assert(

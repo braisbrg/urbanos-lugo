@@ -95,6 +95,33 @@ export class Session {
     return res.result.value as T;
   }
 
+  /**
+   * Call a function in the page with real arguments.
+   *
+   * The values used to be spliced into an expression with JSON.stringify, which is code
+   * built from data -- a label with `</script>` or U+2028 in it would have broken out of
+   * the literal -- and CodeQL said so. The protocol has a channel for arguments; this is
+   * it. `globalThis` is looked up on every call because its handle dies with each
+   * navigation, and these tools navigate more than they call.
+   */
+  async call<T>(fn: string, ...args: unknown[]): Promise<T> {
+    const { result: page } = await this.send<{ result: { objectId: string } }>('Runtime.evaluate', { expression: 'globalThis' });
+    const res = await this.send<{
+      result: { value?: T };
+      exceptionDetails?: { text: string; exception?: { description?: string } };
+    }>('Runtime.callFunctionOn', {
+      functionDeclaration: fn,
+      objectId: page.objectId,
+      arguments: args.map((value) => ({ value })),
+      awaitPromise: true,
+      returnByValue: true,
+    });
+    if (res.exceptionDetails) {
+      throw new Error(res.exceptionDetails.exception?.description ?? res.exceptionDetails.text);
+    }
+    return res.result.value as T;
+  }
+
   /** Runs before any of the page's own script, on this and every subsequent document. */
   async onNewDocument(source: string): Promise<void> {
     await this.send('Page.addScriptToEvaluateOnNewDocument', { source });
