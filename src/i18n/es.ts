@@ -306,7 +306,7 @@ export const es: Dict = {
     layerStops: 'Paradas',
     layerBuses: 'Buses',
     layerRoutes: 'Trazados',
-    documentTitle: 'Urbanos de Lugo | Líneas, horarios y paradas',
+    documentTitle: 'Urbanos de Lugo | Bus urbano: líneas, horarios y paradas',
     layers: 'Capas visibles',
     linesList: 'Elegir líneas',
     linesPicked: (count: number) => (count === 1 ? '1 elegida' : `${count} elegidas`),

@@ -19,7 +19,7 @@ import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
 import { createHash } from 'node:crypto';
 import { REPO_URL } from '../src/project';
-import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
+import { ROOT_HEAD, SITE_PATHS, pageHead, pageHtml, robotsTxt, routeUrl, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
@@ -2708,10 +2708,66 @@ ok('the structured data does not pass this off as the operator', () => {
   assert(robots.includes(`Sitemap: ${site}sitemap.xml`), `robots.txt does not name the sitemap: ${robots}`);
   assert(/^User-agent: \*/m.test(robots), 'robots.txt has no user-agent line');
 
+  // With the trailing slash: each tab is a directory on Pages, and the bare path is a
+  // 301 to it -- six of the seven sitemap entries redirected.
   const map = sitemapXml(site, ['', 'paradas']);
   assert(map.includes(`<loc>${site}</loc>`), 'the sitemap is missing the site root');
-  assert(map.includes(`<loc>${site}paradas</loc>`), 'a path passed to the sitemap did not come out');
+  assert(map.includes(`<loc>${site}paradas/</loc>`), 'a path passed to the sitemap did not come out with its slash');
   assert(!map.includes('//paradas'), 'joining the site URL to a path doubled the slash');
+});
+
+ok('every tab page has its own title, description and canonical', () => {
+  // The build wrote six copies of index.html, and all seven pages carried the root's
+  // title, description and canonical: to a search engine, one page listed seven times,
+  // and the six copies duplicates of it. Each copy is re-headed from `pageHead` now, and
+  // the root's tags are the anchors that replacement finds -- so index.html has to say
+  // exactly what ROOT_HEAD says, or the copies quietly keep the wrong head.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const site = 'https://example.org/';
+  assert(html.includes(`<title>${ROOT_HEAD.title}</title>`), 'index.html <title> is not ROOT_HEAD.title');
+  assert(html.includes(`<meta property="og:title" content="${ROOT_HEAD.title}"`), 'og:title is not ROOT_HEAD.title');
+  assert(html.includes(`content="${ROOT_HEAD.description}"`), 'the meta description is not ROOT_HEAD.description');
+  // The app's own title for the home screen, in Galician, is the same line: a tab strip
+  // should read the same before and after the bundle arrives.
+  assert(translations('gl').map.documentTitle === ROOT_HEAD.title, 'gl documentTitle drifted from ROOT_HEAD.title');
+
+  const seen = new Set<string>();
+  for (const route of SITE_PATHS) {
+    const head = pageHead(route);
+    // "bus" is the word people search; "non oficial" is the word they are owed. 155 is
+    // where a result cuts the description, and 60 the title.
+    assert(/\bbus\b/i.test(head.title), `"${head.title}" does not say bus`);
+    assert(head.title.length <= 60, `"${head.title}" is ${head.title.length} characters; 60 is where a result cuts it`);
+    assert(/^Non oficial\./.test(head.description), `the description for "${route}" does not open with "Non oficial."`);
+    assert(head.description.length <= 155, `the description for "${route}" is ${head.description.length} characters; 155 is the cut`);
+    assert(!/tempo real|en vivo|GPS en directo/i.test(head.title + head.description), `the head for "${route}" promises live data`);
+    assert(!seen.has(head.title), `two pages share the title "${head.title}"`);
+    seen.add(head.title);
+
+    // Injected the way the build does it, on a page carrying the root canonical.
+    const withCanonical = html.replace('<meta name="theme-color"', `<link rel="canonical" href="${site}" />\n    <meta name="theme-color"`);
+    const page = pageHtml(withCanonical, route, site);
+    assert(page.includes(`<title>${head.title}</title>`), `the ${route || 'root'} page did not get its title`);
+    assert(page.includes(`<meta name="description" content="${head.description}"`), `the ${route || 'root'} page did not get its description`);
+    assert(page.includes(`<meta property="og:title" content="${head.title}"`), `the ${route || 'root'} page did not get its og:title`);
+    assert(page.includes(`<link rel="canonical" href="${routeUrl(site, route)}" />`), `the ${route || 'root'} page canonical is not its own address`);
+    assert((page.match(/rel="canonical"/g) ?? []).length === 1, `the ${route || 'root'} page has more than one canonical`);
+  }
+
+  // The preview image is injected with the canonical, absolute, and is a file that ships.
+  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  assert(/og:image" content="\$\{site\}icon-512\.png"/.test(vite), 'the build no longer injects an absolute og:image');
+  assert(existsSync(join(root, 'public/icon-512.png')), 'public/icon-512.png is gone, so og:image points at nothing');
+
+  // The tabs are links, so a crawler can walk from any copy to the other six, and the
+  // address they carry is the one the build writes, slash included.
+  for (const file of ['src/components/BottomNav.tsx', 'src/components/SideNav.tsx', 'src/components/MenuDrawer.tsx']) {
+    const source = readFileSync(join(root, file), 'utf8');
+    assert(/<a\s[^>]*\{\.\.\.tabLink\(/.test(source), `${file} no longer renders the tabs as links`);
+  }
+  const hook = readFileSync(join(root, 'src/hooks/useTabRoute.ts'), 'utf8');
+  assert(/PATHS\[tab\]\}\/\$\{window\.location\.search\}/.test(hook), 'urlForTab lost the trailing slash, so every shared link 301s again');
 });
 
 ok('every tab has a path, and the sitemap lists exactly those', () => {

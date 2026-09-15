@@ -317,7 +317,7 @@ export const en: Dict = {
     layerStops: 'Stops',
     layerBuses: 'Buses',
     layerRoutes: 'Routes',
-    documentTitle: 'Urbanos de Lugo | Lines, timetables and stops',
+    documentTitle: 'Urbanos de Lugo | Lugo city bus: lines, timetables and stops',
     layers: 'Visible layers',
     linesList: 'Choose lines',
     linesPicked: (count: number) => (count === 1 ? '1 chosen' : `${count} chosen`),

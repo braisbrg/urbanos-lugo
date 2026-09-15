@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { CSP_META } from './src/security/csp';
 import { THEME_INIT_SOURCE } from './src/security/themeInit';
-import { SITE_PATHS, robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
+import { SITE_PATHS, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
 
 // GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
 // Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
@@ -105,11 +105,14 @@ const emitSpaFallback = {
     const built = path.resolve(outDir, 'index.html');
     if (!existsSync(built)) return;
     copyFileSync(built, path.resolve(outDir, '404.html'));
+    // Each copy with its own title, description and canonical: seven identical heads
+    // read to a search engine as one page listed seven times.
+    const html = readFileSync(built, 'utf8');
     for (const route of SITE_PATHS) {
       if (!route) continue; // the root is index.html itself
       const dir = path.resolve(outDir, route);
       mkdirSync(dir, { recursive: true });
-      copyFileSync(built, path.join(dir, 'index.html'));
+      writeFileSync(path.join(dir, 'index.html'), pageHtml(html, route, site));
     }
   },
 };
@@ -130,7 +133,11 @@ const emitSeoFiles = {
   },
 };
 
-/** The canonical link and the structured data, which both need the real address. */
+/**
+ * The canonical link, the preview image and the structured data, which all need the
+ * real address. The image is the 512 px icon the manifest already ships -- absolute,
+ * because the apps that unfurl a pasted link do not resolve a relative one.
+ */
 const injectSeoTags = {
   name: 'inject-seo-tags',
   apply: 'build' as const,
@@ -138,6 +145,9 @@ const injectSeoTags = {
     if (!site) return html;
     const tags = [
       `<link rel="canonical" href="${site}" />`,
+      `<meta property="og:image" content="${site}icon-512.png" />`,
+      `<meta property="og:image:width" content="512" />`,
+      `<meta property="og:image:height" content="512" />`,
       `<script type="application/ld+json">${structuredData(site)}</script>`,
     ].join('\n    ');
     return html.replace('<meta name="theme-color"', `${tags}\n    <meta name="theme-color"`);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, CreditCard, Globe, Moon } from 'lucide-react';
 import { navSections, type Tab } from './navSections';
+import { tabLink } from '../hooks/useTabRoute';
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, LANG_NAME, translations } from '../i18n';
 
@@ -65,9 +66,9 @@ export const SideNav: React.FC<SideNavProps> = ({
         {sections.map(({ id, Icon, label }) => {
           const on = activeTab === id;
           return (
-            <button
+            <a
               key={id}
-              onClick={() => setActiveTab(id)}
+              {...tabLink(id, setActiveTab)}
               aria-current={on ? 'page' : undefined}
               className={`flex h-11 items-center gap-3 rounded-control px-3 text-left text-body ${
                 on ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'
@@ -81,7 +82,7 @@ export const SideNav: React.FC<SideNavProps> = ({
                   <span className="sr-only">{t.companion.onTrip}</span>
                 </>
               )}
-            </button>
+            </a>
           );
         })}
       </nav>
@@ -93,9 +94,9 @@ export const SideNav: React.FC<SideNavProps> = ({
         {asides.map(({ id, Icon, label, badge }) => (
           // The count is part of the name, with a pause: read from the markup it came out
           // as one word, "Avisos do servizo1". Same as the menu.
-          <button
+          <a
             key={id}
-            onClick={() => setActiveTab(id)}
+            {...tabLink(id, setActiveTab)}
             aria-current={activeTab === id ? 'page' : undefined}
             aria-label={badge > 0 ? `${label} (${badge})` : undefined}
             className={`flex h-11 items-center gap-3 rounded-control px-3 text-left text-body ${
@@ -109,7 +110,7 @@ export const SideNav: React.FC<SideNavProps> = ({
                 {badge}
               </span>
             )}
-          </button>
+          </a>
         ))}
       </div>
 

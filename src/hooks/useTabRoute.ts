@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import type { Tab } from '../components/navSections';
 import { PATHS } from '../routes';
 
@@ -36,7 +36,24 @@ function tabFromLocation(): Tab | null {
 function urlForTab(tab: Tab): string {
   // The search string is carried across so that arriving on `?parada=uilP` and then
   // moving between tabs does not silently drop the stop out of a shared link.
-  return `${BASE}${PATHS[tab]}${window.location.search}`;
+  // The trailing slash is the address the build writes, so a shared link does not 301.
+  return `${BASE}${PATHS[tab]}/${window.location.search}`;
+}
+
+/**
+ * A tab as a link. The nav used to be buttons, which a crawler cannot follow: the six
+ * copies of the page had one internal link between them. A plain left click stays in
+ * the app; a modifier or the middle button is the browser's own -- a new tab, a bookmark.
+ */
+export function tabLink(tab: Tab, go: (tab: Tab) => void) {
+  return {
+    href: urlForTab(tab),
+    onClick(event: MouseEvent<HTMLAnchorElement>) {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      go(tab);
+    },
+  };
 }
 
 export function useTabRoute(initial: Tab): [Tab, (tab: Tab) => void] {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDialog } from '../hooks/useDialog';
+import { tabLink } from '../hooks/useTabRoute';
 import { AlertTriangle, ChevronRight, CreditCard, Globe, Moon, X } from 'lucide-react';
 import type { ThemeChoice } from '../hooks/useTheme';
 import { Lang, LANGS, LANG_CODE, LANG_NAME, translations } from '../i18n';
@@ -86,12 +87,12 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           {asides.map(({ id, Icon, tint, label, badge }) => (
             // The count is part of the name, with a pause: read from the markup it came
             // out as one word, "Avisos do servizo1".
-            <button
+            <a
               key={id}
-              onClick={() => {
-                onOpenTab(id);
+              {...tabLink(id, (tab) => {
+                onOpenTab(tab);
                 onClose();
-              }}
+              })}
               aria-label={badge > 0 ? `${label} (${badge})` : undefined}
               className="flex h-14 items-center gap-4 rounded-card px-3 text-left"
             >
@@ -103,7 +104,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
                 </span>
               )}
               <ChevronRight className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
-            </button>
+            </a>
           ))}
 
           <div className="flex min-h-14 items-center gap-4 px-3 py-2">

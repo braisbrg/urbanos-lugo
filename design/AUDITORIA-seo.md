@@ -193,16 +193,28 @@ ferramenta (bloquean a descarga): o que se di deles vén dos títulos da SERP.
 2. **Título, descrición e canónica por pestana.** `seo.ts` + `vite.config.ts` +
    `App.tsx` + os tres dicionarios, e un check en `test.ts`: cada copia con título
    distinto e canónica propia.
+   *Feito o 15 de setembro de 2026: táboa `pageHead` en `seo.ts` (galego), cada copia
+   reescrita por `pageHtml` na build, e as pestanas pasan a `<a href>` en `BottomNav`,
+   `SideNav` e `MenuDrawer` (o clic simple queda na app; Ctrl, Maiús ou botón central son
+   do navegador). O check comproba título ≤ 60 con «bus», descrición ≤ 155 con «Non
+   oficial.», canónica propia e sen promesa de tempo real.*
 3. **Barra final no sitemap e en `urlForTab`.** Quita os seis 301.
+   *Feito o 15 de setembro de 2026 (`routeUrl` en `seo.ts`).*
 4. **Descrición ≤ 155 con «non oficial», título con «bus», `og:image` co icono.** Coherente
    coas tres portadas: o que non é oficial dise en todas partes.
    *Feita a descrición o 14 de setembro de 2026 (`7a7bf3b`): 154 caracteres, empeza por
-   «Non oficial.», igual na `og:description` e no manifest, e `test.ts` compróbao. Quedan o
-   «bus» no título e a `og:image`.*
+   «Non oficial.», igual na `og:description` e no manifest, e `test.ts` compróbao. O «bus»
+   no título («Urbanos de Lugo | Bus urbano: liñas, horarios e paradas», 55) e a
+   `og:image` (o icono de 512 px, con largo e alto, inxectada na build co enderezo
+   absoluto) o 15 de setembro.*
 5. **Bloque estático na portada** (parágrafo + 24 liñas ligadas). Depende de decidir onde
    vai nunha app a pantalla completa: a proposta é que viva no HTML e a app o substitúa
    ao montar; para Google conta o renderizado, así que as mesmas 24 liñas teñen que
    estar tamén no DOM da app —xa o están en `/linhas/`.
+   *Aparcado o 15 de setembro de 2026: un bloque que React substitúe ao montar é un
+   desprazamento de toda a pantalla, e o CLS 0 da táboa de medidas deixaría de selo. Sen
+   prerender real (o mesmo React a hidratar o mesmo marcado) non compensa; vai co punto 7,
+   que ten o mesmo problema e a mesma solución.*
 6. **Descrición e temas do repositorio**, hoxe baleiros. O repositorio si está indexado e
    é a única porta que hai:
 

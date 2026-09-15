@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lang, translations } from '../i18n';
 import { navSections, type Tab } from './navSections';
+import { tabLink } from '../hooks/useTabRoute';
 
 
 interface BottomNavProps {
@@ -31,9 +32,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, t
       {items.map(({ id, Icon, label }) => {
         const on = activeTab === id;
         return (
-          <button
+          <a
             key={id}
-            onClick={() => setActiveTab(id)}
+            {...tabLink(id, setActiveTab)}
             aria-current={on ? 'page' : undefined}
             className={`flex h-[60px] flex-1 flex-col items-center justify-center gap-1 border-t-2 transition-colors ${
               on ? 'border-accent text-accent' : 'border-transparent text-ink-3'
@@ -56,7 +57,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, t
             <span className={`text-label ${on ? 'font-semibold' : 'font-normal'}`}>
               {label}
             </span>
-          </button>
+          </a>
         );
       })}
     </nav>

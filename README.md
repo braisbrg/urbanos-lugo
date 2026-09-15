@@ -631,7 +631,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── rateLimit.ts            teito de peticións por enderezo, servidor e worker
 │   │   └── themeInit.ts            o script do tema antes do primeiro pintado, e o seu hash
 │   ├── routes.ts                   os slugs das pestanas, nunha soa lista
-│   ├── seo.ts                      canonical, sitemap e datos estruturados
+│   ├── seo.ts                      título, descrición e canónica por pestana, sitemap, datos estruturados
 │   ├── types.ts
 │   ├── App.tsx
 │   └── main.tsx
@@ -1213,8 +1213,13 @@ A build escribe unha páxina en cada enderezo de pestana —`paradas/`, `linhas/
 un detalle: `sitemap.xml` anuncia esas seis rutas e un buscador descarta un enderezo
 listado que responde 404, e as aplicacións onde se pegan os enlaces de «copiar ligazón»
 saltan a vista previa cando ven un 404 — tirando xusto as etiquetas `og:` que existen
-porque eses enlaces se comparten. Son seis copias de 4,6 KB. Os slugs saen de
-`src/routes.ts`, que é a única lista: dela len o enrutador, o sitemap e a build.
+porque eses enlaces se comparten. Son seis copias de 4,6 KB, e desde o 15 de setembro de
+2026 cada unha leva o seu título, a súa descrición e a súa canónica (`src/seo.ts`): antes
+as sete levaban as da raíz e un buscador vía unha soa páxina sete veces. As pestanas son
+ligazóns (`<a href>`) que un rastrexador pode seguir, o sitemap e «copiar ligazón» usan a
+barra final para non pasar polo 301 de Pages, e a `og:image` é o icono de 512 px. Os
+slugs saen de `src/routes.ts`, que é a única lista: dela len o enrutador, o sitemap e a
+build.
 
 O único que cambia sen servidor son os **avisos oficiais**: o navegador non pode ler
 buslugo.com por CORS, así que se usa a copia horaria que deixa a tarefa programada e
@@ -1350,7 +1355,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-146 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+147 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1657,9 +1662,10 @@ substituír o scraper por un lector de GTFS afectaría só a `tools/importOffici
 
 ### Que os buscadores atopen o sitio
 
-A 14 de setembro de 2026 ningún buscador devolve o sitio: as sete URL do sitemap levan
-o mesmo título e a mesma canónica, as pestanas son botóns que un rastrexador non pode
-seguir, e as 24 liñas e 417 paradas non teñen páxina propia. A auditoría, coas medidas e
-o plan por orde —verificar o sitio, título e canónica por pestana, páxinas estáticas por
-liña—, está en [`design/AUDITORIA-seo.md`](design/AUDITORIA-seo.md). Nada diso cambia
-as regras: ningún título prometerá tempo real, e «non oficial» vai na descrición.
+A 14 de setembro de 2026 ningún buscador devolve o sitio. A parte que era código está
+feita: título, descrición e canónica por pestana, pestanas como ligazóns, `og:image`. O
+que queda é verificar o sitio en Search Console e Bing e enviar o sitemap —só o pode
+facer o dono da conta— e, despois, unha páxina por liña e por parada, que hoxe non teñen
+URL propia. A auditoría, coas medidas e o plan por orde, está en
+[`design/AUDITORIA-seo.md`](design/AUDITORIA-seo.md). Nada diso cambia as regras:
+ningún título prometerá tempo real, e «non oficial» vai na descrición.
