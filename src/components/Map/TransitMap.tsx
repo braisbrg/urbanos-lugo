@@ -999,11 +999,14 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               onOpenLine={onOpenLine}
             />
 
+            {/* The big dot follows what the reader is looking at: the stop whose sheet is
+                open, else the one whose board they came from. It used to follow only the
+                second, so tapping around the map left it on a stop from another screen. */}
             <StopLayer
               map={map}
               visibleLineIds={visibleLineIds}
               stops={stops}
-              selectedStop={selectedStop}
+              selectedStop={tappedStop ?? selectedStop}
               showStops={showStops}
               onTapStop={setTappedStop}
             />

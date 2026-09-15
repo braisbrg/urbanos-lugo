@@ -78,6 +78,10 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   // Held in a ref so a fresh arrow from the parent does not rebuild every marker.
   const onTapStopRef = useRef(onTapStop);
   onTapStopRef.current = onTapStop;
+  // The same for the selection: a marker placed after a pan reads the current one here,
+  // and a change of selection restyles the markers below instead of rebuilding them.
+  const selectedIdRef = useRef(selectedStop?.id);
+  selectedIdRef.current = selectedStop?.id;
 
   /*
    * The rung, not the zoom.
@@ -93,6 +97,8 @@ export const StopLayer: React.FC<StopLayerProps> = ({
    * rather than on every notch.
    */
   const [rung, setRung] = useState(() => rungFor(map?.getZoom() ?? 14));
+  /** Bumped when a stop selected at a thinning zoom has no dot yet; see the selection effect. */
+  const [thinnedIn, setThinnedIn] = useState(0);
   useEffect(() => {
     if (!map) return;
     const sync = () => setRung(rungFor(map.getZoom()));
@@ -137,7 +143,7 @@ export const StopLayer: React.FC<StopLayerProps> = ({
               const kept: L.Point[] = [];
               const chosen = [...onLine].sort(
                 (a, b) =>
-                  Number(b.id === selectedStop?.id) - Number(a.id === selectedStop?.id) ||
+                  Number(b.id === selectedIdRef.current) - Number(a.id === selectedIdRef.current) ||
                   b.lines.length - a.lines.length ||
                   a.name.localeCompare(b.name),
               );
@@ -237,12 +243,12 @@ export const StopLayer: React.FC<StopLayerProps> = ({
         // A marker built in a later frame misses the selection effect below, which runs
         // once per selection over whatever exists at that moment; so the selected look is
         // applied here too, and the two agree on what it is.
-        if (stop.id === selectedStop?.id) {
+        if (stop.id === selectedIdRef.current) {
           marker.setStyle({ radius: 9, fillColor: colors.stopSelected, weight: 3 });
         }
         group.addLayer(marker);
         markersRef.current[stop.id] = marker;
-        if (stop.id === selectedStop?.id) marker.bringToFront();
+        if (stop.id === selectedIdRef.current) marker.bringToFront();
       };
 
       // What is in view lands in this task, one redraw; what is not waits for a pan.
@@ -279,7 +285,10 @@ export const StopLayer: React.FC<StopLayerProps> = ({
       markersRef.current = {};
     };
     // `colors` too: the names canvas bakes the theme in when it is built, like the dots.
-  }, [map, stops, visibleLineIds, showStops, rung, selectedStop?.id, colors]);
+    // Not the selection: it used to be here, so every tap on a stop rebuilt all 417.
+    // `thinnedIn` only: a selection made at a zoom that thins the dots rebuilds once, so
+    // the chosen stop gets a dot to restyle.
+  }, [map, stops, visibleLineIds, showStops, rung, colors, thinnedIn]);
 
   // Selection restyles one marker rather than rebuilding the layer. The others go back
   // to the rung's radius, not to a fixed one: this ran after every rebuild and set the
@@ -287,6 +296,12 @@ export const StopLayer: React.FC<StopLayerProps> = ({
   // shared the screen at zoom 16.
   useEffect(() => {
     const selectedId = selectedStop?.id;
+    // At the zooms that thin the dots the selected stop is kept on purpose (the sort
+    // above), but only when the layer is built; selected afterwards, it may have no dot.
+    if (selectedId && !markersRef.current[selectedId] && !rung.label) {
+      setThinnedIn((n) => n + 1);
+      return;
+    }
     Object.entries(markersRef.current).forEach(([id, marker]: [string, L.CircleMarker]) => {
       const isSelected = id === selectedId;
       marker.setStyle({
