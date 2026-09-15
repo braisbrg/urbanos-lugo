@@ -237,6 +237,25 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    nunca espera pola rede; a pantalla de avisos nunca queda baleira máis de dous segundos;
    unha lectura fallida do operador dura un minuto, non media hora; sen rede, o *service
    worker* dá a última resposta que viu. Rolda 16 do rexistro.*
+4. **Interurbanas no taboleiro, e con elas os postes na beirarrúa.** Un só proxecto de
+   datos, decidido o 15 de setembro de 2026 e sen data. As liñas da Xunta chegan en GTFS
+   (datos abertos; ler a licenza antes, regra de `DATA.md`) con un poste por sentido, na
+   beirarrúa. É o mesmo formato que faría falta para arranxar o que hoxe o mapa non di: o
+   lado da rúa. Medido: de 1.088 pares parada-sentido, 652 pins do operador están a menos
+   de 4 m do eixe da rúa —marcan a calzada, non a beirarrúa— e 143 paradas son un só
+   punto para os dous sentidos. Non se arranxa desprazando os pins «á dereita do sentido»
+   (sería inventar unha posición, e falla en rotondas, dobres calzadas e bucles: os 22
+   casos que saen «á esquerda» son iso), senón tomando o poste real: OpenStreetMap ten 275
+   das 417 co mesmo nome. O prezo: as coordenadas deixan de ser do operador, `stops.json`
+   pasa a ser dato OSM (ODbL), 142 paradas quedan sen fonte, e hai que partir as dobres —
+   co que cambian o reconto, os códigos QR compartidos, os favoritos e `?parada=`. Non se
+   fai por partes.
+5. **Tres paradas que discrepan de OSM no lado da rúa**, para mirar a pé ou en Street View
+   antes de tocar nada: `s589` Czda. Gándaras (enfte. Residencia) —o poste de OSM está 31 m
+   máis alá, na outra beirarrúa da 4.2 cara a Gándaras—, `s133` Rúa Industria (Aula 9)
+   —43 m, outra beirarrúa da 1.2/1.4 de volta— e `s1043` Barbaín (dir. centro) —15 m, outra
+   beirarrúa da 11 a Bóveda de volta—. OSM tamén se equivoca; sen velas, non se move
+   ningunha.
 
 ### Lista para o iPhone
 
