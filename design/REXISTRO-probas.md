@@ -1347,3 +1347,36 @@ puntos para un iPhone real está nas NOTAS.
 e sete veces ao día en setembro. O README dicía «copia horaria» en dous sitios e xa non; a
 descrición da páxina de avisos dicía «actualizados cada hora» e agora di «coa hora da
 última lectura». `stress:network` corre os luns con `measure.yml`.
+
+## Rolda 17: o pin que non era unha posición — 15 de setembro de 2026
+
+Unha parada vista fóra do seu sitio no mapa: «Estda. Nova Santiago (Monte Segade)», da
+liña 11 cara a Calde, debuxada na N-540 á altura da Avda. das Américas cando o poste
+está 1,1 km máis abaixo, na estrada de Santiago.
+
+**O que dicía cada fonte.** O operador, en todas as súas: a páxina da parada
+(`mapa/?ps=1065` e `?ps=1082`, os dous postes) centra o mapa en 43,00913 / −7,57125 e o
+seu marcador —vai cifrado na páxina, coa clave na propia páxina; descifráronse os 1.186
+marcadores das páxinas gardadas para comprobalo— di o mesmo punto; o mapa da ruta
+(`mapa/?l=21`) tamén. E ese punto está a **cinco metros** de «Avda. Américas 88», a parada
+anterior do mesmo sentido. OpenStreetMap ten dous postes co nome exacto en 43,00391 /
+−7,58286 e 43,00420 / −7,58323, a 9–19 m da ruta levantada da liña. Dúas paradas
+consecutivas dun sentido non poden estar a seis metros: é unha coordenada mal metida.
+
+**O que se fixo, e o que non.** Ningunha coordenada a man. `importStopAmenities.ts`
+rexistra, para cada parada, o poste de OSM co mesmo nome cando está a máis de 300 m do
+pin do operador (hoxe: unha). `buildDataset.ts` detecta os pares de paradas consecutivas a
+menos de 30 m e só cando as dúas condicións coinciden toma o poste de OSM e marca a parada
+(`positionSource: "osm"`); os outros dous pares baixo 30 m —Avda. Américas 36/51 a 19 m,
+Rúa Industria a 28— quedan como os publica o operador e a build dío. Resultado: 417
+paradas, 24 liñas, 271 postes con código, sen cambio; unha parada movida; os tramos ao seu
+redor deixan de medir 0 m (agora 868 e 1.288); `stopPathIndex` de 141 a 205. `check:deep`
+enteiro: 180.144 taboleiros e 24.815 viaxes sen ningún fallo. Un check garda que a
+excepción sexa unha soa e nomea os dous pares que quedan; a nota da suite que chamaba
+«coordenada nun cruce» a ese pin de cinco metros queda corrixida. `DATA.md` di que ese
+dato é de OSM e leva a ODbL.
+
+**Xeneralizado, non só arranxado.** Da comparación pin-por-pin saíu tamén que ningunha
+outra parada ten o poste homónimo de OSM lonxe (275 das 417 teñen un co mesmo nome), e
+que ningunha parada está a máis de 120 m da ruta debuxada agás «Ramón Ferreiro 26» na
+5.1 (219 m), que é un extremo de liña e non un pin duplicado.
