@@ -2717,6 +2717,9 @@ ok('every tab page has its own title, description and canonical', () => {
   // The app's own title for the home screen, in Galician, is the same line: a tab strip
   // should read the same before and after the bundle arrives.
   assert(translations('gl').map.documentTitle === ROOT_HEAD.title, 'gl documentTitle drifted from ROOT_HEAD.title');
+  // Search Console re-checks its verification tag now and then; a head rewrite that
+  // dropped it would end the verification without anything on screen changing.
+  assert(/<meta name="google-site-verification" content="[\w-]{20,}"/.test(html), 'index.html lost the Search Console verification tag');
 
   const seen = new Set<string>();
   for (const route of SITE_PATHS) {
