@@ -684,6 +684,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 ├── design/                         artboards do redeseño (.dc.html), canvas.json e as notas de deseño (.md)
 ├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts
+├── CONTRIBUTING.md                 o pouco que hai que saber para que un cambio entre á primeira
 ├── DATA.md                         procedencia e condicións dos datos
 ├── NOTICE.md                       librarías, tipografía e a quen pertencen
 ├── PRIVACY.md                      que fai esta app cos teus datos
@@ -1559,6 +1560,14 @@ de que alguén se lembre.
 - **Non hai posicións en tempo real de ningún tipo.** Ver [Ideas para máis adiante](#ideas-para-máis-adiante).
 - O cadro horario dá as saídas de cabeceira; as horas nas paradas intermedias son
   estimacións a partir do tempo de condución medido, non horas publicadas.
+
+---
+
+## Contribuír
+
+O pouco que hai que saber está en [`CONTRIBUTING.md`](CONTRIBUTING.md): os datos son
+xerados e non se editan a man, ningunha hora vai sen etiqueta, os textos van en tres
+idiomas, cada arranxo deixa un check, e a documentación cambia no mesmo commit.
 
 ---
 
