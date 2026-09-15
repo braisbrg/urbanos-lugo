@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useReducer, useRef, lazy, Suspense } from 'react';
 import { Lang, translations } from '../i18n';
 import {
   Navigation,
@@ -125,6 +125,32 @@ interface Suggestion {
   zone?: string;
   type: 'stop' | 'landmark';
   score: number;
+}
+
+/**
+ * The question, the form and the answer, as one state with two moves.
+ *
+ * On a phone the form is 352 px and the quick destinations another 235, so the answer
+ * started below the second screenful: once there is one, the form folds to a one-line
+ * summary (`formOpen`; always open from `lg` up, where both fit). The screen opens on a
+ * worked example, which on a phone put 2,200 px of somebody else's trip between you and
+ * the fields, so there it waits until you have `asked`. And `answered` counts the
+ * questions so focus can move to the answer each time, the second one like the first.
+ *
+ * They were three `useState`s, and the "no route" sentence that nobody could see on a
+ * phone was an interaction between them: a search that found nothing set `asked` but
+ * left the form up, and the column with the sentence is hidden while the form is up.
+ * One reducer makes the rule a rule: answering folds the form, found or not.
+ */
+interface Asking {
+  formOpen: boolean;
+  asked: boolean;
+  answered: number;
+}
+function asking(state: Asking, action: 'answer' | 'toggleForm'): Asking {
+  return action === 'answer'
+    ? { formOpen: false, asked: true, answered: state.answered + 1 }
+    : { ...state, formOpen: !state.formOpen };
 }
 
 interface RoutePlannerViewProps {
@@ -429,35 +455,14 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }, [planResult, walkCorrection, lang]);
 
   /**
-   * On a phone the form is 352 px and the quick destinations another 235, so the
-   * answer to what you just asked started below the second screenful. Once there is
-   * a plan the form folds to a one-line summary; it is still sticky and always open
-   * from `lg` up, where there is room for both.
+   * The question, the form and the answer, as one state -- see `asking` above. Focus
+   * lands on the answer column after every question: pressing "Calcular ruta" folds the
+   * form away, and the button with it, so focus fell to the top of the document and a
+   * screen reader heard nothing. The column reads its first line -- the three figures, or
+   * the sentence saying there is nothing -- and scrolls into view on a phone.
    */
-  const [formOpen, setFormOpen] = useState(true);
-
-  /**
-   * Whether the reader has asked for anything yet.
-   *
-   * The screen opens on a worked example -- Fonte dos Ranchos to HULA, already
-   * planned -- which shows a desktop visitor what the tool answers with. On a phone
-   * it put 2,200 px of somebody else's trip between you and the two fields you came
-   * to fill in, so there it waits until you have asked something.
-   */
-  const [asked, setAsked] = useState(false);
-
-  /**
-   * Where the keyboard goes once there is an answer.
-   *
-   * Pressing "Calcular ruta" folds the form away, and the button with it, so focus fell
-   * to the top of the document: a screen reader heard nothing, and a keyboard had to walk
-   * the whole page back down to find out whether there was a route. Focus lands on the
-   * answer column instead, which reads its first line -- the three figures, or the
-   * sentence saying there is nothing -- and scrolls it into view on a phone. Counted, not
-   * a flag, because the second question deserves the same as the first.
-   */
+  const [{ formOpen, asked, answered }, ask] = useReducer(asking, { formOpen: true, asked: false, answered: 0 });
   const answerRef = useRef<HTMLDivElement>(null);
-  const [answered, setAnswered] = useState(0);
   useEffect(() => {
     if (answered) answerRef.current?.focus();
   }, [answered]);
@@ -522,9 +527,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     // "no route" sentence lives in the answer column, which is hidden while the form is
     // up, so the reader pressed the button and watched nothing happen. The row above the
     // answer reopens the fields in one tap.
-    setAsked(true);
-    setAnswered((n) => n + 1);
-    setFormOpen(false);
+    ask('answer');
     if (plans.length) rememberRoute({ from: orig, to: dest });
     setEndpoints({
       origin: toPoint(resolveLocationQuery(orig, gps)),
@@ -662,7 +665,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
           {asked && (
             <button
               type="button"
-              onClick={() => setFormOpen(!formOpen)}
+              onClick={() => ask('toggleForm')}
               aria-expanded={formOpen}
               className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden"
             >

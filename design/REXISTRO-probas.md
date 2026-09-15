@@ -1249,3 +1249,48 @@ agora.
 **Descartado:** `fadeDuration: 0` no renderizador (menos cadros tras cada tesela, a
 cambio de etiquetas que aparecen sen fundido) e saltar a sonda de WebGL2 apoiándose no
 erro do renderizador (a excepción salta en `onAdd`, non onde se crea a capa).
+
+## Rolda 15: o que quedaba das auditorías — 15 de setembro de 2026
+
+Tres puntos da lista de débeda e a metade rápida do plan de SEO, cada un no seu commit.
+
+**SEO, a parte que era código.** As sete páxinas levaban o mesmo título, a mesma
+descrición e a mesma canónica: para un buscador, unha páxina listada sete veces. Agora
+cada copia que escribe a build leva as súas (`pageHead` en `src/seo.ts`, galego; títulos
+≤ 60 con «bus», descricións ≤ 155 que empezan por «Non oficial.», ningunha promete tempo
+real), a canónica é o seu propio enderezo, e as pestanas son `<a href>` nos tres sitios
+onde eran botóns, así que un rastrexador pode ir dunha copia ás outras seis: o clic
+simple queda na app, Ctrl, Maiús ou o botón central son do navegador. O sitemap e
+«copiar ligazón» levan a barra final que Pages redirixía (seis 301 de sete entradas), e a
+`og:image` é o icono de 512 px co enderezo absoluto. Comprobado nunha build con
+`SITE_URL`: `dist/tarifas/index.html` co seu título, a súa descrición e
+`…/tarifas/` como canónica; e no navegador, as ligazóns con barra final, o histórico
+funcionando e a consola limpa. O bloque estático na portada queda aparcado: substituílo
+ao montar custaría o CLS 0, e a solución boa —prerender de verdade— é a mesma das páxinas
+por liña.
+
+**Débeda 6: dous comportamentos, co teclado de verdade.** `audit:browser` despacha Tab e
+Maiús+Tab reais polo menú aberto —unha volta enteira en cada sentido— e mira onde está o
+foco en cada paso; e planifica unha viaxe e le a que elemento foi o foco. Medido:
+**10 controis de 10 visitados, ningún paso fóra do diálogo, e o foco na resposta**. O
+número de controis distintos imprímese para que un Tab que non movese nada non puidese
+aprobar. Semanal, non porta, como o resto da ferramenta.
+
+**Débeda 8: `transitEngine.ts` partido por asunto.** 1.737 liñas en catro ficheiros:
+`places.ts` (374), `arrivals.ts` (298), `vehicles.ts` (184) e `planner.ts` (920), cortados
+polas costuras que xa tiña o código —`places` non le a ninguén; `arrivals` le `places`;
+`vehicles` le `arrivals`; o planificador le `places` e `arrivals`—. Dous auxiliares
+privados cruzaban unha costura (`occupancyAt`, `LocationResolution`) e agora expórtanse;
+os 21 importadores nomean o ficheiro dono do que usan, sen barril. `lint`, 147
+comprobacións, `check:deep` enteiro e `build`, todo verde; o diagrama de arquitectura
+volto a xerar co novo nome do motor.
+
+**Débeda 7, a metade que tiña un erro detrás.** Os tres estados do planificador que
+interactuaban —formulario aberto, preguntado, respostas contadas— son un `useReducer` con
+dous movementos: responder pecha o formulario e conta a pregunta, sempre; o botón da fila
+alterna o formulario. Comprobado no navegador: tras calcular, `aria-expanded="false"`,
+foco no `div` da resposta, e a fila volve abrir os campos. A outra metade —a folla de
+controis do mapa a un compoñente— **non se fai en frío**: sería un compoñente de vinte
+props, menos liñas no ficheiro e a mesma complexidade; cando se abra `TransitMap` para
+outra cousa, o que paga é sacar a lista de liñas (`pickedLineIds`, `linesExpanded`) que
+si é unha peza soa.

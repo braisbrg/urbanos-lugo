@@ -4503,7 +4503,13 @@ ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer take
   // form on a phone. The answer column takes focus after every question, found or not.
   const planner = read('src/components/RoutePlannerView.tsx');
   assert(/ref=\{answerRef\}\s+tabIndex=\{-1\}/.test(planner), 'the answer column can no longer take focus');
-  assert(/setAnswered\(\(n\) => n \+ 1\);\s+setFormOpen\(false\);/.test(planner), 'a question without an answer leaves the form covering the sentence that says so');
+  // One reducer holds the rule: answering folds the form and counts the question, and
+  // the calculate handler goes through it rather than through three setters again.
+  assert(
+    /action === 'answer'\s*\?\s*\{ formOpen: false, asked: true, answered: state\.answered \+ 1 \}/.test(planner),
+    'answering no longer folds the form and counts the question in one move',
+  );
+  assert(/ask\('answer'\);/.test(planner), 'the calculate handler no longer answers through the reducer');
 });
 
 ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoom changes', () => {
