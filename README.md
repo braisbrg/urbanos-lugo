@@ -1485,8 +1485,11 @@ pestanas, e compara cada cifra co orzamento que ten escrito ao lado, co porqué.
 `audit:browser` mide, en doce estados e nos dous temas, o contraste de cada texto (as
 cores en `oklch()` resólvense pintándoas nun lenzo, non cunha expresión regular), os
 textos por baixo de 12 px, os obxectivos por baixo de 44 px, e o que a consola rexistra
-en cada carga fresca. Ningún dos dous é unha porta de CI: os orzamentos son relativos á
-máquina. `.github/workflows/measure.yml` execútaos os luns e garda a saída como artefacto,
+en cada carga fresca; e despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta
+enteira ao menú sen saír del (10 controis de 10 visitados, para que a comprobación non
+poida aprobar por non moverse), e unha viaxe planificada deixa o foco na resposta. Os
+checks de `test.ts` sobre iso len o código; estes dous len o foco. Ningún dos dous é unha
+porta de CI: os orzamentos son relativos á máquina. `.github/workflows/measure.yml` execútaos os luns e garda a saída como artefacto,
 para que unha regresión coma a do mapa —catro veces o orzamento durante días— non dependa
 de que alguén se lembre.
 

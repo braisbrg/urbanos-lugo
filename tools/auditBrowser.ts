@@ -278,6 +278,78 @@ async function audit(browser: Browser, theme: 'light' | 'dark') {
   return out;
 }
 
+/**
+ * Two things the keyboard has to do, done with the keyboard.
+ *
+ * tools/test.ts checks that the dialog hook and the planner *contain* the code for these;
+ * a grep proves the text exists, not that focus moves. So here a real Tab goes through
+ * the browser's own focus handling: it must not leave the open menu, forwards or back,
+ * and a planned trip must land focus on the answer rather than leave it on the button.
+ */
+async function keyboard(browser: Browser): Promise<{ failures: string[]; visited: string }> {
+  const page = await browser.newPage();
+  await page.send('Emulation.setDeviceMetricsOverride', VIEW);
+  await page.onNewDocument(`try { localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}`);
+  const tab = async (back = false) => {
+    const key = { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9, modifiers: back ? 8 : 0 };
+    await page.send('Input.dispatchKeyEvent', { type: 'keyDown', ...key });
+    await page.send('Input.dispatchKeyEvent', { type: 'keyUp', ...key });
+  };
+  const active = () =>
+    page.evaluate<string>(
+      `(() => { const a = document.activeElement; if (!a || a === document.body) return 'body';
+         return (a.closest('[role=dialog]') ? 'dialog:' : 'outside:') + a.tagName.toLowerCase() + ' "' + ((a.getAttribute('aria-label') || a.textContent || '').trim().slice(0, 24)) + '"'; })()`,
+    );
+  const failures: string[] = [];
+  let visited = 'menu not opened';
+
+  await page.goto(`${BASE}/paradas`);
+  await page.waitFor('document.querySelector("main")');
+  await sleep(2200);
+  const opened = await page.evaluate<true | string>(`(async () => {${REACH} if (!hit('men|abrir')) return 'no menu button'; await pause(600); return true;})()`);
+  if (opened !== true) failures.push(`menu: ${opened}`);
+  else {
+    const count = await page.evaluate<number>(
+      `[...document.querySelector('[role=dialog]').querySelectorAll('button, [href], input, select, textarea, [tabindex]')].filter((e) => e.tabIndex >= 0 && !e.matches(':disabled')).length`,
+    );
+    // Forwards past the last one, then back past the first: every stop is in the dialog.
+    const stops = new Set<string>();
+    visited = '';
+    for (let i = 0; i < count + 2; i++) {
+      await tab();
+      const at = await active();
+      stops.add(at);
+      if (!at.startsWith('dialog:')) failures.push(`Tab ${i + 1} of ${count + 2} left the menu: focus on ${at}`);
+    }
+    for (let i = 0; i < count + 2; i++) {
+      await tab(true);
+      const at = await active();
+      stops.add(at);
+      if (!at.startsWith('dialog:')) failures.push(`Shift+Tab ${i + 1} of ${count + 2} left the menu: focus on ${at}`);
+    }
+    // Proof the key did something: the hook focuses the first control when the menu
+    // opens, so a Tab that moved nothing would also never leave the dialog.
+    visited = `${stops.size} distinct controls of ${count} in the menu`;
+    if (stops.size < Math.min(count, 3)) failures.push(`Tab visited ${stops.size} distinct controls of ${count}: the key is not moving focus, so this proved nothing`);
+  }
+
+  await page.goto(`${BASE}/ruta`);
+  await page.waitFor('document.querySelector("main")');
+  await sleep(2200);
+  const planned = await page.evaluate<true | string>(`(async () => {${REACH}${STATES.find((s) => s.name === 'planificada')!.setup}})()`);
+  if (planned !== true) failures.push(`planner: ${planned}`);
+  else {
+    const where = await page.evaluate<string>(
+      `(() => { const a = document.activeElement; const main = document.querySelector('main');
+         if (!a || a === document.body) return 'body';
+         if (!main.contains(a)) return 'outside main: ' + a.tagName;
+         return a.tabIndex === -1 && a.tagName === 'DIV' && a.textContent.trim().length > 50 ? 'answer' : a.tagName.toLowerCase() + ' "' + (a.textContent || '').trim().slice(0, 24) + '"'; })()`,
+    );
+    if (where !== 'answer') failures.push(`after planning, focus is on ${where}, not the answer`);
+  }
+  return { failures, visited };
+}
+
 const only = process.argv[2] as 'light' | 'dark' | undefined;
 const themes: ('light' | 'dark')[] = only ? [only] : ['light', 'dark'];
 
@@ -285,8 +357,11 @@ const exe = findChromium();
 if (!exe) throw new Error('no Chromium found');
 const browser = await launch(exe, true);
 const results = new Map<string, Awaited<ReturnType<typeof audit>>>();
+let keyboardFailures: string[] = [];
+let keyboardVisited = '';
 try {
   for (const theme of themes) results.set(theme, await audit(browser, theme));
+  ({ failures: keyboardFailures, visited: keyboardVisited } = await keyboard(browser));
 } finally {
   browser.close();
 }
@@ -333,6 +408,11 @@ for (const key of keys) {
   }
 }
 if (!noisy) console.log('  clean: nothing logged above info level on any state, either theme');
+
+console.log('\n=== keyboard: Tab stays in the menu, a planned trip takes focus ===');
+if (!keyboardFailures.length) console.log(`  both hold (${keyboardVisited})`);
+else console.log(`  (${keyboardVisited})`);
+for (const line of keyboardFailures) console.log(`  ${line}`);
 
 console.log('\n=== totals ===');
 for (const theme of themes) {
