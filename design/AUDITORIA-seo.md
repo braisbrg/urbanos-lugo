@@ -190,6 +190,12 @@ ferramenta (bloquean a descarga): o que se di deles vén dos títulos da SERP.
 1. **Search Console e Bing Webmaster.** Só o pode facer o dono da conta. Verificación
    por etiqueta `<meta>` ou por ficheiro HTML en `public/` —o token é público, non é
    unha credencial—, enviar o sitemap e «Inspeccionar URL → Solicitar indexación» na raíz.
+   *Feito o 15 de setembro de 2026, coa 1.1.1 en produción: propiedade de prefixo de URL
+   verificada por etiqueta `<meta>` (que `test.ts` garda), sitemap enviado en Google e
+   importado en Bing —Bing leuno o mesmo día: 7 URL, estado correcto; Google marcaba «non
+   se puido obter» e tipo «descoñecido» nas primeiras horas, o habitual nunha propiedade
+   nova, mentres a proba de URL publicada dicía que si podía acceder. O que segue é
+   esperar: días ou semanas ata aparecer en «Páxinas».*
 2. **Título, descrición e canónica por pestana.** `seo.ts` + `vite.config.ts` +
    `App.tsx` + os tres dicionarios, e un check en `test.ts`: cada copia con título
    distinto e canónica propia.

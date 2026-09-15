@@ -1668,10 +1668,11 @@ substituír o scraper por un lector de GTFS afectaría só a `tools/importOffici
 
 ### Que os buscadores atopen o sitio
 
-A 14 de setembro de 2026 ningún buscador devolve o sitio. A parte que era código está
-feita: título, descrición e canónica por pestana, pestanas como ligazóns, `og:image`. O
-que queda é verificar o sitio en Search Console e Bing e enviar o sitemap —só o pode
-facer o dono da conta— e, despois, unha páxina por liña e por parada, que hoxe non teñen
-URL propia. A auditoría, coas medidas e o plan por orde, está en
+A 14 de setembro de 2026 ningún buscador devolvía o sitio. Desde o 15 está feito o que
+dependía de nós: título, descrición e canónica por pestana, pestanas como ligazóns,
+`og:image`, e o sitio verificado en Search Console e Bing co sitemap enviado. O que
+segue é esperar a que o indexen. Unha páxina por liña e por parada —que hoxe non teñen URL
+propia— queda descrita na auditoría e non se fai por agora: non hai présa por competir
+con ninguén. A auditoría, coas medidas e o plan, está en
 [`design/AUDITORIA-seo.md`](design/AUDITORIA-seo.md). Nada diso cambia as regras:
 ningún título prometerá tempo real, e «non oficial» vai na descrición.
