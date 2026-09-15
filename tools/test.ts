@@ -4623,6 +4623,20 @@ ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoo
   assert(/stopNamesLayer\(/.test(stopsLayer) && !/permanent: true/.test(stopsLayer), 'the stop names are DOM tooltips again');
 });
 
+ok('a page opened before a deploy reloads itself once when a chunk has gone', () => {
+  // The site is rebuilt several times a day for the notices snapshot, and every rebuild
+  // renames the hashed chunks; the service worker drops the old names. A page opened
+  // before that and asked for the map after it fetched a file that no longer existed and
+  // showed "A view failed to render" -- three times in one session on the live site.
+  // Vite raises `vite:preloadError` for exactly this; the page reloads on it, and only
+  // once, so a reload that lands on the same failure surfaces instead of looping.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const main = readFileSync(join(root, 'src/main.tsx'), 'utf8');
+  assert(/addEventListener\('vite:preloadError'/.test(main), 'the entry no longer listens for a failed chunk load');
+  assert(/location\.reload\(\)/.test(main), 'a failed chunk load no longer reloads the page');
+  assert(/sessionStorage\.getItem\(key\) === target\) return/.test(main), 'the reload is no longer limited to once per address');
+});
+
 ok('the letter paints before the search rows do', () => {
   // The first keystroke scored the whole network and drew the rows in the same render as
   // the character: 400 ms from key to paint at 6x CPU, 219 of them blocked. The rows are

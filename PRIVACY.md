@@ -29,14 +29,15 @@ typed your street, your street is what it holds. It is kept so you do not have t
 the same trip twice, it is capped at four, and "Borrar" beside the list removes it. As
 with everything above, nothing in this project reads it back out or sends it anywhere.
 
-One more is kept in `sessionStorage`, which is different: it survives a reload and is
+Two more are kept in `sessionStorage`, which is different: it survives a reload and is
 gone when the tab closes.
 
 | Key | What it holds |
 | :--- | :--- |
 | `urbanos-lugo-trip` | the trip you are on, if you pressed "Vou nesta": its stops, lines and times, and which stops you have passed |
+| `urbanos-lugo-reloaded-for` | the address of the page, written only when the page reloaded itself once because a deploy had renamed a file it needed, so it does not do so twice |
 
-It is there so that locking your phone on the bus does not end the mode. It is written
+The first is there so that locking your phone on the bus does not end the mode. It is written
 when you start a trip, removed when you press "Saír da viaxe", and — because it is
 `sessionStorage` and not `localStorage` — not left on the device afterwards as a record
 of where you went and when.
