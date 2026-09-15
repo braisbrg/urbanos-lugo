@@ -281,6 +281,7 @@ export const es: Dict = {
       `Solo las líneas que paran en ${stop} y las que pasan a menos de ${metres} m a pie.`,
     aroundStopClear: 'Mostrar todas las líneas otra vez',
     linesHere: 'Líneas por aquí',
+    bothDirections: 'En los dos sentidos',
     drawRoute: 'Dibujar el recorrido',
     openLineInfo: 'Ver la ficha completa de la línea',
     liveBusesCount: 'buses en servicio',

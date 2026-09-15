@@ -292,6 +292,7 @@ export const en: Dict = {
       `Only the lines that call at ${stop} and those passing within ${metres} m on foot.`,
     aroundStopClear: 'Show every line again',
     linesHere: 'Lines through here',
+    bothDirections: 'Both directions',
     drawRoute: 'Draw this route',
     openLineInfo: 'Open the full line details',
     liveBusesCount: 'buses running',

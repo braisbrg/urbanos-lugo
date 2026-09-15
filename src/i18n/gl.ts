@@ -320,6 +320,7 @@ export const gl = {
       `Só as liñas que paran en ${stop} e as que pasan a menos de ${metres} m a pé.`,
     aroundStopClear: 'Amosar todas as liñas outra vez',
     linesHere: 'Liñas por aquí',
+    bothDirections: 'Nos dous sentidos',
     drawRoute: 'Debuxar o percorrido',
     openLineInfo: 'Ver a ficha completa da liña',
     liveBusesCount: 'buses en servizo',

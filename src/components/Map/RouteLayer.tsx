@@ -297,15 +297,26 @@ function linesHerePopup(
       <div data-rows="1" style="display: flex; flex-direction: column; gap: 4px;"></div>
     </div>`;
 
-  const rows = node.querySelector('[data-rows]')!;
+  // One row per line, not per direction. Where a line runs both ways along the same
+  // street the click hit both of its paths, and a corridor with five lines listed ten
+  // rows -- two of every line, doing the same thing, since both buttons act on the line.
+  const byLine = new Map<string, { line: BusLine; dirs: BusLine['directions'][number][] }>();
   for (const { line, dir } of hits) {
+    const entry = byLine.get(line.id) ?? { line, dirs: [] };
+    entry.dirs.push(dir);
+    byLine.set(line.id, entry);
+  }
+
+  const rows = node.querySelector('[data-rows]')!;
+  for (const { line, dirs } of byLine.values()) {
+    const where = dirs.length > 1 ? t.map.bothDirections : directionLabel(dirs[0], lang);
     const row = document.createElement('div');
     row.style.cssText = 'display:flex; align-items:stretch; gap:4px;';
     row.innerHTML = `
       <button type="button" data-draw="1" title="${escapeHtml(t.map.drawRoute)}"
         style="display:flex; flex:1; align-items:center; gap:8px; min-height:44px; padding:0 8px; background:none; border:none; cursor:pointer; text-align:left; font-family:inherit;">
         <span style="background-color:${escapeHtml(line.color)}; color:#fff; font-weight:700; font-size:12px; padding:3px 7px; border-radius:5px;">${escapeHtml(line.number)}</span>
-        <span style="font-size:13px; color:var(--c-ink-2);">${escapeHtml(directionLabel(dir, lang))}</span>
+        <span style="font-size:13px; color:var(--c-ink-2);">${escapeHtml(where)}</span>
       </button>
       <button type="button" data-open="1" title="${escapeHtml(t.map.openLineInfo)}"
         aria-label="${escapeHtml(t.map.openLineInfo)}: ${escapeHtml(line.number)}"
