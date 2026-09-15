@@ -106,7 +106,7 @@ export const es: Dict = {
     },
     alertsTitle: 'Avisos oficiales e incidencias en Lugo',
     alertsSubtitle:
-      'Comprobación automatizada cada hora desde el portal del operador, buslugo.com',
+      'Leídos del portal del operador, buslugo.com; la hora de la última lectura va al pie',
     faresTitle: 'Tarifas y Tarjeta Ciudadana',
     faresSubtitle: 'Precios oficiales y títulos de transporte en Lugo (Monbus)',
     notAffiliated: 'Web no oficial, sin relación con Monbus ni con el Ayuntamiento de Lugo.',
@@ -131,9 +131,9 @@ export const es: Dict = {
     savedCopy: 'copia guardada',
     structuralTitle: 'Avisos estructurales y obras municipales',
     structuralSource: 'Escritos en este proyecto a partir de fuentes municipales, no comprobados automáticamente como los avisos de arriba. Pueden quedar desactualizados.',
-    newsTitle: 'Noticias del Concello sobre la ciudad',
+    newsTitle: 'Cortes y desvíos anunciados por el Concello',
     newsSubtitle:
-      'Notas de prensa municipales sobre obras y tráfico. No son avisos del servicio: pueden afectar a los buses, o no.',
+      'Notas de prensa municipales de la última semana que anuncian un corte, un desvío o una restricción. No son avisos del servicio: pueden afectar a los buses, o no.',
     sourceOperator: 'Aviso del operador',
     sourceConcello: 'Nota de prensa del Concello',
     readInFull: 'Leer la noticia completa',

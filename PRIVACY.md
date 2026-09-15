@@ -97,7 +97,7 @@ one third party that was giving neither the map nor the data.
 The published site has no API of its own: service notices come from a copy committed by a
 scheduled job, and the app says on screen when that copy was taken. Where an API **is**
 configured, it is a small service on Deno Deploy (`worker/index.ts`) that reads
-buslugo.com and the council's feeds on the browser's behalf, because those sites refuse a
+buslugo.com and the council's traffic feed on the browser's behalf, because those sites refuse a
 browser directly. It is sent a stop code and nothing else — no identifier, no position.
 
 ## If you run the server yourself

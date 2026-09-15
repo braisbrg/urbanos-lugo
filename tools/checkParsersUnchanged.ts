@@ -17,7 +17,7 @@ import { readCapped, MAX_BODY_BYTES } from '../src/services/readCapped';
 
 const UA = 'Mozilla/5.0 (compatible; UrbanosLugoOpenData/1.0)';
 const OPERATOR = 'https://info.urbanoslugo.com/qr-demo-paradas/oTWQ';
-const FEED = 'https://concellodelugo.gal/es/taxonomy/term/701/feed';
+const FEED = 'https://concellodelugo.gal/es/taxonomy/term/707/feed';
 
 let failures = 0;
 
@@ -57,7 +57,7 @@ async function main() {
     if (n === 0) console.log('  --   but the page carried no departures, so that told us nothing');
   }
 
-  console.log('\nthe council’s bus feed');
+  console.log('\nthe council’s traffic feed');
   const feed = await bothWays(FEED);
   if (!feed) {
     console.log('  the feed could not be read; nothing compared, nothing claimed');
@@ -65,8 +65,8 @@ async function main() {
     const [uncapped, capped] = feed;
     check('the capped read returns the whole feed', uncapped.length === capped.length,
       `${uncapped.length} vs ${capped.length} chars`);
-    const before = JSON.stringify(extractConcelloNotices(uncapped, true));
-    const after = JSON.stringify(extractConcelloNotices(capped, true));
+    const before = JSON.stringify(extractConcelloNotices(uncapped));
+    const after = JSON.stringify(extractConcelloNotices(capped));
     const n = JSON.parse(before).length;
     check('the same notices come out', before === after, `${n} notice(s)`);
     if (n === 0) console.log('  --   but the feed carried no notices, so that told us nothing');

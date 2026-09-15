@@ -45,46 +45,35 @@ function cacheHolds(cached: AlertSyncResult, elapsed: number, forceRefresh: bool
 
 
 /**
- * The city's news, by subject.
+ * The city's traffic notices, and nothing else of the city's.
  *
- * The site-wide feed at `/rss.xml` is ten press releases across fifteen months and mostly
- * about other things. What is actually published is a feed per subject tag, which the tag
- * pages link to as `/all/feed` — a path that answers with HTML. `/es/taxonomy/term/N/feed`
- * is the one that answers with RSS, and it is current: the works feed was carrying a
- * street closure fifteen days after it was written.
- *
- * Three tags, because three are what a passenger is affected by. The rest of the taxonomy
- * is the ordinary business of a council.
+ * The Concello publishes a press feed per subject tag (`/es/taxonomy/term/N/feed` is the
+ * one that answers with RSS). Three of them were read -- Buses urbanos, Obras, Tráfico --
+ * and audited on 15 September 2026 against what they had carried in sixty days: the bus
+ * tag was ridership records, plan presentations and a note about emergency services, with
+ * one operational item in a year; the works tag gave one political statement about a
+ * street Adif had shut; the traffic tag gave the road closures for a Saturday race -- the
+ * one thing a passenger could use, and it would have stayed on screen for two months
+ * after the race. So: the traffic tag alone, only headlines announcing a closure, a
+ * diversion or a restriction, and only for a week, which is how long such a thing lasts.
  */
-const CONCELLO_FEEDS = [
-  // Buses urbanos. The tag is precise enough to be its own filter.
-  { term: 701, tag: 'buses' as const, alwaysRelevant: true },
-  // Obras en ejecución, and Tráfico. Both are broad — the works tag carries expropriations
-  // and a dog shelter refurbishment — so these need the headline to be about moving around.
-  { term: 600, tag: 'obras' as const, alwaysRelevant: false },
-  { term: 707, tag: 'trafico' as const, alwaysRelevant: false },
-];
+const CONCELLO_FEED_URL = 'https://concellodelugo.gal/es/taxonomy/term/707/feed';
 
-const concelloFeedUrl = (term: number) => `https://concellodelugo.gal/es/taxonomy/term/${term}/feed`;
-
-/** Sixty days. Past that a press release is history, not news. */
-const CONCELLO_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+/** Seven days. A closure or a diversion is news for about that long; after it, history. */
+const CONCELLO_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
- * Whether a headline from the broad tags is about getting around the city.
+ * Whether a headline announces something that changes how you get around.
  *
  * Only the headline: matching the body as well let through a police communiqué and a
  * speech about sustainable architecture, both of which mention the streets in passing.
- *
- * And only events, never topics. "Tráfico", "calle" and "avenida" were in this list, and
- * they matched the council signing an agreement with the Jefatura Provincial de Tráfico
- * about road-safety courses for schoolchildren -- a body with the word in its name, not a
- * condition on the street. The tag already says the story is about traffic; the headline
- * has to say something changed. Nothing genuine is lost: a real closure says corte, a
- * real diversion says desvío, and a reopening says apertura.
+ * And only the event words. "Tráfico" on its own matched the council signing an agreement
+ * with the Jefatura Provincial de Tráfico about road-safety courses; "apertura" matched a
+ * demand that Adif reopen a street, which is a position, not a change. A real closure says
+ * corte or cierre, a real diversion says desvío, a restriction says so.
  */
 const ABOUT_GETTING_AROUND =
-  /\b(bus|buses|autobús|autobuses|autobus|transporte|parada|paradas|marquesina|corte|cortes|cortad[oa]s?|desv[íi]os?|desvi[oó]s?|circulaci[óo]n|peonaliza\w*|peatonaliza\w*|reapertura|apertura)\b/i;
+  /\b(cortes?|cortad[oa]s?|cierres?|cerrad[oa]s?|peches?|pechad[oa]s?|desv[íi]os?|desviad[oa]s?|restricci[óo]n(?:es)?|restrici[óo]ns?)\b/i;
 
 /**
  * Plain prose out of an RSS field.
@@ -137,7 +126,7 @@ function* blocks(text: string, lower: string, open: string, close: string): Gene
   }
 }
 
-export function extractConcelloNotices(xml: string, alwaysRelevant = false): ServiceAlert[] {
+export function extractConcelloNotices(xml: string): ServiceAlert[] {
   const field = (block: string, name: string): string => {
     const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
     return m ? decodedText(m[1]) : '';
@@ -153,13 +142,12 @@ export function extractConcelloNotices(xml: string, alwaysRelevant = false): Ser
   for (const block of blocks(xml, haystack, '<item>', '</item>')) {
     const title = field(block, 'title');
     if (!title) continue;
-    // The bus tag is its own filter; the broad ones are not.
-    if (!alwaysRelevant && !ABOUT_GETTING_AROUND.test(title)) continue;
+    if (!ABOUT_GETTING_AROUND.test(title)) continue;
 
     // Their pubDate is RFC 822 and occasionally missing a timezone. An unparseable or an
-    // old one is dropped rather than shown: these feeds hold ten items each going back
-    // more than a year, and a press release from last spring beside an incident happening
-    // now would read as if both were current.
+    // old one is dropped rather than shown: the feed holds ten items going back more than
+    // a year, and last month's race closure beside an incident happening now would read as
+    // if both were current.
     const published = new Date(field(block, 'pubDate'));
     if (Number.isNaN(published.getTime())) continue;
     if (Date.now() - published.getTime() > CONCELLO_MAX_AGE_MS) continue;
@@ -184,32 +172,18 @@ export function extractConcelloNotices(xml: string, alwaysRelevant = false): Ser
 
 /**
  * Best effort, and deliberately so: the operator's notices are the ones that matter, and
- * nothing here may take them down with it. Three requests an hour against a council's
- * news feeds, with a User-Agent that says who is asking.
+ * nothing here may take them down with it. One request per sync against the council's
+ * traffic feed, with a User-Agent that says who is asking.
  */
 async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
   const headers = { 'User-Agent': `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)` };
-  const perFeed = await Promise.all(
-    CONCELLO_FEEDS.map(async ({ term, alwaysRelevant }) => {
-      try {
-        const res = await fetch(concelloFeedUrl(term), { headers, signal: AbortSignal.timeout(15_000) });
-        if (!res.ok) return [];
-        return extractConcelloNotices(await readCapped(res), alwaysRelevant);
-      } catch {
-        return [];
-      }
-    }),
-  );
-
-  // One story can carry two of these tags, and the council does tag generously.
-  const seen = new Set<string>();
-  const merged: ServiceAlert[] = [];
-  for (const notice of perFeed.flat()) {
-    if (seen.has(notice.title)) continue;
-    seen.add(notice.title);
-    merged.push({ ...notice, id: `concello-${merged.length + 1}` });
+  try {
+    const res = await fetch(CONCELLO_FEED_URL, { headers, signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) return [];
+    return extractConcelloNotices(await readCapped(res)).sort((a, b) => b.date.localeCompare(a.date));
+  } catch {
+    return [];
   }
-  return merged.sort((a, b) => b.date.localeCompare(a.date));
 }
 
 /** Warnings rather than notes: something is being held up, cut or withdrawn. */

@@ -73,8 +73,8 @@ export function useServiceAlerts(): ServiceAlerts {
       try {
         // Only a server can reach buslugo.com; the browser is blocked by CORS.
         //
-        // With a deadline, because `?refresh=true` makes the server go and read three
-        // council feeds and the operator's home page, and a slow upstream is exactly the
+        // With a deadline, because `?refresh=true` makes the server go and read the
+        // council's traffic feed and the operator's home page, and a slow upstream is exactly the
         // day somebody presses the button. Without one the spinner turns for as long as
         // the browser's own patience, which is minutes. Thirty seconds is past the
         // server's honest worst case -- 6 s for buslugo plus 15 s for the feeds, which
@@ -129,7 +129,7 @@ export function useServiceAlerts(): ServiceAlerts {
   // not an answer yet: claiming zero incidents at that moment would be a claim, not a
   // silence.
   //
-  // Only the operator's own notices count. The council's feeds are press releases about
+  // Only the operator's own notices count. The council's feed is press releases about
   // the city that sometimes mention the buses; a badge on the navigation says "something
   // is wrong with your journey", and a story about resurfacing works does not say that.
   const announcedIncidents =

@@ -133,7 +133,7 @@ export const gl = {
     },
     alertsTitle: 'Avisos oficiais e incidencias en Lugo',
     alertsSubtitle:
-      'Comprobación automatizada cada hora dende o portal do operador, buslugo.com',
+      'Lidos do portal do operador, buslugo.com; a hora da última lectura vai ao pé',
     faresTitle: 'Tarifas e Tarxeta Cidadá',
     faresSubtitle: 'Prezos oficiais e títulos de transporte en Lugo (Monbus)',
     /* Dito nas dúas pantallas que citan o operador polo seu nome, que son onde alguén
@@ -161,9 +161,9 @@ export const gl = {
     savedCopy: 'copia gardada',
     structuralTitle: 'Avisos estruturais e obras municipais',
     structuralSource: 'Escritos neste proxecto a partir de fontes municipais, non comprobados automaticamente coma os avisos de arriba. Poden quedar desactualizados.',
-    newsTitle: 'Novas do Concello sobre a cidade',
+    newsTitle: 'Cortes e desvíos anunciados polo Concello',
     newsSubtitle:
-      'Notas de prensa municipais sobre obras e tráfico. Non son avisos do servizo: poden afectar aos buses, ou non.',
+      'Notas de prensa municipais da última semana que anuncian un corte, un desvío ou unha restrición. Non son avisos do servizo: poden afectar aos buses, ou non.',
     sourceOperator: 'Aviso do operador',
     sourceConcello: 'Nota de prensa do Concello',
     readInFull: 'Ler a nova completa',

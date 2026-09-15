@@ -381,14 +381,19 @@ meu bus» pregúntase de pé nunha parada, e «canto custa o bono» lese unha ve
 Estaban apiladas nunha soa que chegara a sete seccións.
 
 **Avisos** (`/avisos`) trae os avisos de servizo do operador, e por separado —sen contar
-para o distintivo da navegación— as **novas do Concello** sobre obras e tráfico. Unha nota
-de prensa municipal non é unha incidencia do servizo, e mesturalas facía que a barra dixese
-«1» por unha noticia sobre asfaltado. Ademais, os avisos estruturais escritos neste
-proxecto, cada un coa súa data de revisión.
+para o distintivo da navegación— os **cortes e desvíos que anuncia o Concello**: as notas
+de prensa da etiqueta *Tráfico* da última semana cuxo titular anuncia un corte, un desvío
+ou unha restrición. Unha nota de prensa municipal non é unha incidencia do servizo, e
+mesturalas facía que a barra dixese «1» por unha noticia sobre asfaltado. Líanse tres
+etiquetas —tamén *Buses urbanos* e *Obras*— e durante sesenta días; auditadas o 15 de
+setembro de 2026, en dous meses deran un récord de viaxeiros, unha declaración política e
+os cortes dunha carreira que seguirían en pantalla ata novembro. Ademais, os avisos
+estruturais escritos neste proxecto, cada un coa súa data de revisión.
 
 A consulta faise **desde o servidor** (o navegador non pode por CORS), contra buslugo.com e
-tres feeds do Concello. Se non hai servidor —ou non responde— úsase a copia que deixou a
-tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por actual.
+o feed de tráfico do Concello. Se non hai servidor —ou non responde— úsase a copia que
+deixou a tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por
+actual.
 
 **Tarifas** (`/tarifas`) leva os títulos de transporte tal e como os publica o operador,
 **cada un coa súa fonte enlazada**: billete ordinario, bono ordinario e bono social da
@@ -540,7 +545,7 @@ Calde e Santa Comba), que se publican por separado porque son servizos distintos
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/arquitectura-dark.png">
-  <img src="docs/diagrams/arquitectura-light.png" alt="Diagrama da arquitectura: no navegador, src/data/*.json alimenta o motor de horarios, e este a SPA de React e o mapa de Leaflet, co Service Worker servindo a app sen conexión; a SPA fala cun servidor Express opcional que consulta buslugo.com e os feeds do Concello; fóra quedan as teselas de OpenFreeMap e o enrutador a pé de OpenStreetMap.">
+  <img src="docs/diagrams/arquitectura-light.png" alt="Diagrama da arquitectura: no navegador, src/data/*.json alimenta o motor de horarios, e este a SPA de React e o mapa de Leaflet, co Service Worker servindo a app sen conexión; a SPA fala cun servidor Express opcional que consulta buslugo.com e o feed de tráfico do Concello; fóra quedan as teselas de OpenFreeMap e o enrutador a pé de OpenStreetMap.">
 </picture>
 
 O reparto que importa é ese: **todo o cálculo de horas ocorre no navegador**, sobre os

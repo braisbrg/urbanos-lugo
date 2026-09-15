@@ -2933,22 +2933,34 @@ ok("a notice in the operator’s navigation bar is still a notice", () => {
   );
 });
 
-ok("the city's press feed is read for buses and not for everything else", () => {
-  // The Concello publishes nothing an app can read about roadworks. What it has is a press
-  // feed running at about one item every two months, and now and then one of them is
-  // exactly what a passenger needs — free buses for the start of Arde Lucus was in it. So
-  // it is read, and filtered hard, because the alternative is a bus app announcing a
-  // speech about sustainable architecture.
+ok("the city's traffic feed is read for closures and diversions, and for nothing else", () => {
+  // The Concello publishes nothing an app can read about roadworks. What it has is press
+  // feeds by tag, and three of them were read until 15 September 2026, when sixty days of
+  // them were audited: the bus tag was ridership records and plan presentations, the works
+  // tag a political statement, and the traffic tag one genuinely useful thing -- the road
+  // closures for a Saturday race -- which would have stayed on screen for two months. So
+  // now it is the traffic tag alone, a headline that announces a closure, a diversion or a
+  // restriction, and a week; the alternative is a bus app announcing a speech.
   const recent = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toUTCString();
+  const lastMonth = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toUTCString();
   const ancient = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toUTCString();
   const feed = (items: string) => `<rss><channel>${items}</channel></rss>`;
   const item = (title: string, when: string, description = 'corpo da nova') =>
     `<item><title>${title}</title><description>${description}</description>` +
     `<pubDate>${when}</pubDate><link>https://concellodelugo.gal/x</link></item>`;
 
-  const wanted = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', recent)));
-  assert(wanted.length === 1, `a headline about buses yielded ${wanted.length} notices, expected 1`);
+  const wanted = extractConcelloNotices(
+    feed(item('El Ayuntamiento informa de los cortes de tráfico para este sábado con motivo de la carrera', recent)),
+  );
+  assert(wanted.length === 1, `a headline announcing closures yielded ${wanted.length} notices, expected 1`);
   assert(wanted[0].source === 'concello', 'a city notice has to say it came from the city');
+
+  // Free buses for a festival are a service change, and they were the one operational item
+  // the bus tag carried in a year. That tag is no longer read, and the traffic feed's
+  // headlines have to announce a change to the street: this one does not, and so it stays
+  // out rather than the filter growing a word for it.
+  const festival = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', recent)));
+  assert(festival.length === 0, `a headline with no closure in it yielded ${festival.length} notices`);
 
   // Matching the body as well as the headline let two of these through when it was first
   // written: a police communiqué and a speech, both of which mention the streets.
@@ -2976,17 +2988,20 @@ ok("the city's press feed is read for buses and not for everything else", () => 
     `an agreement about road-safety courses yielded ${institution.length} notices`,
   );
 
-  // And the one from the same feed that genuinely matters still comes through: a street
-  // the buses use, shut by someone else's works, being demanded back.
+  // "Apertura" used to be in the vocabulary, for this headline: the council demanding that
+  // Adif reopen a street. It reached the screen in September 2026 and it is a position,
+  // not a change on the street -- nothing was opened, nothing was closed that day.
   const reopening = extractConcelloNotices(
     feed(item('El Ayuntamiento exige a Adif la apertura inmediata al tráfico de la calle Conde Fontao', recent)),
   );
-  assert(reopening.length === 1, `the Conde Fontao reopening yielded ${reopening.length} notices, expected 1`);
+  assert(reopening.length === 0, `a demand about a street yielded ${reopening.length} notices`);
 
-  // The feed runs at one item every couple of months, so with no cutoff the app would put
-  // last spring beside an incident happening now.
-  const stale = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', ancient)));
-  assert(stale.length === 0, 'a press release from months ago is history, not news');
+  // A closure is news for about a week. The race closures published on a Thursday were
+  // still on screen the Tuesday after the race, with fifty-odd days left to run.
+  const stale = extractConcelloNotices(feed(item('Cortes de tráfico por la carrera del sábado', lastMonth)));
+  assert(stale.length === 0, 'a closure from three weeks ago is history, not news');
+  const older = extractConcelloNotices(feed(item('Cortes de tráfico por la carrera del sábado', ancient)));
+  assert(older.length === 0, 'a press release from months ago is history, not news');
 
   // Their body arrives as entity-encoded markup. Stripping tags does nothing to it,
   // because at that point there are no tags — there is text that looks like tags, and the

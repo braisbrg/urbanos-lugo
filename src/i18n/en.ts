@@ -117,7 +117,7 @@ export const en: Dict = {
     },
     alertsTitle: 'Official service notices for Lugo',
     alertsSubtitle:
-      'Checked automatically every hour against the operator’s own portal, buslugo.com',
+      'Read from the operator’s own portal, buslugo.com; the time of the last read is at the foot',
     faresTitle: 'Fares and the Tarxeta Cidadá',
     faresSubtitle: 'Official prices and travel passes in Lugo (Monbus)',
     notAffiliated: 'Unofficial site, not connected to Monbus or Lugo city council.',
@@ -142,9 +142,9 @@ export const en: Dict = {
     savedCopy: 'saved copy',
     structuralTitle: 'Standing notices and city roadworks',
     structuralSource: 'Written into this project from municipal sources, not checked automatically the way the alerts above are. They can go out of date.',
-    newsTitle: 'Council news about the city',
+    newsTitle: 'Closures and diversions announced by the council',
     newsSubtitle:
-      'Municipal press releases about roadworks and traffic. Not service notices: they may reach the buses, or they may not.',
+      'Municipal press releases from the last week announcing a closure, a diversion or a restriction. Not service notices: they may reach the buses, or they may not.',
     sourceOperator: 'Notice from the operator',
     sourceConcello: 'Press release from the council',
     readInFull: 'Read the whole thing',
