@@ -216,13 +216,16 @@ ferramenta (bloquean a descarga): o que se di deles vén dos títulos da SERP.
    prerender real (o mesmo React a hidratar o mesmo marcado) non compensa; vai co punto 7,
    que ten o mesmo problema e a mesma solución.*
 6. **Descrición e temas do repositorio**, hoxe baleiros. O repositorio si está indexado e
-   é a única porta que hai:
-
-   ```bash
-   gh repo edit braisbrg/urbanos-lugo --description "App non oficial do bus urbano de Lugo: 24 liñas, 417 paradas, horarios oficiais e estimacións etiquetadas. PWA, sen conexión." --add-topic lugo --add-topic galicia --add-topic public-transport --add-topic bus --add-topic pwa --add-topic react --add-topic maplibre --add-topic openstreetmap
-   ```
+   é a única porta que hai.
+   *Feito antes do 15 de setembro de 2026: a descrición empeza por «Non oficial.» e os
+   temas son `lugo`, `galicia`, `autobus`, `transporte-publico`, `pwa`, `react`,
+   `maplibre`, `openstreetmap`; a páxina web está enlazada como *homepage*.*
 
 ### Este trimestre: estratéxico
+
+*Decidido o 15 de setembro de 2026: nada disto se fai por agora. Feita a parte que era
+código e coa verificación pendente do dono, o sitio ten que aparecer por si só; non hai
+présa por competir con ninguén. O dominio propio queda descartado polo momento.*
 
 7. **Páxinas estáticas por liña.** Depende de 2 e 3. Xerador en `tools/` desde
    `src/data/*.json`, enrutador lendo `/linhas/<nº>/`, sitemap a 31 URL. Só horas do
