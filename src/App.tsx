@@ -428,7 +428,12 @@ export default function App() {
                 }}
                 onViewOnMap={handleViewOnMap}
                 onSelectStop={handleSelectStop}
-                onBack={() => setShowStopBoard(false)}
+                // Leaving the board un-chooses the stop for the map too: it kept the big
+                // blue dot on a stop the reader had already closed.
+                onBack={() => {
+                  setShowStopBoard(false);
+                  setStopWasChosen(false);
+                }}
                 isFavorite={favoriteStopIds.includes(selectedStop.id)}
                 onToggleFavorite={handleToggleFavorite}
                 viaQr={qrStopId === selectedStop.id}
