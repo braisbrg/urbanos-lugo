@@ -152,8 +152,8 @@ sen WebGL2 cae ás teselas ráster de OpenStreetMap. O **estilo é do repositori
 do publicado por OpenFreeMap e xerado por `tools/buildMapStyle.ts`: as teselas, os sprites
 e os glifos seguen sendo os seus, as cores son nosas. Están medidas contra o que se debuxa
 enriba — as 24 cores de liña quedan a 1,45 ou máis sobre calquera das tres capas de rúa
-que cruzan, e ningún rótulo do mapa baixa de 4,5. O plan e as cifras están en
-[`design/PLAN-mapa-propio.md`](design/PLAN-mapa-propio.md).
+que cruzan, e ningún rótulo do mapa baixa de 4,5. As decisións e as cifras están en
+[`design/DECIDIDO.md`](design/DECIDIDO.md).
 
 Debúxanse sempre os dous sentidos de cada liña —a volta, descontinua—, cada un á
 **dereita do seu sentido de marcha**, como circulan os buses. Onde varias comparten
@@ -681,7 +681,8 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── measure.yml                 luns: measure:browser e audit:browser, cifras como artefacto
 │   └── ci.yml                      en cada push: lint, test, check:deep e build
 ├── worker/                         a API que Pages non pode servir (opcional)
-├── design/                         artboards do redeseño (.dc.html), canvas.json e as notas de deseño (.md)
+├── design/                         artboards do redeseño (.dc.html), canvas.json, e as notas: o que se decidiu
+│                                   (DECIDIDO.md), o rexistro de probas, a auditoría SEO e as notas de fontes
 ├── docs/diagrams/                  fontes dos diagramas deste README + as imaxes
 ├── server.ts
 ├── CONTRIBUTING.md                 o pouco que hai que saber para que un cambio entre á primeira

@@ -606,7 +606,8 @@ algo baixo `src/` o nomea; comprobado que morde.
   medidas de hoxe, coas tres columnas (sen comprimir, gzip, brotli).
 - **`SECURITY.md`**: dicía que o servidor «proxies one scrape of buslugo.com». Son tres
   fontes, e agora di cales e que todas están capadas a 512 KB e con tempo límite.
-- **`design/PLAN-acento-vermello.md`** xa estaba marcado como feito. Correcto.
+- **`design/PLAN-acento-vermello.md`** xa estaba marcado como feito. Correcto. (O plan
+  fundiuse en `DECIDIDO.md` o 15 de setembro; o texto queda no historial.)
 
 ---
 

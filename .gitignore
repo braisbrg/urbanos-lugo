@@ -85,3 +85,7 @@ tools/_*.ts
 # 4.6 MB of raw Overpass, and `pnpm run data:walk` rebuilds it. The graph it produces,
 # src/data/walk-network.json, is committed because that is what ships.
 data/osm-walk-network.json
+
+# Working notes that are not documentation: the letter to the council and its tactics,
+# drafts. They stay on the machine; the repository is public.
+notes/
