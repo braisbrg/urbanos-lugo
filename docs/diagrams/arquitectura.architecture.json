@@ -83,7 +83,7 @@
       "id": "motor",
       "type": "frontend",
       "label": "Motor de horarios",
-      "sublabel": "transitEngine + schedule",
+      "sublabel": "arrivals, planner + schedule",
       "pos": [
         380,
         380

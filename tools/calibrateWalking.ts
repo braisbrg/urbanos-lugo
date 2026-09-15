@@ -9,7 +9,7 @@
  *
  * This samples real pedestrian routes from OSM's foot router and reports the factor that
  * actually fits, plus the error the current constants produce. It changes no code: read
- * the output and set the constants in transitEngine.ts.
+ * the output and set the constants in src/utils/places.ts.
  */
 import stops from '../src/data/stops.json';
 import { getDistanceMeters as haversine } from '../src/utils/geo';

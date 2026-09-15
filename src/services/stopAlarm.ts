@@ -5,7 +5,7 @@
  * chosen stop. It runs only while the page is open — a web page cannot wake itself in the
  * background, and the UI says so rather than implying otherwise.
  */
-import { getDistanceMeters } from '../utils/transitEngine';
+import { getDistanceMeters } from '../utils/geo';
 
 /** Far enough ahead to stand up and press the button. */
 export const ALARM_RADIUS_M = 300;

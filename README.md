@@ -255,7 +255,7 @@ que se mida, así que van as dúas:
 A segunda é a que importa, porque é a poboación á que se lle aplica a estimación: ti ata a
 túa primeira parada, os transbordos, e a última parada ata onde vas. Aí a constante de
 1,35 queda **na mediana**, non por riba dela como pretendía o seu comentario — e ese
-comentario xa está corrixido coa medición nova en `src/utils/transitEngine.ts`.
+comentario xa está corrixido coa medición nova en `src/utils/places.ts`.
 
 O que nunca estivo ben é a cola: **×32,96 no peor caso**, dous postes a poucas decenas de
 metros cun quilómetro de camiño entre eles porque hai unha vía polo medio. Ningunha
@@ -614,7 +614,10 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   └── useMapChrome.ts         nome e controis do mapa no idioma da IU, para o lector de pantalla
 │   ├── utils/
 │   │   ├── schedule.ts             calendario e cadro horario
-│   │   ├── transitEngine.ts        chegadas, vehículos e rutas
+│   │   ├── arrivals.ts             próximos pasos por parada e seguinte saída dunha liña
+│   │   ├── planner.ts              o planificador: directo, un transbordo, a pé, e a orde entre eles
+│   │   ├── vehicles.ts             onde van os autobuses, derivado do cadro horario
+│   │   ├── places.ts               camiñada estimada, lugares, resolver o que se escribe, paradas preto
 │   │   ├── serviceLabels.ts        días, frecuencia e sentido no idioma da IU
 │   │   ├── geo.ts                  a única Haversine
 │   │   ├── tripProgress.ts         que parada pasei, contra o GPS; e a máquina da viaxe
@@ -840,7 +843,7 @@ servizo que cruzan a medianoite.
 
 ## Planificador
 
-`planSmartTrip` en `src/utils/transitEngine.ts`:
+`planSmartTrip` en `src/utils/planner.ts`:
 
 1. **Resolución** — texto libre, código de parada, punto de interese ou coordenadas GPS.
 2. **Candidatas de embarque** — ata 10 paradas servidas a menos de 2 km de cada extremo,
@@ -1638,7 +1641,7 @@ un número que alguén decidiu mirar.
 
 Unha pantalla no recibidor que diga «sae en 6 min, colle o abrigo». **É factible con moi
 pouco**, porque a arquitectura xa o permite sen querelo: os datos son ficheiros JSON
-estáticos e o motor (`schedule.ts`, `transitEngine.ts`) é TypeScript sen DOM nin
+estáticos e o motor (`schedule.ts`, `arrivals.ts`, `planner.ts`, `vehicles.ts`, `places.ts`) é TypeScript sen DOM nin
 dependencias de navegador. Unha Pi con Node importa exactamente o mesmo código e calcula
 en local; `estimateWalk` máis `getArrivalsForStop` dan «cando saír da casa» nunhas trinta
 liñas. Sen API, sen servidor propio, e segue funcionando se cae a rede.

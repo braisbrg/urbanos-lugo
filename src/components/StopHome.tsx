@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Compass, History, QrCode, Route, Star } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS } from '../data/transitData';
-import { NEARBY_STOP_LIMIT_METRES, getArrivalsForStop, getNearbyStops } from '../utils/transitEngine';
+import { NEARBY_STOP_LIMIT_METRES, getNearbyStops } from '../utils/places';
+import { getArrivalsForStop } from '../utils/arrivals';
 import { Lang, translations } from '../i18n';
 // Leaflet is heavy and this screen opens cold: the map arrives only once you ask to be
 // located, and then only once it is actually on screen.

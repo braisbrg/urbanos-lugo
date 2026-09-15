@@ -5,7 +5,7 @@ import { Lang, translations } from '../i18n';
 import { QrCode, X, ArrowRight, Camera, CameraOff } from 'lucide-react';
 import { BusStop } from '../types';
 import { BUS_STOPS } from '../data/transitData';
-import { findStop } from '../utils/transitEngine';
+import { findStop } from '../utils/places';
 
 interface QrScannerModalProps {
   isOpen: boolean;

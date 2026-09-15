@@ -12,7 +12,7 @@
  * and the five-minute window where a departure is overdue but still listed.
  */
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
-import { getArrivalsForStop } from '../src/utils/transitEngine';
+import { getArrivalsForStop } from '../src/utils/arrivals';
 import { scheduledDuration } from '../src/utils/schedule';
 
 const violations: string[] = [];

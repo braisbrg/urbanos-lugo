@@ -27,7 +27,7 @@
  * User-Agent that says who is asking and links back.
  */
 import { appendFileSync } from 'node:fs';
-import { getArrivalsForStop } from '../src/utils/transitEngine';
+import { getArrivalsForStop } from '../src/utils/arrivals';
 import { parseOperatorTimes, type OperatorDeparture } from '../src/services/operatorTimes';
 import { REPO_URL } from '../src/project';
 

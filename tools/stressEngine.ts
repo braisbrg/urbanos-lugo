@@ -13,7 +13,9 @@
  * across the city that takes ten times the rest, and that pair is what somebody will type.
  */
 import { BUS_STOPS } from '../src/data/transitData';
-import { planTrips, getArrivalsForStop, findStop } from '../src/utils/transitEngine';
+import { planTrips } from '../src/utils/planner';
+import { getArrivalsForStop } from '../src/utils/arrivals';
+import { findStop } from '../src/utils/places';
 import { matchesQuery, calculateRelevanceScore, MAX_QUERY_LENGTH } from '../src/utils/searchUtils';
 
 const AT = new Date(2026, 7, 19, 13, 30, 0); // a Wednesday lunchtime, as the suite uses

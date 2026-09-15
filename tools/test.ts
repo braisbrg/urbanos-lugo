@@ -62,25 +62,11 @@ import {
   anchorIndex,
   isLineInService,
 } from '../src/utils/schedule';
-import {
-  planTrips,
-  estimateWalk,
-  getArrivalsForStop,
-  nextServiceAtStop,
-  getScheduledBuses,
-  getDistanceMeters,
-  getNearbyStops,
-  NEARBY_STOP_LIMIT_METRES,
-  timingPointStopCount,
-  getNearestStopToCoords,
-  findStop,
-  planSmartTrip,
-  resolveLocationQuery,
-  QUICK_DESTINATIONS,
-  LUGO_LANDMARKS,
-  TRANSFER_BUFFER_ESTIMATED_MIN,
-  WALK_MUST_BEAT_BUS_BY_MIN,
-} from '../src/utils/transitEngine';
+import { planTrips, planSmartTrip, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
+import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
+import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
+import { getScheduledBuses } from '../src/utils/vehicles';
+import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
 
 

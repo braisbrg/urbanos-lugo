@@ -19,7 +19,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { BUS_STOPS } from '../src/data/transitData';
-import { LUGO_LANDMARKS } from '../src/utils/transitEngine';
+import { LUGO_LANDMARKS } from '../src/utils/places';
 import { metresBetween } from '../src/utils/geo';
 import { routeOnFoot } from '../src/utils/walkRouter';
 

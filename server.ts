@@ -3,7 +3,9 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { BUS_STOPS, BUS_LINES, FARE_INFO } from './src/data/transitData';
-import { getArrivalsForStop, getScheduledBuses, planRouteBetweenStops } from './src/utils/transitEngine';
+import { getArrivalsForStop } from './src/utils/arrivals';
+import { getScheduledBuses } from './src/utils/vehicles';
+import { planRouteBetweenStops } from './src/utils/planner';
 import { syncOfficialAlerts } from './src/services/alertSyncService';
 import { operatorTimesResponse } from './src/services/operatorTimesRoute';
 // The same cap the search inputs enforce, imported rather than repeated: two numbers

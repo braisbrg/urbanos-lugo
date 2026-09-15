@@ -12,7 +12,7 @@
  * Hundreds of pairs across the network, at times spread through the service day.
  */
 import { BUS_STOPS } from '../src/data/transitData';
-import { planTrips } from '../src/utils/transitEngine';
+import { planTrips } from '../src/utils/planner';
 
 const violations: string[] = [];
 const seen = new Set<string>();

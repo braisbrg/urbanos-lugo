@@ -1,4 +1,4 @@
-import { findStop } from '../utils/transitEngine';
+import { findStop } from '../utils/places';
 import { poleCode } from '../data/transitData';
 import { operatorTimesForStop } from './operatorTimes';
 

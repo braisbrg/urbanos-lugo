@@ -9,7 +9,7 @@ Tailwind 4 + MapLibre, TypeScript throughout, pnpm, Node >= 22.
 | Path | What lives there |
 | :--- | :--- |
 | `src/components/` | Screens and UI. `Map/` holds every MapLibre/Leaflet surface. |
-| `src/utils/` | The engine: `transitEngine.ts` (arrivals, trip planning), `schedule.ts` (runs and service windows), `searchUtils.ts`, `geo.ts`. Pure functions, no React. |
+| `src/utils/` | The engine: `arrivals.ts`, `planner.ts`, `vehicles.ts`, `places.ts` (one subject each; they were one `transitEngine.ts`), `schedule.ts` (runs and service windows), `searchUtils.ts`, `geo.ts`. Pure functions, no React. |
 | `src/services/` | Everything that touches the network. Shared by browser, `server.ts` and `worker/`. |
 | `src/data/` | The shipped dataset. **Generated** — see the pipeline block below. |
 | `src/i18n/` | `gl` / `es` / `en` dictionaries. `gl.ts` is the type source. |
@@ -30,7 +30,7 @@ nothing merges without them. A change is not done until all four are green:
 
 ```
 pnpm run lint          # tsc --noEmit
-pnpm test              # tools/test.ts — prints "N checks passed" (101 as of this writing)
+pnpm test              # tools/test.ts — prints "N checks passed" (147 as of this writing)
 pnpm run check:deep    # invariants + planner + parser sweeps over the whole dataset, ~24s
 pnpm run build         # vite build + esbuild of the server bundle
 ```

@@ -4,7 +4,7 @@ import { ALARM_RADIUS_M } from '../services/stopAlarm';
 import { RoutePlanResult } from '../types';
 import { getDistanceMeters } from './geo';
 import { minutesNow, parseTimeToMinutes } from './schedule';
-import { getNextLineDeparture } from './transitEngine';
+import { getNextLineDeparture } from './arrivals';
 
 /**
  * Where somebody is along a plan they said they were making.

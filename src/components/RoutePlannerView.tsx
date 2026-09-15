@@ -16,7 +16,8 @@ import {
 import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { BUS_STOPS } from '../data/transitData';
 import { formatMinutes, parseTimeToMinutes } from '../utils/schedule';
-import { planTrips, resolveLocationQuery, estimateWalk, LONG_WAIT_MIN, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/transitEngine';
+import { planTrips, LONG_WAIT_MIN } from '../utils/planner';
+import { resolveLocationQuery, estimateWalk, LUGO_LANDMARKS, QUICK_DESTINATIONS } from '../utils/places';
 import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 import { useRecentRoutes } from '../hooks/useRecentRoutes';

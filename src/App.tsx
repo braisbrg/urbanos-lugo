@@ -28,7 +28,7 @@ import { useTheme } from './hooks/useTheme';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
 import type { Tab } from './components/navSections';
 import { isLineInService } from './utils/schedule';
-import { findStop } from './utils/transitEngine';
+import { findStop } from './utils/places';
 import { BusStop, BusLine } from './types';
 import { Moon, X } from 'lucide-react';
 

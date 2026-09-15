@@ -15,12 +15,8 @@ import {
 } from 'lucide-react';
 import { BusStop, BusLine, ScheduledBus } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, poleCode } from '../../data/transitData';
-import {
-  getScheduledBuses,
-  getNearbyLines,
-  getNearbyStops,
-  NEARBY_STOP_LIMIT_METRES,
-} from '../../utils/transitEngine';
+import { getScheduledBuses } from '../../utils/vehicles';
+import { getNearbyLines, getNearbyStops, NEARBY_STOP_LIMIT_METRES } from '../../utils/places';
 import { getDistanceMeters } from '../../utils/geo';
 
 /** Matches the stop board: what somebody standing there could reasonably walk to. */

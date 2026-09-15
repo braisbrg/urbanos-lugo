@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../../types';
 import { poleCode } from '../../data/transitData';
-import { getArrivalsForStop } from '../../utils/transitEngine';
+import { getArrivalsForStop } from '../../utils/arrivals';
 import { Lang, translations } from '../../i18n';
 import { useDialog } from '../../hooks/useDialog';
 

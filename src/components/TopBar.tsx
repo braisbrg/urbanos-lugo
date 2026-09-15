@@ -2,7 +2,7 @@ import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'r
 import { Landmark, MapPin, Menu, QrCode, Search, Star, X } from 'lucide-react';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
-import { LUGO_LANDMARKS, getNearestStopToCoords } from '../utils/transitEngine';
+import { LUGO_LANDMARKS, getNearestStopToCoords } from '../utils/places';
 import { BusLine, BusStop } from '../types';
 import { Lang, translations } from '../i18n';
 

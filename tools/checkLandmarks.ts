@@ -18,7 +18,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { LUGO_LANDMARKS } from '../src/utils/transitEngine';
+import { LUGO_LANDMARKS } from '../src/utils/places';
 import { metresBetween } from '../src/utils/geo';
 import { BBOX, overpass } from './osm';
 

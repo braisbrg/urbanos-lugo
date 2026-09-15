@@ -10,7 +10,9 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
-import { getDistanceMeters, getScheduledBuses, getArrivalsForStop } from '../src/utils/transitEngine';
+import { getDistanceMeters } from '../src/utils/geo';
+import { getScheduledBuses } from '../src/utils/vehicles';
+import { getArrivalsForStop } from '../src/utils/arrivals';
 import { buildRuns, dayKind, isWithinServiceWindow } from '../src/utils/schedule';
 import { hydrateGeometry } from './hydrateGeometry';
 

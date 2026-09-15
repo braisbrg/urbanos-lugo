@@ -5,13 +5,8 @@ import { BusStop, BusLine, StopArrival } from '../types';
 // is what makes that true, since `lazy()` alone fires as soon as the board renders.
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { BUS_LINES, poleCode } from '../data/transitData';
-import {
-  getArrivalsForStop,
-  getNearbyLines,
-  getNearbyStops,
-  nextServiceAtStop,
-  timingPointStopCount,
-} from '../utils/transitEngine';
+import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../utils/arrivals';
+import { getNearbyLines, getNearbyStops } from '../utils/places';
 import { Lang, LOCALE, translations } from '../i18n';
 import { newIssueUrl } from '../project';
 import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';

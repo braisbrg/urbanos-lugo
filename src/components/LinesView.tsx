@@ -13,7 +13,7 @@ import {
 import { Lang, translations } from '../i18n';
 import { BusLine, BusStop, ScheduledBus } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
-import { getScheduledBuses } from '../utils/transitEngine';
+import { getScheduledBuses } from '../utils/vehicles';
 import { buildRuns, dayKind, formatMinutes, minutesNow, scheduledDuration } from '../utils/schedule';
 import { daysLabel, directionLabel, frequencyLabel } from '../utils/serviceLabels';
 import { MAX_QUERY_LENGTH, matchesQuery } from '../utils/searchUtils';
