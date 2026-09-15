@@ -1,7 +1,7 @@
 # Fontes, e que a web se manteña soa
 
-Brais o 28 de agosto de 2026: «quiero que cuando lo tengamos acabado, a menos que cambie
-alguna ruta o algún bus, la web se mantenga sola». Isto é o inventario do que hai, do que
+O obxectivo fixado o 28 de agosto de 2026: cando estea acabada, a menos que cambie unha
+ruta ou un bus, a web ten que manterse soa. Isto é o inventario do que hai, do que
 falta, e —o máis importante— **onde está a raia** entre o que se pode deixar só e o que
 non.
 
@@ -16,7 +16,7 @@ non.
 | **Avisos do operador** | cada hora | `deploy-pages.yml` corre `tools/fetchAlerts.ts` e volve despregar |
 | **Itinerarios e horarios** | cada semana | `check-source.yml` corre `reconcile --fresh` e **falla** se a páxina do operador xa non di o que publicamos |
 
-Iso cobre o que Brais pediu: mentres non cambie unha ruta nin un bus, ninguén ten que
+Iso cobre o obxectivo: mentres non cambie unha ruta nin un bus, ninguén ten que
 tocar nada; e o día que cambien, salta.
 
 ### Pode ir só, e aínda non vai
@@ -114,7 +114,7 @@ un cambio de datos e habería que decidir cal manda.
 
 ## Redes sociais e outras webs (comprobado o 28 de agosto)
 
-Brais preguntou por elas. A resposta curta é **non hai por onde**, e convén que quede
+Preguntouse por elas. A resposta curta é **non hai por onde**, e convén que quede
 escrito para non volver mirar:
 
 - **`@010lugo` en X** — é a conta de información do Concello e é a que interesa; enlázaa a
@@ -177,7 +177,7 @@ canle correcta para unha app de bus, e xa se le cada hora.
 
 ## Se cambia o mapa: que se detecta e que non
 
-Pregunta de Brais: se aparece unha rotonda nova e a ruta cambia, actualízase soa?
+Pregunta aberta: se aparece unha rotonda nova e a ruta cambia, actualízase soa?
 **En parte, e convén saber en cal.**
 
 Detéctase só, cada semana, en `reconcile --fresh`:

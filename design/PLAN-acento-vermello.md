@@ -1,6 +1,6 @@
 # Plan: A Mosqueira en vermello
 
-Decidido con Brais o 27 de agosto de 2026, tras tres roldas de bocetos, e **feito**
+Decidido o 27 de agosto de 2026, tras tres roldas de bocetos, e **feito**
 ese mesmo día. O que segue era o encargo; ao final está o que realmente saíu, que
 non é exactamente isto.
 
@@ -14,14 +14,14 @@ Artifact coas variantes e as maquetas:
 **Forma: F3.** A Mosqueira co remate de dous arcos tanxentes — a silueta segue as
 propias fiestras e fai un pico onde se tocan. O adarve atravesa a placa de lado a
 lado, e a parada é un **anel** pisando esa liña, non un punto macizo. A F3 é o
-debuxo de Brais cos arcos un punto máis grandes, para que sobrevivan a 16 px.
+debuxo escollido, cos arcos un punto máis grandes, para que sobrevivan a 16 px.
 
 **Cor: vermello de flota, `#d81f26`.** Os autobuses de Urbanos de Lugo son
 vermellos e xa levan a silueta da muralla no lateral. O azul actual (`#1e3a8a`)
 non se escolleu nunca: é o `blue-900` que trae Tailwind por defecto.
 
 Nun momento recomendei verde, co argumento de que o vermello nunha interface
-significa erro e o distintivo azul de horario oficial era intocable. **Brais dixo
+significa erro e o distintivo azul de horario oficial era intocable. **Decidiuse
 que o distintivo pode cambiar de cor**, así que ese argumento caeu e o vermello
 gaña. Non revisitar isto sen ese contexto.
 
@@ -98,7 +98,7 @@ en 255 eran o mesmo azul.
 
 ### Pendente aparte disto
 
-- **Capturas para o README** — só as pode facer Brais.
+- **Capturas para o README** — só se poden facer a man, nun móbil real.
 - **Ligazón á app en vivo** arriba do README, cando Pages estea activo.
 - **Publicar**: `gh auth login`, crear `braisbrg/urbanos-lugo` público,
   `git remote add origin`, `git push -u origin main`, Settings → Pages →
@@ -111,11 +111,11 @@ en 255 eran o mesmo azul.
 
 ---
 
-## Dúbida aberta de Brais: o «sen tráfico» da ficha de liña
+## Dúbida aberta: o «sen tráfico» da ficha de liña
 
 **Sen responder.** Apuntado o 27 de agosto para mirar na sesión seguinte.
 
-Brais observou que na liña 1.1 o cadro horario dá a primeira saída ás **6:58** e a
+Observouse que na liña 1.1 o cadro horario dá a primeira saída ás **6:58** e a
 última parada ás **7:36** — trinta e oito minutos — mentres a tarxeta «Sen tráfico»
 di **25 min**. Dúas preguntas, e as dúas son boas:
 
@@ -149,7 +149,7 @@ paradas xa non é «sen tráfico», é outra cousa e outro nome.
 
 ## O que se fixo de verdade
 
-Brais engadiu unha condición mentres se traballaba: **a paleta enteira ten que casar**,
+Engadiuse unha condición mentres se traballaba: **a paleta enteira ten que casar**,
 e só as cores de liña poden desentoar, porque cada unha xa ten o seu significado. Iso
 cambiou o alcance: non era cambiar o acento, era refacer o sistema.
 
@@ -209,6 +209,6 @@ enriba. O acento é un chisco máis escuro porque tamén é texto.
 
 - **O icono queda na A**, a F3 tal cal. Amosóuselle a 16, 20, 32, 64 e 160 px sobre
   barra clara e escura, xunto cunha variante de arcos máis suaves e outra dun só arco;
-  Brais escolleu deixalo como está. Que a 16 px se lea coma un «m» está dito e aceptado.
+  Decidiuse deixalo como está. Que a 16 px se lea coma un «m» está dito e aceptado.
 - **O basemap xa non é CARTO.** Pasou a OpenFreeMap, sen chave e sen conta. Detalle
   completo no comentario de `src/components/Map/basemap.ts`, que é onde vive a decisión.

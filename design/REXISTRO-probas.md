@@ -207,7 +207,7 @@ Rexenerouse o bloqueo e volveuse comprobar que xa pasa.
 > **Regra:** calquera cambio en `package.json` remata en `pnpm install --frozen-lockfile`
 > para ver o que verá CI. Un cambio cosmético de dúas liñas pode tirar o despregamento.
 
-### Deixado como decisión de Brais, non como corte
+### Deixado como decisión, non como corte
 
 - **Os 13 `.dc.html`** de deseño (2.648 liñas). Son o traballo de deseño orixinal, non
   código morto. Bórranse se el quere.

@@ -463,8 +463,8 @@ Todo o demais: cero. Son 0,93 km de 158. O operador publica paradas nesas rúas 
 alí unha parada de bus levantada sobre o terreo, así que algo pasa por elas; pero ningunha
 vía leva `bus=yes` nin `psv=yes`.
 
-**Resolto por observación directa.** O 2 de setembro de 2026 Brais viu a liña 9 entrar na
-muralla pola porta do Hospital Quirón, e supuxo que sairían pola de San Fernando.
+**Resolto por observación directa.** O 2 de setembro de 2026 viuse a liña 9 entrar na
+muralla pola porta do Hospital Quirón, e supúxose que sairía pola de San Fernando.
 Comprobado contra os datos antes de escribilo, e as dúas cousas cadran — para as catro
 liñas, non só para a 9:
 

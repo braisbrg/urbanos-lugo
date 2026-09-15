@@ -30,7 +30,7 @@ the timetable»— e dío o README na sección «O que esta app NON pode facer»
 que amosa o globo é a hora do día, non xente contada.
 
 Así que hai que escoller, e a regra do proxecto xa a ten escollida: **non presentar unha
-posición como medida se non o é**. **Decidido con Brais o 7 de setembro de 2026:**
+posición como medida se non o é**. **Decidido o 7 de setembro de 2026:**
 
 > **Non se debuxa o bus.** O que se debuxa é **a túa viaxe** e **onde estás ti nela**. O
 > horario segue mandando nas horas, coas súas etiquetas de sempre.
@@ -117,7 +117,7 @@ precisa 762, así que pasa de «case cabe» a necesitar unha pantalla e media.
 | O planificador cala cando a barra xa o dixo | O seu aviso só aparece se fala doutra hora — planificar para as 08:00 de mañá si é información nova. |
 | A caixa «Información» só se leva algo dentro | De noite, coa opción «todo a pé», non hai tarifa e queda un recadro cun rótulo e nada. |
 
-E a comparación que pediu Brais: **Mapa xa levou este tratamento e Ruta non.** Mapa é mapa
+E a comparación de partida: **Mapa xa levou este tratamento e Ruta non.** Mapa é mapa
 a sangre, controis flotando por riba, accións no terzo do polgar. Ruta é unha tarxeta con
 marxes, todo apilado, o mapa reducido a 200 px no medio dun scroll, e as accións como dúas
 ligazóns de texto pequenas por riba del. A proposta é aplicarlle o que xa funcionou no
@@ -164,7 +164,7 @@ mellor ofrécese en vez de supoñerse. Agora o resumo dá 0,64 € e o detalle l
 filas etiquetadas, ningunha riscada. Check: `ok('the price a trip shows is the one anybody
 pays')`.
 
-**Sobre gardar un prezo favorito** (idea de Brais): non o vexo necesario, e recomendo non
+**Sobre gardar un prezo favorito** (idea da revisión): non parece necesario, e recoméndase non
 facelo. As dúas tarifas caben xa en dúas liñas, así que non hai nada que escoller; unha
 preferencia gardada engade a sétima clave en `localStorage` —cunha fila en PRIVACY.md e o
 seu test— e pode quedar rancia: a quen lle caduque a tarxeta veríalle un prezo que xa non
@@ -221,7 +221,7 @@ era cara a onde vai, así que agora pon o destino do sentido. E en «Sube en» /
 etiqueta e a hora baixáronse da liña do nome: deixaban 132 px para «Rda. Muralla (Obras
 Públicas)», que precisa 204. Nada merece cortar o nome dunha parada.
 
-O reconto «(4 de 55)» fóra, decidido con Brais: soaba a que gardabamos corenta e nove
+O reconto «(4 de 55)» fóra, decidido na revisión: soaba a que gardabamos corenta e nove
 respostas nun caixón, cando o que queda son as mesmas liñas saíndo máis tarde. Como
 `planTrips` ordena por `isBetterPlan`, as catro primeiras son de verdade as mellores, e iso
 é o que di a etiqueta agora.
@@ -268,7 +268,7 @@ Tres cambios:
 
 ## A segunda volta — 8 e 9 de setembro de 2026
 
-Todo o de abaixo saíu de mirar a pantalla con Brais depois de dar A.1 e A.2 por bos. Non
+Todo o de abaixo saíu de mirar a pantalla en revisión despois de dar A.1 e A.2 por bos. Non
 estaba no plan; está aquí porque son as medidas, e porque o estado B parte de aquí.
 
 ### O bloque de opcións: tres maquetas e o que quedou
@@ -597,7 +597,7 @@ mesmo radio, o mesmo son e o mesmo permiso. Un check impide que apareza un segun
 sobrevive a unha recarga e a cambiar de pestana, e «Saír da viaxe» bórraa. PRIVACY.md ten a
 fila e o parágrafo, e o check de claves le agora tamén `sessionStorage`.
 
-**A segunda ollada, o mesmo día.** Brais pediu ver a viaxe enteira e sinalou tres cousas:
+**A segunda ollada, o mesmo día.** Na revisión pediuse ver a viaxe enteira e saíron tres cousas:
 o mapa quedaba pequeno ao lado do resto, «Rematei» non era a palabra, e o botón de saír
 tiña que estar á man e non ao fondo. Medido nun 375×812 antes de tocar nada: mapa 200 px
 fronte a unha cabeceira de 260 e unha lista de 774; o botón a **1.348 px** do alto, dúas
@@ -636,7 +636,7 @@ debuxar o bus, e o modo en segundo plano, que unha páxina web non pode.
 
 ## Revisión — 13 de setembro de 2026
 
-Brais pediu revisar a entrega. Tres cousas, dúas delas nos ficheiros que o propio plan
+Revisouse a entrega. Tres cousas, dúas delas nos ficheiros que o propio plan
 sinalaba como os que podían estar mal.
 
 **O contador saltaba cara adiante e non volvía.** `tripProgress` daba por pasada a

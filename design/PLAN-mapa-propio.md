@@ -1,6 +1,6 @@
 # Plan: o mapa de debaixo é noso
 
-Decidido con Brais o 8 de setembro de 2026 e feito o 9. Ata agora o mapa era o estilo
+Decidido o 8 de setembro de 2026 e feito o 9. Ata agora o mapa era o estilo
 publicado de OpenFreeMap con parches de cor aplicados en tempo de execución. Pasa a
 ser un estilo do repositorio, derivado do seu, xerado por unha ferramenta.
 
@@ -262,5 +262,5 @@ Cinco checks en `tools/test.ts`:
 
 ## Despois
 
-Brais deixou aberto se paga a pena algunha animación ou efecto. Non é prioridade e
+Queda aberto se paga a pena algunha animación ou efecto. Non é prioridade e
 non se fai neste plan.
