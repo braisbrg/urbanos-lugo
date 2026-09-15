@@ -11,9 +11,9 @@ pasan, nunha web lixeira que funciona sen cobertura.
 
 > [Castellano](README.es.md) · [English](README.en.md)
 >
-> Esas dúas son resumos dunha pantalla, non traducións deste documento. Aquí hai preto de
-> mil cincocentas liñas cheas de cifras medidas, e tres copias delas serían tres sitios
-> onde unha medición pode quedar vella sen que ninguén o note. O que si vai nos tres
+> Esas dúas son resumos dunha pantalla, non traducións deste documento. Este é longo e
+> está cheo de cifras medidas, e tres copias delas serían tres sitios onde unha medición
+> pode quedar vella sen que ninguén o note. O que si vai nos tres
 > idiomas é o que non se pode dicir só nun: que isto non é oficial, e que ningunha hora
 > desta web é unha medición.
 
@@ -201,9 +201,10 @@ lista cada unha coa distancia á súa parada máis próxima. Antes calculaba as 
 próximas e logo quedaba só coa primeira, así que dende Avda. Américas 88 vías a 8 e
 ningunha máis.
 
-As paradas debúxanse en canvas (`preferCanvas`) e non todas á vez: afastado só se ven os
-46 intercambiadores, e a partir do zoom 15 —ou ao seleccionar unha liña— aparecen as 417.
-Amosalas todas sobre a vista de cidade tapaba as propias liñas e creaba 417 nodos DOM.
+As paradas debúxanse en canvas (`preferCanvas`) e non todas á vez: afastado gañan o sitio
+as máis servidas, e ningunha se pinta a menos de 24 px doutra que xa está, así que a vista
+de cidade é un reparto uniforme que se enche ao achegarse; desde o zoom 16 —ou cunha liña
+escollida— están as 417, cos nomes pintados nun lenzo propio en lugar de 417 nodos DOM.
 
 Os vehículos que se ven proveñen do cadro horario: unha expedición que xa saíu e aínda
 non rematou sitúase sobre o trazado onde debería ir. As dúas direccións dunha liña son
@@ -238,11 +239,9 @@ leva dentro a rede peonil de Lugo — 21.093 cruces e 29.489 arestas levantadas 
 OpenStreetMap — e resolve cada camiño cun A\* en menos dun milisegundo
 (`src/utils/walkRouter.ts`). Nin conexión nin terceiros.
 
-Antes había un botón, **"Ver camiño a pé"**, porque trazar o camiño significaba mandarlle
-os dous extremos de cada tramo ao enrutador peonil de OpenStreetMap, e un deses extremos
-pode ser a túa posición do GPS. Iso é algo que hai que pedir permiso para facer, así que
-se pedía. Agora non hai nada que consentir: o botón desapareceu e o camiño debúxase
-sempre.
+O camiño debúxase sempre e sen pedir permiso: cando o trazaba un enrutador alleo había que
+consentir que saísen os extremos de cada tramo —un deles pode ser a túa posición—, e agora
+nada sae do móbil.
 
 **Canto se rodea de verdade**, medido co enrutador contra a liña recta. Depende de sobre
 que se mida, así que van as dúas:
@@ -421,8 +420,9 @@ Non hai datos escritos a man. `stops.json` e `lines.json` xéranse a partir de:
 
 4. **OpenStreetMap** — cartografía base do mapa e, vía Overpass, os equipamentos
    levantados en cada poste (marquesiña, banco). O operador non publica eses datos e o
-   conxunto anterior inventábaos; agora 413 das 417 paradas están emparelladas cun nodo
-   de OSM a menos de 45 m e o que ninguén levantou queda como `null`, non como "non".
+   conxunto anterior inventábaos; agora 399 das 417 paradas están emparelladas cun poste de
+   OSM —398 a menos de 45 m e unha polo nome— e o que ninguén levantou queda como `null`,
+   non como "non".
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/datos-dark.png">
@@ -452,7 +452,7 @@ implica o trazado si — e acurta o itinerario drasticamente — repárase a ord
 log. Hoxe: **45 sentidos co itinerario topografiado, 3 con OSRM**, e o 99% do que se
 debuxa cae sobre o itinerario de OSM.
 
-Efecto medido: os tramos cun desvío viario superior a 4x pasaron de 14 a **2 de 1137**.
+Efecto medido: os tramos cun desvío viario superior a 4x pasaron de 14 a **2 de 1136**.
 
 **O que isto non resolve.** Unha relación de OSM di por onde vai o bus; as etiquetas de
 acceso das rúas son outro levantamento distinto, e nese remate do casco histórico
@@ -573,6 +573,10 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   │   ├── basemap.ts          o mapa de fondo, debaixo de todo o demais
 │   │   │   ├── palette.ts          as cores do mapa, nun sitio, para as dúas paletas
 │   │   │   └── escapeHtml.ts       escapa o que vai a un popup ou tooltip de Leaflet
+│   │   ├── ui/
+│   │   │   ├── LineBadge.tsx       a insignia dunha liña, a mesma en todas partes
+│   │   │   ├── Provenance.tsx      de onde vén unha hora: sólido publicado, descontinuo derivado
+│   │   │   └── SectionLabel.tsx    as versaletas sobre un bloque
 │   │   ├── TopBar.tsx              buscador único + escáner QR
 │   │   ├── BottomNav.tsx           navegación en móbil
 │   │   ├── SideNav.tsx             rail de navegación en escritorio
@@ -582,7 +586,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── LinesView.tsx           liñas e horarios
 │   │   ├── RoutePlannerView.tsx    planificador
 │   │   ├── TripCompanionView.tsx   «vou nesta»: a pantalla para a viaxe
-│   │   ├── AlertsView.tsx          avisos do servizo e novas do Concello
+│   │   ├── AlertsView.tsx          avisos do servizo e cortes anunciados polo Concello
 │   │   ├── FaresView.tsx           tarifas, normas a bordo e contacto
 │   │   ├── FavoritesDrawer.tsx     favoritos
 │   │   ├── QrScannerModal.tsx      escáner QR
@@ -632,12 +636,14 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── clock.ts                se o reloxo do dispositivo coincide co de Lugo
 │   │   └── html.ts                 quitar as etiquetas ao HTML alleo
 │   ├── fonts/                      as dúas caras variables + OFL.txt
+│   ├── index.css                   os tokens de cor e tipo, e o pouco CSS que Tailwind non escribe
 │   ├── fonts.css                   XERADO por tools/importFonts.ts
 │   ├── i18n/                       gl.ts · es.ts · en.ts
 │   ├── security/
 │   │   ├── csp.ts                  unha política, para a meta e para a cabeceira
-│   │   ├── rateLimit.ts            teito de peticións por enderezo, servidor e worker
+│   │   ├── rateLimit.ts            teito de peticións por enderezo, no servidor Express
 │   │   └── themeInit.ts            o script do tema antes do primeiro pintado, e o seu hash
+│   ├── project.ts                  onde vive este proxecto, nun sitio: a ligazón das incidencias e o User-Agent
 │   ├── routes.ts                   os slugs das pestanas, nunha soa lista
 │   ├── seo.ts                      título, descrición e canónica por pestana, sitemap, datos estruturados
 │   ├── types.ts
@@ -680,10 +686,10 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── fullAudit.ts                informe de calidade de datos
 │   └── test.ts                     comprobacións executables
 ├── .github/workflows/
-│   ├── deploy-pages.yml            publica en Pages: push, cada hora e a man
+│   ├── deploy-pages.yml            publica en Pages: push, por calendario e a man
 │   ├── deploy-worker.yml           publica a API en Deno Deploy, se hai token
 │   ├── check-source.yml            luns: reconcile + xeometría + tarifas
-│   ├── measure.yml                 luns: measure:browser e audit:browser, cifras como artefacto
+│   ├── measure.yml                 luns: measure:browser, audit:browser e stress:network, como artefacto
 │   └── ci.yml                      en cada push: lint, test, check:deep e build
 ├── worker/                         a API que Pages non pode servir (opcional)
 ├── design/                         artboards do redeseño (.dc.html), canvas.json, e as notas: o que se decidiu
@@ -757,18 +763,15 @@ Consecuencias en toda a aplicación:
 
 - Os vehículos do mapa din no seu globo que a posición é **estimada do cadro horario**,
   non medida por GPS. A lenda chámalles «posición estimada», non «en movemento».
-- Eliminouse todo campo que non se podía encher honestamente: velocidade do vehículo,
-  hora da última posición, retraso en segundos e accesibilidade por vehículo. Estaban
-  inventados e amosábanse como datos.
-- A ocupación segue existindo porque a hora do día si informa, pero chámase
-  **«ocupación prevista»**.
+- Non hai ningún campo que non se poida encher honestamente: nin velocidade do vehículo,
+  nin hora da última posición, nin retraso en segundos, nin accesibilidade por vehículo.
+- A ocupación existe porque a hora do día si informa, pero chámase **«ocupación
+  prevista»**.
 - Os equipamentos de parada (marquesiña, banco) veñen de levantamentos reais de OSM; o
   que ninguén levantou queda baleiro en vez de dicir «non».
-- O pé de páxina xa non anuncia un SAE en tempo real que non existe.
-- O listado de liñas amosaba `1 GPS` cun radar a pulsar ao lado. Non hai GPS ningún: ese
-  número son os autobuses que segundo o cadro deberían estar circulando —unha expedición
-  e a volta na que se converte contan unha vez—, e agora chámase **`1 en ruta`**, sen
-  radar e cun texto que o explica ao pousar o rato.
+- O listado de liñas di **`1 en ruta`**, non «1 GPS»: son os autobuses que segundo o
+  cadro deberían estar circulando —unha expedición e a volta na que se converte contan
+  unha vez—, e o texto ao pousar o rato explícao.
 
 A etiqueta decídese **por expedición e parada**, non por liña. Unha parada só leva
 `HORARIO OFICIAL` se a hora que calculamos para ese bus concreto está literalmente
@@ -978,50 +981,57 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 
 | | sen comprimir | gzip | brotli |
 | :--- | ---: | ---: | ---: |
-| Anaco de entrada | 569 KB | 149 KB | **123 KB** |
-| Folla de estilos | 52 KB | 10 KB | **9 KB** |
+| Anaco de entrada | 604 KB | 159 KB | **133 KB** |
+| Folla de estilos | 51 KB | 10 KB | **8 KB** |
 | `index.html` | 4 KB | 2 KB | **2 KB** |
-| **Primeira carga** | **625 KB** | ~161 KB | **~134 KB** |
+| **Primeira carga** | **660 KB** | ~171 KB | **~143 KB** |
 | Tipografía | 50 KB | — | 50 KB, en paralelo |
-| Renderizador do mapa, co estilo e a paleta | 1.132 KB | 291 KB | 240 KB, ao abrir un mapa |
+| Renderizador do mapa, co estilo e a paleta | 1.184 KB | 311 KB | 255 KB, ao abrir un mapa |
 | Estilos do renderizador | 96 KB | 16 KB | 14 KB, ao abrir un mapa |
-| Worker do renderizador | 475 KB | 132 KB | 109 KB, ao abrir un mapa |
+| Worker do renderizador | 495 KB | 141 KB | 116 KB, ao abrir un mapa |
 | Xeometría viaria | 511 KB | 82 KB | 28 KB, ao abrir un mapa |
 | Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
+
+Medido o 16 de setembro de 2026 (versión 1.1.2). O anaco de entrada medra co que leva
+dentro: MapLibre 6.9, a instantánea de avisos e as cabeceiras por pestana.
 
 A tipografía non leva columnas: o `woff2` xa vén comprimido e volver comprimilo non aforra
 nada, así que a build nin o intenta. Son dous ficheiros e non oito —son fontes variables,
 e o navegador instánciaas no peso que faga falta—, e antes viñan da CDN de Google. Os bytes
 que descarga o lector son os mesmos; o que cambia é a quen llos pide.
 
-GitHub Pages comprime por si mesmo, así que o sitio publicado sempre foi o da columna da
-dereita. `npm start` non o facía: enviaba a da esquerda ata que se engadiu isto.
+GitHub Pages comprime por si mesmo; `pnpm start` entrega o `.br` ou o `.gz` que a build
+deixa ao lado de cada ficheiro.
 
 **O que si baixa enteiro, en segundo plano.** «Só cando fan falta» describe o que a
 páxina pide para pintarse; o service worker é outra cousa. Para que a app funcione sen
-cobertura, na primeira visita garda **todo** o que a build produce — os 32 ficheiros,
-4,21 MB sen comprimir e 1,24 MB en gzip, medidos sobre `dist/sw.js` — sen esperar a que
+cobertura, na primeira visita garda **todo** o que a build produce — os 31 ficheiros,
+4,32 MB sen comprimir e 1,29 MB en gzip, medidos sobre `dist/sw.js` — sen esperar a que
 se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
 pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
-carga de 134 KB.
+carga de 143 KB.
+
+E cando un despregue cambia os nomes deses ficheiros debaixo dunha páxina aberta —pasa
+varias veces ao día, pola instantánea de avisos—, a páxina que pide o mapa despois de
+publicado recarga unha soa vez en lugar de amosar «a vista non se puido debuxar»; o
+service worker actualízase só e xa non ten os nomes vellos.
 
 ### Rigor de tipos
 
-`strict` está activado. Non o estaba: o proxecto herdara un `tsconfig.json` de andamio
-e, sobre todo, **non tiña instalados `@types/react` nin `@types/react-dom`**, así que
-todo JSX era `any` e as props de todos os compoñentes levaban sen comprobarse desde
-sempre. Ao instalalos, os erros baixo `--strict` pasaron de 1581 a 19, e os que quedaban
-eran reais: tres capas do mapa recibindo unha prop que ningunha lía, e `null` circulando
-onde o código asumía un valor.
+`strict` está activado, con `@types/react` e `@types/react-dom` instalados. Sen eles todo
+JSX era `any` e ningunha prop se comprobaba; ao poñelos, dos 1.581 erros que saíron baixo
+`--strict` quedaron 19, e eses eran reais.
 
 ### Seguridade
 
-`pnpm audit`: **0 vulnerabilidades** sobre 8 dependencias de produción e 10 de
-desenvolvemento. Dependabot revisa semanalmente as dependencias e mais as actions.
+`pnpm audit`: **0 vulnerabilidades** sobre 7 dependencias de produción e 13 de
+desenvolvemento (16 de setembro de 2026). Dependabot revisa semanalmente as dependencias
+e mais as actions, e CodeQL o código en cada push a `main`.
 
-**Content Security Policy.** `script-src 'self'`, sen `unsafe-inline` nin `unsafe-eval`:
-o build non ten ningún script en liña, nin worker, nin wasm, e o escáner QR usa o
+**Content Security Policy.** `script-src 'self'` máis o hash do script do tema, sen
+`unsafe-inline` nin `unsafe-eval`: ese é o único script en liña, o único worker é o do
+renderizador do mapa e sérvese desde esta orixe, non hai wasm, e o escáner QR usa o
 `BarcodeDetector` do navegador en vez dunha librería. As únicas orixes remotas
 permitidas son as que a app usa de verdade — OpenFreeMap polas teselas vectoriais,
 tile.openstreetmap.org polo respaldo ráster. O enrutador peonil de OSM estivo aquí ata
@@ -1035,7 +1045,7 @@ dous sitios, porque o despregue real é GitHub Pages e un aloxamento estático n
 cabeceiras: **dentro da páxina**, inxectada ao construír, e **como cabeceira** para quen
 o hospede el mesmo. Inxéctase ao construír e non no HTML fonte porque en `vite dev`
 bloqueaba o websocket de recarga en quente, e ensanchar a política de produción para
-admitir un socket de desenvolvemento sería facelo ao revés. `npm test` comproba que
+admitir un socket de desenvolvemento sería facelo ao revés. `pnpm test` comproba que
 `script-src` segue sendo só `'self'` e que ningunha orixe permitida sobra.
 
 **Límite de peticións.** 120 peticións por minuto e enderezo, 30 se son de planificación,
@@ -1097,18 +1107,12 @@ foco no botón do QR detrás do caixón. Todo pasa por un só hook, `useDialog`,
 —as tres cifras, ou a frase que di que non hai— en lugar de caer ao principio do
 documento cando o formulario se prega debaixo do botón.
 
-Esa última frase estivo aquí antes de ser certa. A sonda que daba por boa a aplicación
-buscaba `button`, `a[href]`, `[role=button]` e `summary` sen nome accesible, e un `div`
-cun manexador de clic non é ningún deles: **cada fila da lista de liñas era un `div`**,
-así que coa pestana Liñas enteira non se podía abrir ningunha liña sen rato, e as dúas
-listas de suxestións do planificador tiñan o mesmo problema. Tampouco vía o contedor de
-Leaflet, que é un `div` ao que a librería lle pon `tabindex="0"`: os dous mapas eran unha
-parada de tabulación sen nome e os seus controis dicían "Zoom in" en inglés baixo unha
-interface en galego. Está todo arranxado, e a sonda marca agora `cursor: pointer` sobre
-calquera cousa que non sexa interactiva. O mapa do traxecto, que naceu despois, quedou
-fóra dese arranxo ata a auditoría do 14 de setembro de 2026 —dicía "Zoom in" outra vez—;
-agora `pnpm test` esixe o mesmo nome e os mesmos títulos a calquera ficheiro que chame a
-`L.map(`.
+As filas da lista de liñas e as suxestións do planificador son botóns, non `div` cun
+clic —chegaron a selo, e a pestana Liñas enteira non se abría sen rato—, e a sonda de
+accesibilidade marca `cursor: pointer` sobre calquera cousa que non sexa interactiva. Os
+tres mapas levan nome e controis no idioma da interface, porque o contedor de Leaflet é
+unha parada de tabulación cos seus botóns en inglés se ninguén llos traduce; `pnpm test`
+esíxello a calquera ficheiro que chame a `L.map(`.
 
 **Contraste.** A insignia dunha liña é texto branco sobre a cor da liña a 10 px, e o número
 que leva é o único que hai que ler dun golpe de vista. Cinco das vinte e catro non chegaban
@@ -1255,7 +1259,8 @@ abonda cun servizo pequeno que responda `/api/…`.
 
 `worker/index.ts` é ese servizo. Non reimplementa nada: chama ás mesmas funcións de
 `src/services/`, que só usan `fetch`, `Response`, `ReadableStream` e `TextDecoder`. Diante
-delas pon a Cache API —trinta minutos para os avisos, vinte segundos para unha parada— que
+delas pon a Cache API —trinta minutos para os avisos, un se a lectura fallou, vinte segundos
+para unha parada— que
 é o que de verdade mantén preto de unha por xanela as peticións que saen cara a servizos
 alleos, porque a caché en memoria dos módulos vive por illa e non limita nada por si soa.
 
@@ -1300,7 +1305,7 @@ O que si limita é a caché de arriba, que é a que protexe aos de fóra.
 
 ## Instalación
 
-Precisa **Node 20 ou superior** e **pnpm**, que é o xestor que declara `package.json` e
+Precisa **Node 22 ou superior** e **pnpm**, que é o xestor que declara `package.json` e
 o que usa a integración continua con `--frozen-lockfile`. `pnpm-lock.yaml` é o único
 ficheiro de bloqueo do repositorio; instalar con outro xestor daría unha árbore distinta
 da que se proba e se desprega.
@@ -1538,11 +1543,7 @@ de que alguén se lembre.
 - **Non hai posición GPS real da flota.** Non existe fonte pública. Os vehículos que
   amosa o mapa son as expedicións do cadro horario situadas sobre o trazado: onde
   *debería* estar o bus, non onde está. A aplicación nunca di "en tempo real".
-- **Cada hora leva a súa procedencia.** `HORARIO OFICIAL` é a hora que publica o
-  operador para esa parada; `ESTIMADO` (co prefixo `~`) calcúlase desde a saída de
-  cabeceira máis o tempo de percorrido medido por estrada. Como o segundo pode desviarse
-  uns minutos, convén chegar á parada antes da hora amosada.
-- **2 tramos de 1135 (0,2%)** teñen un desvío viario superior a 4x fronte á liña recta,
+- **2 tramos de 1136 (0,2%)** teñen un desvío viario superior a 4x fronte á liña recta,
   é dicir: o camiño por rúa entre dúas paradas consecutivas é máis de catro veces a
   distancia en liña recta. Adoita significar que o itinerario lista os dous postes
   opostos da mesma rúa dentro do mesmo sentido (o bus tería que dar a volta), ou que
@@ -1572,7 +1573,6 @@ de que alguén se lembre.
 - **Non hai historial de fiabilidade** ("este bus non pasou"). Necesita base de datos: en
   memoria perderíase en cada despregue, e rexistrar algo que se esvae sería outra forma
   de mentir.
-- **Non hai posicións en tempo real de ningún tipo.** Ver [Ideas para máis adiante](#ideas-para-máis-adiante).
 - O cadro horario dá as saídas de cabeceira; as horas nas paradas intermedias son
   estimacións a partir do tempo de condución medido, non horas publicadas.
 
@@ -1657,7 +1657,11 @@ O que custa, medido:
   seguiría funcionando sen conexión.
 
 Non está feito porque é un pipeline novo comparable ao do urbano, non un engadido
-pequeno. A decisión previa é se paga a pena manter esa descarga.
+pequeno. A decisión previa é se paga a pena manter esa descarga. E leva outra cousa
+consigo: o GTFS trae **un poste por sentido, na beirarrúa**, que é o que faría falta para
+que o mapa dixese o lado da rúa —hoxe os pins do operador marcan a calzada, non a beira—;
+o custo e a orde diso están en
+[`design/NOTAS-fontes-e-autosuficiencia.md`](design/NOTAS-fontes-e-autosuficiencia.md).
 
 ### Que o móbil vibre coa aplicación pechada
 
@@ -1689,22 +1693,6 @@ antemán**. Iso é exactamente o que unha alarma local resolve sen servidor ning
 etiqueta de procedencia que a pantalla: un aviso que vibra é unha promesa máis forte ca
 un número que alguén decidiu mirar.
 
-### Un panel físico nunha Raspberry Pi
-
-Unha pantalla no recibidor que diga «sae en 6 min, colle o abrigo». **É factible con moi
-pouco**, porque a arquitectura xa o permite sen querelo: os datos son ficheiros JSON
-estáticos e o motor (`schedule.ts`, `arrivals.ts`, `planner.ts`, `vehicles.ts`, `places.ts`) é TypeScript sen DOM nin
-dependencias de navegador. Unha Pi con Node importa exactamente o mesmo código e calcula
-en local; `estimateWalk` máis `getArrivalsForStop` dan «cando saír da casa» nunhas trinta
-liñas. Sen API, sen servidor propio, e segue funcionando se cae a rede.
-
-O que falta non é código, é compromiso: publicar as URLs dos datos como **interface
-estable** e documentala, para que un aparello aí fóra non rompa cada vez que se cambia a
-forma dun JSON. Iso e un exemplo mínimo que sirva de referencia.
-
-Cae despois das interurbanas na orde de prioridade: aproveita todo o traballo feito, pero
-non lle serve a ninguén que non teña unha Pi.
-
 ### Historial de fiabilidade
 
 "Este bus non pasou", con estatísticas por liña. Necesita base de datos de verdade
@@ -1728,3 +1716,19 @@ propia— queda descrita na auditoría e non se fai por agora: non hai présa po
 con ninguén. A auditoría, coas medidas e o plan, está en
 [`design/AUDITORIA-seo.md`](design/AUDITORIA-seo.md). Nada diso cambia as regras:
 ningún título prometerá tempo real, e «non oficial» vai na descrición.
+
+### Un panel físico nunha Raspberry Pi
+
+Unha pantalla no recibidor que diga «sae en 6 min, colle o abrigo». **É factible con moi
+pouco**, porque a arquitectura xa o permite sen querelo: os datos son ficheiros JSON
+estáticos e o motor (`schedule.ts`, `arrivals.ts`, `planner.ts`, `vehicles.ts`, `places.ts`) é TypeScript sen DOM nin
+dependencias de navegador. Unha Pi con Node importa exactamente o mesmo código e calcula
+en local; `estimateWalk` máis `getArrivalsForStop` dan «cando saír da casa» nunhas trinta
+liñas. Sen API, sen servidor propio, e segue funcionando se cae a rede.
+
+O que falta non é código, é compromiso: publicar as URLs dos datos como **interface
+estable** e documentala, para que un aparello aí fóra non rompa cada vez que se cambia a
+forma dun JSON. Iso e un exemplo mínimo que sirva de referencia.
+
+Vai a última de todas a propósito: aproveita todo o traballo feito, pero non lle serve a
+ninguén que non teña unha Pi.

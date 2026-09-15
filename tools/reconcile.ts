@@ -170,6 +170,13 @@ async function main(): Promise<void> {
     }
     const stop = stopById.get(canonical)!;
     const d = distance(stop.lat, stop.lng, coords[0], coords[1]);
+    // The one stop placed on purpose away from the operator's pin (see buildDataset.ts:
+    // the pin duplicated the previous stop's) is expected to disagree with its page. It
+    // is reported, not flagged, so the disagreement stays visible without failing the run.
+    if ((stop as any).positionSource === 'osm') {
+      console.log(`  ${stop.name}: ${Math.round(d)} m from its page for ps=${ps}, by design (positionSource: osm)`);
+      continue;
+    }
     drift.push(d);
     if (d > 60) flag(`${stop.name} sits ${Math.round(d)} m from what its page publishes for ps=${ps}`);
   }
