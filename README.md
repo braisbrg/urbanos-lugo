@@ -1376,7 +1376,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-148 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+149 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1542,6 +1542,15 @@ de que alguén se lembre.
   opostos da mesma rúa dentro do mesmo sentido (o bus tería que dar a volta), ou que
   hai sentidos únicos no casco histórico. `pnpm data:audit` lístaos un a un.
 - **12 paradas sen coordenadas** na fonte quedan fóra do conxunto de datos.
+- **As coordenadas son as do operador, agás unha.** O seu pin de «Estda. Nova Santiago
+  (Monte Segade)» estaba a cinco metros de «Avda. Américas 88», a parada anterior da liña
+  11 cara a Calde, e a 1,1 km do poste que OpenStreetMap ten cadastrado con ese mesmo
+  nome, sobre a propia ruta levantada da liña. Dúas paradas consecutivas dun sentido non
+  poden estar a seis metros: é unha coordenada mal metida, non unha posición. O xerador
+  toma o poste de OSM só nese caso —pin que duplica o da parada veciña **e** poste co
+  mesmo nome lonxe— e a parada lévao escrito (`positionSource: "osm"`); os dous outros
+  pares que o operador publica a menos de 30 m (Avda. Américas 36/51, Rúa Industria)
+  quedan como están, e `pnpm data:build` di cales son. Un check garda que sexa unha soa.
 - **Festivos locais** non se distinguen dos domingos.
 - **Tres sentidos debúxanse coa ruta dun coche**, non co itinerario levantado en OSM:
   a 3.2 nos dous sentidos e a 5.2 cara a Avda. Américas. A liña azul do mapa pode

@@ -34,6 +34,16 @@ residents are pointed at.
   it reads the pages a passenger reads, at the rate a passenger would, identifies itself
   in its User-Agent, links back to the source on every screen, and points anyone who needs
   certainty at the operator's own page.
+- **Coordinates are the operator's, with one exception, and the exception is OSM's.**
+  Each pole's position is read from the operator's own page for it. For one stop,
+  "Estda. Nova Santiago (Monte Segade)", that page places the pin five metres from the
+  previous stop of the same direction and 1.1 km from the pole OpenStreetMap surveys under
+  the same name — a mis-entered coordinate, not a position. `tools/buildDataset.ts` takes
+  the OSM pole only when both hold (pin duplicating a neighbour's, same-named pole far
+  away), marks the stop `positionSource: "osm"`, and reports every other close pair without
+  touching it. That one coordinate is OSM data and carries ODbL and its attribution like the
+  rest of `data/stop-amenities.json`, where it is recorded; `tools/test.ts` holds the count
+  at one.
 
 ## Route geometry — OpenStreetMap
 

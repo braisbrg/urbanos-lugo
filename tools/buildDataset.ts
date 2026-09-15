@@ -19,8 +19,10 @@ const RAW = join(HERE, '../data');
 const raw = JSON.parse(readFileSync(join(RAW, 'official-raw.json'), 'utf8'));
 // Optional: written by tools/importStopAmenities.ts from OpenStreetMap surveys.
 const amenitiesPath = join(RAW, 'stop-amenities.json');
-const amenities: Record<string, { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null }> =
-  existsSync(amenitiesPath) ? JSON.parse(readFileSync(amenitiesPath, 'utf8')) : {};
+const amenities: Record<
+  string,
+  { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null; position?: [number, number]; osmNode?: number }
+> = existsSync(amenitiesPath) ? JSON.parse(readFileSync(amenitiesPath, 'utf8')) : {};
 const routes = JSON.parse(readFileSync(join(RAW, 'routes.json'), 'utf8'));
 // Optional: written by tools/importOsmRoutes.ts. The real itineraries, surveyed.
 const osmPath = join(RAW, 'osm-routes.json');
@@ -379,14 +381,52 @@ for (const s of raw.stops) {
   RECOVERED_BY_TOKEN.add(s.ps);
 }
 
+// ---- the operator's pin against the surveyed pole ------------------------------------
+
+/**
+ * Coordinates are the operator's, with one exception the data itself proves.
+ *
+ * Two consecutive stops of one direction cannot be six metres apart, yet the operator's
+ * pin for "Estda. Nova Santiago (Monte Segade)" sat on top of "Avda. Américas 88", 1.1 km
+ * from the pole OpenStreetMap surveys under that exact name -- which lies on the line's
+ * own surveyed route. A pin that duplicates its neighbour's is a mis-entered coordinate,
+ * not a position. So when a stop is in such a pair AND the OSM importer recorded where
+ * the same-named pole really is, that position is used and the stop says so
+ * (`positionSource: 'osm'`). Either condition alone is only reported: pins 19 m apart on
+ * Avda. Américas are two real poles, and a far same-named pole with a plausible pin
+ * could as easily be OSM's mistake.
+ */
+const DUPLICATE_PIN_M = 30;
+const clusterById = new Map<string, any>(clusters.map((c: any) => [c.id, c]));
+const duplicatePairs: [string, string, number][] = [];
+for (const line of raw.lines) {
+  for (const dir of line.directions) {
+    const ids = dir.stops.map((ps: number) => canonicalByPs.get(ps)).filter(Boolean) as string[];
+    for (let i = 1; i < ids.length; i++) {
+      const a = clusterById.get(ids[i - 1]);
+      const b = clusterById.get(ids[i]);
+      if (!a || !b || a === b) continue;
+      const m = haversine(a.lat, a.lng, b.lat, b.lng);
+      if (m < DUPLICATE_PIN_M && !duplicatePairs.some(([x, y]) => x === a.id && y === b.id)) duplicatePairs.push([a.id, b.id, m]);
+    }
+  }
+}
+const suspects = new Set(duplicatePairs.flatMap(([a, b]) => [a, b]));
+const repositioned: string[] = [];
+
 const stops = clusters.map((c) => {
   const { samples, ...rest } = c;
   const surveyed = amenities[c.id];
+  const moved = suspects.has(c.id) && surveyed?.position ? surveyed.position : null;
+  if (moved) repositioned.push(c.id);
+  const lat = moved ? moved[0] : c.lat;
+  const lng = moved ? moved[1] : c.lng;
   return {
     ...rest,
-    lat: Number(c.lat.toFixed(7)),
-    lng: Number(c.lng.toFixed(7)),
-    zone: zoneFor(c.lat, c.lng),
+    lat: Number(lat.toFixed(7)),
+    lng: Number(lng.toFixed(7)),
+    ...(moved ? { positionSource: 'osm' as const } : {}),
+    zone: zoneFor(lat, lng),
     shelter: surveyed?.shelter ?? null,
     bench: surveyed?.bench ?? null,
   };
@@ -594,6 +634,10 @@ writeFileSync(join(DATA, 'route-geometry.json'), JSON.stringify(geometry) + '\n'
 
 console.log(`stops : ${served.length} physical poles written`);
 console.log(`        ${collapsed} duplicate operator ids collapsed, ${dropped} without coordinates, ${orphaned} served by no line`);
+console.log(`        ${repositioned.length} placed at the pole OSM surveys under the same name, the operator's pin duplicating a neighbour's: ${repositioned.join(', ') || 'none'}`);
+for (const [a, b, m] of duplicatePairs) {
+  if (!repositioned.includes(a) && !repositioned.includes(b)) console.log(`        left as published: ${a} and ${b} are ${Math.round(m)} m apart in one direction`);
+}
 console.log(`lines : ${lines.length} written`);
 const geometryKb = (JSON.stringify(geometry).length / 1024).toFixed(0);
 const linesKb = (JSON.stringify(slimLines).length / 1024).toFixed(0);

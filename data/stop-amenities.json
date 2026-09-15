@@ -379,11 +379,6 @@
     "bench": true,
     "tactilePaving": null
   },
-  "s83": {
-    "shelter": false,
-    "bench": false,
-    "tactilePaving": false
-  },
   "s120": {
     "shelter": false,
     "bench": null,
@@ -744,11 +739,6 @@
     "bench": null,
     "tactilePaving": null
   },
-  "s414": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
   "s415": {
     "shelter": false,
     "bench": null,
@@ -770,11 +760,6 @@
     "tactilePaving": null
   },
   "s419": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s421": {
     "shelter": false,
     "bench": null,
     "tactilePaving": null
@@ -824,19 +809,9 @@
     "bench": null,
     "tactilePaving": null
   },
-  "s437": {
-    "shelter": true,
-    "bench": true,
-    "tactilePaving": false
-  },
   "s445": {
     "shelter": true,
     "bench": true,
-    "tactilePaving": null
-  },
-  "s467": {
-    "shelter": false,
-    "bench": null,
     "tactilePaving": null
   },
   "s479": {
@@ -875,11 +850,6 @@
     "tactilePaving": null
   },
   "s487": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s500": {
     "shelter": false,
     "bench": null,
     "tactilePaving": null
@@ -964,21 +934,6 @@
     "bench": null,
     "tactilePaving": null
   },
-  "s540": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s547": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s548": {
-    "shelter": true,
-    "bench": null,
-    "tactilePaving": null
-  },
   "s550": {
     "shelter": false,
     "bench": null,
@@ -1000,16 +955,6 @@
     "tactilePaving": null
   },
   "s554": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s555": {
-    "shelter": true,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s557": {
     "shelter": false,
     "bench": null,
     "tactilePaving": null
@@ -1365,11 +1310,6 @@
     "tactilePaving": null
   },
   "s706": {
-    "shelter": false,
-    "bench": null,
-    "tactilePaving": null
-  },
-  "s708": {
     "shelter": false,
     "bench": null,
     "tactilePaving": null
@@ -1820,9 +1760,14 @@
     "tactilePaving": null
   },
   "s1065": {
-    "shelter": false,
+    "shelter": true,
     "bench": null,
-    "tactilePaving": null
+    "tactilePaving": null,
+    "position": [
+      43.0039067,
+      -7.5828602
+    ],
+    "osmNode": 11238397388
   },
   "s1066": {
     "shelter": false,

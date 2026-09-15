@@ -24,10 +24,14 @@ const CACHE = join(HERE, '../.cache/osm-stops.json');
 
 /** Same pole, allowing for survey imprecision on either side. */
 const MATCH_RADIUS_M = 45;
-
+/** Past this, a same-named pole is not "the other side of the road": one of the two is wrong. */
+const DISAGREE_M = 300;
 
 const yesNo = (value: string | undefined): boolean | null =>
   value === undefined ? null : value !== 'no';
+/** Names compared without accents, case or doubled spaces: OSM and the operator differ in all three. */
+const normalise = (name: string): string =>
+  name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 async function fetchOsmStops(): Promise<any[]> {
   if (existsSync(CACHE)) return JSON.parse(readFileSync(CACHE, 'utf8'));
@@ -52,8 +56,16 @@ async function main() {
   const osm = await fetchOsmStops();
   console.log(`OSM bus stops in the Lugo box: ${osm.length}`);
 
-  const amenities: Record<string, { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null }> = {};
+  const amenities: Record<
+    string,
+    { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null; position?: [number, number]; osmNode?: number }
+  > = {};
   let matched = 0;
+  let disagree = 0;
+
+  // OSM names its poles the way the operator prints them, so a name is a second way to
+  // find the same pole -- and the one that survives a wrong pin.
+  const sameName = (name: string) => osm.filter((node) => normalise(node.tags?.name || '') === normalise(name));
 
   for (const stop of stops as any[]) {
     let best: any = null;
@@ -65,7 +77,19 @@ async function main() {
         best = node;
       }
     }
-    if (!best || bestD > MATCH_RADIUS_M) continue;
+
+    // The surveyed pole under this exact name, when it is nowhere near the operator's
+    // pin. Recorded, not applied: buildDataset.ts takes it only when the pin also
+    // duplicates a neighbouring stop's, which is what a mis-entered coordinate looks
+    // like. One stop as of September 2026, 1.1 km out.
+    const named = sameName(stop.name)
+      .map((node) => ({ node, d: haversine(stop.lat, stop.lng, node.lat, node.lon) }))
+      .sort((a, b) => a.d - b.d)[0];
+    const far = named && named.d > DISAGREE_M ? named.node : null;
+    if (far) {
+      disagree++;
+      best = far; // and its amenities are that pole's, not the neighbour's
+    } else if (!best || bestD > MATCH_RADIUS_M) continue;
 
     matched++;
     const tags = best.tags || {};
@@ -73,6 +97,7 @@ async function main() {
       shelter: yesNo(tags.shelter),
       bench: yesNo(tags.bench),
       tactilePaving: yesNo(tags.tactile_paving),
+      ...(far ? { position: [far.lat, far.lon] as [number, number], osmNode: far.id } : {}),
     };
   }
 
@@ -81,6 +106,7 @@ async function main() {
   const withShelter = Object.values(amenities).filter((a) => a.shelter === true).length;
   const withTactile = Object.values(amenities).filter((a) => a.tactilePaving === true).length;
   console.log(`matched ${matched}/${(stops as any[]).length} stops within ${MATCH_RADIUS_M} m`);
+  console.log(`  same-named pole more than ${DISAGREE_M} m from the operator's pin: ${disagree}`);
   console.log(`  with a shelter        : ${withShelter}`);
   console.log(`  with tactile paving   : ${withTactile}`);
   console.log(`  unsurveyed stay null and the UI says nothing about them`);

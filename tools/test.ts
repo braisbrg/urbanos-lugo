@@ -413,6 +413,42 @@ ok('every stop sits on the route drawn for its line', () => {
   assert(median < 25, `stops sit a median of ${Math.round(median)} m off their route`);
 });
 
+ok('a coordinate is the operator’s unless its pin duplicates the next stop’s', () => {
+  // The operator's pin for "Estda. Nova Santiago (Monte Segade)" sat five metres from
+  // "Avda. Américas 88", the stop before it on line 11 towards Calde, and 1.1 km from the
+  // pole OpenStreetMap surveys under that name on the line's own route. The check above
+  // could not see it: the surveyed route passes both points. Two consecutive stops of one
+  // direction six metres apart is not a position, it is a mis-entered one, so the
+  // generator takes the same-named surveyed pole for exactly that case and marks it.
+  const moved = BUS_STOPS.filter((s) => s.positionSource === 'osm');
+  assert(moved.length === 1, `${moved.length} stops carry an OSM position; one is known (s1065), any other needs looking at`);
+  const segade = moved[0];
+  assert(segade.id === 's1065' && /Monte Segade/.test(segade.name), `the repositioned stop is ${segade.id} ${segade.name}`);
+  const calde = BUS_LINES.find((l) => l.id === '11-Calde')!;
+  for (const dir of calde.directions) {
+    const i = dir.stops.indexOf(segade.id);
+    const before = BUS_STOPS.find((s) => s.id === dir.stops[i - 1])!;
+    const after = BUS_STOPS.find((s) => s.id === dir.stops[i + 1])!;
+    const gapBefore = getDistanceMeters(before.lat, before.lng, segade.lat, segade.lng);
+    const gapAfter = getDistanceMeters(segade.lat, segade.lng, after.lat, after.lng);
+    assert(gapBefore > 300 && gapAfter > 300, `${dir.id}: Monte Segade is ${Math.round(gapBefore)} m from ${before.name} and ${Math.round(gapAfter)} m from ${after.name}`);
+  }
+  // And the rule does not fire on the two pairs the operator publishes close together on
+  // purpose -- both sides of Avda. Américas, both ends of Rúa Industria: those stay put.
+  const close: string[] = [];
+  for (const line of BUS_LINES) {
+    for (const dir of line.directions) {
+      for (let i = 1; i < dir.stops.length; i++) {
+        const a = BUS_STOPS.find((s) => s.id === dir.stops[i - 1])!;
+        const b = BUS_STOPS.find((s) => s.id === dir.stops[i])!;
+        const pair = `${a.id}>${b.id}`;
+        if (getDistanceMeters(a.lat, a.lng, b.lat, b.lng) < 30 && !close.includes(pair)) close.push(pair);
+      }
+    }
+  }
+  assert(close.join(' ') === 's37>s38 s605>s606', `consecutive stops under 30 m apart: ${close.join(' ') || 'none'}; a new one is a new duplicated pin`);
+});
+
 console.log('\nservice calendar');
 
 ok('a daytime window is respected', () => {
@@ -1438,11 +1474,13 @@ ok('the trip companion counts stops against the list, and never backwards', () =
 
   /*
    * The radius is wider than some of the published gaps, and that is known rather than
-   * tuned away. Ten of the 1,136 consecutive pairs are closer than sixty metres; the
-   * tightest reads five, and that five is a coordinate the operator publishes at a
-   * junction rather than a gap between two poles — see the note on AT_STOP_RADIUS_M.
-   * What must not happen is the count growing quietly, which is what widening the radius,
-   * or a re-import that moves a stop, would do.
+   * tuned away. Ten of the 1,136 consecutive pairs used to be closer than sixty metres;
+   * the tightest read five, and this note called that "a coordinate the operator publishes
+   * at a junction". It was not: it was Monte Segade's pin sitting on the stop before it,
+   * 1.1 km from its pole, and the generator now places it where OpenStreetMap surveys it
+   * (see the check on duplicated pins). Eight remain. What must not happen is the count
+   * growing quietly, which is what widening the radius, or a re-import that moves a
+   * stop, would do.
    */
   let tight = 0;
   for (const line of BUS_LINES) {
@@ -1454,7 +1492,7 @@ ok('the trip companion counts stops against the list, and never backwards', () =
       }
     }
   }
-  assert(tight <= 10, `${tight} consecutive pairs are closer than the ${AT_STOP_RADIUS_M} m radius, up from 10`);
+  assert(tight <= 8, `${tight} consecutive pairs are closer than the ${AT_STOP_RADIUS_M} m radius, up from 8`);
 
   /*
    * And the pairs that are NOT consecutive, which the note above never counted.

@@ -16,6 +16,12 @@ export interface BusStop {
   aliases?: string[];
   lat: number;
   lng: number;
+  /**
+   * Set only when the coordinates are not the operator's. The generator takes the pole
+   * OpenStreetMap surveys under the same name when the operator's pin duplicates the
+   * neighbouring stop's -- see tools/buildDataset.ts; everything else is the operator's.
+   */
+  positionSource?: 'osm';
   lines: string[]; // List of line IDs passing by, e.g. ["1.1", "1.2", "3.1", "4.1"]
   zone?: string;
   /**

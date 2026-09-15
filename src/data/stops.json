@@ -8126,14 +8126,15 @@
     "officialToken": null,
     "name": "Estda. Nova Santiago (Monte Segade)",
     "aliases": [],
-    "lat": 43.0091297,
-    "lng": -7.5712505,
+    "lat": 43.0039067,
+    "lng": -7.5828602,
     "lines": [
       "11-Calde"
     ],
-    "zone": "Oeste / Américas",
-    "shelter": false,
-    "bench": null
+    "zone": "A Cheda",
+    "shelter": true,
+    "bench": null,
+    "positionSource": "osm"
   },
   {
     "id": "s1066",
