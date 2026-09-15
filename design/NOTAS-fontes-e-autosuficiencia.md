@@ -214,16 +214,56 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
 
 1. **Outra rolda de auditoría e de comprobacións**, coa mesma disciplina: medir antes de
    afirmar, e correr cada aviso ata a súa causa antes de descartalo.
+   *Feita: as roldas 13 a 16 de `REXISTRO-probas.md` (14 e 15 de setembro de 2026).*
 2. **Comprobar navegadores e sistemas.** Non se probou máis que nun Chromium. Importa
    especialmente: **Safari en iOS**, que é o outro medio Lugo, e onde `100dvh`, os
    `<details>`, `oklch()` e o `ResizeObserver` do mapa son os candidatos a romper. Tamén
    Firefox e Chrome en Android. Hai que decidir cal é o chan que se soporta e escribilo.
+   *O chan está escrito (15 de setembro de 2026, README, «Navegadores»): o de Vite 8,
+   Chrome/Edge 111, Firefox 114, Safari e iOS 16.4. Do que está por riba do chan xa se
+   protexe o código: `AbortSignal.timeout?.`, `wakeLock` só se existe, `vibrate?.`, mapa
+   ráster sen WebGL2. O que queda é a proba nun iPhone real, coa lista de abaixo.*
 3. **Probas de esforzo en todo o proxecto**, despois do paso de navegadores. Non se
    probou nunca nada fóra do camiño feliz: unha sesión longa co taboleiro recalculando cada
    15 s, o planificador contra pares de paradas afastadas, o mapa con todas as capas, a
    sincronización de avisos contra un servidor lento ou caído, o endpoint do QR chamado
    unha e outra vez, consultas enormes na busca, e o comportamento con rede mala. Hai que
    decidir que se rompe aceptablemente e que non debe romper nunca.
+   *Feitas, e con ferramenta cada unha: a sesión longa e o mapa con todo (`measure:browser`),
+   o planificador contra pares afastados (`stressPlanner`), o QR unha e outra vez e as
+   consultas enormes (`stressHttp`: 50 á vez sobre un poste, 40 plans nunha ventá, o
+   limitador a 120/min), e o 15 de setembro de 2026 os avisos contra un servidor colgado,
+   con erro ou lento e a app sen rede (`stress:network`). O que se decidiu: o taboleiro
+   nunca espera pola rede; a pantalla de avisos nunca queda baleira máis de dous segundos;
+   unha lectura fallida do operador dura un minuto, non media hora; sen rede, o *service
+   worker* dá a última resposta que viu. Rolda 16 do rexistro.*
+
+### Lista para o iPhone
+
+Media hora cun iPhone real, en Safari, con iOS 16.4 ou máis. Anotar o modelo e a versión.
+
+1. Abrir `braisbrg.github.io/urbanos-lugo/`. O taboleiro con horas en menos de 3 s, sen
+   marco branco antes do tema escuro.
+2. Compartir → **Engadir á pantalla de inicio**. Abrir desde a icona: pantalla completa,
+   sen barra de Safari, a icona correcta.
+3. Buscar «catedral» tecleando: as filas aparecen letra a letra sen que o teclado tape o
+   campo. Abrir unha parada; premer **copiar ligazón** e pegala en Notas: ten `?parada=`.
+4. **Mapa**: debuxa (é MapLibre, WebGL2); pinza e xiro van fluídos; os nomes das paradas
+   lense; a folla de controis sobe desde abaixo e non queda tapada pola barra de inicio
+   (é onde `100dvh` e as zonas seguras rompen).
+5. Xirar o teléfono a horizontal e volver: nada queda cortado.
+6. **Ruta**: calcular Praza Maior → HULA; ao calcular, a pantalla vai á resposta. Premer
+   **Vou nesta**: pide o GPS, e a pantalla non se apaga durante un minuto (a *wake lock*,
+   iOS 16.4+; se non existe, non debe saír erro ningún).
+7. Cambiar tema e idioma desde o menú: as cores (`oklch()`) e os textos cambian enteiros.
+8. Modo avión, pechar a app, abrila de novo desde a icona: abre, o taboleiro ten horas, e
+   Avisos amosa unha resposta con data (a última ou a copia gardada), non unha lista baleira.
+9. **Axustes → Accesibilidade → Texto máis grande**, ao máximo: nada se solapa nin se
+   corta; a barra de abaixo segue con catro destinos.
+10. **VoiceOver** un minuto: as pestanas anúncianse como ligazóns co seu nome; dentro do
+    menú, pasar co dedo non sae del; ao calcular unha ruta, le a resposta.
+
+Un fallo en calquera punto é un erro de verdade e vai ao rexistro con modelo e versión.
 
 ## Feito dende que se escribiu isto
 

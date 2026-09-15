@@ -68,6 +68,10 @@ jobs:
         continue-on-error: true
         run: pnpm run audit:browser 2>&1 | tee audit.txt
 
+      - name: Play a dead, slow and absent network against the app
+        continue-on-error: true
+        run: pnpm run stress:network 2>&1 | tee network.txt
+
       - name: Summary
         if: always()
         run: |
@@ -80,6 +84,11 @@ jobs:
             echo '```'
             grep -A4 '=== totals' audit.txt || true
             grep -A2 '=== console' audit.txt || true
+            grep -A2 '=== keyboard' audit.txt || true
+            echo '```'
+            echo '## stress:network -- what was on screen, and when'
+            echo '```'
+            grep -E ' ms|never|broke|worth looking' network.txt || echo '(no lines: the run did not get that far)'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -90,5 +99,6 @@ jobs:
           path: |
             measure.txt
             audit.txt
+            network.txt
             server.log
           retention-days: 90

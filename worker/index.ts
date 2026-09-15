@@ -31,7 +31,9 @@ import { operatorTimesResponse } from '../src/services/operatorTimesRoute';
  * outbound request count near one per window, which is the promise this project makes to
  * two free services it does not own.
  */
-const EDGE_SECONDS = { alerts: 30 * 60, operator: 20 };
+// A failed read is held for a minute, not thirty: it says what happened at one moment,
+// and the service memory keeps the outbound cooldown whatever the edge does.
+const EDGE_SECONDS = { alerts: 30 * 60, unreachable: 60, operator: 20 };
 
 /**
  * The one site allowed to call this, e.g. `https://braisbrg.github.io`. Set in the
@@ -151,7 +153,7 @@ export async function handle(request: Request): Promise<Response> {
   if (url.pathname === '/api/alerts') {
     const force = url.searchParams.get('refresh') === 'true';
     const data = await syncOfficialAlerts(force);
-    return respond(data, 200, force ? 0 : EDGE_SECONDS.alerts);
+    return respond(data, 200, force ? 0 : data.status === 'unreachable' ? EDGE_SECONDS.unreachable : EDGE_SECONDS.alerts);
   }
 
   const stopMatch = url.pathname.match(/^\/api\/paradas\/([^/]+)\/agora$/);

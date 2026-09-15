@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AlertSyncResult } from '../services/alertSyncService';
 import alertSnapshot from '../data/alerts.json';
 import { isSnapshotStale } from '../utils/snapshotAge';
@@ -19,6 +19,8 @@ import { apiUrl } from '../services/apiUrl';
  */
 
 const COOLDOWN_SECONDS = 30;
+/** How long an unanswered first request keeps the screen empty before the snapshot shows. */
+export const SNAPSHOT_AFTER_MS = 2000;
 
 /**
  * The committed snapshot, narrowed rather than asserted.
@@ -61,6 +63,8 @@ export function useServiceAlerts(): ServiceAlerts {
   const [snapshotAt, setSnapshotAt] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  /** Whether the first request has come back, either way; see the patience timer below. */
+  const answered = useRef(false);
 
   const refresh = useCallback(
     async (force = false) => {
@@ -92,6 +96,7 @@ export function useServiceAlerts(): ServiceAlerts {
         setData(readSnapshot(alertSnapshot));
         setSnapshotAt(alertSnapshot.fetchedAt ?? null);
       } finally {
+        answered.current = true;
         if (force) setCooldown(COOLDOWN_SECONDS);
         setIsSyncing(false);
       }
@@ -99,8 +104,18 @@ export function useServiceAlerts(): ServiceAlerts {
     [cooldown, isSyncing],
   );
 
+  // A server that neither answers nor fails -- a cold worker, a tunnel, a phone with one
+  // bar -- left the screen on an empty list for up to the thirty seconds above, and an
+  // empty list reads as "no incidents". Two seconds without a word and the reader gets
+  // the committed snapshot, dated; the live answer replaces it whenever it lands.
   useEffect(() => {
     refresh(false);
+    const patience = setTimeout(() => {
+      if (answered.current) return;
+      setData(readSnapshot(alertSnapshot));
+      setSnapshotAt(alertSnapshot.fetchedAt ?? null);
+    }, SNAPSHOT_AFTER_MS);
+    return () => clearTimeout(patience);
     // Once, on mount. Later refreshes are the reader asking.
   }, []);
 

@@ -30,6 +30,19 @@ let lastFetchTimestamp = 0;
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes cache
 const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000; // 60 seconds minimum cooldown between external requests to buslugo.com
 
+/**
+ * An answer is held for half an hour; a failure only for the outbound cooldown.
+ *
+ * They were held alike, so one timed-out read of buslugo.com -- a six-second hiccup --
+ * was served as "we could not read the operator's page" to everyone for the next thirty
+ * minutes, with the notices it had replaced gone from the cache. A failure is a fact
+ * about one moment, and a minute later it is worth asking again.
+ */
+function cacheHolds(cached: AlertSyncResult, elapsed: number, forceRefresh: boolean): boolean {
+  if (elapsed < MIN_OUTBOUND_INTERVAL_MS) return true;
+  return !forceRefresh && cached.status !== 'unreachable' && elapsed < CACHE_TTL_MS;
+}
+
 
 /**
  * The city's news, by subject.
@@ -298,7 +311,7 @@ export function extractAlertsFromHtml(html: string): ServiceAlert[] {
  * 
  * Enforces rate limiting: Max 1 external request per 60 seconds.
  */
-export async function syncOfficialAlerts(forceRefresh = false): Promise<AlertSyncResult> {
+export async function syncOfficialAlerts(forceRefresh = false, now = Date.now()): Promise<AlertSyncResult> {
   // Share one outbound request between everyone waiting for it.
   //
   // The cooldown below only applies once there IS a cache, so on a cold start every
@@ -307,11 +320,8 @@ export async function syncOfficialAlerts(forceRefresh = false): Promise<AlertSyn
   // asks meanwhile.
   if (inFlight) return inFlight;
 
-  const now = Date.now();
-  const elapsed = now - lastFetchTimestamp;
-
-  // Rate Limiting Protection: If forceRefresh is requested but cooldown hasn't expired, return cache
-  if (cachedAlerts && (elapsed < MIN_OUTBOUND_INTERVAL_MS || (!forceRefresh && elapsed < CACHE_TTL_MS))) {
+  // `now` is a parameter so a test can move the clock; nothing else passes it.
+  if (cachedAlerts && cacheHolds(cachedAlerts, now - lastFetchTimestamp, forceRefresh)) {
     return cachedAlerts;
   }
 

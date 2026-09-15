@@ -216,8 +216,18 @@ class Connection {
 export interface Browser {
   /** A fresh page with Page/Runtime/Network/Performance already enabled. */
   newPage(): Promise<Session>;
+  /**
+   * Pull the plug on every service worker too. `Network.emulateNetworkConditions` on a
+   * page reaches only that page's own requests; a worker fetching on its behalf is a
+   * different target with a working connection, so an "offline" test that forgot it
+   * would be served fresh answers by the worker and pass for the wrong reason.
+   */
+  offline(on: boolean): Promise<void>;
   close(): void;
 }
+
+const OFFLINE = { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 };
+const ONLINE = { ...OFFLINE, offline: false };
 
 export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
@@ -272,7 +282,34 @@ export async function launch(executable: string, headless = true): Promise<Brows
   const conn = new Connection();
   await conn.open(version.webSocketDebuggerUrl);
 
+  // Every service worker the browser starts gets a session of its own, so `offline`
+  // can reach it. Pages are attached by hand in `newPage`, so the filter leaves them out.
+  const workers = new Set<string>();
+  let unplugged = false;
+  conn.on('Target.attachedToTarget', (p) => {
+    const info = p.targetInfo as { type: string };
+    if (info.type !== 'service_worker') return;
+    const sessionId = p.sessionId as string;
+    workers.add(sessionId);
+    if (unplugged) {
+      conn.send('Network.enable', {}, sessionId).then(() => conn.send('Network.emulateNetworkConditions', OFFLINE, sessionId));
+    }
+  });
+  conn.on('Target.detachedFromTarget', (p) => workers.delete(p.sessionId as string));
+  await conn.send(
+    'Target.setAutoAttach',
+    { autoAttach: true, waitForDebuggerOnStart: false, flatten: true, filter: [{ type: 'service_worker', exclude: false }] },
+    undefined,
+  );
+
   return {
+    async offline(on: boolean): Promise<void> {
+      unplugged = on;
+      for (const sessionId of workers) {
+        await conn.send('Network.enable', {}, sessionId);
+        await conn.send('Network.emulateNetworkConditions', on ? OFFLINE : ONLINE, sessionId);
+      }
+    },
     async newPage(): Promise<Session> {
       const { targetId } = (await conn.send('Target.createTarget', { url: 'about:blank' }, undefined)) as {
         targetId: string;

@@ -669,8 +669,8 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── cdp.ts                      un navegador dirixido por cable, para medir onde corre a app
 │   ├── buildDiagrams.ts            redebuxa os diagramas deste README
 │   ├── importFonts.ts              baixa a tipografía e escribe os @font-face
-│   ├── stress*.ts                  carga e disparates: parsers, motor, HTTP,
-│   │                               planificador e invariantes
+│   ├── stress*.ts                  carga e disparates: parsers, motor, HTTP, rede morta ou
+│   │                               lenta no navegador, planificador e invariantes
 │   ├── auditBrowser.ts             contraste, tamaños, obxectivos e consola, por pantalla e tema
 │   ├── fullAudit.ts                informe de calidade de datos
 │   └── test.ts                     comprobacións executables
@@ -1203,7 +1203,10 @@ o formulario queda fixo mentres o itinerario baixa ao lado. A barra inferior des
 **A aplicación non precisa servidor.** Horarios, chegadas, planificador, mapa e busca
 calcúlanse no navegador a partir dos datos empaquetados, así que todo son ficheiros
 estáticos. `.github/workflows/deploy-pages.yml` publica en Pages en cada `push` a `main`
-e cada hora, refrescando antes a copia dos avisos oficiais.
+e por calendario, refrescando antes a copia dos avisos oficiais. O calendario di cada hora;
+GitHub execútao cando pode, e na práctica foron entre cinco e sete veces ao día en setembro
+de 2026 —por iso a copia leva a súa data en pantalla e deixa de contar incidencias ás seis
+horas.
 
 Para activalo: **Settings → Pages → Source: GitHub Actions**. O workflow define
 `BASE_PATH` co nome do repositorio para que as rutas apunten a
@@ -1225,10 +1228,15 @@ slugs saen de `src/routes.ts`, que é a única lista: dela len o enrutador, o si
 build.
 
 O único que cambia sen servidor son os **avisos oficiais**: o navegador non pode ler
-buslugo.com por CORS, así que se usa a copia horaria que deixa a tarefa programada e
+buslugo.com por CORS, así que se usa a copia que deixa a tarefa programada e
 amósase **cando se tomou**. Todo o demais é idéntico, incluído o funcionamento offline.
 
-Se despregas o servidor Express (`pnpm start`), os avisos pásanse a consultar en vivo.
+Se despregas o servidor Express (`pnpm start`), os avisos pásanse a consultar en vivo:
+unha resposta de buslugo.com gárdase media hora; unha lectura fallida, só o minuto de
+espera entre peticións —na memoria do servizo e na caché de bordo do *worker*—, porque un
+tempo de espera de seis segundos é un feito sobre un momento, non sobre a media hora
+seguinte. E se o servidor tarda máis de dous segundos en dicir algo, a pantalla amosa
+mentres a copia gardada, coa súa data.
 
 ### Devolverlle a Pages as dúas cousas que lle faltan
 
@@ -1289,6 +1297,15 @@ Precisa **Node 20 ou superior** e **pnpm**, que é o xestor que declara `package
 o que usa a integración continua con `--frozen-lockfile`. `pnpm-lock.yaml` é o único
 ficheiro de bloqueo do repositorio; instalar con outro xestor daría unha árbore distinta
 da que se proba e se desprega.
+
+**Navegadores.** O chan é o que Vite 8 compila por defecto —*Baseline widely available*:
+Chrome e Edge 111, Firefox 114, Safari 16.4 (iOS 16.4, marzo de 2023)— e por baixo del a
+app non promete nada. As pezas que ese chan non cobre degrádanse en vez de romper: manter a
+pantalla acesa e `AbortSignal.timeout` pídense só se existen, a vibración é opcional, e sen
+WebGL2 o mapa cae ás teselas ráster. Está probado a fondo só en Chromium (as ferramentas de
+`tools/` diríxeno por CDP); Safari en iOS, que é a outra metade dos teléfonos de Lugo,
+próbase a man cunha lista que está en
+[`design/NOTAS-fontes-e-autosuficiencia.md`](design/NOTAS-fontes-e-autosuficiencia.md).
 
 ```bash
 corepack enable && corepack prepare --activate
@@ -1358,7 +1375,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-147 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+148 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1479,6 +1496,7 @@ pnpm lint
 pnpm build && PORT=3002 pnpm start   # noutra terminal
 pnpm run measure:browser             # start | map | typing | session
 pnpm run audit:browser               # light | dark
+pnpm run stress:network              # a API morta, con erro, lenta; e sen rede
 ```
 
 O que `pnpm test` non pode ver: un Chromium real, dirixido por `tools/cdp.ts`, acelerado
@@ -1491,8 +1509,18 @@ textos por baixo de 12 px, os obxectivos por baixo de 44 px, e o que a consola r
 en cada carga fresca; e despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta
 enteira ao menú sen saír del (10 controis de 10 visitados, para que a comprobación non
 poida aprobar por non moverse), e unha viaxe planificada deixa o foco na resposta. Os
-checks de `test.ts` sobre iso len o código; estes dous len o foco. Ningún dos dous é unha
-porta de CI: os orzamentos son relativos á máquina. `.github/workflows/measure.yml` execútaos os luns e garda a saída como artefacto,
+checks de `test.ts` sobre iso len o código; estes dous len o foco. `stress:network` xoga
+o outro lado de `stress:http`: non o servidor con carga, senón a pantalla cando a rede é
+o problema, que nunha parada é o normal. Catro formas, coa pila de rede do propio
+navegador: a API non contesta nunca, contesta 500, contesta seis segundos tarde, e non hai
+rede ningunha nunha segunda visita. O listón: o taboleiro nunca espera pola API (medido:
+170–250 ms en todos os casos), a pantalla de avisos nunca queda nunha lista baleira —que se
+le como «non hai incidencias»— máis dos dous segundos que o *hook* concede antes de amosar
+a copia gardada coa súa data (medido: 2.100 ms coa API colgada, 130 con erro; antes
+agardaba os 30 s do prazo), unha resposta tardía substitúe esa copia (a 4.100 ms), e sen
+rede o *service worker* devolve a última resposta que viu (55 ms) e o taboleiro sae da
+caché (130–145 ms). Ningún dos tres é unha porta de CI: os orzamentos son relativos á
+máquina. `.github/workflows/measure.yml` execútaos os luns e garda a saída como artefacto,
 para que unha regresión coma a do mapa —catro veces o orzamento durante días— non dependa
 de que alguén se lembre.
 

@@ -1294,3 +1294,56 @@ controis do mapa a un compoñente— **non se fai en frío**: sería un compoñe
 props, menos liñas no ficheiro e a mesma complexidade; cando se abra `TransitMap` para
 outra cousa, o que paga é sacar a lista de liñas (`pickedLineIds`, `linesExpanded`) que
 si é unha peza soa.
+
+## Rolda 16: a rede como problema — 15 de setembro de 2026
+
+As probas de esforzo que quedaban da lista de `NOTAS-fontes-e-autosuficiencia.md`, e o
+chan de navegadores escrito.
+
+**O que xa estaba feito e ninguén marcara.** O QR chamado unha e outra vez (`stressHttp`:
+50 peticións á vez sobre un poste, unha soa saída a `info.urbanoslugo.com` grazas ao
+*in-flight* e á caché de 20 s; o limitador a 120 por minuto), as consultas enormes na
+busca, a sesión longa e o mapa con todas as capas (`measure:browser`), o planificador
+contra pares afastados (`stressPlanner`). Quedaban os avisos contra un servidor colgado ou
+caído e o comportamento con rede mala. Para iso, `stress:network`: a app construída, un
+Chromium dirixido por CDP, e a API interceptada na pila de rede do navegador.
+
+**Dous defectos, un por lado.** No servidor, `syncOfficialAlerts` gardaba unha lectura
+fallida de buslugo.com exactamente igual ca unha resposta: media hora na memoria do
+servizo e media hora na caché de bordo do *worker*. Un tempo de espera de seis segundos
+—un tropezo— convertíase en «non se puido ler a páxina do operador» para todo o mundo
+durante trinta minutos, cos avisos que substituíra fóra da caché. Agora unha falla dura o
+minuto de espera entre peticións (`cacheHolds`; o *worker* pon 60 s de bordo a
+`unreachable`), e unha resposta segue durando a media hora. Check con reloxo inxectado:
+falla → aínda falla aos 30 s → volve preguntar aos 61 → e unha resposta de hai 61 s non se
+tira por unha falla. No navegador, `useServiceAlerts` deixaba a pantalla de avisos nunha
+lista baleira mentres a API non contestase: ata os 30 s do prazo, e unha lista baleira
+lese como «non hai incidencias». Aos dous segundos sen palabra amosa a copia gardada coa
+súa data, e a resposta en vivo substitúea cando chegue.
+
+**Medido (`stress:network`, este portátil, sen aceleración):**
+
+| Escenario | Taboleiro con horas | Avisos con resposta datada | Despois |
+| :--- | ---: | ---: | :--- |
+| A API non contesta nunca | 225 ms | 2.128 ms (copia gardada) | — |
+| A API contesta 500 | 234 ms | 131 ms (copia gardada) | — |
+| A API contesta aos 6 s | 171 ms | 2.102 ms (copia gardada) | a resposta substitúea aos 4.066 ms |
+| Sen rede, segunda visita | 144 ms (caché do SW) | 55 ms (última resposta do SW) | — |
+
+Cero excepcións sen capturar en todos. Dúas cousas que a ferramenta tivo que aprender:
+`Network.emulateNetworkConditions` só corta a páxina, non o *service worker* que busca no
+seu nome —`cdp.ts` engánchase agora a cada *worker* e córtao tamén, e a proba comproba
+primeiro que un `fetch` de verdade falla—; e sen rede a pantalla de avisos non amosa a
+copia gardada senón a última resposta que o *worker* viu (NetworkFirst con 5 s), que é
+mellor e igual de datada, así que o listón é «unha resposta con data», non «a copia».
+
+**O chan de navegadores.** O de Vite 8 por defecto (`ESBUILD_BASELINE_WIDELY_AVAILABLE_TARGET`):
+Chrome e Edge 111, Firefox 114, Safari e iOS 16.4. Escrito no README. Do que queda por
+riba, o código xa se protexe (`AbortSignal.timeout?.`, *wake lock* só se existe,
+`vibrate?.`, ráster sen WebGL2). Non se probou en Safari: non hai un aquí. A lista de dez
+puntos para un iPhone real está nas NOTAS.
+
+**Tamén.** O calendario de `deploy-pages.yml` di cada hora; GitHub executouno entre cinco
+e sete veces ao día en setembro. O README dicía «copia horaria» en dous sitios e xa non; a
+descrición da páxina de avisos dicía «actualizados cada hora» e agora di «coa hora da
+última lectura». `stress:network` corre os luns con `measure.yml`.

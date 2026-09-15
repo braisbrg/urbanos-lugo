@@ -1875,6 +1875,31 @@ await okAsync('an unreachable operator page is never reported as "all normal"', 
   }
 });
 
+await okAsync('a failed read of the operator is not held for half an hour', async () => {
+  // A failure was cached exactly like an answer: one six-second timeout on buslugo.com
+  // and every reader was told for the next thirty minutes that the page could not be
+  // read, with the notices it had replaced gone from the cache. A failure now lasts the
+  // outbound cooldown -- a minute -- and the next caller asks again; an answer still
+  // lasts the half hour. The clock is passed in so this does not have to wait a minute.
+  const realFetch = globalThis.fetch;
+  const down = (() => Promise.reject(new Error('offline'))) as typeof fetch;
+  const up = (async () => new Response('<html><body></body></html>', { status: 200 })) as typeof fetch;
+  // An hour past whatever the previous check left in the module's cache, so it is expired
+  // whichever way it went.
+  const t0 = Date.now() + 60 * 60_000;
+  try {
+    globalThis.fetch = down;
+    assert((await syncOfficialAlerts(false, t0)).status === 'unreachable', 'the operator was down and the sync did not say so');
+    globalThis.fetch = up;
+    assert((await syncOfficialAlerts(false, t0 + 30_000)).status === 'unreachable', 'a failure was retried inside the outbound cooldown');
+    assert((await syncOfficialAlerts(false, t0 + 61_000)).status !== 'unreachable', 'a minute-old failure was still being served');
+    globalThis.fetch = down;
+    assert((await syncOfficialAlerts(false, t0 + 122_000)).status !== 'unreachable', 'a minute-old answer was thrown away for a failure');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 ok('no view renders Galician or Spanish text of its own', () => {
   // The chip that says HORARIO OFICIAL sat in the markup as a literal rather than
   // coming from the dictionary, so an English reader was told the time came from the

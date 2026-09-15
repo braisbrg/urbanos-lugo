@@ -136,7 +136,7 @@ const TAB_HEAD: Record<Tab, PageHead> = {
   info: {
     title: 'Avisos do bus urbano de Lugo | Urbanos de Lugo',
     description:
-      'Non oficial. Avisos do servizo do bus urbano de Lugo tal como os publica o operador: desvíos, cortes e cambios de horario, actualizados cada hora.',
+      'Non oficial. Avisos do servizo do bus urbano de Lugo tal como os publica o operador: desvíos, cortes e cambios de horario, coa hora da última lectura.',
   },
   fares: {
     title: 'Canto custa o bus urbano de Lugo: tarifas | Urbanos de Lugo',

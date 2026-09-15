@@ -33,6 +33,7 @@
     "measure:engine": "tsx tools/stressEngine.ts",
     "measure:parsers": "tsx tools/stressParsers.ts",
     "stress:http": "tsx tools/stressHttp.ts",
+    "stress:network": "tsx tools/stressNetwork.ts",
     "compare:operator": "tsx tools/compareOperatorTimes.ts",
     "compare:walk": "tsx tools/compareWalkRouter.ts",
     "data:amenities": "tsx tools/importStopAmenities.ts",
