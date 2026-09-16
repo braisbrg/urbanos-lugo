@@ -46,7 +46,12 @@
          at a bus stop. -->
   </head>
   <body class="bg-bg text-ink antialiased selection:bg-accent selection:text-on-accent">
-    <div id="root"></div>
+    <!-- The page's heading before any script runs. React replaces everything inside #root
+         on mount with its own sr-only <h1> per screen, so nothing doubles; but a crawler
+         that does not run JavaScript -- Bing's site scan reported "H1 tag missing" -- sees
+         the document as it arrives, and each per-tab copy carries its own title here.
+         Hidden the same way the app hides it, so it takes no space and never flashes. -->
+    <div id="root"><h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Urbanos de Lugo | Bus urbano: liñas, horarios e paradas</h1></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

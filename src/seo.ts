@@ -161,6 +161,8 @@ export function pageHtml(html: string, route: string, site: string | null): stri
     .replace(/<title>[^<]*<\/title>/, `<title>${head.title}</title>`)
     .replace(/(<meta name="description" content=")[^"]*/, `$1${head.description}`)
     .replace(/(<meta property="og:title" content=")[^"]*/, `$1${head.title}`)
-    .replace(/(<meta property="og:description" content=")[^"]*/, `$1${head.description}`);
+    .replace(/(<meta property="og:description" content=")[^"]*/, `$1${head.description}`)
+    // The static <h1> inside #root, for crawlers that do not run the app.
+    .replace(/(<h1[^>]*>)[^<]*(<\/h1>)/, `$1${head.title}$2`);
   return site ? out.replace(`<link rel="canonical" href="${site}" />`, `<link rel="canonical" href="${routeUrl(site, route)}" />`) : out;
 }

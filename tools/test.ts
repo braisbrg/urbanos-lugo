@@ -2782,6 +2782,10 @@ ok('every tab page has its own title, description and canonical', () => {
   // The app's own title for the home screen, in Galician, is the same line: a tab strip
   // should read the same before and after the bundle arrives.
   assert(translations('gl').map.documentTitle === ROOT_HEAD.title, 'gl documentTitle drifted from ROOT_HEAD.title');
+  // A crawler that does not run the app sees the document as it arrives, and Bing's site
+  // scan reported it had no <h1>. There is one inside #root before React mounts, hidden
+  // the way the app hides its own, and it says the same thing the title says.
+  assert(new RegExp(`<div id="root"><h1[^>]*>${ROOT_HEAD.title.replace(/[|]/g, '\|')}</h1></div>`).test(html), 'index.html has no static <h1> inside #root, or it does not match the title');
   // Search Console re-checks its verification tag now and then; a head rewrite that
   // dropped it would end the verification without anything on screen changing.
   assert(/<meta name="google-site-verification" content="[\w-]{20,}"/.test(html), 'index.html lost the Search Console verification tag');
@@ -2805,6 +2809,7 @@ ok('every tab page has its own title, description and canonical', () => {
     assert(page.includes(`<title>${head.title}</title>`), `the ${route || 'root'} page did not get its title`);
     assert(page.includes(`<meta name="description" content="${head.description}"`), `the ${route || 'root'} page did not get its description`);
     assert(page.includes(`<meta property="og:title" content="${head.title}"`), `the ${route || 'root'} page did not get its og:title`);
+    assert(page.includes(`>${head.title}</h1>`), `the ${route || 'root'} page did not get its own <h1>`);
     assert(page.includes(`<link rel="canonical" href="${routeUrl(site, route)}" />`), `the ${route || 'root'} page canonical is not its own address`);
     assert((page.match(/rel="canonical"/g) ?? []).length === 1, `the ${route || 'root'} page has more than one canonical`);
   }
