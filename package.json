@@ -51,7 +51,7 @@
     "express": "^5.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.45.0",
-    "maplibre-gl": "^6.9.0",
+    "maplibre-gl": "^6.9.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
