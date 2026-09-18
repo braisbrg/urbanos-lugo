@@ -220,7 +220,12 @@ ferramenta (bloquean a descarga): o que se di deles vén dos títulos da SERP.
    *Aparcado o 15 de setembro de 2026: un bloque que React substitúe ao montar é un
    desprazamento de toda a pantalla, e o CLS 0 da táboa de medidas deixaría de selo. Sen
    prerender real (o mesmo React a hidratar o mesmo marcado) non compensa; vai co punto 7,
-   que ten o mesmo problema e a mesma solución.*
+   que ten o mesmo problema e a mesma solución. O que si se fixo, o 16 de setembro: un
+   `<h1>` estático dentro de `#root` en cada copia, co título da súa páxina e oculto como
+   o da app, porque o escaneo de Bing Webmaster avisaba «H1 tag missing» —non executa
+   JavaScript e vía o documento tal como chega—. React substitúeo ao montar, ocupa un
+   píxel, así que o CLS non se move; `test.ts` compara o da portada co título. Bing borra o
+   aviso no seu seguinte escaneo, ou antes se o dono lanza un desde Site Scan.*
 6. **Descrición e temas do repositorio**, hoxe baleiros. O repositorio si está indexado e
    é a única porta que hai.
    *Feito antes do 15 de setembro de 2026: a descrición empeza por «Non oficial.» e os
@@ -261,7 +266,8 @@ présa por competir con ninguén. O dominio propio queda descartado polo momento
 - **As páxinas estáticas só levan horas do cadro publicado** —`HORARIO OFICIAL`—; as
   estimacións quedan na app, coa súa etiqueta.
 - **As coordenadas das paradas son as do operador** e non se tocan por facer unha páxina
-  bonita.
+  bonita. (A única excepción, unha parada tomada de OSM porque o pin do operador
+  duplicaba a anterior, está en `DATA.md` e non ten que ver co SEO.)
 
 ---
 

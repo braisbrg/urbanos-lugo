@@ -2784,8 +2784,11 @@ ok('every tab page has its own title, description and canonical', () => {
   assert(translations('gl').map.documentTitle === ROOT_HEAD.title, 'gl documentTitle drifted from ROOT_HEAD.title');
   // A crawler that does not run the app sees the document as it arrives, and Bing's site
   // scan reported it had no <h1>. There is one inside #root before React mounts, hidden
-  // the way the app hides its own, and it says the same thing the title says.
-  assert(new RegExp(`<div id="root"><h1[^>]*>${ROOT_HEAD.title.replace(/[|]/g, '\|')}</h1></div>`).test(html), 'index.html has no static <h1> inside #root, or it does not match the title');
+  // the way the app hides its own, and it says the same thing the title says. Extracted and
+  // compared, not built into a pattern: the title has a "|" in it, and a first version
+  // that spliced it into a RegExp was an alternation that passed on half the heading.
+  const staticH1 = html.match(/<div id="root"><h1[^>]*>([^<]*)<\/h1><\/div>/)?.[1];
+  assert(staticH1 === ROOT_HEAD.title, `the static <h1> inside #root says ${JSON.stringify(staticH1)}, not ROOT_HEAD.title`);
   // Search Console re-checks its verification tag now and then; a head rewrite that
   // dropped it would end the verification without anything on screen changing.
   assert(/<meta name="google-site-verification" content="[\w-]{20,}"/.test(html), 'index.html lost the Search Console verification tag');

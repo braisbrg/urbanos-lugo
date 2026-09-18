@@ -256,6 +256,18 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    —43 m, outra beirarrúa da 1.2/1.4 de volta— e `s1043` Barbaín (dir. centro) —15 m, outra
    beirarrúa da 11 a Bóveda de volta—. OSM tamén se equivoca; sen velas, non se move
    ningunha.
+6. **A folla de controis do mapa**, a outra metade da débeda 7 (rolda 15 do rexistro). Non
+   se fai en frío: sería un compoñente de vinte props coa mesma complexidade. Cando se abra
+   `TransitMap` por outro motivo, o que paga é sacar só a lista de liñas (`pickedLineIds`,
+   `linesExpanded`), que si é unha peza soa.
+7. **«WebGL context lost»**, visto unha vez na consola de produción o 16 de setembro de
+   2026, entre o ruído das extensións do navegador, sen que se anotase que pasou co mapa.
+   Sen investigar. O que hai que comprobar, forzándoo (`WEBGL_lose_context` desde a
+   consola): que o mapa volve pintar cando o contexto se restaura, e que se non se
+   restaura cae ás teselas ráster en vez de quedar en branco.
+8. **Volver mirar os buscadores** nunhas semanas, cousa do dono: en Search Console, que
+   «Páxinas» amose as sete; en Bing Webmaster, que o escaneo do sitio xa non avise de
+   «H1 tag missing» (arranxado o 16 de setembro cun `<h1>` estático en cada copia).
 
 ### Lista para o iPhone
 
@@ -286,9 +298,13 @@ Un fallo en calquera punto é un erro de verdade e vai ao rexistro con modelo e 
 
 ## Feito dende que se escribiu isto
 
-- **O RSS do Concello** lese en cada sincronización, filtrado por sucesos e non por temas
-  —«tráfico» é o nome dun organismo tanto como unha condición da rúa— e as notas de prensa
-  amósanse á parte dos avisos do servizo, sen contar para o distintivo.
+- **O RSS do Concello** lese en cada sincronización e as notas de prensa amósanse á parte
+  dos avisos do servizo, sen contar para o distintivo. Dende o 15 de setembro de 2026, só a
+  etiqueta *Tráfico*, só a última semana, e só os titulares que anuncian un corte, un
+  desvío ou unha restrición: auditados sesenta días de tres etiquetas, o que entraba era un
+  récord de viaxeiros, unha declaración política e os cortes dunha carreira que seguirían
+  en pantalla ata novembro. «Tráfico» a secas non vale como palabra —é o nome dun
+  organismo tanto como unha condición da rúa—; as palabras do suceso si.
 - **Os minutos de `info.urbanoslugo.com`** amósanse só a quen chega escaneando o QR dese
   poste. É a páxina á que apunta a pegatina; en calquera outro sitio serían dúas listas de
   horas que se contradín sen que ninguén poida dicir cal manda.

@@ -1381,3 +1381,50 @@ dato é de OSM e leva a ODbL.
 outra parada ten o poste homónimo de OSM lonxe (275 das 417 teñen un co mesmo nome), e
 que ningunha parada está a máis de 120 m da ruta debuxada agás «Ramón Ferreiro 26» na
 5.1 (219 m), que é un extremo de liña e non un pin duplicado.
+
+## Rolda 18: o repaso antes da 1.1.2 — 15 e 16 de setembro de 2026
+
+Dous erros vistos usando o mapa, dous avisos de CodeQL, un fallo de produción, e o README
+lido enteiro antes de etiquetar.
+
+**O punto azul que non seguía o dedo.** O mapa destacaba a parada de cuxo taboleiro viña o
+lector, nunca a que tocaba: tocando arredor quedaba un punto grande sobre unha parada
+doutra pantalla, e ao saír do taboleiro seguía marcada. Agora destácase a tocada mentres a
+súa folla está aberta, se non a escollida, e saír do taboleiro desescóllea tamén para o
+mapa. De paso, escoller xa non reconstrúe os 417 marcadores: a capa le o identificador por
+unha referencia e o efecto de selección só restila; escollida a un zoom que adelgaza os
+puntos, reconstrúe unha vez para ter punto que restilar.
+
+**«Liñas por aquí», unha fila por liña.** Onde unha liña vai e volve pola mesma rúa, un
+clic daba nas dúas trazas e sobre a Avda. das Américas saían dez filas para cinco liñas,
+cada par facendo o mesmo. Agrupadas por liña; a que pasa nos dous sentidos dío.
+
+**CodeQL, dous avisos na raíz.** `stressBrowser.ts` metía unha etiqueta nunha expresión
+para `Runtime.evaluate` con `JSON.stringify`: código construído con datos, e unha etiqueta
+con `</script>` ou U+2028 rompería o literal. A sesión CDP ten agora `call(fn, ...args)`
+sobre `Runtime.callFunctionOn`, a canle do protocolo para argumentos, e as ferramentas
+úsana onde antes interpolaban; a auditoría escolle un de dous guións fixos para o tema. A
+expresión de `<script>` da suite leva a marca `i` que pedía o outro aviso. Pechados no
+escaneo de `main` do 16. As seis pólas de Dependabot con todas as PR pechadas, borradas.
+
+**Produción: «A vista non se puido debuxar».** Na consola do dono, tres veces nunha
+sesión: `error loading dynamically imported module …/TransitMap-….js`. O sitio
+reconstrúese varias veces ao día pola copia dos avisos, cada build renomea os anacos e o
+*service worker* solta os nomes vellos; unha páxina aberta antes dun despregue que pide o
+mapa despois busca un ficheiro que xa non existe. Con `vite:preloadError` a páxina recarga
+unha vez por enderezo (`sessionStorage`, en `PRIVACY.md`), así que unha recarga que atope
+o mesmo fallo amósao en vez de dar voltas. Reproducido de punta a punta en 3002: páxina
+cargada, build nova debaixo, pestana Ruta → tipo de navegación `reload` e o planificador
+pintado. Na mesma consola había un «WebGL context lost» que non se investigou: anotado
+nas NOTAS, punto 7.
+
+**README enteiro, antes da etiqueta.** Cifras volvidas medir (tamaños, primeira carga,
+renderizador, *worker*, precaché, dependencias), dúas afirmacións falsas quitadas —a
+política de seguridade dicía que non había *worker*; o limitador só existe en Express—, o
+historial recortado, a idea da Raspberry ao final. Despois, `v1.1.2`. E o 16, á parte, o
+`<h1>` estático por copia que Bing botaba en falta (auditoría SEO, punto 5).
+
+**O 18, o check do `<h1>` tiña un erro.** CodeQL avisou de que `'\|'` nunha cadena é `'|'`:
+o título metido nunha `RegExp` era unha alternancia, e o check pasaba con media
+cabeceira. Agora extrae o texto do `<h1>` e compárao co título; con «Urbanos de Lugo » a
+secas falla, comprobado.

@@ -18,7 +18,7 @@ Tailwind 4 + MapLibre, TypeScript throughout, pnpm, Node >= 22.
 | `data/` | Snapshots the generator reads. Outside `src/` because nothing in the app imports them. |
 | `server.ts` | Express host for local dev and self-hosting. |
 | `worker/index.ts` | The same two endpoints on Deno Deploy, for the static deployment. |
-| `docs/`, `design/`, `DATA.md` | Diagrams, design artboards, and where every dataset comes from and under what terms. |
+| `docs/`, `design/`, `DATA.md` | Diagrams, design artboards, and where every dataset comes from and under what terms. What is still to do is one list: `design/NOTAS-fontes-e-autosuficiencia.md` → «Pendente»; `design/REXISTRO-probas.md` is the log of every round of checks, `design/DECIDIDO.md` the decisions already taken. |
 
 <important if="you need to run, build, test or regenerate anything">
 
