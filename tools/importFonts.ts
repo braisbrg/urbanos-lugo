@@ -1,41 +1,20 @@
 /**
- * Fetch the typeface this app ships, and write the CSS that declares it.
- *
- *   pnpm fonts:import
- *
- * The faces used to come from Google's CDN through a <link> in index.html. Serving them
- * from here is not about speed — browsers partitioned their HTTP cache years ago, so a
- * visitor never had the copy some other site fetched, and either way the browser only
- * downloads the faces a screen actually uses. It is so that opening a bus timetable does
- * not tell Google you did, which is the only third party in this app that was giving us
- * neither the map nor the data. It also puts the typeface on the very first offline load
- * instead of falling back to the system sans at the shelter, which is the one place the
- * legibility this face was designed for actually matters.
- *
- * Only the `latin` subset. Galician and Spanish live entirely inside it — á é í ó ú ñ ü ç
- * — and `latin-ext` is another 117 KB for characters no stop in Lugo has. A reader who
- * somehow needs one gets the system fallback for that glyph, which is what everybody gets
- * for the first moment anyway.
- *
- * Re-run it when a weight is added or the upstream font is revised, and commit what it
- * writes: src/fonts/*.woff2 and src/fonts.css.
+ * Fetch the typeface this app ships and write the CSS that declares it: `pnpm fonts:import`.
+ * Served from here rather than Google's CDN so that opening a timetable tells nobody (PRIVACY.md).
+ * Latin subset only; Galician and Spanish fit inside it. Commit src/fonts/*.woff2 and src/fonts.css.
  */
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { at } from './lib';
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), '../src/fonts');
+const OUT = at('src', 'fonts');
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
+const get = (url: string) => fetch(url, { headers: { 'User-Agent': UA } });
 
-/**
- * 400 to 700, and no further.
- *
- * Google serves nothing heavier for this family; asking for 900 as well returns the same
- * eight files. Which answers a question worth writing down: the app uses `font-black` in
- * 21 places, and it has always rendered as the bold face because there is no black one.
- */
+// Google serves nothing heavier than 700 for these families: the app's `font-black` renders
+// as the bold face because there is no black one.
 const FAMILIES: [string, string, number[]][] = [
   ['Atkinson Hyperlegible Next', 'next', [400, 500, 600, 700]],
   ['Atkinson Hyperlegible Mono', 'mono', [400, 500, 600, 700]],
@@ -54,40 +33,31 @@ const HEADER = `/* Atkinson Hyperlegible Next and Mono, Braille Institute of Ame
 mkdirSync(OUT, { recursive: true });
 
 const faces: { family: string; weight: string; file: string; range: string }[] = [];
-/**
- * One file per distinct set of bytes.
- *
- * These are variable fonts: Google declares a face per weight, and all four point at the
- * same file, which the browser instances at whatever the face asks for. Downloading them
- * as four files put four identical copies of 33 KB in the repository — 202 KB where 51
- * does the same job. Keyed by content, so if the family ever ships real static weights
- * this writes them all without being changed.
- */
+// One file per distinct set of bytes: these are variable fonts, so Google's four faces point
+// at one file. Keyed by content, so real static weights would still all be written.
 const written = new Map<string, string>();
 let total = 0;
 
 for (const [family, slug, weights] of FAMILIES) {
   const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@${weights.join(';')}&display=swap`;
-  const css = await fetch(url, { headers: { 'User-Agent': UA } }).then((r) => r.text());
+  const css = await get(url).then((r) => r.text());
 
   for (const block of css.matchAll(/@font-face \{([\s\S]*?)\}/g)) {
     const body = block[1];
-    // The latin block, identified by the range itself rather than by a comment Google
-    // is free to stop writing.
+    // The latin block, identified by the range itself rather than by a comment Google may drop.
     if (!/U\+0000-00FF/.test(body)) continue;
     const weight = body.match(/font-weight:\s*(\d+)/)?.[1];
     const src = body.match(/url\((https:\/\/[^)]+)\)/)?.[1];
     const range = body.match(/unicode-range:\s*([^;]+);/)?.[1]?.trim();
     if (!weight || !src || !range) throw new Error(`could not read a face of ${family}`);
 
-    const downloaded = await fetch(src, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer());
+    const downloaded = await get(src).then((r) => r.arrayBuffer());
     const bytes = new Uint8Array(downloaded);
     const digest = createHash('sha256').update(bytes).digest('hex').slice(0, 8);
 
     let file = written.get(digest);
     if (!file) {
-      // Named by content, not by weight: four faces sharing one file must not be called
-      // `next-700.woff2` because 700 happened to be written last.
+      // Named by content, not by weight: four faces sharing one file are not `next-700`.
       file = `${slug}-${digest}.woff2`;
       writeFileSync(join(OUT, file), bytes);
       written.set(digest, file);
@@ -111,6 +81,6 @@ const declarations = faces.map(
 }`,
 );
 
-writeFileSync(join(OUT, '..', 'fonts.css'), `${HEADER}\n${declarations.join('\n')}\n`);
+writeFileSync(at('src', 'fonts.css'), `${HEADER}\n${declarations.join('\n')}\n`);
 console.log(`\n${faces.length} faces over ${written.size} files, ${(total / 1024).toFixed(0)} KB`);
 console.log('wrote src/fonts.css — remember OFL.txt travels with the files');

@@ -561,7 +561,9 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 ├── src/
 │   ├── components/
 │   │   ├── Map/
-│   │   │   ├── TransitMap.tsx      contedor do mapa e panel lateral
+│   │   │   ├── TransitMap.tsx      o mapa da rede: estado, capas e os chips sobre el
+│   │   │   ├── MapControls.tsx     o panel lateral / a folla de controis, un só marcado
+│   │   │   ├── useFollowMe.ts      seguir o móbil no mapa: o punto, o círculo, o reloxo
 │   │   │   ├── RouteLayer.tsx      polilinas de percorrido
 │   │   │   ├── RouteMap.tsx        mapa dun traxecto planificado
 │   │   │   ├── StopLayer.tsx       marcadores de parada
@@ -572,11 +574,18 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   │   ├── StopNames.ts        os nomes das paradas, nun canvas propio
 │   │   │   ├── basemap.ts          o mapa de fondo, debaixo de todo o demais
 │   │   │   ├── palette.ts          as cores do mapa, nun sitio, para as dúas paletas
-│   │   │   └── escapeHtml.ts       escapa o que vai a un popup ou tooltip de Leaflet
+│   │   │   └── popupHtml.ts        os anacos de HTML dos popups de Leaflet, escapados
+│   │   ├── planner/
+│   │   │   ├── PlaceField.tsx      o campo de orixe ou destino, coas suxestións
+│   │   │   ├── TripOptions.tsx     as alternativas, en filas comparables
+│   │   │   ├── Itinerary.tsx       paso a paso
+│   │   │   └── walkCorrection.ts   a aritmética da camiñada medida fronte á estimada
 │   │   ├── ui/
 │   │   │   ├── LineBadge.tsx       a insignia dunha liña, a mesma en todas partes
 │   │   │   ├── Provenance.tsx      de onde vén unha hora: sólido publicado, descontinuo derivado
-│   │   │   └── SectionLabel.tsx    as versaletas sobre un bloque
+│   │   │   ├── SectionLabel.tsx    as versaletas sobre un bloque
+│   │   │   ├── controls.tsx        botón de icona, aviso e control segmentado
+│   │   │   └── Settings.tsx        tema e idioma, os mesmos no menú e no rail
 │   │   ├── TopBar.tsx              buscador único + escáner QR
 │   │   ├── BottomNav.tsx           navegación en móbil
 │   │   ├── SideNav.tsx             rail de navegación en escritorio
@@ -584,7 +593,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── StopHome.tsx            gardadas, vistas hai pouco e preto de min
 │   │   ├── StopArrivalsView.tsx    taboleiro de chegadas
 │   │   ├── LinesView.tsx           liñas e horarios
-│   │   ├── RoutePlannerView.tsx    planificador
+│   │   ├── RoutePlannerView.tsx    planificador: a pregunta e a resposta; as partes en planner/
 │   │   ├── TripCompanionView.tsx   «vou nesta»: a pantalla para a viaxe
 │   │   ├── AlertsView.tsx          avisos do servizo e cortes anunciados polo Concello
 │   │   ├── FaresView.tsx           tarifas, normas a bordo e contacto
@@ -608,19 +617,17 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── readCapped.ts           teito de 512 KB en cada lectura de fóra
 │   │   ├── stopAlarm.ts            alarma de proximidade á parada
 │   │   ├── walkingPath.ts          onde camiña un plan; a ruta faina walkRouter
-│   │   ├── apiUrl.ts               onde pedir `/api/…`: co servidor ao lado ou co worker
-│   │   └── operatorTimesRoute.ts   a resposta aos minutos do operador, unha para servidor e worker
+│   │   └── apiUrl.ts               onde pedir `/api/…`: co servidor ao lado ou co worker
 │   ├── hooks/
 │   │   ├── useTabRoute.ts          unha ruta por pestana, para o xesto de atrás
 │   │   ├── useServiceAlerts.ts     avisos, ou a instantánea coa súa data
 │   │   ├── useOperatorTimes.ts     os minutos do operador, se hai servidor
 │   │   ├── useTheme.ts             clara / escura / automática
-│   │   ├── useRecentStops.ts       últimas paradas abertas (só ids)
-│   │   ├── useRecentRoutes.ts      últimas rutas planificadas, tal como se escribiron
+│   │   ├── useStoredList.ts        gardadas, últimas paradas e últimas rutas: unha lista no dispositivo
 │   │   ├── useTripCompanion.ts     a viaxe en curso, por riba das pestanas
 │   │   ├── useDialog.ts            Escape, foco atrapado e foco devolto
 │   │   ├── useIsDark.ts            se a paleta escura está activa agora mesmo
-│   │   └── useMapChrome.ts         nome e controis do mapa no idioma da IU, para o lector de pantalla
+│   │   └── useLeafletMap.ts        un mapa de Leaflet: base, tema, redimensión e nome accesible
 │   ├── utils/
 │   │   ├── schedule.ts             calendario e cadro horario
 │   │   ├── arrivals.ts             próximos pasos por parada e seguinte saída dunha liña
@@ -634,11 +641,12 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── snapshotAge.ts          cando unha copia deixa de falar do presente
 │   │   ├── searchUtils.ts          buscador
 │   │   ├── clock.ts                se o reloxo do dispositivo coincide co de Lugo
-│   │   └── html.ts                 quitar as etiquetas ao HTML alleo
+│   │   ├── html.ts                 quitar as etiquetas ao HTML alleo, e escapalo para Leaflet
+│   │   └── storage.ts              localStorage e sessionStorage, protexidos, nun sitio
 │   ├── fonts/                      as dúas caras variables + OFL.txt
 │   ├── index.css                   os tokens de cor e tipo, e o pouco CSS que Tailwind non escribe
 │   ├── fonts.css                   XERADO por tools/importFonts.ts
-│   ├── i18n/                       gl.ts · es.ts · en.ts
+│   ├── i18n/                       gl.ts · es.ts · en.ts; index.ts dá o idioma por contexto (useT)
 │   ├── security/
 │   │   ├── csp.ts                  unha política, para a meta e para a cabeceira
 │   │   ├── rateLimit.ts            teito de peticións por enderezo, no servidor Express
@@ -684,6 +692,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │                               lenta no navegador, planificador e invariantes
 │   ├── auditBrowser.ts             contraste, tamaños, obxectivos e consola, por pantalla e tema
 │   ├── fullAudit.ts                informe de calidade de datos
+│   ├── lib.ts                      o que cada ferramenta levaba repetido: raíz, JSON, estatísticas
 │   └── test.ts                     comprobacións executables
 ├── .github/workflows/
 │   ├── deploy-pages.yml            publica en Pages: push, por calendario e a man
@@ -853,7 +862,7 @@ servizo que cruzan a medianoite.
 
 ## Planificador
 
-`planSmartTrip` en `src/utils/planner.ts`:
+`planTrips` en `src/utils/planner.ts` (a primeira opción é a resposta):
 
 1. **Resolución** — texto libre, código de parada, punto de interese ou coordenadas GPS.
 2. **Candidatas de embarque** — ata 10 paradas servidas a menos de 2 km de cada extremo,

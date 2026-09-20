@@ -1,22 +1,12 @@
 /**
- * Redraw the README diagrams from their JSON sources.
+ * Redraw the README diagrams from their JSON sources: `pnpm diagrams`.
  *
- *   pnpm diagrams
- *
- * The three diagrams in the README are pictures of a repository that keeps moving, so the
- * thing that has to stay true is the *source*: `docs/diagrams/*.json` is what gets edited
- * and committed, and the `.html` viewer and the two PNGs beside it are output. Archify
- * renders deterministically -- same JSON in, same bytes out -- which is why the HTML is
- * not tracked and this script exists instead.
- *
- * `deliver` is the part that must pass: it validates the source, renders it and refuses to
- * write anything that fails a layout or composition check. `visual-check` is the part that
- * needs a browser, and it is what produces the light and dark PNGs the README embeds. If
- * no Chrome or Chromium turns up, the HTML is still rewritten and the script says plainly
- * that the images are now older than the sources -- rather than leaving that to be found
- * in a diff months later.
- *
- * Point ARCHIFY_CHROME at a binary to override the search.
+ * `docs/diagrams/*.json` is what gets edited and committed; the `.html` viewer and the two
+ * PNGs beside it are output, and archify renders them deterministically. `deliver`
+ * validates, renders and refuses to write anything that fails a layout or composition
+ * check; `visual-check` needs a browser and produces the light and dark PNGs the README
+ * embeds. Without a Chrome the HTML is still rewritten and the script says plainly that
+ * the images are now older than the sources. ARCHIFY_CHROME overrides the search.
  */
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync } from 'node:fs';
@@ -59,9 +49,8 @@ function findChrome(): string | null {
 }
 
 // The renderer is an assistant skill under .claude/, which this repository does not track
-// -- that directory holds session transcripts and machine paths. So a clone has the JSON
-// sources and the images but not the thing that turns one into the other, and without this
-// the failure is an ENOENT from execFileSync with a path and no explanation.
+// (session transcripts, machine paths), so a clone has the sources and the images but not
+// the thing that turns one into the other; without this the failure is a bare ENOENT.
 if (!existsSync(ARCHIFY)) {
   console.error(
     `Missing ${ARCHIFY}.\n\n` +
@@ -78,10 +67,11 @@ const archify = (args: string[], env?: NodeJS.ProcessEnv) =>
 const chrome = findChrome();
 
 for (const { type, name, source } of DIAGRAMS) {
+  const html = join(DIR, `${name}.html`);
   console.log(`\n=== ${name} (${type}) ===`);
-  archify(['deliver', type, join(DIR, source), join(DIR, `${name}.html`), '--quality', 'showcase']);
+  archify(['deliver', type, join(DIR, source), html, '--quality', 'showcase']);
   if (!chrome) continue;
-  archify(['visual-check', join(DIR, `${name}.html`)], { ARCHIFY_CHROME: chrome });
+  archify(['visual-check', html], { ARCHIFY_CHROME: chrome });
   for (const theme of ['light', 'dark']) {
     copyFileSync(join(DIR, `${name}.visual-check.${CAPTURE}.${theme}.png`), join(DIR, `${name}-${theme}.png`));
   }
