@@ -3,25 +3,17 @@
  *
  *   npm run reconcile:selftest
  *
- * A checker that always reports "all clean" is indistinguishable from a checker that
- * checks nothing, and this one has already been wrong twice: it compared every branch of
- * line 11 against the same shipped line, and it compared stop names per operator id when
- * the operator prints several names for one pole. Both invented failures. The opposite
- * mistake — a check that can never fire — would be worse, because it reads as proof.
- *
- * So each check gets a fault built for it: the data is corrupted in one specific way, the
- * reconciler is run, and the section that should notice has to be the section that does.
- * The data files are restored afterwards, whatever happens.
+ * A checker that always reports "all clean" is indistinguishable from one that checks
+ * nothing, and this one has invented failures twice already. So each check gets a fault
+ * built for it: the data is corrupted in one specific way, the reconciler is run, and the
+ * section that should notice has to be the one that does. The files are restored after.
  */
-import { readFileSync, writeFileSync, copyFileSync, existsSync, unlinkSync } from 'fs';
-import { execSync } from 'child_process';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { execSync } from 'node:child_process';
+import { copyFileSync, existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { at, ROOT } from './lib';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA = join(HERE, '../src/data');
-const STOPS = join(DATA, 'stops.json');
-const LINES = join(DATA, 'lines.json');
+const STOPS = at('src', 'data', 'stops.json');
+const LINES = at('src', 'data', 'lines.json');
 const BACKUPS = [STOPS, LINES].map((f) => [f, f + '.selftest-backup'] as const);
 
 interface Mutation {
@@ -34,8 +26,7 @@ interface Mutation {
 const MUTATIONS: Mutation[] = [
   {
     name: 'a stop moved 200 m from where the operator puts it',
-    // Specific enough to name one section: "Stop position" alone also matches the OSM
-    // one, which reports a rural pole nobody has surveyed and would mask this result.
+    // "Stop position" alone also matches the OSM section, which would mask this result.
     section: 'Stop position vs the coordinate',
     apply: (stops) => {
       const stop = stops.find((s) => s.officialIds?.length)!;
@@ -48,9 +39,8 @@ const MUTATIONS: Mutation[] = [
     section: 'Itineraries',
     apply: (_stops, lines) => {
       const dir = lines.find((l) => l.directions?.[0]?.stops?.length > 5)!.directions[0];
-      const removed = dir.stops.splice(3, 1)[0];
       dir.stopPathIndex?.splice(3, 1);
-      return removed;
+      return dir.stops.splice(3, 1)[0];
     },
   },
   {
@@ -87,32 +77,28 @@ function sectionsThatFired(output: string): string[] {
   const lines = output.split(/\r?\n/);
   const fired: string[] = [];
   let current = '';
-  for (let i = 0; i < lines.length; i++) {
-    if (/^-{3,}$/.test(lines[i].trim()) && i > 0) current = lines[i - 1].trim();
-    if (lines[i].trimStart().startsWith('! ') && current && !fired.includes(current)) fired.push(current);
-  }
+  lines.forEach((line, i) => {
+    if (/^-{3,}$/.test(line.trim()) && i > 0) current = lines[i - 1].trim();
+    if (line.trimStart().startsWith('! ') && current && !fired.includes(current)) fired.push(current);
+  });
   return fired;
 }
 
 function runReconcile(): string {
   try {
-    // Quoted, not concatenated: the repo path carries an accent today and could carry a
-    // space tomorrow.
-    return execSync(`npx tsx "${join(HERE, 'reconcile.ts')}"`, {
-      encoding: 'utf8',
-      cwd: join(HERE, '..'),
-    });
+    // Quoted: the repository path carries an accent, and could carry a space.
+    return execSync(`npx tsx "${at('tools', 'reconcile.ts')}"`, { encoding: 'utf8', cwd: ROOT });
   } catch (err: any) {
     return String(err.stdout ?? '') + String(err.stderr ?? '');
   }
 }
 
+const backUp = () => BACKUPS.forEach(([file, backup]) => copyFileSync(file, backup));
 function restore(): void {
   for (const [file, backup] of BACKUPS) {
-    if (existsSync(backup)) {
-      copyFileSync(backup, file);
-      unlinkSync(backup);
-    }
+    if (!existsSync(backup)) continue;
+    copyFileSync(backup, file);
+    unlinkSync(backup);
   }
 }
 
@@ -123,18 +109,15 @@ process.on('SIGINT', () => {
 
 let passed = 0;
 let failed = 0;
-
 try {
-  for (const [file, backup] of BACKUPS) copyFileSync(file, backup);
-
+  backUp();
   console.log('Baseline: reconciling the data as it stands.');
   const baseline = sectionsThatFired(runReconcile());
   console.log(`  sections reporting something today: ${baseline.length ? baseline.join(', ') : 'none'}\n`);
 
   for (const mutation of MUTATIONS) {
     restore();
-    for (const [file, backup] of BACKUPS) copyFileSync(file, backup);
-
+    backUp();
     const stops = JSON.parse(readFileSync(STOPS, 'utf8'));
     const lines = JSON.parse(readFileSync(LINES, 'utf8'));
     const target = mutation.apply(stops, lines);
@@ -143,22 +126,16 @@ try {
 
     const fired = sectionsThatFired(runReconcile());
     const noticed = fired.some((s) => s.startsWith(mutation.section));
-    // The fault has to be caught by the check built for it. A different section noticing
-    // is not a pass: it would mean the two checks are testing the same thing.
+    // A different section noticing is not a pass: the two checks would be testing the
+    // same thing. Nor is a section that was already firing before the fault.
     const wasAlreadyFiring = baseline.some((s) => s.startsWith(mutation.section));
-
     if (noticed && !wasAlreadyFiring) {
       passed++;
-      console.log(`  caught  ${mutation.name}`);
-      console.log(`          -> "${mutation.section}" noticed (${target})`);
-    } else if (wasAlreadyFiring) {
-      failed++;
-      console.log(`  BLIND   ${mutation.name}`);
-      console.log(`          -> "${mutation.section}" was already reporting before the fault, so this proves nothing`);
+      console.log(`  caught  ${mutation.name}\n          -> "${mutation.section}" noticed (${target})`);
     } else {
       failed++;
-      console.log(`  MISSED  ${mutation.name}`);
-      console.log(`          -> "${mutation.section}" stayed quiet; sections that fired: ${fired.join(', ') || 'none'}`);
+      if (wasAlreadyFiring) console.log(`  BLIND   ${mutation.name}\n          -> "${mutation.section}" was already reporting before the fault, so this proves nothing`);
+      else console.log(`  MISSED  ${mutation.name}\n          -> "${mutation.section}" stayed quiet; sections that fired: ${fired.join(', ') || 'none'}`);
     }
   }
 } finally {
