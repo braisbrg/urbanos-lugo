@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { CSP_META } from './src/security/csp';
 import { THEME_INIT_SOURCE } from './src/security/themeInit';
@@ -13,51 +13,25 @@ import { SITE_PATHS, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } 
 // Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
 const base = process.env.BASE_PATH || '/';
 
-/**
- * The policy goes into the built page, not the source one.
- *
- * In the source page it also applied to `vite dev`, where it blocked the HMR
- * websocket -- `connect-src 'self'` does not cover ws://localhost:24678. Widening
- * the production policy to admit a development socket would be the wrong way
- * round, so the tag is added when building and never in dev.
- */
-/**
- * Where this build will live, or null.
- *
- * Set by the workflow. A canonical or a sitemap carrying the wrong origin is worse than
- * having neither -- it points crawlers at pages that do not exist -- so a build without
- * it simply omits them rather than guessing from the base path.
- */
+// Where this build will live, set by the workflow. A canonical or a sitemap carrying the
+// wrong origin points crawlers at pages that do not exist, so without it they are omitted.
 const site = siteUrl(process.env.SITE_URL);
 
-/** Vite's default output directory, named once so the fallback copy does not guess. */
 const outDir = 'dist';
 
+/** Every build-time head edit goes in front of the theme-color meta. */
+const beforeThemeColor = (html: string, tags: string) => html.replace('<meta name="theme-color"', `${tags}\n    <meta name="theme-color"`);
+
 /**
- * A copy of the page at 404.html.
- *
- * GitHub Pages serves that file for any path it does not have on disk, which is every
- * tab route -- /paradas, /mapa and the rest exist only in the browser. Without it a
- * direct visit or a refresh on any of them lands on GitHub's own 404 instead of the app.
+ * A .gz and a .br beside every asset worth compressing. GitHub Pages compresses by
+ * itself; `npm start` serves dist/ through express.static, which does not, and a build
+ * can afford brotli's slowest setting where a server answering a phone should not.
  */
-/**
- * A .gz and a .br beside every asset worth compressing.
- *
- * The entry chunk goes out at 544 KB and gzips to 139; the whole first load is 587 KB
- * where 148 would do. GitHub Pages compresses by itself, so the published site never had
- * the problem -- but `npm start` serves dist/ through express.static, which does not, and
- * that is the documented way to self-host.
- *
- * Done here rather than per request: a build can afford brotli's slowest setting, and a
- * server answering a phone at a bus stop should not be spending CPU on something that
- * never changes between requests.
- */
-const emitCompressedAssets = {
+const emitCompressedAssets: Plugin = {
   name: 'emit-compressed-assets',
-  apply: 'build' as const,
+  apply: 'build',
   closeBundle() {
-    // Below about a kilobyte the headers cost more than the saving.
-    const FLOOR = 1024;
+    const FLOOR = 1024; // below about a kilobyte the headers cost more than the saving
     const walk = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry): string[] => {
         const full = path.join(dir, entry.name);
@@ -69,11 +43,8 @@ const emitCompressedAssets = {
     for (const file of walk(outDir)) {
       const body = readFileSync(file);
       if (body.length < FLOOR) continue;
-      const gz = gzipSync(body, { level: 9 });
-      const br = brotliCompressSync(body, {
-        params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: body.length },
-      });
-      writeFileSync(file + '.gz', gz);
+      const br = brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: body.length } });
+      writeFileSync(file + '.gz', gzipSync(body, { level: 9 }));
       writeFileSync(file + '.br', br);
       saved += body.length - br.length;
     }
@@ -82,31 +53,20 @@ const emitCompressedAssets = {
 };
 
 /**
- * A real page at every tab's address, and 404.html behind them.
- *
- * The fallback alone was enough to *render* /paradas or /tarifas -- Pages serves 404.html
- * for a path it does not have -- but it sends 404 with it, and a 404 is not only a
- * rendering detail. sitemap.xml advertises all six of these paths, and a crawler drops a
- * listed URL that answers 404, which turned the SEO work into a list of dead links. The
- * app also has a "copy link" button on every stop, and the apps people paste those into
- * skip the preview on a 404 -- so the og: tags added *because* those links get shared
- * were being thrown away too.
- *
- * One 4.6 KB copy per tab fixes both: the six addresses answer 200, and 404.html stays
- * for everything else, which is what still catches an old link or a mistyped path.
- *
- * Runs before emit-compressed-assets in the plugin list on purpose, so the copies get
- * their .br and .gz like every other file.
+ * A real page at every tab's address, and 404.html behind them. Pages serves 404.html for
+ * any path it does not have, which renders the app but with a 404 status: crawlers drop a
+ * listed URL that answers 404, and the apps a stop link is pasted into skip the preview.
+ * One copy per tab, each with its own title and canonical (seven identical heads read as
+ * one page listed seven times), and 404.html still catches a mistyped path. Runs before
+ * emit-compressed-assets on purpose, so the copies get their .br and .gz too.
  */
-const emitSpaFallback = {
+const emitSpaFallback: Plugin = {
   name: 'emit-spa-fallback',
-  apply: 'build' as const,
+  apply: 'build',
   closeBundle() {
     const built = path.resolve(outDir, 'index.html');
     if (!existsSync(built)) return;
     copyFileSync(built, path.resolve(outDir, '404.html'));
-    // Each copy with its own title, description and canonical: seven identical heads
-    // read to a search engine as one page listed seven times.
     const html = readFileSync(built, 'utf8');
     for (const route of SITE_PATHS) {
       if (!route) continue; // the root is index.html itself
@@ -118,97 +78,77 @@ const emitSpaFallback = {
 };
 
 /** robots.txt and sitemap.xml, written beside the built page. */
-const emitSeoFiles = {
+const emitSeoFiles: Plugin = {
   name: 'emit-seo-files',
-  apply: 'build' as const,
+  apply: 'build',
   generateBundle() {
     if (!site) return;
-    for (const [fileName, source] of [
-      ['robots.txt', robotsTxt(site)],
-      ['sitemap.xml', sitemapXml(site)],
-    ] as const) {
-      // @ts-expect-error -- `this` is Rollup's plugin context at build time.
-      this.emitFile({ type: 'asset', fileName, source });
-    }
+    this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt(site) });
+    this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapXml(site) });
   },
 };
 
 /**
- * The canonical link, the preview image and the structured data, which all need the
- * real address. The image is the 512 px icon the manifest already ships -- absolute,
- * because the apps that unfurl a pasted link do not resolve a relative one.
+ * The canonical link, the preview image and the structured data, which all need the real
+ * address. The image is absolute because the apps that unfurl a pasted link do not
+ * resolve a relative one.
  */
-const injectSeoTags = {
+const injectSeoTags: Plugin = {
   name: 'inject-seo-tags',
-  apply: 'build' as const,
-  transformIndexHtml(html: string) {
+  apply: 'build',
+  transformIndexHtml(html) {
     if (!site) return html;
-    const tags = [
-      `<link rel="canonical" href="${site}" />`,
-      `<meta property="og:image" content="${site}icon-512.png" />`,
-      `<meta property="og:image:width" content="512" />`,
-      `<meta property="og:image:height" content="512" />`,
-      `<script type="application/ld+json">${structuredData(site)}</script>`,
-    ].join('\n    ');
-    return html.replace('<meta name="theme-color"', `${tags}\n    <meta name="theme-color"`);
+    return beforeThemeColor(
+      html,
+      [
+        `<link rel="canonical" href="${site}" />`,
+        `<meta property="og:image" content="${site}icon-512.png" />`,
+        `<meta property="og:image:width" content="512" />`,
+        `<meta property="og:image:height" content="512" />`,
+        `<script type="application/ld+json">${structuredData(site)}</script>`,
+      ].join('\n    '),
+    );
   },
 };
 
-/**
- * Which commit the page is, when a workflow built it: `<meta name="build">`, seven
- * characters, the same answer the worker gives at /api/version. A local build says
- * nothing rather than guessing.
- */
-const stampBuild = {
+/** Which commit the page is, when a workflow built it: the same answer the worker gives at /api/version. */
+const stampBuild: Plugin = {
   name: 'stamp-build',
-  apply: 'build' as const,
-  transformIndexHtml(html: string) {
+  apply: 'build',
+  transformIndexHtml(html) {
     const sha = process.env.GITHUB_SHA;
-    if (!sha) return html;
-    return html.replace('<meta name="theme-color"', `<meta name="build" content="${sha.slice(0, 7)}" />\n    <meta name="theme-color"`);
+    return sha ? beforeThemeColor(html, `<meta name="build" content="${sha.slice(0, 7)}" />`) : html;
   },
 };
 
 /**
- * The theme script, in the page rather than beside it.
- *
- * It has to run before the first paint, so it blocks the parser wherever it sits. As a
- * file that cost a whole round trip on the critical path: measured at 6x CPU on Slow 4G,
- * the browser did not ask for the entry chunk until theme-init.js had come back, and first
- * contentful paint was 3760 ms. Inlined it is 3120 ms, with one request fewer.
- *
- * `script-src` carries the SHA-256 of these exact bytes, computed by security/csp.ts from
- * the same export inlined here — one source, so the page and the policy cannot disagree
- * about what is allowed to run.
- *
- * No `apply`, so it runs in dev too: there is no file left to serve.
+ * The theme script inlined: it has to run before the first paint, and as a file it cost
+ * a round trip on the critical path. `script-src` carries the SHA-256 of these exact
+ * bytes, computed by security/csp.ts from the same export, so the page and the policy
+ * cannot disagree. No `apply`, so it runs in dev too: there is no file left to serve.
  */
-const inlineThemeInit = {
+const inlineThemeInit: Plugin = {
   name: 'inline-theme-init',
-  transformIndexHtml(html: string) {
+  transformIndexHtml(html) {
     const tag = /<script src="[^"]*theme-init\.js"><\/script>/;
     if (!tag.test(html)) throw new Error('the theme-init tag is gone; inline-theme-init has nothing to replace');
     return html.replace(tag, `<script>${THEME_INIT_SOURCE}</script>`);
   },
 };
 
-const injectCsp = {
+/** The policy goes into the built page only: in the source page it also applied to `vite dev`, where it blocked the HMR websocket. */
+const injectCsp: Plugin = {
   name: 'inject-csp',
-  apply: 'build' as const,
-  transformIndexHtml(html: string) {
-    return html.replace(
-      '<meta name="theme-color"',
-      `<meta http-equiv="Content-Security-Policy" content="${CSP_META}" />
-    <meta name="theme-color"`,
-    );
+  apply: 'build',
+  transformIndexHtml(html) {
+    return beforeThemeColor(html, `<meta http-equiv="Content-Security-Policy" content="${CSP_META}" />`);
   },
 };
 
 export default defineConfig({
   base,
-  // The map renderer’s worker is an ES module. Vite’s default worker format is iife,
-  // which would strip the imports it needs.
-  worker: { format: 'es' as const },
+  // The map renderer's worker is an ES module; Vite's default iife would strip its imports.
+  worker: { format: 'es' },
   plugins: [
     inlineThemeInit,
     injectCsp,
@@ -219,66 +159,46 @@ export default defineConfig({
     emitCompressedAssets,
     react(),
     tailwindcss(),
-    // Everything the app computes — timetables, arrivals, route planning — runs from
-    // bundled data, so once the shell is cached it works with no connection at all.
-    // That is the normal case at a bus stop: signal is worst exactly where you need
-    // the departure time.
+    // Everything the app computes runs from bundled data, so once the shell is cached it
+    // works with no connection at all, which is the normal case at a bus stop.
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Urbanos de Lugo',
-        // The home-screen label. It was "Bus Lugo", which is the operator's domain; twelve
-        // characters is the most a launcher shows whole.
+        // The home-screen label: twelve characters is the most a launcher shows whole.
         short_name: 'Urbanos Lugo',
         description: 'Non oficial. Liñas, paradas e tempos de paso do autobús urbano de Lugo',
         lang: 'gl',
         theme_color: '#d81f26',
-        // Dark is the default theme, so the splash has to be dark too -- this was
-        // still the light surface and flashed white on every cold start.
+        // Dark is the default theme, so the splash has to be dark too.
         background_color: '#0d0e11',
         display: 'standalone',
         start_url: base,
         scope: base,
         icons: [
-          // 192 for the launcher, 512 for the splash screen Android draws while the app
-          // starts. With only the 192 it upscales that one and the splash is soft.
+          // 192 for the launcher, 512 for the splash Android draws while the app starts.
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          // Maskable has to be a PNG, and a different drawing.
-          //
-          // A launcher crops this to its own shape and only the middle 80% is
-          // guaranteed to survive; favicon.svg puts the wheel hard against the edge, so
-          // a circular mask bit into it. This one is the same mark scaled into the safe
-          // zone on full-bleed red -- a transparent corner would show as a notch. SVG
-          // was declared here before, which Android does not handle dependably.
-          {
-            src: 'icon-maskable-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-          // Kept for the browser tab and anything that scales.
+          // A launcher crops the maskable icon to its own shape and only the middle 80%
+          // survives, so this is the mark scaled into the safe zone on full-bleed red.
+          // A PNG: SVG here is not handled dependably by Android.
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
         ],
       },
       workbox: {
         // The geometry chunk is ~490 KB; the default 2 MB cap would drop it silently.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        // The typeface is served from this origin, so it is precached with everything else.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/\/api\//],
         runtimeCaching: [
-          // The typeface had a rule here, because it came from Google's CDN and was
-          // the one asset the service worker did not precache — so a second visit with
-          // no signal fell back to the system sans, losing the face chosen for
-          // legibility exactly where it matters. It is served from this origin now, so
-          // `globPatterns` above precaches the woff2 files with everything else and a
-          // runtime rule for them would be a rule for something already in the cache.
           {
-            // Map data: show what was seen before rather than grey squares offline.
-            // Covers the vector tiles, the glyphs and the sprites, which all come from
-            // the one host, and the raster fallback for a device with no WebGL2.
+            // Map data: show what was seen before rather than grey squares offline. The
+            // vector tiles, glyphs and sprites come from the one host; the raster is the
+            // fallback for a device with no WebGL2.
             urlPattern: /^https:\/\/(tiles\.openfreemap\.org|tile\.openstreetmap\.org)\/.*/i,
             handler: 'CacheFirst',
             options: {
@@ -288,8 +208,8 @@ export default defineConfig({
             },
           },
           {
-            // Service alerts are the only genuinely live data; prefer the network but
-            // fall back to the last answer instead of an error.
+            // Service alerts are the only genuinely live data: prefer the network, fall
+            // back to the last answer instead of an error.
             urlPattern: /\/api\/alerts/,
             handler: 'NetworkFirst',
             options: {
