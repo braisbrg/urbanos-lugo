@@ -1,44 +1,27 @@
 /**
- * Turns the scraped official data + snapped street geometry into the two files the
- * app actually reads: src/data/stops.json and src/data/lines.json. Its inputs live in
- * data/, outside src/, because nothing in the application imports them.
+ * Turns the scraped official data + snapped street geometry into the two files the app
+ * reads: src/data/stops.json and src/data/lines.json. Inputs live in data/, outside src/.
  *
  *   npx tsx tools/importOfficialData.ts   # fetch (slow, cached)
  *   npx tsx tools/buildDataset.ts         # shape (fast, offline)
  */
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { existsSync } from 'node:fs';
 import { getDistanceMeters as haversine } from '../src/utils/geo';
+import { at, readJson, writeJson } from './lib';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA = join(HERE, '../src/data');
-/** Build inputs, outside src/ because the application never imports them. */
-const RAW = join(HERE, '../data');
-
-const raw = JSON.parse(readFileSync(join(RAW, 'official-raw.json'), 'utf8'));
+const raw = readJson(at('data', 'official-raw.json'));
 // Optional: written by tools/importStopAmenities.ts from OpenStreetMap surveys.
-const amenitiesPath = join(RAW, 'stop-amenities.json');
-const amenities: Record<
-  string,
-  { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null; position?: [number, number]; osmNode?: number }
-> = existsSync(amenitiesPath) ? JSON.parse(readFileSync(amenitiesPath, 'utf8')) : {};
-const routes = JSON.parse(readFileSync(join(RAW, 'routes.json'), 'utf8'));
+const amenitiesPath = at('data', 'stop-amenities.json');
+const amenities: Record<string, { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null; position?: [number, number]; osmNode?: number }> =
+  existsSync(amenitiesPath) ? readJson(amenitiesPath) : {};
+const routes = readJson(at('data', 'routes.json'));
 // Optional: written by tools/importOsmRoutes.ts. The real itineraries, surveyed.
-const osmPath = join(RAW, 'osm-routes.json');
-const osmRoutes: { ref: string; name: string; path: [number, number][] }[] = existsSync(osmPath)
-  ? JSON.parse(readFileSync(osmPath, 'utf8'))
-  : [];
+const osmPath = at('data', 'osm-routes.json');
+const osmRoutes: { ref: string; name: string; path: [number, number][] }[] = existsSync(osmPath) ? readJson(osmPath) : [];
 
 /**
- * Colours the project already used, so existing screenshots and habits still hold —
- * except five that were unreadable.
- *
- * A line badge is white text on the line's colour at 10 px, and the number on it is the
- * single most important thing in the app. Five of the twenty-four failed WCAG AA for
- * small text: line 2 sat at 2.94:1 against the 4.5 needed. Each is darkened by the least
- * that clears the bar — 10% to 22%, keeping the hue — so the badge stays recognisable
- * and stays legible at a stop in daylight.
+ * The project's line colours. Five were darkened by the least that clears WCAG AA for
+ * the white 10 px number on the badge (line 2 sat at 2.94:1), keeping the hue.
  */
 const KNOWN_COLORS: Record<string, string> = {
   '1.1': '#2563eb', '1.2': '#0c857a', '1.3': '#7c3aed', '1.4': '#07819e',
@@ -75,7 +58,6 @@ const ZONES: { name: string; lat: number; lng: number }[] = [
   { name: 'Rural', lat: 42.95, lng: -7.5 },
 ];
 
-
 function zoneFor(lat: number, lng: number): string {
   let best = ZONES[0];
   let bestD = Infinity;
@@ -86,20 +68,9 @@ function zoneFor(lat: number, lng: number): string {
       best = z;
     }
   }
-  // Anything far from every anchor is genuinely out of town.
-  return bestD > 3000 ? 'Rural' : best.name;
+  return bestD > 3000 ? 'Rural' : best.name; // far from every anchor is genuinely out of town
 }
 
-/** Sum values[from..to) — used to merge legs whose intermediate stop was collapsed. */
-/**
- * Which vertex of the drawn route each stop sits on, in route order.
- *
- * The match can only move forward. Taking the nearest vertex over the whole polyline
- * broke on any route that uses a street twice — three directions had a stop matched to
- * the wrong pass, so its index landed behind the previous stop's. A bus interpolating
- * between that pair travelled the polyline backwards and appeared to cross the city off
- * its own line.
- */
 /** Metres along a polyline between two of its vertices. */
 function pathLength(path: [number, number][], from: number, to: number): number {
   let total = 0;
@@ -107,141 +78,14 @@ function pathLength(path: [number, number][], from: number, to: number): number 
   return total;
 }
 
+/** Squared degrees to a vertex — enough to pick the nearest one. */
+const near2 = (v: [number, number], stop: { lat: number; lng: number }) => (v[0] - stop.lat) ** 2 + (v[1] - stop.lng) ** 2;
+
 /**
- * The route the bus really drives, preferring the itinerary mapped in OpenStreetMap.
- *
- * OSRM answers "how would a car drive between these points", which is a different
- * question. It sent lines 8, 9 and 12 the long way round the muralla — 2127 m for a
- * 372 m hop — because a car cannot enter the old town, and it drove line 5.1's return
- * out and back for 28 km against a real 10 km wherever a pole sat slightly out of order.
- *
- * An OSM relation is only taken if it plausibly describes THIS direction: right line
- * number, ends where this direction ends, every stop close to the line, and stops
- * falling along it in order. Anything short of that keeps the OSRM trace, which is at
- * least a real road.
+ * Which vertex of the drawn route each stop sits on, in route order. The match can only
+ * move forward: the nearest vertex over the whole polyline matched the other pass on a
+ * route that uses a street twice, and the bus was drawn backwards across the city.
  */
-function realRoute(lineNumber: string, stops: any[]): { path: [number, number][]; order: number[] } | null {
-  const candidates = osmRoutes.filter((r) => r.ref === lineNumber || r.ref === lineNumber.split('-')[0]);
-  if (!candidates.length || stops.length < 2) return null;
-
-  const first = stops[0];
-  const last = stops[stops.length - 1];
-  let best: { path: [number, number][]; ends: number } | null = null;
-  for (const route of candidates) {
-    const ends =
-      haversine(route.path[0][0], route.path[0][1], first.lat, first.lng) +
-      haversine(route.path[route.path.length - 1][0], route.path[route.path.length - 1][1], last.lat, last.lng);
-    if (!best || ends < best.ends) best = { path: route.path, ends };
-  }
-  if (!best || best.ends > 600) return null; // that relation is some other branch
-
-  const path = best.path;
-  const inOrder = stops.map((_, i) => i);
-
-  // Reading the stops in the operator's order has to walk forward along the route. A
-  // relation drawn end-to-start would pass a distance test and then place everything
-  // backwards, so this is checked before anything else is believed.
-  // A published stop coordinate is the average of what the operator prints across pages,
-  // so a couple sitting a few hundred metres from the surveyed line is ordinary. A stop
-  // half a kilometre away, or many of them adrift at once, means this is the wrong route.
-  const walksForward = (order: number[]) => {
-    const vertices = stopVertices(path, order.map((i) => stops[i]));
-    let adrift = 0;
-    for (let k = 0; k < order.length; k++) {
-      const v = path[vertices[k]];
-      const off = haversine(v[0], v[1], stops[order[k]].lat, stops[order[k]].lng);
-      if (off > 400) return null;
-      if (off > 150) adrift++;
-    }
-    return adrift <= 2 ? vertices : null;
-  };
-
-  if (walksForward(inOrder)) return { path, order: inOrder };
-
-  // The operator's own page can list a stop in the wrong place. Line 5.1's return prints
-  // Fonte dos Ranchos and Doutor Gasalla third and fifth, when the route passes them near
-  // the end: both sit within 110 m of the surveyed line, just much later along it. Taken
-  // literally that itinerary crosses the city four times for 28 km, against a real 10 km,
-  // and no timetable printing 20 minutes for it could be true.
-  //
-  // So where the page order fails, try the order the surveyed route implies. It is only
-  // accepted if it walks forward AND the itinerary gets dramatically shorter — a modest
-  // gain would more likely mean this reader is wrong than the operator.
-  const along = stops.map((stop, i) => {
-    let bestVertex = 0;
-    let bestDistance = Infinity;
-    for (let k = 0; k < path.length; k++) {
-      const d = (path[k][0] - stop.lat) ** 2 + (path[k][1] - stop.lng) ** 2;
-      if (d < bestDistance) {
-        bestDistance = d;
-        bestVertex = k;
-      }
-    }
-    return { i, vertex: bestVertex };
-  });
-  // Keep as much of the operator's order as can possibly stand, and never touch the two
-  // ends. A direction's first stop is where the other direction left the bus standing —
-  // 5.1 outbound finishes at HULA (Ent. Principal), so its return starts there, and any
-  // reordering that says otherwise has the bus jumping 651 m backwards before it moves.
-  // The surveyed line passes Ent. Personal before Ent. Principal because the relation
-  // draws the hospital loop once, on the way in; the bus passes it again on the way out.
-  //
-  // Everything between the ends: the longest run that already reads forward along the
-  // route stays where the page puts it, and only the stops that break it are lifted out
-  // and dropped back where the route passes them, clamped inside the two termini.
-  const finalIndex = along.length - 1;
-  const interior = along.slice(1, finalIndex);
-
-  const runs: number[][] = [];
-  for (const item of interior) {
-    let best: number[] = [];
-    for (const run of runs) {
-      const tail = interior.find((x) => x.i === run[run.length - 1])!;
-      if (tail.vertex <= item.vertex && run.length > best.length) best = run;
-    }
-    runs.push([...best, item.i]);
-  }
-  const keep = runs.reduce((a, b) => (b.length > a.length ? b : a), []);
-  const kept = new Set(keep);
-
-  const displaced = interior.filter((x) => !kept.has(x.i)).sort((a, b) => a.vertex - b.vertex);
-  const vertexOf = new Map(along.map((x) => [x.i, x.vertex]));
-
-  const middle: number[] = [];
-  let next = 0;
-  for (const index of keep) {
-    while (next < displaced.length && displaced[next].vertex <= vertexOf.get(index)!) {
-      middle.push(displaced[next++].i);
-    }
-    middle.push(index);
-  }
-  while (next < displaced.length) middle.push(displaced[next++].i);
-
-  const resorted = [along[0].i, ...middle, along[finalIndex].i];
-
-  if (resorted.every((v, k) => v === inOrder[k])) return null;
-  if (!walksForward(resorted)) return null;
-
-  const span = (order: number[]) => {
-    let total = 0;
-    for (let k = 1; k < order.length; k++) {
-      const a = stops[order[k - 1]];
-      const b = stops[order[k]];
-      total += haversine(a.lat, a.lng, b.lat, b.lng);
-    }
-    return total;
-  };
-  const before = span(inOrder);
-  const after = span(resorted);
-  if (after > before * 0.7) return null;
-
-  console.log(
-    `        ! ${lineNumber}: moved ${displaced.length} stop(s) the page lists out of place ` +
-      `(${(before / 1000).toFixed(1)} km of zig-zag -> ${(after / 1000).toFixed(1)} km)`,
-  );
-  return { path, order: resorted };
-}
-
 function stopVertices(path: [number, number][], stops: any[]): number[] {
   const out: number[] = [];
   let cursor = 0;
@@ -249,7 +93,7 @@ function stopVertices(path: [number, number][], stops: any[]): number[] {
     let best = cursor;
     let bestD = Infinity;
     for (let k = cursor; k < path.length; k++) {
-      const d = (path[k][0] - stop.lat) ** 2 + (path[k][1] - stop.lng) ** 2;
+      const d = near2(path[k], stop);
       if (d < bestD) {
         bestD = d;
         best = k;
@@ -261,6 +105,104 @@ function stopVertices(path: [number, number][], stops: any[]): number[] {
   return out;
 }
 
+/**
+ * The route the bus really drives, preferring the itinerary mapped in OpenStreetMap:
+ * OSRM answers how a car would drive, which sent three lines the long way round the old
+ * town it cannot enter. A relation is taken only if it plausibly describes THIS direction:
+ * right number, right ends, every stop close to the line and falling along it in order.
+ */
+function realRoute(lineNumber: string, stops: any[]): { path: [number, number][]; order: number[] } | null {
+  const candidates = osmRoutes.filter((r) => r.ref === lineNumber || r.ref === lineNumber.split('-')[0]);
+  if (!candidates.length || stops.length < 2) return null;
+
+  const first = stops[0];
+  const last = stops[stops.length - 1];
+  let best: { path: [number, number][]; ends: number } | null = null;
+  for (const route of candidates) {
+    const tail = route.path[route.path.length - 1];
+    const ends = haversine(route.path[0][0], route.path[0][1], first.lat, first.lng) + haversine(tail[0], tail[1], last.lat, last.lng);
+    if (!best || ends < best.ends) best = { path: route.path, ends };
+  }
+  if (!best || best.ends > 600) return null; // that relation is some other branch
+
+  const path = best.path;
+  const inOrder = stops.map((_, i) => i);
+
+  // Reading the stops in the given order has to walk forward along the route. A published
+  // coordinate is an average across pages, so a couple a few hundred metres off is ordinary;
+  // a stop half a kilometre away, or many adrift at once, means this is the wrong route.
+  const walksForward = (order: number[]) => {
+    const vertices = stopVertices(path, order.map((i) => stops[i]));
+    let adrift = 0;
+    for (let k = 0; k < order.length; k++) {
+      const v = path[vertices[k]];
+      const off = haversine(v[0], v[1], stops[order[k]].lat, stops[order[k]].lng);
+      if (off > 400) return null;
+      if (off > 150) adrift++;
+    }
+    return adrift <= 2 ? vertices : null;
+  };
+  if (walksForward(inOrder)) return { path, order: inOrder };
+
+  // The operator's page can list a stop in the wrong place (one return prints two stops
+  // early that the route passes near the end, an itinerary that crosses the city four
+  // times). Try the order the surveyed route implies, accepted only if it walks forward AND
+  // gets dramatically shorter: the two ends never move, because a direction starts where
+  // the other left the bus; the longest run already reading forward stays where the page
+  // puts it, and only the stops that break it are dropped back where the route passes them.
+  const along = stops.map((stop, i) => {
+    let vertex = 0;
+    let bestDistance = Infinity;
+    for (let k = 0; k < path.length; k++) {
+      const d = near2(path[k], stop);
+      if (d < bestDistance) {
+        bestDistance = d;
+        vertex = k;
+      }
+    }
+    return { i, vertex };
+  });
+  const finalIndex = along.length - 1;
+  const interior = along.slice(1, finalIndex);
+
+  const runs: number[][] = [];
+  for (const item of interior) {
+    let longest: number[] = [];
+    for (const run of runs) {
+      const tail = interior.find((x) => x.i === run[run.length - 1])!;
+      if (tail.vertex <= item.vertex && run.length > longest.length) longest = run;
+    }
+    runs.push([...longest, item.i]);
+  }
+  const keep = runs.reduce((a, b) => (b.length > a.length ? b : a), []);
+  const kept = new Set(keep);
+  const displaced = interior.filter((x) => !kept.has(x.i)).sort((a, b) => a.vertex - b.vertex);
+  const vertexOf = new Map(along.map((x) => [x.i, x.vertex]));
+
+  const middle: number[] = [];
+  let next = 0;
+  for (const index of keep) {
+    while (next < displaced.length && displaced[next].vertex <= vertexOf.get(index)!) middle.push(displaced[next++].i);
+    middle.push(index);
+  }
+  while (next < displaced.length) middle.push(displaced[next++].i);
+  const resorted = [along[0].i, ...middle, along[finalIndex].i];
+
+  if (resorted.every((v, k) => v === inOrder[k]) || !walksForward(resorted)) return null;
+  const span = (order: number[]) => {
+    let total = 0;
+    for (let k = 1; k < order.length; k++) total += haversine(stops[order[k - 1]].lat, stops[order[k - 1]].lng, stops[order[k]].lat, stops[order[k]].lng);
+    return total;
+  };
+  const before = span(inOrder);
+  const after = span(resorted);
+  if (after > before * 0.7) return null;
+
+  console.log(`        ! ${lineNumber}: moved ${displaced.length} stop(s) the page lists out of place (${(before / 1000).toFixed(1)} km of zig-zag -> ${(after / 1000).toFixed(1)} km)`);
+  return { path, order: resorted };
+}
+
+/** Sum values[from..to), rounded — merges legs whose intermediate stop was collapsed. */
 function sumRange(values: number[], from: number, to: number): number {
   let total = 0;
   for (let i = from; i < to; i++) total += values[i] ?? 0;
@@ -270,9 +212,7 @@ function sumRange(values: number[], from: number, to: number): number {
 function categoryFor(line: any): string {
   const text = `${line.id} ${line.name}`.toLowerCase();
   if (text.includes('hula')) return 'hospital';
-  if (line.id.includes('-')) return 'rural';
-  if (/nadela|p[ií]as|b[óo]veda|calde|santa comba|ramil/.test(text)) return 'rural';
-  if (/campus|veterinaria|humanidades/.test(text)) return 'urbano';
+  if (line.id.includes('-') || /nadela|p[ií]as|b[óo]veda|calde|santa comba|ramil/.test(text)) return 'rural';
   return 'urbano';
 }
 
@@ -281,14 +221,10 @@ function categoryFor(line: any): string {
 const located = raw.stops.filter((s: any) => Array.isArray(s.coords));
 const dropped = raw.stops.length - located.length;
 
-// The operator numbers a stop once per line and per direction, so the same physical
-// pole shows up under many `ps` ids: Sindicatos alone appears 20 times at one identical
-// coordinate. Collapse them by position, or the app counts 1198 stops where the city
-// has ~430, and every stop list, zone filter and nearest-stop search is skewed.
-// The operator's live-panel token is the pole's real identity, so it groups first. For
-// poles with no token, the same name within 80 m is the same pole: the published
-// coordinates wobble by a few metres between pages, while genuinely opposite poles get
-// distinct names ("... (enfte. ...)"). 80 m keeps the two apart.
+// The operator numbers a stop once per line and direction, so one pole shows up under many
+// `ps` ids (one interchange appears 20 times). Collapse by identity: the live-panel token
+// first, then the same name within 80 m — published coordinates wobble a few metres between
+// pages, while genuinely opposite poles get distinct names.
 const MERGE_RADIUS_M = 80;
 const canonicalByPs = new Map<number, string>();
 const clusters: any[] = [];
@@ -296,40 +232,30 @@ const byToken = new Map<string, any>();
 
 for (const s of located) {
   const [lat, lng] = s.coords;
-
   let stop = s.token ? byToken.get(s.token) : undefined;
   if (!stop) {
-    // Identical coordinates mean the same pole even when the label differs: the site
-    // publishes some stops in Galician and Spanish ("Facultade" / "Facultad").
-    // Two tokens that differ are two panels, so two poles. Anything else — one side
-    // tokenless, or both — can still be the same pole listed twice, and it was: nine
-    // poles shipped as eighteen stops because one entry carried a live-panel token and
-    // its twin did not, at identical published coordinates under an identical name.
+    // Identical coordinates mean the same pole even under another label (Galician and
+    // Spanish spellings). Two different tokens are two panels; one side tokenless, or both,
+    // can still be the same pole listed twice — nine poles once shipped as eighteen stops.
     const mergeable = (c: any) => !(c.officialToken && s.token);
     stop =
       clusters.find((c) => mergeable(c) && haversine(c.lat, c.lng, lat, lng) === 0) ||
-      clusters.find(
-        (c) => mergeable(c) && c.name === s.name && haversine(c.lat, c.lng, lat, lng) <= MERGE_RADIUS_M,
-      );
+      clusters.find((c) => mergeable(c) && c.name === s.name && haversine(c.lat, c.lng, lat, lng) <= MERGE_RADIUS_M);
   }
-
   if (!stop) {
     stop = {
       id: `s${s.ps}`, // the first ps seen at this pole becomes the stable id
       code: s.token || String(s.ps),
-      /** Every operator id that points at this physical pole, so any QR link resolves. */
       officialIds: [] as number[],
       officialToken: s.token || null,
       name: s.name,
-      /** Every other label the operator prints for this pole. */
       aliases: [] as string[],
       lat,
       lng,
       samples: 0,
       lines: [] as string[], // filled from the itineraries below: one source of truth
       zone: '',
-      // null = nobody has surveyed it. The dataset used to claim every stop had step-free
-      // access and no shelter, both invented.
+      // null = nobody has surveyed it. The dataset used to invent step-free access and no shelter.
       shelter: null as boolean | null,
       bench: null as boolean | null,
     };
@@ -338,8 +264,7 @@ for (const s of located) {
   }
 
   // A pole with a live panel keeps that identity even when a tokenless twin reached the
-  // cluster first: without this, merging cost five poles their scannable code and left
-  // them under the twin's label — "As Pedreiras" became "Opuesto Piscina Pedreiras".
+  // cluster first; without this five poles lost their scannable code and their own label.
   if (s.token && !stop.officialToken) {
     stop.officialToken = s.token;
     stop.code = s.token;
@@ -358,18 +283,10 @@ for (const s of located) {
 }
 
 /**
- * The poles the operator published with no coordinates but with a live-panel token.
- *
- * A token is the pole's own identity, so one that already belongs to a clustered pole is
- * not a new stop -- it is the same stop, listed again on another line's itinerary without
- * its position. Twelve of the 1198 scraped entries have no coordinates, and dropping all
- * twelve cost line 13's return direction Rda. Muralla 56 (Sindicatos): fourteen lines call
- * there, the operator's own itinerary for the 13 names it, and the app drew a route that
- * skipped the busiest interchange in the city.
- *
- * Only the token match is safe. The other eleven carry either no token or one no located
- * pole shares, and a stop with neither a position nor a known identity cannot be placed
- * from this source at all -- tools/test.ts pins that count so a thirteenth is noticed.
+ * Poles published with no coordinates but with a live-panel token that a clustered pole
+ * already carries are that pole listed again on another itinerary. Dropping all twelve
+ * such listings cost line 13's return the busiest interchange in the city. Only the token
+ * match is safe; the rest have no position and no known identity. tools/test.ts pins the count.
  */
 const RECOVERED_BY_TOKEN = new Set<number>();
 for (const s of raw.stops) {
@@ -384,17 +301,11 @@ for (const s of raw.stops) {
 // ---- the operator's pin against the surveyed pole ------------------------------------
 
 /**
- * Coordinates are the operator's, with one exception the data itself proves.
- *
- * Two consecutive stops of one direction cannot be six metres apart, yet the operator's
- * pin for "Estda. Nova Santiago (Monte Segade)" sat on top of "Avda. Américas 88", 1.1 km
- * from the pole OpenStreetMap surveys under that exact name -- which lies on the line's
- * own surveyed route. A pin that duplicates its neighbour's is a mis-entered coordinate,
- * not a position. So when a stop is in such a pair AND the OSM importer recorded where
- * the same-named pole really is, that position is used and the stop says so
- * (`positionSource: 'osm'`). Either condition alone is only reported: pins 19 m apart on
- * Avda. Américas are two real poles, and a far same-named pole with a plausible pin
- * could as easily be OSM's mistake.
+ * Coordinates are the operator's, with one exception the data itself proves: two
+ * consecutive stops of one direction cannot be six metres apart, so a pin that duplicates
+ * its neighbour's is a mis-entered coordinate. When a stop is in such a pair AND the OSM
+ * importer recorded where the same-named pole is, that position is used and the stop says
+ * so (`positionSource: 'osm'`). Either condition alone is only reported.
  */
 const DUPLICATE_PIN_M = 30;
 const clusterById = new Map<string, any>(clusters.map((c: any) => [c.id, c]));
@@ -432,10 +343,8 @@ const stops = clusters.map((c) => {
   };
 });
 
-// Nearest-anchor alone draws Voronoi cells that cut across streets, so consecutive
-// stops on Avda. Magoi landed in "A Ponte" and "Campus USC". Two rounds of
-// majority-vote smoothing over each stop's neighbours make the zones contiguous
-// without inventing a street-to-district table.
+// Nearest-anchor alone draws Voronoi cells that cut across streets; two rounds of
+// majority-vote smoothing over each stop's neighbours make the zones contiguous.
 for (let pass = 0; pass < 2; pass++) {
   const smoothed = stops.map((stop: any) => {
     const votes: Record<string, number> = {};
@@ -444,8 +353,7 @@ for (let pass = 0; pass < 2; pass++) {
       .sort((a: any, b: any) => a.d - b.d)
       .slice(0, 9)
       .forEach(({ other, d }: any) => {
-        // Closer neighbours count for more; the stop itself dominates its own vote.
-        votes[other.zone] = (votes[other.zone] || 0) + 1 / (1 + d / 100);
+        votes[other.zone] = (votes[other.zone] || 0) + 1 / (1 + d / 100); // closer neighbours count for more
       });
     return Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0];
   });
@@ -456,8 +364,10 @@ const stopById = new Map(stops.map((s: any) => [s.id, s]));
 
 // ---- lines -------------------------------------------------------------------
 
-const routeKey = (lineId: string, dir: string) => `${lineId}|${dir}`;
-const routeMap = new Map<string, any>(routes.map((r: any) => [routeKey(r.lineId, r.direction), r]));
+const routeMap = new Map<string, any>(routes.map((r: any) => [`${r.lineId}|${r.direction}`, r]));
+/** 5 decimals is ~1 m, plenty for a drawn polyline, and roughly halves the payload. */
+const round = (p: [number, number][]) => p.map(([lat, lng]) => [Number(lat.toFixed(5)), Number(lng.toFixed(5))] as [number, number]);
+const sum = (xs: number[]) => xs.reduce((n, x) => n + x, 0);
 
 let fallbackIdx = 0;
 let osmCount = 0;
@@ -467,30 +377,22 @@ const lines = raw.lines.map((line: any) => {
 
   const directions = line.directions.map((dir: any, i: number) => {
     const dirId = i === 0 ? 'ida' : 'volta';
-    const geo = routeMap.get(routeKey(line.id, dirId));
+    const geo = routeMap.get(`${line.id}|${dirId}`);
 
-    // Map the itinerary's per-line ids onto the collapsed physical stops.
-    //
-    // The router was fed only the stops that had coordinates, so its arrays are indexed
-    // against THAT subset, not against dir.stops. Walk the itinerary keeping a separate
-    // counter for the router's indexing, or every leg lines up with the wrong pair of
-    // stops further down the route.
+    // Map the itinerary's per-line ids onto the collapsed physical stops. The router was
+    // fed only the stops that had coordinates, so its arrays are indexed against THAT
+    // subset: `geoPos` walks it separately, and a pole recovered by its token (never sent
+    // to the router) must not advance it.
     const kept: number[] = []; // positions in the router's arrays
     let stopIds: string[] = [];
     let geoPos = -1;
-    // A pole recovered by its token was never sent to the router, so it has no position
-    // in those arrays and must not advance the counter -- see RECOVERED_BY_TOKEN above.
-    // It still belongs on the itinerary, and its road times come from the direction's own
-    // average speed, the same stand-in a repaired order already uses.
     let recovered = false;
     dir.stops.forEach((ps: number) => {
       const canonical = canonicalByPs.get(ps);
-      if (!canonical) return; // stop had no coordinates: the router never saw it either
+      if (!canonical) return; // no coordinates: the router never saw it either
       const routed = !RECOVERED_BY_TOKEN.has(ps);
       if (routed) geoPos++;
-      // A pole listed twice in one direction (a terminus loop) would break the leg
-      // indices and every "how many stops away" count downstream.
-      if (stopIds.includes(canonical)) return;
+      if (stopIds.includes(canonical)) return; // a pole listed twice (a terminus loop) would break the leg indices
       if (routed) kept.push(geoPos);
       else recovered = true;
       stopIds.push(canonical);
@@ -506,55 +408,28 @@ const lines = raw.lines.map((line: any) => {
     if (surveyed) osmCount++;
     else if (geo) osrmCount++;
 
-    // A repaired order changes which stop each of the router's legs belongs to, so those
-    // legs are dropped rather than silently mismatched; the direction's own average speed
-    // stands in for them.
-    // `recovered` joins it for the same reason: once a stop sits on the itinerary that the
-    // router never saw, its legs no longer line up one-for-one with the router's, so they
-    // are dropped rather than silently mismatched.
+    // A repaired order, or a recovered stop the router never saw, means the router's legs
+    // no longer line up one-for-one: they are dropped rather than silently mismatched, and
+    // the direction's own average speed stands in.
     const reordered = Boolean(surveyed && surveyed.order.some((v, k) => v !== k)) || recovered;
     if (surveyed && reordered) {
       stopIds = surveyed.order.map((i: number) => stopIds[i]);
       dirStops = surveyed.order.map((i: number) => dirStops[i]);
     }
 
-    // 5 decimals is ~1 m, plenty for a drawn polyline, and roughly halves the payload
-    // every visitor downloads.
-    const round = (p: [number, number][]) =>
-      p.map(([lat, lng]) => [Number(lat.toFixed(5)), Number(lng.toFixed(5))] as [number, number]);
-
-    const path: [number, number][] = surveyed
-      ? round(surveyed.path)
-      : geo
-        ? round(geo.path)
-        : dirStops.map((st: any) => [st.lat, st.lng] as [number, number]);
-
+    const path: [number, number][] = surveyed ? round(surveyed.path) : geo ? round(geo.path) : dirStops.map((st: any) => [st.lat, st.lng] as [number, number]);
     const stopPathIndex = surveyed || geo ? stopVertices(path, dirStops) : [];
 
     // geo arrays are indexed by the original itinerary; re-slice them to the kept stops.
-    const osrmMeters: number[] = geo
-      ? kept.slice(0, -1).map((idx: number, k: number) => sumRange(geo.legMeters, idx, kept[k + 1]))
-      : [];
-    const osrmSeconds: number[] = geo
-      ? kept.slice(0, -1).map((idx: number, k: number) => sumRange(geo.legSeconds, idx, kept[k + 1]))
-      : [];
+    const osrmMeters: number[] = geo ? kept.slice(0, -1).map((idx: number, k: number) => sumRange(geo.legMeters, idx, kept[k + 1])) : [];
+    const osrmSeconds: number[] = geo ? kept.slice(0, -1).map((idx: number, k: number) => sumRange(geo.legSeconds, idx, kept[k + 1])) : [];
 
-    // Distances follow whatever line is actually drawn, so what the app says and what it
-    // shows agree. Times keep the speed OSRM measured on that corridor and apply it to
-    // the real length: OSM maps where a bus goes, not how long it takes to get there.
-    const legMeters: number[] = surveyed
-      ? stopPathIndex.slice(0, -1).map((v, k) => Math.round(pathLength(path, v, stopPathIndex[k + 1])))
-      : osrmMeters;
-    const metresPerSecond =
-      osrmSeconds.reduce((n, x) => n + x, 0) > 0
-        ? osrmMeters.reduce((n, x) => n + x, 0) / osrmSeconds.reduce((n, x) => n + x, 0)
-        : 6;
+    // Distances follow whatever line is drawn; times keep the speed OSRM measured on that
+    // corridor and apply it to the real length. OSM maps where a bus goes, not how long it takes.
+    const legMeters: number[] = surveyed ? stopPathIndex.slice(0, -1).map((v, k) => Math.round(pathLength(path, v, stopPathIndex[k + 1]))) : osrmMeters;
+    const metresPerSecond = sum(osrmSeconds) > 0 ? sum(osrmMeters) / sum(osrmSeconds) : 6;
     const legSeconds: number[] = surveyed
-      ? legMeters.map((m, k) =>
-          !reordered && osrmMeters[k] > 0
-            ? Math.round((osrmSeconds[k] * m) / osrmMeters[k])
-            : Math.round(m / metresPerSecond),
-        )
+      ? legMeters.map((m, k) => (!reordered && osrmMeters[k] > 0 ? Math.round((osrmSeconds[k] * m) / osrmMeters[k]) : Math.round(m / metresPerSecond)))
       : osrmSeconds;
 
     return {
@@ -563,13 +438,12 @@ const lines = raw.lines.map((line: any) => {
       origin: dir.origin,
       destination: dir.destination,
       stops: stopIds,
-      /** Where the drawn line comes from: 'osm' is a surveyed itinerary, 'osrm' a guess. */
       geometrySource: surveyed ? 'osm' : geo ? 'osrm' : 'straight',
       pathCoordinates: path,
       stopPathIndex,
       legMeters,
       legSeconds,
-      totalMeters: legMeters.reduce((n: number, m: number) => n + m, 0),
+      totalMeters: sum(legMeters),
     };
   });
 
@@ -594,8 +468,7 @@ const lines = raw.lines.map((line: any) => {
 const served = stops.filter((s: any) => s.lines.length > 0);
 const orphaned = stops.length - served.length;
 
-// Route geometry is 92% of the line data but is only needed once a map is on screen,
-// so it ships as a separate file the app fetches on demand.
+// Route geometry is 92% of the line data and only needed once a map is on screen, so it ships as its own file.
 const geometry: Record<string, { path: [number, number][]; stopPathIndex: number[] }> = {};
 const slimLines = lines.map((line: any) => ({
   ...line,
@@ -606,31 +479,17 @@ const slimLines = lines.map((line: any) => ({
   }),
 }));
 
-// Refuse to replace good data with a bad scrape.
-//
-// Everything the app shows comes out of these files. A page that changed shape, a
-// half-finished download, or a parse that silently matched nothing all arrive here as a
-// much smaller dataset, and writing it destroys the working one before any test gets a
-// chance to complain. A tenth of the stops or lines going missing is not a timetable
-// change; it is a broken run.
-const previousCount = (file: string): number => {
-  const path = join(DATA, file);
-  return existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as unknown[]).length : 0;
-};
-
+// Refuse to replace good data with a bad scrape: a tenth of the stops or lines going missing
+// is a broken run, not a timetable change, and writing it would destroy the working files.
 for (const [file, built] of [['stops.json', served], ['lines.json', slimLines]] as const) {
-  const before = previousCount(file);
-  if (built.length < before * 0.9) {
-    throw new Error(
-      `${file}: built ${built.length}, previously ${before}. That is a broken run, not a ` +
-        `timetable change — nothing written.`,
-    );
-  }
+  const path = at('src', 'data', file);
+  const before = existsSync(path) ? (readJson<unknown[]>(path)).length : 0;
+  if (built.length < before * 0.9) throw new Error(`${file}: built ${built.length}, previously ${before}. That is a broken run, not a timetable change — nothing written.`);
 }
 
-writeFileSync(join(DATA, 'stops.json'), JSON.stringify(served, null, 2) + '\n');
-writeFileSync(join(DATA, 'lines.json'), JSON.stringify(slimLines, null, 2) + '\n');
-writeFileSync(join(DATA, 'route-geometry.json'), JSON.stringify(geometry) + '\n');
+writeJson(at('src', 'data', 'stops.json'), served);
+writeJson(at('src', 'data', 'lines.json'), slimLines);
+writeJson(at('src', 'data', 'route-geometry.json'), geometry, false);
 
 console.log(`stops : ${served.length} physical poles written`);
 console.log(`        ${collapsed} duplicate operator ids collapsed, ${dropped} without coordinates, ${orphaned} served by no line`);
@@ -639,8 +498,6 @@ for (const [a, b, m] of duplicatePairs) {
   if (!repositioned.includes(a) && !repositioned.includes(b)) console.log(`        left as published: ${a} and ${b} are ${Math.round(m)} m apart in one direction`);
 }
 console.log(`lines : ${lines.length} written`);
-const geometryKb = (JSON.stringify(geometry).length / 1024).toFixed(0);
-const linesKb = (JSON.stringify(slimLines).length / 1024).toFixed(0);
 console.log(`routes: ${Object.keys(geometry).length} directions with street geometry`);
 console.log(`        ${osmCount} drawn from the itinerary surveyed in OSM, ${osrmCount} from OSRM`);
-console.log(`sizes : lines.json ${linesKb} KB (bundled) + route-geometry.json ${geometryKb} KB (lazy)`);
+console.log(`sizes : lines.json ${(JSON.stringify(slimLines).length / 1024).toFixed(0)} KB (bundled) + route-geometry.json ${(JSON.stringify(geometry).length / 1024).toFixed(0)} KB (lazy)`);
