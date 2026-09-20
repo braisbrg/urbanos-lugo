@@ -1,10 +1,6 @@
 /**
- * One runnable check for the logic that used to be wrong.
- *
- *   npm test
- *
- * Every case below corresponds to a bug found in the audit, so a regression fails here
- * rather than in the browser.
+ * One runnable check per bug that was real once: `npm test`. A regression fails here
+ * rather than in the browser, and each check names the bug it guards against.
  */
 import assert from 'assert';
 import { readFileSync, readdirSync, existsSync } from 'fs';
@@ -83,6 +79,10 @@ function listSourceFiles(dir: string): string[] {
 
 hydrateGeometry();
 
+/** The repository root, and a file under it, for the checks that read the source rather than run it. */
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const read = (path: string) => readFileSync(join(root, path), 'utf8');
+
 
 let checks = 0;
 const ok = (name: string, fn: () => void) => {
@@ -137,10 +137,8 @@ ok('every stop an itinerary lists exists', () => {
 });
 
 ok('every stop and line carries the fields the app reads', () => {
-  // stops.json and lines.json are generated, and imported with a cast: TypeScript takes
-  // the shape on trust. A field the generator stops emitting therefore reaches the app
-  // as undefined, and the first thing to touch it throws a stack trace somewhere far
-  // from the cause. Check the shape once, here, and name the stop that is wrong.
+  // The generated JSON is imported with a cast, so a field the generator stops emitting
+  // reaches the app as undefined and throws far from the cause. Check the shape once, here.
   for (const stop of BUS_STOPS) {
     assert(typeof stop.id === 'string' && stop.id, `a stop has no id`);
     assert(typeof stop.name === 'string' && stop.name, `${stop.id} has no name`);
@@ -210,10 +208,8 @@ ok('route geometry follows the streets, not straight lines', () => {
 });
 
 ok('a stop never sits further along the route than the next one', () => {
-  // Matching each stop to its nearest vertex anywhere on the polyline broke wherever a
-  // route uses a street twice: the stop matched the other pass, its index landed behind
-  // the previous stop's, and the bus drawn between that pair travelled the line
-  // backwards — right across the city, off its own route.
+  // Snapping each stop to its nearest vertex anywhere on the polyline broke where a route
+  // uses a street twice: the stop matched the other pass and the bus was drawn backwards.
   for (const line of BUS_LINES) {
     for (const dir of line.directions) {
       if (!dir.stopPathIndex?.length) continue;
@@ -232,10 +228,8 @@ ok('a stop never sits further along the route than the next one', () => {
 });
 
 ok('a drawn bus moves at a steady pace, not vertex by vertex', () => {
-  // Surveyed geometry is spaced by shape: across these directions the median segment is
-  // 8.9 m and the longest 358 m. Advancing a bus one vertex per tick therefore crawled it
-  // round a roundabout and flung it down a straight. Progress is measured in metres, so
-  // consecutive ticks should cover comparable ground.
+  // Surveyed vertices are spaced by shape (8.9 m median, 358 m longest); a bus advanced
+  // per vertex crawled round roundabouts and flew down straights. Progress is in metres.
   hydrateGeometry();
   const base = new Date(2026, 7, 20, 9, 0, 0);
   const tracks = new Map<string, { lat: number; lng: number }[]>();
@@ -281,12 +275,8 @@ ok('every drawn bus stays on its own route', () => {
 });
 
 ok('measured leg distances are at least the straight-line distance', () => {
-  // A road cannot be shorter than the straight line — but the two ends of that line are
-  // published stop coordinates, and those carry their own error: they are the average of
-  // what the operator prints across pages, and they sit a median of 7 m off the surveyed
-  // route (p90 23 m). Where both stops of a leg lie off to the same side, the distance
-  // along the route between them is legitimately shorter than between the coordinates.
-  // So the lower bound is the straight line less each stop's own offset from the route.
+  // A road cannot be shorter than the straight line, but published stop coordinates sit a
+  // median of 7 m off the route, so the bound is the straight line less each stop's offset.
   const TOLERANCE_M = 60;
   for (const line of BUS_LINES) {
     for (const dir of line.directions) {
@@ -311,20 +301,9 @@ ok('measured leg distances are at least the straight-line distance', () => {
 });
 
 ok('a leg that drives far further than the crow flies is the route, not a bad snap', () => {
-  // The audit flags legs whose road distance is more than four times the straight line,
-  // and calls them "two opposite poles of the same street". That is a guess unless the
-  // stops are shown to sit on the drawn line: a stop snapped to the wrong vertex invents
-  // exactly the same shape, and it would be a real defect rather than a real detour.
-  //
-  // Both survivors were measured, and both are detours:
-  //   3.1/volta  A Tolda (UNED) -> A Tolda (Cruce pista Bosende)   360 m for 70 m,
-  //     osm-surveyed, at vertices 0 -> 37, i.e. the loop out of the terminus, with the two
-  //     stops 6.1 m and 1.4 m off the line.
-  //   3.2/volta  Pza. Conde Fontao (Estda. FFCC) -> Rúa Castelao 53   765 m for 137 m,
-  //     one of the three directions with no surveyed itinerary, so OSRM's way round a
-  //     one-way system, with the stops 4.3 m and 3.6 m off the line.
-  //
-  // So the count is pinned, and each survivor has to keep proving it is a detour.
+  // Legs driving four times the straight line are either a real detour (a terminus loop, a
+  // one-way system) or a stop snapped to the wrong vertex. Both survivors are detours, and
+  // the count is pinned so each has to keep proving it by sitting on the drawn line.
   const SNAP_M = 30;
   const far: string[] = [];
   for (const line of BUS_LINES) {
@@ -359,12 +338,8 @@ ok('a leg that drives far further than the crow flies is the route, not a bad sn
 });
 
 ok('a line ends each direction where the other one starts', () => {
-  // The bus does not teleport between trips: the return begins from the pole the
-  // outbound left it at. This is the check that caught a bad repair — reordering line
-  // 5.1's return by position along the surveyed route moved its first stop from HULA
-  // (Ent. Principal) to (Ent. Personal), which would have the bus reversing 651 m before
-  // setting off. Termini are now pinned, and this is what would notice if they stopped
-  // being. The allowance is for a terminus with a pole on each side of the street.
+  // The return begins from the pole the outbound left it at. This caught a repair that
+  // moved 5.1's first return stop 651 m; the allowance is for a pole on each side of the street.
   for (const line of BUS_LINES) {
     if (line.directions.length < 2) continue;
     const [out, back] = line.directions;
@@ -387,11 +362,8 @@ ok('a line ends each direction where the other one starts', () => {
 });
 
 ok('every stop sits on the route drawn for its line', () => {
-  // The counterpart to the check above: it excuses a short leg by the stop's distance
-  // from the line, so that distance has to stay small or the excuse swallows everything.
-  // The allowance matches the one buildDataset accepts a surveyed route under — a
-  // published coordinate is an average across pages and carries its own error, but a
-  // stop half a kilometre away, or many adrift at once, means the wrong route was taken.
+  // The counterpart of the short-leg excuse above: a stop's distance from the line must stay
+  // small, or the excuse swallows everything. A stop half a kilometre off is the wrong route.
   const offsets: number[] = [];
   for (const line of BUS_LINES) {
     for (const dir of line.directions) {
@@ -413,12 +385,8 @@ ok('every stop sits on the route drawn for its line', () => {
 });
 
 ok('a coordinate is the operator’s unless its pin duplicates the next stop’s', () => {
-  // The operator's pin for "Estda. Nova Santiago (Monte Segade)" sat five metres from
-  // "Avda. Américas 88", the stop before it on line 11 towards Calde, and 1.1 km from the
-  // pole OpenStreetMap surveys under that name on the line's own route. The check above
-  // could not see it: the surveyed route passes both points. Two consecutive stops of one
-  // direction six metres apart is not a position, it is a mis-entered one, so the
-  // generator takes the same-named surveyed pole for exactly that case and marks it.
+  // Two consecutive stops six metres apart is a mis-entered pin, not a position: the generator
+  // takes the same-named surveyed pole for exactly that case and marks it `positionSource`.
   const moved = BUS_STOPS.filter((s) => s.positionSource === 'osm');
   assert(moved.length === 1, `${moved.length} stops carry an OSM position; one is known (s1065), any other needs looking at`);
   const segade = moved[0];
@@ -562,11 +530,8 @@ const fleetOf = (now: Date, number: string, lineId = number) =>
   getScheduledBuses(now).filter((b) => b.lineNumber === number && b.lineId === lineId);
 
 ok('a bus turning around is drawn once, not as its outbound and its return', () => {
-  // Every minute of the three service days was swept: the 7 drew its 07:30 outbound
-  // still 1.3 minutes short of A Ponte while its 07:45 return had already left it -- one
-  // vehicle, 139 m apart, 58 minutes a day. The 11 to Bóveda ran its outbound eight
-  // minutes past Barbaín, its last timing point, while the return had left Bóveda on
-  // that very minute.
+  // Swept every minute of the three service days: one vehicle drawn twice, 139 m apart, for
+  // 58 minutes a day, and an outbound drawn eight minutes past its last timing point.
   assert.strictEqual(fleetOf(new Date(2026, 7, 19, 7, 45, 30), '7').length, 1, 'line 7 at 07:45:30');
   assert.strictEqual(fleetOf(new Date(2026, 7, 19, 8, 22, 0), '11', '11-Igrexa de Bóveda').length, 1, 'line 11 Bóveda at 08:22');
   // And it is the return that stays, because that is where the bus is now.
@@ -574,10 +539,9 @@ ok('a bus turning around is drawn once, not as its outbound and its return', () 
 });
 
 ok('the handover never takes the second bus off a line that runs two', () => {
-  // A departure of the other direction inside a run is not always this bus turning: on
-  // the 2 and the 6 the round trip is longer than the headway, so it is the other
-  // vehicle. The rail is the run's last printed timing point -- the 6's return is pinned
-  // through Sindicatos, and the outbound that leaves ten minutes earlier falls before it.
+  // On the 2 and the 6 the round trip is longer than the headway, so a departure of the other
+  // direction inside a run is the other vehicle, not this bus turning. The rail is the last
+  // printed timing point.
   assert.strictEqual(fleetOf(new Date(2026, 7, 19, 9, 15, 0), '2').length, 2, 'line 2 at 09:15');
   assert.strictEqual(fleetOf(new Date(2026, 7, 19, 17, 15, 0), '6').length, 2, 'line 6 at 17:15');
   // The same rail keeps the last run of the day whole: without it the 6's 21:05 return
@@ -587,10 +551,8 @@ ok('the handover never takes the second bus off a line that runs two', () => {
 });
 
 ok('a handover never loses a bus, cuts a printed stretch, or lands outside its run', () => {
-  // The contract of handoverMinutes, over every run of every line on every day: the
-  // marker stops strictly after departure and no later than arrival, never before the
-  // run's last timing point, and at no minute does a line the timetable has on the
-  // road go dark -- when a marker stops, the leg it handed over to is already drawn.
+  // The contract of handoverMinutes over every run: the marker stops after departure and no
+  // later than arrival, never before the last timing point, and no line ever goes dark.
   for (const kind of ['laborable', 'sabado', 'domingo'] as const) {
     for (const line of BUS_LINES) {
       if (!lineRunsOn(line, kind)) continue;
@@ -675,16 +637,9 @@ ok('every arrival states where its time came from', () => {
 });
 
 ok('every published claim is backed by the row that names that stop', () => {
-  // Two conditions, both necessary. The time must be printed, AND it must be printed in
-  // the row for a timing point that resolves to this stop.
-  //
-  // Checking only the first is a test that cannot fail: the headway fallback starts at
-  // line.firstDeparture, which is itself a printed time, so a bogus claim on stop 0 would
-  // match "some time somewhere in the table" and slip through.
-  //
-  // The stop is resolved with the engine's own anchorIndex rather than a second matcher
-  // written here — "Avd. Américas" has to reach "Avda. Américas 36 (Amadeus)", and a
-  // private copy of that rule would drift from the one the engine actually uses.
+  // Printed, AND printed in the row of a timing point that resolves to this stop: the headway
+  // fallback starts at a printed time, so "some time somewhere in the table" cannot fail.
+  // Resolved with the engine's own anchorIndex, so this cannot drift from what ships.
   for (const line of BUS_LINES) {
     for (const kind of ['laborable', 'sabado', 'domingo'] as const) {
       const pattern = line.services.find((p) => p.days.includes(kind));
@@ -834,9 +789,8 @@ ok('named destinations resolve to a well-connected stop', () => {
 });
 
 ok('every quick destination points at a real, distinct place', () => {
-  // Each chip carries a short label and the full name the resolver needs. "Rda. Muralla"
-  // carried Praza Maior's query, so two differently-labelled buttons went to the same
-  // square — invisible while an unresolvable query silently became BUS_STOPS[0].
+  // "Rda. Muralla" once carried Praza Maior's query, so two labelled buttons went to the same
+  // square, invisible while an unresolvable query silently became BUS_STOPS[0].
   const landed = new Map<string, string>();
   for (const { label, query } of QUICK_DESTINATIONS) {
     const resolved = resolveLocationQuery(query);
@@ -852,11 +806,8 @@ ok('every quick destination points at a real, distinct place', () => {
 });
 
 ok('no two landmarks are written at the same point', () => {
-  // "Parque da Milagrosa" and "Avenida da Coruña" both carried 43.0205,-7.5606, so two
-  // places a reader can ask for were one place. The quick-destination check above only
-  // covers the eight on the chips; these 28 are the whole list the search offers, and
-  // they are typed by hand. `pnpm check:landmarks` measures them against OSM, which
-  // needs the network; this only asks that no two of them are literally the same point.
+  // Two landmarks once carried the same point, so two places a reader can ask for were one.
+  // `pnpm check:landmarks` measures them against OSM; this only asks that no two coincide.
   const seen = new Map<string, string>();
   for (const landmark of LUGO_LANDMARKS) {
     const point = `${landmark.lat},${landmark.lng}`;
@@ -867,9 +818,8 @@ ok('no two landmarks are written at the same point', () => {
 });
 
 ok('a place the app does not know resolves to nothing, not to a random stop', () => {
-  // It used to fall back to BUS_STOPS[0] while keeping the typed text as the name, so a
-  // query the app never understood came back as a confident itinerary from somewhere
-  // else entirely.
+  // It used to fall back to BUS_STOPS[0] while keeping the typed text as the name: a query
+  // the app never understood came back as a confident itinerary from somewhere else.
   for (const q of ['<script>', 'zzzzqqqq', 'Puerta del Sol', '!!!!']) {
     assert(resolveLocationQuery(q) === null, `"${q}" resolved to something`);
   }
@@ -880,9 +830,8 @@ ok('a place the app does not know resolves to nothing, not to a random stop', ()
 });
 
 ok('a real corridor plans end to end', () => {
-  // Line 5ES is published as "Fonte dos Ranchos => ... => HULA", so this must resolve.
-  // Pinned: without a time these read the wall clock, so they passed by day and
-  // failed after the last bus. A test that depends on when it runs is not a test.
+  // Line 5ES is published as "Fonte dos Ranchos => ... => HULA". Pinned to a time: read
+  // off the wall clock these passed by day and failed after the last bus.
   const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', {
     now: new Date(2026, 7, 20, 9, 30),
   })[0] ?? null;
@@ -921,9 +870,8 @@ ok('planning two connected stops returns a usable itinerary', () => {
 });
 
 ok('an empty board still says when the next bus is', () => {
-  // "No departures right now" on its own leaves someone at the stop at 03:00 with no
-  // idea whether to wait ten minutes or go home. Every served stop must be able to name
-  // its next departure, however far off — including across a Sunday into Monday.
+  // "No departures right now" leaves someone at the stop at 03:00 with no idea whether to
+  // wait or go home. Every served stop can name its next departure, across a Sunday into Monday.
   const busiest = [...BUS_STOPS].sort((a, b) => b.lines.length - a.lines.length)[0];
   for (const now of [new Date(2026, 7, 21, 3, 15), new Date(2026, 7, 20, 23, 59), new Date(2026, 7, 23, 6, 0)]) {
     const { arrivals } = getArrivalsForStop(busiest.id, now);
@@ -935,9 +883,8 @@ ok('an empty board still says when the next bus is', () => {
 });
 
 ok('a line badge can be read', () => {
-  // The badge is white text on the line's own colour at 10 px, and the number on it is
-  // the one thing a passenger must read at a glance. Five lines used to fail WCAG AA for
-  // small text — line 2 sat at 2.94:1 — which is unreadable in daylight at a stop.
+  // White text on the line colour at 10 px is the one thing a passenger reads at a glance;
+  // five lines used to fail WCAG AA for small text.
   const luminance = (hex: string) => {
     const n = parseInt(hex.slice(1), 16);
     const channel = (v: number) => {
@@ -1069,19 +1016,14 @@ ok('no itinerary rides the same line twice', () => {
 });
 
 ok('an hours-long walk is never the headline suggestion when a bus exists', () => {
-  // Ranking on duration alone made a 168-minute walk to Calde beat a bus 285 minutes
-  // out, because the rural branch runs twice a day. No map app answers "walk for nearly
-  // three hours". The walk stays in the list; it stops leading it.
-  //
-  // The ceiling is 75 minutes, not 45: an hour on foot that beats a five-hour wait is
-  // the honest answer, and hiding it below four bus cards was how the quickest way to
-  // get there became the one option nobody saw.
+  // Ranking on duration alone made a 168-minute walk beat a bus 285 minutes out on a twice-
+  // a-day branch. The walk stays in the list and stops leading it; the ceiling is 75 min,
+  // because an hour on foot that beats a five-hour wait is still the honest answer.
   const now = new Date(2026, 7, 20, 9, 30);
   const served = BUS_STOPS.filter((s) => s.lines.length > 0);
   let checked = 0;
-  // Widened from 500 pairs: allowing a change between two poles a short walk apart
-  // connected most of what used to fall back to walking, so the old sample turned up
-  // only three cases to judge.
+  // Widened from 500 pairs: transfers between two poles a short walk apart connected most
+  // of what used to fall back to walking, so the old sample turned up only three cases.
   for (let i = 0; i < 2000; i++) {
     const a = served[(i * 67) % served.length];
     const b = served[(i * 131 + 17) % served.length];
@@ -1118,9 +1060,8 @@ ok('the options offered are visibly different from each other', () => {
 console.log('\ntranslations');
 
 ok('the three dictionaries have exactly the same shape', () => {
-  // The type already enforces this at compile time. The test catches what the type
-  // cannot: a key present everywhere but left empty, or a function in one language where
-  // another has a plain string.
+  // The type already enforces the shape; this catches what it cannot: a key present
+  // everywhere but empty, or a function in one language where another has a string.
   const walk = (node: unknown, path: string, out: Map<string, string>) => {
     if (typeof node === 'function') out.set(path, 'function');
     else if (Array.isArray(node)) node.forEach((v, i) => walk(v, `${path}[${i}]`, out));
@@ -1148,21 +1089,15 @@ ok('the three dictionaries have exactly the same shape', () => {
 });
 
 ok('the price a trip shows is the one anybody pays', () => {
-  // The planner showed 0,45 € as the cost of the trip. That is the Tarxeta Cidadá price,
-  // and it assumes the reader holds a card issued by Lugo city council -- somebody visiting
-  // pays 0,64 € and the only number on the summary said otherwise. Worse, the detail put
-  // the ordinary fare beside it with a line through it, which is the idiom of a shop sale:
-  // "this price no longer applies". It applies to everyone without the card.
-  //
-  // Same rule as the times. The default is the figure that is true for whoever is reading,
-  // and the better one is offered rather than assumed.
+  // The planner showed 0,45 € (the Tarxeta Cidadá price) as the cost of the trip, with the
+  // 0,64 € a visitor pays struck through beside it. The default is what is true for whoever
+  // is reading; the better fare is offered, never assumed.
   assert(
     FARES.singleTicket > FARES.citizenCard,
     'the ordinary fare is no longer the dearer one, so this check is about the wrong number',
   );
 
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const view = readFileSync(join(root, 'src/components/RoutePlannerView.tsx'), 'utf8');
+  const view = read('src/components/RoutePlannerView.tsx');
 
   // The summary line -- the one figure you see without opening anything -- has to be the
   // ordinary fare. Take the first fare rendered in the file: it is the summary's.
@@ -1181,18 +1116,11 @@ ok('the price a trip shows is the one anybody pays', () => {
 });
 
 ok('the Galician card is called what its own issuer calls it', () => {
-  // The app named one card two ways. The fare cards, transitData.ts, the README and the
-  // source URL all said TMG; the transfer reminder and the FAQ said TPG, in all three
-  // languages -- six strings for a card that does not exist under that name.
-  //
-  // And the expansion disagreed with the acronym it was expanding: "Tarxeta do transporte
-  // público de Galicia (TMG)". Read at tmg.xunta.gal, the issuer writes "Tarxeta TMG" and
-  // "tarxeta do Transporte Metropolitano de Galicia" -- metropolitano, which is where the
-  // M comes from. A price is never inferred here; neither is the name on the card.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // One card named two ways (TMG here, TPG there, in three languages), and the expansion
+  // disagreed with its own acronym. The issuer writes "Transporte Metropolitano de Galicia".
   const files = ['src/i18n/gl.ts', 'src/i18n/es.ts', 'src/i18n/en.ts', 'src/data/transitData.ts', 'README.md'];
   for (const file of files) {
-    const source = readFileSync(join(root, file), 'utf8');
+    const source = read(file);
     assert(!/\bTPG\b/.test(source), `${file} still calls the card TPG; the issuer calls it TMG`);
     assert(
       !/transporte p[úu]blico de Galicia|public transport card \(TMG\)/i.test(source),
@@ -1208,16 +1136,9 @@ ok('the Galician card is called what its own issuer calls it', () => {
 });
 
 ok('every map gets its chrome from the one place that has it', () => {
-  // Three maps draw the same basemap -- the big one, the route map and the stop mini map --
-  // and each built its own furniture. So the "Leaflet |" prefix was dropped in TransitMap
-  // and nowhere else, and the route map and the mini map printed a line the big map had
-  // already decided was too long for a 375 px screen. The same drift gave the route map
-  // scroll-wheel zoom, which on a small map inside a scrolling itinerary means flicking
-  // past it zooms the city instead.
-  //
-  // The prefix now goes in createBasemap, where all three arrive. This is the check that a
-  // fourth map cannot be born with the old line, and that nobody puts it back in a view.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // Three maps built their own furniture, so the "Leaflet |" prefix was dropped in one and
+  // printed by the other two. It lives in createBasemap now; a fourth map cannot be born
+  // with the old line, and nobody puts scroll-wheel zoom back on a small map in a page.
   const mapDir = join(root, 'src/components/Map');
 
   const basemap = readFileSync(join(mapDir, 'basemap.ts'), 'utf8');
@@ -1255,22 +1176,16 @@ ok('every map gets its chrome from the one place that has it', () => {
     );
   }
 
-  // The route map has to still be showing the route after its box changes size. It is
-  // built inside a column that is display:none on a phone until the reader asks for a
-  // plan, and Leaflet's invalidateSize restores the size while leaving the view alone —
-  // so the map kept a zoom worked out for a box that no longer existed. Caught at 375x812
-  // with the trip drawn 118x288 inside a 297x240 map: three of its twenty-nine pieces
-  // were still on screen, and the reader got two streets and a stub of red line.
+  // The route map is built inside a column that is display:none on a phone, and Leaflet's
+  // invalidateSize keeps the zoom worked out for the old box: three of twenty-nine pieces on screen.
   const routeMap = readFileSync(join(mapDir, 'RouteMap.tsx'), 'utf8');
   assert(
     /getBounds\(\)\.contains\(/.test(routeMap),
     'RouteMap no longer checks that the trip is still on the map after a resize',
   );
 
-  // And the zoom these maps fit to. `fitBounds` rounds down to a whole zoom level unless
-  // told otherwise, which on the 297x240 route map drew the trip at 46% of the box and
-  // then jumped to 67% when the reader tapped an unrelated option. The basemap is vector,
-  // so it draws at any zoom; the reason belongs to the basemap and so does the setting.
+  // `fitBounds` rounds down to a whole zoom unless told otherwise: 46% of the box, then 67%
+  // after an unrelated tap. The basemap is vector and draws at any zoom, so it owns the setting.
   assert(
     /map\.options\.zoomSnap = 0/.test(basemap),
     'the basemap no longer turns off whole-level zoom snapping, so fitBounds wastes up to half of every map',
@@ -1285,19 +1200,9 @@ ok('every map gets its chrome from the one place that has it', () => {
 });
 
 ok('the out-of-service banner still fits on two lines', () => {
-  // It was a panel: measured at 162 px on a 375x812, a fifth of the screen, on every tab.
-  // With the search bar and the bottom nav that left 513 px for the screen itself, and the
-  // route planner's form needs 762. It is two truncating lines now, 55 px, and 619 px left
-  // over — but "truncating" is the catch: a longer translation does not wrap and make the
-  // banner taller, it silently cuts the sentence off, which is the failure this app is
-  // least willing to ship on a stop name or on a service notice.
-  //
-  // So the budget is in characters, because that is what a Node test can see. It is not a
-  // guess: measured in the browser at 375 px, the text column is 279 px wide and the small
-  // line renders at about 5.16 px per character, so 54 characters is the edge. The chevron
-  // the component appends costs two of them.
-  //
-  // The bold line carries a time, so it is measured with one in place.
+  // The banner was a 162 px panel on a 375 px phone; it is two truncating lines now, and a
+  // longer translation is cut off rather than wrapped. Measured at 375 px the column takes
+  // 54 characters; the chevron costs two, and the bold line is measured with a time in it.
   const SMALL_LINE = 52; // 54 minus the " ›" appended in App.tsx
   const BOLD_LINE = 42;
 
@@ -1312,9 +1217,8 @@ ok('the out-of-service banner still fits on two lines', () => {
       t.nightBanner.festivals.length <= SMALL_LINE,
       `${lang}: "${t.nightBanner.festivals}" is ${t.nightBanner.festivals.length} characters and the second line fits ${SMALL_LINE}`,
     );
-    // The festival sentence is what keeps "no service" from being a lie on the night of
-    // San Froilán -- the operator runs extra buses and only ever announces them as a
-    // notice. Shortening it is fine; dropping it is not.
+    // The festival sentence keeps "no service" from being a lie on a festival night: extra
+    // buses only ever appear as a notice. Shortening it is fine; dropping it is not.
     assert(
       /festa|fiesta|festival/i.test(t.nightBanner.festivals),
       `${lang}: the banner no longer mentions the festival reinforcements`,
@@ -1323,8 +1227,7 @@ ok('the out-of-service banner still fits on two lines', () => {
 
   // And the row is the link: "see notices" survives as the accessible name of the whole
   // bar rather than as a 44 px row of its own.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const app = readFileSync(join(root, 'src/App.tsx'), 'utf8');
+  const app = read('src/App.tsx');
   assert(
     /nightBanner\.seeNotices/.test(app) && /sr-only[^>]*>\s*\{t\.nightBanner\.seeNotices\}/.test(app),
     'the notices link is no longer the accessible name of the banner row',
@@ -1348,10 +1251,8 @@ ok('no translated string is blank', () => {
 });
 
 ok('every language can plan a trip and gets prose in that language', () => {
-  // The engine writes sentences, so a language it does not know hands back Galician, or
-  // interpolates `undefined` into the instruction. Checking only that the text is
-  // non-empty would pass on an engine that ignores `lang` entirely, so the languages are
-  // compared against each other: the same trip has to read differently in each.
+  // An engine ignoring `lang` would hand back Galician, or interpolate `undefined`, and a
+  // non-empty check would pass on it. The same trip has to read differently in each language.
   const now = new Date(2026, 7, 20, 9, 30);
   const byLang = new Map<string, string>();
 
@@ -1377,13 +1278,9 @@ ok('every language can plan a trip and gets prose in that language', () => {
 });
 
 ok('PRIVACY.md lists every key this app writes to the device', () => {
-  // PRIVACY.md is a promise, and the promise is specific: it names the keys and says what
-  // each one holds. A key that gets added without a row here is the document quietly
-  // becoming false — and the row that matters most is the new one, because a saved trip
-  // is text somebody typed and can be their street, where a stop id is meaningless
-  // without the dataset it indexes into.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const privacy = readFileSync(join(root, 'PRIVACY.md'), 'utf8');
+  // PRIVACY.md names the keys and what each holds; a key added without a row is the document
+  // quietly becoming false, and a saved trip is text somebody typed.
+  const privacy = read('PRIVACY.md');
 
   const written = new Set<string>();
   const walk = (dir: string) => {
@@ -1391,10 +1288,8 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
       else if (/\.tsx?$/.test(entry.name)) {
-        // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, wherever it is written
-        // from -- a hook argument, a module constant, the storage helper -- so the spelling
-        // is what is scanned for, not the call shape, which changes with every refactor.
-        // sessionStorage keys match too: the trip it keeps is where somebody is going.
+        // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, so the spelling is what is
+        // scanned for, not the call shape. sessionStorage keys match too.
         for (const m of readFileSync(full, 'utf8').matchAll(/'(urbanos[-_]lugo[-_][a-z_-]+)'/g)) written.add(m[1]);
       }
     }
@@ -1411,11 +1306,8 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
 });
 
 ok('the trip companion counts stops against the list, and never backwards', () => {
-  // The one piece of the "vou no bus" mode with no equivalent anywhere else, and the one
-  // that can be wrong without looking wrong: a stop counter that slips does not throw, it
-  // shows a plausible number of stops that is not yours. Nothing here is a bus position —
-  // the network publishes none — so this is counting a GPS fix against the plan's own
-  // stop list, and that is exactly what has to be pinned down.
+  // The one piece of the ride mode with no equivalent elsewhere, and the one that can be
+  // wrong without looking wrong: a GPS fix counted against the plan's own stop list.
   const now = new Date(2026, 8, 8, 9, 0, 0);
   const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
   assert(plan, 'no plan to follow');
@@ -1448,13 +1340,8 @@ ok('the trip companion counts stops against the list, and never backwards', () =
   assert(half.stops[0].passed && half.stops[middle].passed, 'the stops behind are not marked');
   assert(!half.stops[half.stops.length - 1].passed, 'the alighting stop is marked before arriving');
 
-  /*
-   * A fix in the middle of nowhere must not walk the count backwards.
-   *
-   * The bus does not stop at every pole and a phone does not report at every one either,
-   * so between stops there is no stop within range. Without carrying what was already
-   * reached, the list would un-tick itself while somebody watched it.
-   */
+  // A fix between stops must not walk the count backwards: the phone does not report at
+  // every pole, so what was already reached is carried, or the list un-ticks itself.
   seen = rememberPassed(half, seen);
   const nowhere = tripProgress(plan, { lat: 43.05, lng: -7.65 }, seen);
   assert(
@@ -1468,16 +1355,8 @@ ok('the trip companion counts stops against the list, and never backwards', () =
   assert(end.stopsRemaining === 0, `${end.stopsRemaining} stops left while standing at the last one`);
   assert(end.metresToAlighting !== null && end.metresToAlighting < AT_STOP_RADIUS_M, 'the distance is wrong at the pole');
 
-  /*
-   * The radius is wider than some of the published gaps, and that is known rather than
-   * tuned away. Ten of the 1,136 consecutive pairs used to be closer than sixty metres;
-   * the tightest read five, and this note called that "a coordinate the operator publishes
-   * at a junction". It was not: it was Monte Segade's pin sitting on the stop before it,
-   * 1.1 km from its pole, and the generator now places it where OpenStreetMap surveys it
-   * (see the check on duplicated pins). Eight remain. What must not happen is the count
-   * growing quietly, which is what widening the radius, or a re-import that moves a
-   * stop, would do.
-   */
+  // The radius is wider than eight of the published gaps, and that is known rather than
+  // tuned away; what must not happen is the count growing quietly after a re-import.
   let tight = 0;
   for (const line of BUS_LINES) {
     for (const direction of line.directions) {
@@ -1490,20 +1369,9 @@ ok('the trip companion counts stops against the list, and never backwards', () =
   }
   assert(tight <= 8, `${tight} consecutive pairs are closer than the ${AT_STOP_RADIUS_M} m radius, up from 8`);
 
-  /*
-   * And the pairs that are NOT consecutive, which the note above never counted.
-   *
-   * Six of the 48 directions double back along their own avenue, so two stops far apart
-   * in the list sit within the radius of each other on the ground: the 4.1 outbound has
-   * stop 20 and stop 29 thirty-eight metres apart, its return has the two Pista Muxa
-   * poles fifteen apart, the 5.2 and 5DS do it on Ramón Ferreiro. The first counter took
-   * the furthest stop in range, so standing at stop 20 ticked 21 to 29 in one go -- and
-   * because a stop once passed stays passed, it never came back: nine stops gone from the
-   * count and the alert nine stops early, on a line people ride every day.
-   *
-   * Every such pair in the dataset is tried here, and at each one the earlier pole must
-   * be the one counted.
-   */
+  // Six directions double back along their own avenue, so two stops far apart in the list
+  // sit within the radius of each other. Taking the furthest in range ticked nine stops at
+  // once; at every such pair the earlier pole must be the one counted.
   let doubledBack = 0;
   for (const line of BUS_LINES) {
     for (const direction of line.directions) {
@@ -1534,12 +1402,9 @@ ok('the trip companion counts stops against the list, and never backwards', () =
 });
 
 ok('the trip companion moves through its phases on fixes alone, rings once a leg, and carries a transfer', () => {
-  // The mode is a cursor over plan.segments driven by GPS fixes. What must hold: nobody
-  // is "on the bus" until the phone has seen them past the pole they boarded at; the
-  // alert rings once per leg and never for the leg being waited for; reaching the end of
-  // the first ride hands the cursor to the second, and walking from one pole to the other
-  // does not hand it back -- judged on distance alone, a fix 70 m from the alighting pole
-  // put the reader back on the bus they had just left.
+  // The mode is a cursor over plan.segments driven by fixes: nobody is on the bus until seen
+  // past the boarding pole, the alert rings once a leg, and a transfer walk does not hand
+  // the cursor back to the bus just left.
   const now = new Date(2026, 8, 8, 9, 0, 0);
   const plan = planTrips('Intercentros Campus Universitario USC', 'Hospital Lucus Augusti (HULA)', { now })[0];
   assert(plan, 'no plan to follow');
@@ -1607,11 +1472,8 @@ ok('the trip companion moves through its phases on fixes alone, rings once a leg
 });
 
 ok('the trip companion asks about a missed bus and answers with the timetable, or with the truth that there is none', () => {
-  // A missed bus is not guessed from the GPS, it is asked: three minutes past the printed
-  // departure with nobody seen moving, and only then. "Yes" ends the question; "no" reads
-  // the next run of that line from that pole -- not a new plan -- and the times on screen
-  // become that run's. When the timetable has nothing left today, the mode says so
-  // instead of printing tomorrow's first departure as if it were tonight's.
+  // A missed bus is asked, not guessed, three minutes past the printed departure; "no" reads
+  // the next run of that line from that pole, and says so when there is none left today.
   const now = new Date(2026, 8, 8, 9, 0, 0);
   const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
   assert(plan, 'no plan to follow');
@@ -1647,11 +1509,8 @@ ok('the trip companion asks about a missed bus and answers with the timetable, o
 });
 
 ok('"Vou nesta" rises to the top in the ten minutes before the bus, and a fix can only keep it down', () => {
-  // The button is always there, and what changes is where.
-  // Ten minutes before the first bus it leads the answer; after the printed time it does
-  // not, because the plan is stale and the replan speaks. The planner's fix is a one-shot
-  // the reader asked for, possibly from home, so it is trusted to say "not at the pole"
-  // and never to say "at the pole" -- and with no fix at all the clock decides alone.
+  // The button is always there; ten minutes before the first bus it leads the answer, and
+  // the planner's one-shot fix can only say "not at the pole", never "at the pole".
   const now = new Date(2026, 8, 8, 9, 0, 0);
   const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
   assert(plan, 'no plan to follow');
@@ -1671,10 +1530,8 @@ ok('"Vou nesta" rises to the top in the ten minutes before the bus, and a fix ca
 });
 
 ok('a trip survives a reload with its lines put back by id, and refuses one it cannot rebuild', () => {
-  // The trip lives in sessionStorage so a locked phone does not end it. A BusLine is the
-  // whole timetable plus both geometries, so the copy carries ids; what comes back has to
-  // be the same plan. And a copy that names a line the dataset no longer has is a trip
-  // from before a rebuild: dropped, not half-rebuilt.
+  // The trip lives in sessionStorage so a locked phone does not end it; lines travel as ids
+  // and a copy naming a line the dataset no longer has is dropped, not half-rebuilt.
   const now = new Date(2026, 8, 8, 9, 0, 0);
   const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
   assert(plan, 'no plan to follow');
@@ -1697,10 +1554,7 @@ ok('a trip survives a reload with its lines put back by id, and refuses one it c
 });
 
 ok('one alert radius, shared by the board and the trip companion', () => {
-  // The board's alarm and the ride's alert are the
-  // same alarm, so there is one radius, one ring and one permission prompt. A second
-  // constant creeping in is the two drifting apart.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // The board's alarm and the ride's alert are one alarm: one radius, one ring, one prompt.
   const src = join(root, 'src');
   const radii: string[] = [];
   const walk = (dir: string) => {
@@ -1722,20 +1576,11 @@ ok('one alert radius, shared by the board and the trip companion', () => {
 });
 
 ok('the answer column spaces its blocks in one place', () => {
-  // Measured down the Ruta result column on a 375x812, the gaps between the six blocks
-  // ran 20, 0, 20, 20, 24 px. Each block carried its own margin -- mb-4 on the notice,
-  // mb-5 on the headline, mt-3 on the folded box, mb-5 twice more, mt-6 on the footer --
-  // and six numbers kept by hand do not stay in step. The alternatives ended up flush
-  // against the box above them, which is the one gap a reader notices.
-  //
-  // The column owns the rhythm now, the way AlertsView and FaresView already do. A block
-  // that brings its own vertical margin back will look right in isolation and put the
-  // column out again, so the class names are what is checked.
-  // Líneas had the same fault and worse: 10, 12, 16, 16 and 20 px between the blocks of
-  // three cards. Both screens are 16 between blocks and 8 from a heading to its content.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // The gaps down the Ruta column ran 20, 0, 20, 20, 24 px because each block carried its
+  // own margin; Líneas ran 10, 12, 16, 16, 20. The column owns the rhythm now, and a block
+  // bringing its own margin back would look right alone and put the column out again.
   for (const file of ['RoutePlannerView.tsx', 'LinesView.tsx']) {
-    const view = readFileSync(join(root, 'src/components', file), 'utf8');
+    const view = read(`src/components/${file}`);
     assert(
       /className="space-y-4 bg-bg/.test(view),
       `${file}: no card declares the rhythm its blocks depend on`,
@@ -1750,14 +1595,9 @@ ok('the answer column spaces its blocks in one place', () => {
 });
 
 ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
-  // Two faults, one cause: the plan used to start at `now` whatever the timetable said.
-  // Asking at 09:00 for a bus at 09:28 produced a 7-minute walk and 21 minutes of
-  // standing, called it a 50-minute journey, and then offered five such journeys that
-  // all arrived at 09:50 — five ways of catching the same 4.2.
-  //
-  // With the departure free to slide, ranking on duration broke the other way: the
-  // shortest ride from Fonte dos Ranchos to HULA is a 22-minute 5ES that leaves at
-  // 14:08, and at 09:00 it led the list. What is compared now is when you get there.
+  // Every plan used to start at `now`: asking at 09:00 for a 09:28 bus gave 21 minutes of
+  // standing and five identical 50-minute journeys. With the departure free to slide, ranking
+  // on duration then led with a 22-minute ride at 14:08; what is compared is when you get there.
   const PAIRS: [string, string][] = [
     ['Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)'],
     ['Praza Maior', 'Campus Universitario'],
@@ -1774,9 +1614,8 @@ ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
           `${from} -> ${to} at ${hour}: leaves ${plan.departureTime}, ${departed} min after the question, but claims ${plan.slackMinutes}`,
         );
 
-        // Standing before the first bus is capped at the margin that exists because the
-        // buses here have no GPS and have been seen running early. Waits *between* buses
-        // are not: once you are in the system you cannot choose to set off later.
+        // Standing before the first bus is capped at the margin that exists because these buses run
+        // early; waits between buses are not: once in the system you cannot set off later.
         const firstBus = plan.segments.findIndex((seg) => seg.type === 'bus');
         if (firstBus > 0 && plan.segments[firstBus - 1].type === 'wait') {
           assert(
@@ -1786,9 +1625,8 @@ ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
         }
       }
 
-      // The option on top has to be the one that gets there first, and the only thing
-      // allowed to arrive before it is a walk that does not beat it by the documented
-      // margin — bus times here are interpolated, so three minutes is not a real lead.
+      // The top option gets there first, and only a walk that beats it by the documented margin
+      // may arrive before it: bus times are interpolated, so three minutes is not a real lead.
       const reach = (p: (typeof plans)[number]) => p.slackMinutes + p.durationMinutes;
       const leader = plans[0];
       for (const plan of plans) {
@@ -1805,15 +1643,9 @@ ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
 });
 
 ok('the itinerary prose does not repeat the figures its own row already shows', () => {
-  // Every step of the itinerary is drawn with a header carrying the clock ("12:18 →
-  // 12:22"), the duration ("4 min") and, for a walk, the distance ("Camiñar ~535 m").
-  // The sentence under it used to say all three again, so one 173 px row showed the
-  // same time twice and the same minutes twice, and the stop name landed three times
-  // across three consecutive rows. Nothing here is a style preference: a figure printed
-  // twice is a figure that can disagree with itself once somebody edits one of them.
-  //
-  // Two rules, both narrow enough that no place name can trip them. No stop name or
-  // pole code contains a clock, and none is followed by a metre word.
+  // Each step's header already shows the clock, the duration and the distance; the sentence
+  // used to repeat all three, and a figure printed twice can disagree with itself. No stop
+  // name contains a clock and none is followed by a metre word, so the rules are safe.
   const now = new Date(2026, 7, 20, 9, 30);
   for (const lang of LANGS) {
     for (const plan of planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now, lang })) {
@@ -1838,14 +1670,9 @@ ok('the itinerary prose does not repeat the figures its own row already shows', 
 });
 
 ok('no translated key is left with nothing reading it', () => {
-  // A dictionary rots the other way round from most code: the UI moves on and the
-  // strings stay, so somebody translates dead text into three languages. Fourteen keys
-  // had already outlived their screens.
-  //
-  // Two access shapes count as a use: `t.<ns>.<key>` in components, and a destructured
-  // `translations(lang).<ns>` followed by `t.<key>` in the engine and serviceLabels.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const dictionary = readFileSync(join(root, 'src/i18n/gl.ts'), 'utf8');
+  // A dictionary rots the other way round: the UI moves on and fourteen keys outlived their
+  // screens. Two access shapes count: `t.<ns>.<key>`, and `translations(lang).<ns>` then `t.<key>`.
+  const dictionary = read('src/i18n/gl.ts');
 
   const keys: { ns: string; key: string }[] = [];
   let ns = '';
@@ -1865,11 +1692,8 @@ ok('no translated key is left with nothing reading it', () => {
     .map((file) => readFileSync(file, 'utf8'))
     .join('\n');
 
-  // Ends on a word boundary, because `includes` answered this before and a key that is
-  // the prefix of another key was shielded by it: `yourPositionAccurate` contains
-  // `yourPosition`, so the dead one read as used and outlived its screen in all three
-  // languages. Both namespace and key are `[a-zA-Z]+` by the parser above, so neither
-  // can carry a regex metacharacter into here.
+  // A word boundary at the end: `includes` let `yourPositionAccurate` shield a dead
+  // `yourPosition`. Both parts are `[a-zA-Z]+`, so no regex metacharacter gets in.
   const used = (haystack: string, namespace: string, key: string) =>
     new RegExp(`\\.${namespace}\\.${key}\\b`).test(haystack) ||
     new RegExp(`\\bt\\.${key}\\b`).test(haystack);
@@ -1891,10 +1715,8 @@ ok('no translated key is left with nothing reading it', () => {
 console.log('\nservice notices');
 
 await okAsync('an unreachable operator page is never reported as "all normal"', async () => {
-  // The sync catches its own network errors, so a failure comes back as a result like
-  // any other. It used to come back as `operational_normal` with "the network is running
-  // completely normally" — so one unreachable minute during the hourly snapshot job
-  // replaced real service notices with a claim nobody had checked.
+  // A failed fetch came back as `operational_normal`, so one unreachable minute during the
+  // hourly job replaced real notices with a claim nobody had checked.
   const realFetch = globalThis.fetch;
   globalThis.fetch = (() => Promise.reject(new Error('offline'))) as typeof fetch;
   try {
@@ -1910,11 +1732,8 @@ await okAsync('an unreachable operator page is never reported as "all normal"', 
 });
 
 await okAsync('a failed read of the operator is not held for half an hour', async () => {
-  // A failure was cached exactly like an answer: one six-second timeout on buslugo.com
-  // and every reader was told for the next thirty minutes that the page could not be
-  // read, with the notices it had replaced gone from the cache. A failure now lasts the
-  // outbound cooldown -- a minute -- and the next caller asks again; an answer still
-  // lasts the half hour. The clock is passed in so this does not have to wait a minute.
+  // A failure was cached like an answer: one timeout told every reader for thirty minutes
+  // that the page could not be read. A failure lasts the outbound cooldown; an answer, the half hour.
   const realFetch = globalThis.fetch;
   const down = (() => Promise.reject(new Error('offline'))) as typeof fetch;
   const up = (async () => new Response('<html><body></body></html>', { status: 200 })) as typeof fetch;
@@ -1935,37 +1754,27 @@ await okAsync('a failed read of the operator is not held for half an hour', asyn
 });
 
 ok('no view renders Galician or Spanish text of its own', () => {
-  // The chip that says HORARIO OFICIAL sat in the markup as a literal rather than
-  // coming from the dictionary, so an English reader was told the time came from the
-  // "HORARIO OFICIAL" — the one label the whole app's credibility rests on. Greps over
-  // the dictionary could not see it, because the string was never in the dictionary.
-  //
-  // Place names are exempt: stop, line and zone names stay in Galician on purpose, and
-  // they arrive as {expressions}, not as text typed into the markup.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // HORARIO OFICIAL sat in the markup as a literal, so an English reader saw it too, and no
+  // grep over the dictionary could see it. Place names are exempt: they arrive as expressions.
   const marked = /(Liñas?|Líneas?|Paradas|Saída|Chegada|Frecuencia|Avisos|Tarifas|Buscar|Amosar|Ocultar|Espera|Percorrido|Traxecto|Trayecto|Marquesiña|Marquesina|Escanear|Aparencia|Apariencia|localización|Camiñar|Conexión|HORARIO OFICIAL|ESTIMADO)/;
 
   const offenders: string[] = [];
   for (const file of listSourceFiles(join(root, 'src'))) {
     // The dictionaries are supposed to be full of Galician and Spanish.
     if (!/\.tsx?$/.test(file) || file.split(sep).includes('i18n')) continue;
-    // So is seo.ts: the structured data a crawler reads is build-time metadata in one
-    // language, not an interface string, and putting it through the dictionary would
-    // imply it changes with the reader's choice. It does not.
+    // So is seo.ts: the structured data is build-time metadata in one language, not an
+    // interface string that follows the reader's choice.
     if (file.endsWith(`${sep}seo.ts`)) continue;
     const source = readFileSync(file, 'utf8');
     source.split(/\r?\n/).forEach((line, i) => {
       // A trailing comment is never rendered; only what is left of the code matters.
       const text = line.replace(/\/\/.*$/, '').trim();
       if (!text || text.startsWith('//') || text.startsWith('*') || text.startsWith('/*')) return;
-      // Template literals count too: the map builds its tooltips and popups as HTML
-      // strings, and two labels hid there for exactly that reason.
-      // JSX text: a line that is words, not an expression, attribute or import.
+      // Template literals count too: the map builds tooltips as HTML strings and two labels hid
+      // there. A JSX text line is words, not an expression, attribute or import.
       const inTemplate = /`[^`]*[A-Za-zÁÉÍÓÚÑ]/.test(text);
-      // Skipping every line with an '=' let one through: the planner showed the GPS
-      // placeholder as Galician prose inside a value={...} attribute. So quoted strings
-      // are also checked on their own. Class names and ids never match a Galician word,
-      // so widening this costs no false positives.
+      // Skipping every line with an '=' let a Galician placeholder through inside value={...},
+      // so quoted strings are checked on their own; class names never match a Galician word.
       const isJsxText = !/^[<{}/]|=|import |const |type |interface /.test(text);
       const quoted = (text.match(/'[^']*'|"[^"]*"/g) ?? []).join(' ');
       if (!marked.test(isJsxText || inTemplate ? text : quoted)) return;
@@ -1983,9 +1792,8 @@ ok('no view renders Galician or Spanish text of its own', () => {
 console.log('\nuntested corners');
 
 ok('a service window that crosses midnight is not read as finished', () => {
-  // isLineInService decides whether the "no service" banner shows. A night line
-  // running 22:30 to 06:30 has a window whose end is numerically before its start,
-  // and the naive comparison calls that "closed all day".
+  // A night line running 22:30 to 06:30 has a window ending before it starts, and the naive
+  // comparison called it closed all day, which is what the "no service" banner reads.
   const night = { firstDeparture: '22:30', lastDeparture: '06:30', services: [{ days: ['laborable'] }] } as any;
   const tuesday = (h: number, m: number) => new Date(2026, 7, 18, h, m);
 
@@ -2020,10 +1828,8 @@ ok('nearby stops come back nearest first, with a walk rather than a straight lin
 });
 
 ok('the walked hops of a plan are real walks, and the last one reaches the destination', () => {
-  // walkHopsOf feeds the pedestrian router. There is at most one hop per bus leg plus
-  // one at the end, but fewer is normal and correct: when the origin resolves to the
-  // boarding stop itself, or a change happens at the same pole, that hop has zero length
-  // and asking a router to walk it would be nonsense.
+  // walkHopsOf feeds the router: at most one hop per bus leg plus the last, and fewer is
+  // right when the origin is the boarding stop or a change happens at the same pole.
   const now = new Date(2026, 7, 20, 9, 30);
   const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now })[0];
   assert(plan, 'no plan to take hops from');
@@ -2046,17 +1852,9 @@ ok('the walked hops of a plan are real walks, and the last one reaches the desti
 });
 
 await okAsync('a walking route asks nobody for anything', async () => {
-  // This used to guard a rate limit. The router it queued for was FOSSGIS's, asked once a
-  // second because that is what they request of anyone using their server, and it was the
-  // reason a walking route had to be a button at all: one end of the first leg is the
-  // reader's own GPS fix, and it went to a third party with their IP attached.
-  //
-  // The app carries the pedestrian network now and routes on the device, so the rate
-  // limit, the queue and the button are all gone with it. What replaces this check is
-  // stronger than what it replaced -- not "asked politely" but "not asked at all". The
-  // regression it guards against is somebody reaching for fetch again, and the file it
-  // defends is PRIVACY.md, which now says your location does not leave the phone even to
-  // draw the walk.
+  // This used to guard a rate limit for a third-party router that received the reader's own
+  // GPS fix. The app routes on the device now; the regression guarded is somebody reaching
+  // for fetch again, and the file defended is PRIVACY.md.
   const realFetch = globalThis.fetch;
   const reached: string[] = [];
   globalThis.fetch = (async (input: unknown) => {
@@ -2095,11 +1893,8 @@ ok('the published-stop count the board quotes matches the data', () => {
 });
 
 ok('no colour is written straight into a class name', () => {
-  // The theme lives in tokens so dark mode and the per-line tints follow one source.
-  // A one-off sweep took 707 fixed-palette classes to zero and nothing stopped them
-  // coming back: three placeholder-slate-400 crept in, invisible to a sweep that only
-  // knew about bg- and text-. This is the ratchet that sweep never had.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // The theme lives in tokens; a sweep took 707 fixed-palette classes to zero and three
+  // crept back, invisible to a sweep that only knew bg- and text-. This is the ratchet.
   const FAMILY = /bg|text|border|ring|fill|stroke|from|via|to|divide|outline|shadow|placeholder/;
   const HUE = /slate|gray|zinc|neutral|stone|blue|sky|indigo|amber|yellow|orange|green|emerald|teal|red|rose|pink|purple|violet/;
   const PALETTE = new RegExp(
@@ -2123,10 +1918,8 @@ ok('no colour is written straight into a class name', () => {
 });
 
 ok('a saved snapshot stops speaking for the present once it is old', () => {
-  // The server path already refuses to round "could not read the page" down to
-  // "everything is fine". The client had its own way in: on static hosting there is
-  // no server, so the notices always come from the committed snapshot, and a stale
-  // one kept asserting "the network is running normally" in the present tense.
+  // On static hosting the notices always come from the committed snapshot, and a stale one
+  // kept asserting "running normally" in the present tense.
   const now = new Date(2026, 7, 25, 12, 0);
   const iso = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * 3600_000).toISOString();
 
@@ -2139,9 +1932,8 @@ ok('a saved snapshot stops speaking for the present once it is old', () => {
 });
 
 ok('the QR count on the map is the number of poles that have one', () => {
-  // The map header read "429 paradas con QR" — every stop in the network — while the
-  // operator publishes a token for 271 of them. poleCode already refuses to invent one,
-  // so the app showed no code on the other 158 while still counting them.
+  // The map header counted every stop as having a QR code while the operator publishes a
+  // token for 271; the count and the claim have to be the same size.
   const withToken = BUS_STOPS.filter((s) => poleCode(s)).length;
   assert(withToken > 0, "no stop has a QR token at all");
   assert(
@@ -2155,16 +1947,9 @@ ok('the QR count on the map is the number of poles that have one', () => {
 });
 
 ok('a pole with no coordinates is recovered only when its token says which pole it is', () => {
-  // Twelve of the operator's 1198 listings arrive with no coordinates, and dropping all
-  // twelve cost line 13's return direction Rda. Muralla 56 (Sindicatos) — fourteen lines
-  // call there. tools/buildDataset.ts puts one of them back, and only one: a live-panel
-  // token is the pole's own identity, so a listing carrying a token that a located pole
-  // already has is that pole listed again, not a new one. The other eleven have either no
-  // token or one nobody shares, and a listing with neither a position nor a known identity
-  // cannot be placed from this source at all.
-  //
-  // Pinned here so a thirteenth is noticed: a scrape that starts dropping coordinates is
-  // a route quietly losing stops, which is the failure this dataset has.
+  // Twelve listings arrive with no coordinates; dropping all twelve cost a fourteen-line pole.
+  // One is recovered because its live-panel token names a located pole; the others cannot be
+  // placed from this source. Pinned so a thirteenth is noticed.
   const raw = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'data/official-raw.json'), 'utf8'));
   const listings = raw.stops as { ps: number; token?: string; coords?: unknown }[];
   assert(listings.length === 1198, `the operator now lists ${listings.length} poles, not 1198`);
@@ -2195,10 +1980,8 @@ ok('a pole with no coordinates is recovered only when its token says which pole 
 });
 
 ok('a name the operator still prints is still findable after merging', () => {
-  // One pole is listed twice by the operator, once with a live-panel token and once
-  // without, sometimes under a different label. Merging them into one stop is right —
-  // they are one pole — but it cost "Opuesto Piscina Pedreiras" its entry until the
-  // other label was kept as an alias.
+  // A pole listed twice by the operator, once with a token and once under another label, is
+  // one stop; merging cost the other label its entry until it was kept as an alias.
   const withAliases = BUS_STOPS.filter((s) => (s.aliases ?? []).length > 0);
   assert(withAliases.length > 0, "no stop carries an alias, so this proves nothing");
   for (const stop of withAliases) {
@@ -2211,9 +1994,7 @@ ok('a name the operator still prints is still findable after merging', () => {
 });
 
 ok('no two stops share a point', () => {
-  // Nine poles shipped as eighteen stops: identical name, identical published
-  // coordinates, two operator ids. Every stop list, zone filter and nearest-stop
-  // search counted them twice.
+  // Nine poles shipped as eighteen stops: same name, same coordinates, two operator ids.
   const seen = new Map<string, string>();
   for (const s of BUS_STOPS) {
     const key = `${s.lat.toFixed(6)},${s.lng.toFixed(6)}`;
@@ -2224,11 +2005,8 @@ ok('no two stops share a point', () => {
 });
 
 ok('a route drawn from a car route says so', () => {
-  // 45 of the 48 directions follow the itinerary surveyed in OpenStreetMap; three are
-  // built from the route a car would take between the stops, which detours where a bus
-  // does not. Drawing those without a word is the map claiming to know something it
-  // does not, so the line page carries a note whenever the direction is not surveyed.
-  // If a rebuild silently turns more routes into car routes, this is where it shows up.
+  // Three directions are built from a car's route between stops, which detours where a bus
+  // does not; the line page says so. A rebuild silently turning more into car routes shows here.
   const bySource = new Map<string, string[]>();
   for (const line of BUS_LINES) {
     for (const d of line.directions) {
@@ -2245,14 +2023,9 @@ ok('a route drawn from a car route says so', () => {
 });
 
 ok('a trip never rides a bus to reach a stop it could have walked to', () => {
-  // Fonte dos Ranchos to HULA used to lead with "line 9, one stop, one minute" after
-  // three minutes waiting -- a ride whose only purpose was reaching Rda. Muralla, a
-  // seven-minute walk away. It happened because the ten nearest stops were all on one
-  // corridor, so the stop that offers nine more lines was never a candidate.
-  //
-  // Two things are pinned. That the one-bus trip exists at all, and that when two
-  // plans take the same time the simpler one leads. A fixed Wednesday midday, because
-  // both the hour and the day of the week change which services run.
+  // Fonte dos Ranchos to HULA led with a one-stop ride whose only purpose was reaching a stop
+  // a seven-minute walk away, because the ten nearest candidates were all on one corridor.
+  // Pinned: the one-bus trip exists, and of two equal plans the simpler leads. Fixed midday.
   const NOON = { now: new Date(2026, 7, 19, 12, 34, 0) };
   const plans = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', NOON);
   assert(plans.length > 0, 'no plan at all from Fonte dos Ranchos to HULA at midday');
@@ -2289,9 +2062,8 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
       const options = planTrips(from.name, to.name, NOON);
       const best = options[0];
       if (!best) continue;
-      // Both sides must actually ride something. A walking plan that ties with a bus
-      // deliberately loses -- see WALK_MUST_BEAT_BUS_BY_MIN -- so it is not a counter-
-      // example to "do not change bus when you need not".
+      // Both sides must ride something: a walk that ties with a bus deliberately loses, so it is
+      // not a counter-example to "do not change bus when you need not".
       const simpler = options.find(
         (p) =>
           p.durationMinutes === best.durationMinutes &&
@@ -2312,21 +2084,9 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
 });
 
 ok('the content security policy still refuses what it was written to refuse', () => {
-  // A CSP erodes one exception at a time, and each one looks reasonable on the day.
-  // Scripts are the ones that matter: the build has no inline script and no wasm, and
-  // the QR scanner uses the browser's own BarcodeDetector, so 'self' is enough and
-  // anything looser means something got added without noticing.
-  // script-src is 'self' plus exactly one SHA-256, and that hash is the theme script the
-  // page inlines. It used to be 'self' alone, with the theme script as a file — which cost
-  // a round trip on the critical path, because the browser would not ask for the entry
-  // chunk until it came back (3760 ms to first paint as a file, 3516 ms inlined, at 6x CPU
-  // on Slow 4G).
-  //
-  // A hash is not a relaxation: it admits one byte sequence and nothing else, which is
-  // narrower than the 'self' beside it, and an injected <script> cannot match it. What it
-  // is vulnerable to is drift, so this does not take the policy's word for the digest — it
-  // recomputes it from the script actually inlined in the built page. A hash that no longer
-  // matches the bytes is a page whose theme script is silently refused.
+  // A CSP erodes one exception at a time. script-src is 'self' plus exactly one SHA-256, the
+  // inlined theme script; a hash admits one byte sequence and what it is vulnerable to is
+  // drift, so the digest is recomputed from the script actually inlined in the built page.
   const script = CSP_HEADER.match(/script-src ([^;]+)/)?.[1] ?? '';
   const hashes = [...script.matchAll(/'(sha256-[A-Za-z0-9+/=]+)'/g)].map((m) => m[1]);
   assert(hashes.length === 1, `script-src carries ${hashes.length} hashes, not exactly 1: "${script.trim()}"`);
@@ -2335,9 +2095,8 @@ ok('the content security policy still refuses what it was written to refuse', ()
     `script-src is "${script.trim()}", not 'self' plus exactly one hash`,
   );
   assert(hashes[0] === THEME_INIT_HASH, 'the policy hash is not the one computed from the theme script');
-  // Spelled out rather than left to the exact match above: a hash and `'unsafe-inline'` are
-  // opposite things, and a browser that sees both ignores the second. Saying so by name
-  // means the failure reads as what it is.
+  // A hash and `'unsafe-inline'` are opposite things, and a browser that sees both ignores
+  // the second; saying so by name makes the failure read as what it is.
   assert(!/unsafe-inline/.test(script), "script-src has taken 'unsafe-inline', which is not what a hash is for");
   assert(
     THEME_INIT_HASH === `sha256-${createHash('sha256').update(THEME_INIT_SOURCE, 'utf8').digest('base64')}`,
@@ -2364,10 +2123,8 @@ ok('the content security policy still refuses what it was written to refuse', ()
     );
   }
 
-  // The map renderer does run a worker, and it is bundled as a same-origin module on
-  // purpose: handed a cross-origin worker URL it wraps the thing in a blob instead, and
-  // the fix for the resulting error looks like adding blob: here. It is not. The fix is
-  // to make the bundler emit the worker again -- see src/components/Map/basemap.ts.
+  // The map renderer runs a worker bundled as a same-origin module; handed a cross-origin URL
+  // it wraps it in a blob, and the fix is to make the bundler emit it again, not `blob:` here.
   const worker = CSP_HEADER.match(/worker-src ([^;]+)/)?.[1] ?? '';
   assert(worker.trim() === "'self'", `worker-src is "${worker.trim()}", not just 'self'`);
   assert(!/unsafe-eval/.test(CSP_HEADER), 'unsafe-eval crept into the policy');
@@ -2388,13 +2145,10 @@ ok('the content security policy still refuses what it was written to refuse', ()
 });
 
 ok('dark is the default, and only a choice is remembered', () => {
-  // The app is read standing at a pole, most often after dark. Two things have to agree on
-  // this: the hook, and the script that runs before the first paint — which used to be
-  // public/theme-init.js and is now inlined from src/security/themeInit.ts, because as a
-  // file it cost a network round trip before the entry chunk was even requested.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const hook = readFileSync(join(root, 'src/hooks/useTheme.ts'), 'utf8');
-  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  // Read standing at a pole after dark: the hook and the pre-paint script have to agree on
+  // dark by default, and the script is inlined because as a file it cost a round trip.
+  const hook = read('src/hooks/useTheme.ts');
+  const html = read('index.html');
 
   assert(/\? stored : 'dark'/.test(hook), 'useTheme no longer falls back to dark');
   assert(
@@ -2418,10 +2172,8 @@ ok('dark is the default, and only a choice is remembered', () => {
 });
 
 ok('the repository URL is written in one place', () => {
-  // Two things break quietly if this is renamed: the "wrong place" link a reader opens
-  // from a stop, and the User-Agent buslugo.com sees. SECURITY.md and the issue config
-  // are prose and may spell it out; shipped code may not.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // Two things break quietly on a rename: the "wrong place" link and the User-Agent buslugo
+  // sees. Prose may spell the URL out; shipped code may not.
   const offenders: string[] = [];
   const walk = (dir: string) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -2446,21 +2198,10 @@ ok('the repository URL is written in one place', () => {
 });
 
 ok('the install-script setting uses the name the pinned pnpm reads', () => {
-  // This has been wrong twice, and both times it failed at install rather than here.
-  //
-  // The setting decides which dependency may run a postinstall -- where a compromised
-  // package runs first, before anything is built or tested. pnpm 9 read it from
-  // package.json's "pnpm" field; pnpm 10 moved it to pnpm-workspace.yaml as
-  // `onlyBuiltDependencies`, a list; pnpm 11 renamed it to `allowBuilds`, a map with an
-  // explicit true or false per package. Writing an older name is neither an error nor a
-  // warning -- the install just stops with ERR_PNPM_IGNORED_BUILDS, which is how the
-  // second one was found: in the repository's first deployment.
-  //
-  // So this asserts the name matches the pinned major, not merely that some name is
-  // present. Parsed by hand rather than with a YAML dependency: both shapes are one flat
-  // block, and an unreadable file fails here instead of passing blind.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  // Wrong twice, and both times it failed at install: pnpm 9 read the setting from
+  // package.json, 10 from pnpm-workspace.yaml as `onlyBuiltDependencies`, 11 as `allowBuilds`,
+  // and an older name simply stops the install. The name has to match the pinned major.
+  const pkg = JSON.parse(read('package.json'));
 
   const pinned = String(pkg.packageManager ?? '');
   assert(/^pnpm@\d/.test(pinned), `packageManager is "${pinned}", not a pinned pnpm`);
@@ -2489,9 +2230,8 @@ ok('the install-script setting uses the name the pinned pnpm reads', () => {
     for (const name of list) decided.set(name, 'true');
   }
 
-  // Every package with a build script must be named. esbuild is the only one in this
-  // tree, and the answer for it is `false`: since 0.25 its platform binary arrives as an
-  // optional dependency and the script only verifies what is already there.
+  // Every package with a build script must be named. esbuild is the only one, and the answer
+  // is `false`: since 0.25 its binary arrives as an optional dependency.
   assert(decided.has('esbuild'), 'esbuild has an install script and no decision recorded for it');
   for (const [name, value] of decided) {
     assert(
@@ -2512,15 +2252,9 @@ ok('the install-script setting uses the name the pinned pnpm reads', () => {
 });
 
 ok('the policy is not sent in development, where it serves a blank page', () => {
-  // Sending the CSP from the dev server blocked Vite's inline React preamble and its
-  // HMR websocket: `pnpm dev` rendered nothing at all and the console said
-  // "@vitejs/plugin-react can't detect preamble". It survived a first look because the
-  // browser had the pre-fix response cached, which is worth remembering next time a fix
-  // appears not to work.
-  //
-  // The header still goes out for `pnpm start`, which is what anybody self-hosting runs.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const server = readFileSync(join(root, 'server.ts'), 'utf8');
+  // The CSP from the dev server blocked Vite's inline preamble and HMR socket: `pnpm dev`
+  // rendered nothing. The header still goes out for `pnpm start`.
+  const server = read('server.ts');
 
   const line = server.split('\n').find((l) => l.includes("setHeader('Content-Security-Policy'"));
   assert(line, 'the server no longer sends a Content-Security-Policy at all');
@@ -2531,24 +2265,18 @@ ok('the policy is not sent in development, where it serves a blank page', () => 
 
   // The page carries its own copy for GitHub Pages, and that one must not reach dev
   // either -- it is injected when building, never written into the source HTML.
-  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const html = read('index.html');
   assert(
     !/Content-Security-Policy/.test(html),
     'index.html has a CSP meta tag again; it applies to `vite dev` and blocks HMR',
   );
-  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  const vite = read('vite.config.ts');
   assert(/apply: 'build'/.test(vite), 'the CSP injector no longer limits itself to builds');
 });
 
 ok('no comment quotes a stop count the dataset no longer has', () => {
-  // Merging nine duplicated poles moved the total from 429 to 417 and left five
-  // comments asserting the old one. Prose in a comment ages exactly like prose in a
-  // README, and nothing was watching this kind.
-  //
-  // Only counts stated about stops are checked, and only in src/: an HTTP 429 in a
-  // retry comment is not a stop count, and a sentence about what a line "used to read"
-  // is history and allowed to quote the old number.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // Merging nine duplicated poles moved the total from 429 to 417 and left five comments
+  // asserting the old one. Only counts about stops in src/ are checked; "used to" is history.
   const total = BUS_STOPS.length;
   const wrong: string[] = [];
 
@@ -2560,15 +2288,12 @@ ok('no comment quotes a stop count the dataset no longer has', () => {
         continue;
       }
       if (!/\.(ts|tsx)$/.test(entry.name)) continue;
-      // Split on either ending: this repository checks out CRLF on Windows, and a
-      // stray carriage return at the end of a line is enough to break "used to" across
-      // the join below and defeat the filter.
+      // Split on either ending: a stray carriage return broke "used to" across the join below.
       const lines = readFileSync(full, 'utf8').split(/\r?\n/);
       lines.forEach((line, i) => {
           if (!/^\s*(\/\/|\*|\/\*)/.test(line)) return;
-          // A sentence wraps, so the marker that makes a quotation history sits a line
-          // or two above the number it introduces — and "used to" can be split across
-          // the wrap, with a comment asterisk landing between the two words.
+          // The marker that makes a quotation history can sit a line or two above the number, with
+          // "used to" split across the wrap and a comment asterisk between the words.
           const sentence = lines
             .slice(Math.max(0, i - 2), i + 1)
             .map((l) => l.replace(/^\s*(\/\/|\*|\/\*\*?)\s?/, ''))
@@ -2593,9 +2318,8 @@ ok('no comment quotes a stop count the dataset no longer has', () => {
 });
 
 ok('a device on the wrong timezone is told, and one on the right one is not', () => {
-  // Every hour on the board comes from Date.getHours(), which is the device's, and every
-  // hour in the timetable is Lugo's. A device an hour out shifts the entire board with
-  // nothing on screen admitting it -- the one failure this app is built not to have.
+  // Every hour on the board is the device's and every hour in the timetable is Lugo's; a
+  // device an hour out shifts the whole board with nothing on screen admitting it.
   const summer = new Date(2026, 6, 15, 12, 0, 0); // July: Lugo is on CEST
   const winter = new Date(2026, 0, 15, 12, 0, 0); // January: CET
   const original = process.env.TZ;
@@ -2626,11 +2350,8 @@ ok('a device on the wrong timezone is told, and one on the right one is not', ()
 });
 
 ok('a code that names no stop resolves to nothing, not to somebody else', () => {
-  // findStop used to fall back to a ranked search when the exact match failed, so a
-  // damaged sticker or a mistyped link produced a real arrival board for the wrong
-  // pole: "../" and "." both came back as As Pedreiras, "-1" as Rda. Muralla 163-164,
-  // "NaN" as Rúa Dinán. Every caller is resolving an identifier, not searching, and a
-  // board that is confidently wrong is worse than one that says it does not know.
+  // findStop fell back to a ranked search, so "../", ".", "-1" and "NaN" each produced a
+  // real board for the wrong pole. Every caller resolves an identifier; none is searching.
   const nonsense = ['../', '..', '/', '.', '', '   ', 'ZZZZ', '0', '-1', 'NaN', 'null', '%', '999999'];
   for (const q of nonsense) {
     const hit = findStop(q);
@@ -2645,9 +2366,8 @@ ok('a code that names no stop resolves to nothing, not to somebody else', () => 
   for (const stop of BUS_STOPS) {
     assert(findStop(stop.id)?.id === stop.id, `id ${stop.id} no longer resolves`);
     if (stop.code) assert(findStop(stop.code)?.id === stop.id, `code ${stop.code} no longer resolves`);
-    // Three names belong to two poles each -- opposite sides of the same road -- so a
-    // name can only ever resolve to one of them. Any stop with that name will do; a
-    // reader who needs a specific pole has its code.
+    // Three names belong to two poles each, so a name resolves to one of them; a reader who
+    // needs a specific pole has its code.
     assert(
       findStop(stop.name)?.name === stop.name,
       `name "${stop.name}" no longer resolves`,
@@ -2659,16 +2379,9 @@ ok('a code that names no stop resolves to nothing, not to somebody else', () => 
 });
 
 ok('a query with nothing left in it matches nothing', () => {
-  // Normalising strips punctuation, so "." and "../" reached the matchers as the empty
-  // string -- and every name in Lugo contains the empty string, and prefix-matches it
-  // at 800 points. A single dot resolved to a real stop with real coordinates.
-  //
-  // The guard fires only when the normalised query is empty, so anything a person
-  // actually types is scored exactly as before. The second half of this test is what
-  // says so: partial names, accents both ways and expanded abbreviations all still find
-  // what they found.
-  // Only the ones that really do normalise to nothing. A hyphen survives, and it
-  // genuinely appears in "N-VI", so it is a substring match and not this bug.
+  // Normalising strips punctuation, so "." and "../" reached the matchers as the empty string,
+  // which prefix-matches every name at 800 points. The guard fires only on an empty query;
+  // everything a person types is scored as before, which the second half checks.
   const empties = ['.', '..', '../', '/', '_', '()', '   ', '...', ','];
   for (const q of empties) {
     assert(normalizeText(q) === '', `"${q}" does not normalise to empty; wrong test case`);
@@ -2690,11 +2403,8 @@ ok('a query with nothing left in it matches nothing', () => {
 });
 
 ok('no source file mixes its line endings', () => {
-  // This repository checks out CRLF on Windows. An edit that inserts a bare "\n" leaves
-  // one LF among hundreds of CRLFs: invisible in an editor, and then a whole-file diff
-  // the next time anything touches it. It has also broken a check in this very suite,
-  // where splitting on "\n" left a carriage return in the middle of a phrase.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // This repository used to check out CRLF on Windows, and one bare "\n" among hundreds of
+  // CRLFs is invisible in an editor and a whole-file diff later; it also broke a check here.
   const mixed: string[] = [];
 
   const walk = (dir: string) => {
@@ -2721,9 +2431,8 @@ ok('no source file mixes its line endings', () => {
 });
 
 ok('the search-engine tags are omitted rather than guessed', () => {
-  // A canonical or a sitemap carrying the wrong origin is worse than having neither: it
-  // sends crawlers to pages that do not exist. So a build with no SITE_URL emits none of
-  // it, and anything that is not a plain https origin is treated as no URL at all.
+  // A canonical or a sitemap with the wrong origin sends crawlers to pages that do not exist,
+  // so a build without SITE_URL emits none, and anything but a plain https origin is no URL.
   for (const bad of [undefined, '', 'not a url', 'ftp://example.com', 'http://example.com', 'javascript:alert(1)']) {
     assert(siteUrl(bad) === null, `"${bad}" was accepted as a site URL`);
   }
@@ -2735,9 +2444,8 @@ ok('the search-engine tags are omitted rather than guessed', () => {
 });
 
 ok('the structured data does not pass this off as the operator', () => {
-  // A crawler reading this should not come away thinking AULUSA or the Concello
-  // publishes it. The app says so on every screen; the machine-readable copy has to
-  // as well, and it is the one nobody looks at.
+  // A crawler reading the structured data must not come away thinking the operator or the
+  // council publishes this; the machine-readable copy is the one nobody looks at.
   const site = 'https://example.org/';
   const data = JSON.parse(structuredData(site));
 
@@ -2763,13 +2471,10 @@ ok('the structured data does not pass this off as the operator', () => {
 });
 
 ok('every tab page has its own title, description and canonical', () => {
-  // The build wrote six copies of index.html, and all seven pages carried the root's
-  // title, description and canonical: to a search engine, one page listed seven times,
-  // and the six copies duplicates of it. Each copy is re-headed from `pageHead` now, and
-  // the root's tags are the anchors that replacement finds -- so index.html has to say
-  // exactly what ROOT_HEAD says, or the copies quietly keep the wrong head.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  // Six copies of index.html carried the root's title, description and canonical: one page
+  // listed seven times. Each copy is re-headed from `pageHead`, whose replacement finds the
+  // root's tags, so index.html has to say exactly what ROOT_HEAD says.
+  const html = read('index.html');
   const site = 'https://example.org/';
   assert(html.includes(`<title>${ROOT_HEAD.title}</title>`), 'index.html <title> is not ROOT_HEAD.title');
   assert(html.includes(`<meta property="og:title" content="${ROOT_HEAD.title}"`), 'og:title is not ROOT_HEAD.title');
@@ -2777,11 +2482,8 @@ ok('every tab page has its own title, description and canonical', () => {
   // The app's own title for the home screen, in Galician, is the same line: a tab strip
   // should read the same before and after the bundle arrives.
   assert(translations('gl').map.documentTitle === ROOT_HEAD.title, 'gl documentTitle drifted from ROOT_HEAD.title');
-  // A crawler that does not run the app sees the document as it arrives, and Bing's site
-  // scan reported it had no <h1>. There is one inside #root before React mounts, hidden
-  // the way the app hides its own, and it says the same thing the title says. Extracted and
-  // compared, not built into a pattern: the title has a "|" in it, and a first version
-  // that spliced it into a RegExp was an alternation that passed on half the heading.
+  // A crawler that does not run the app sees no heading unless one is in the document; it
+  // is extracted and compared, not spliced into a RegExp, because the title carries a "|".
   const staticH1 = html.match(/<div id="root"><h1[^>]*>([^<]*)<\/h1><\/div>/)?.[1];
   assert(staticH1 === ROOT_HEAD.title, `the static <h1> inside #root says ${JSON.stringify(staticH1)}, not ROOT_HEAD.title`);
   // Search Console re-checks its verification tag now and then; a head rewrite that
@@ -2813,32 +2515,27 @@ ok('every tab page has its own title, description and canonical', () => {
   }
 
   // The preview image is injected with the canonical, absolute, and is a file that ships.
-  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  const vite = read('vite.config.ts');
   assert(/og:image" content="\$\{site\}icon-512\.png"/.test(vite), 'the build no longer injects an absolute og:image');
   assert(existsSync(join(root, 'public/icon-512.png')), 'public/icon-512.png is gone, so og:image points at nothing');
 
   // The tabs are links, so a crawler can walk from any copy to the other six, and the
   // address they carry is the one the build writes, slash included.
   for (const file of ['src/components/BottomNav.tsx', 'src/components/SideNav.tsx', 'src/components/MenuDrawer.tsx']) {
-    const source = readFileSync(join(root, file), 'utf8');
+    const source = read(file);
     assert(/<a\s[^>]*\{\.\.\.tabLink\(/.test(source), `${file} no longer renders the tabs as links`);
   }
-  const hook = readFileSync(join(root, 'src/hooks/useTabRoute.ts'), 'utf8');
+  const hook = read('src/hooks/useTabRoute.ts');
   assert(/PATHS\[tab\]\}\/\$\{window\.location\.search\}/.test(hook), 'urlForTab lost the trailing slash, so every shared link 301s again');
 });
 
 ok('every tab has a path, and the sitemap lists exactly those', () => {
-  // The tab routes exist so the back gesture moves between screens instead of leaving
-  // the site. Two things have to stay in step with the hook: the sitemap, which would
-  // otherwise advertise a path that 404s or miss one that works, and the GitHub Pages
-  // fallback, since none of these paths exist as a file on disk.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const hook = readFileSync(join(root, 'src/hooks/useTabRoute.ts'), 'utf8');
+  // The tab routes exist for the back gesture; the sitemap and the Pages fallback have to
+  // stay in step with the hook, or a path 404s or a working one is missing.
+  const hook = read('src/hooks/useTabRoute.ts');
 
-  // The slugs used to be written out twice, here and in the sitemap, and this check
-  // compared the two copies by parsing the hook's source. They are one record now, in
-  // src/routes.ts, so what is left to check is that it still covers every tab and that
-  // the hook reads it rather than growing its own list again.
+  // The slugs were written out twice and compared by parsing the hook's source; they are one
+  // record in src/routes.ts now, so what is left is that the hook reads it and covers every tab.
   const slugs = Object.values(PATHS);
   assert(slugs.length === 6, `${slugs.length} tabs have a path, expected 6: ${slugs.join(', ')}`);
   assert(new Set(slugs).size === slugs.length, `two tabs share a path: ${slugs.join(', ')}`);
@@ -2850,9 +2547,8 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
     assert(SITE_PATHS.includes(slug), `"${slug}" is a tab route but is not in the sitemap`);
   }
 
-  // A side effect inside a state updater is not guaranteed to run once -- React calls
-  // updaters twice in development -- and doing it there pushed the history entry twice,
-  // which cost a back press that appeared to do nothing.
+  // React runs a state updater twice in development, so a pushState inside one pushed the
+  // history entry twice and a back press appeared to do nothing.
   const go = hook.slice(hook.indexOf('const go ='));
   const updater = go.slice(go.indexOf('setTab('));
   assert(
@@ -2860,12 +2556,9 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
     'history.pushState is back inside the state updater, which double-pushes in development',
   );
 
-  // Vite is told to copy the built page to 404.html, and to write one at each tab's own
-  // address. Without the first, a mistyped or old link lands on GitHub's own 404 page
-  // instead of the app; without the second, every path in sitemap.xml answers 404 --
-  // rendering the app, but telling a crawler the page is not there and stopping the
-  // link previews the og: tags exist for.
-  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  // Without 404.html a mistyped link lands on GitHub's own page; without a page per tab every
+  // path in sitemap.xml answers 404 and link previews are skipped.
+  const vite = read('vite.config.ts');
   assert(/404\.html/.test(vite), 'the SPA fallback copy is gone, so tab paths break on GitHub Pages');
   assert(
     /SITE_PATHS/.test(vite),
@@ -2874,13 +2567,9 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
 });
 
 ok('the hand-written notices are dated, not declared current', () => {
-  // Three notices about the city are written into this repository rather than fetched:
-  // the intermodal works, the pedestrianised old town, the fare discounts. They used to
-  // carry the words "obras actuais", "vixente" and "activo" -- a claim about today, made
-  // by a file that cannot know, sitting directly under a block that really is checked
-  // hourly. A review date replaced them, because a date cannot go out of date.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const view = readFileSync(join(root, 'src/components/AlertsView.tsx'), 'utf8');
+  // Three notices about the city are written into the repository; they used to claim
+  // "vixente" and "activo", which a file cannot know. A review date cannot go out of date.
+  const view = read('src/components/AlertsView.tsx');
 
   const stamp = view.match(/NOTICES_REVIEWED_ON = '(\d{4}-\d{2}-\d{2})'/);
   assert(stamp, 'the hand-written notices no longer carry a review date');
@@ -2890,7 +2579,7 @@ ok('the hand-written notices are dated, not declared current', () => {
 
   // And nothing puts a claim back where the component spreads the dictionary in.
   for (const lang of ['gl', 'es', 'en']) {
-    const dict = readFileSync(join(root, `src/i18n/${lang}.ts`), 'utf8');
+    const dict = read(`src/i18n/${lang}.ts`);
     const block = dict.slice(dict.indexOf('notices: ['), dict.indexOf('],', dict.indexOf('notices: [')));
     assert(
       !/\bdate:/.test(block),
@@ -2900,14 +2589,9 @@ ok('the hand-written notices are dated, not declared current', () => {
 });
 
 ok("a notice in the operator’s navigation bar is still a notice", () => {
-  // buslugo.com does not publish incidents as articles or as a feed. It publishes them as
-  // a bell in its top navigation: a red badge with the count, and a msg_list dropdown with
-  // one item each. This is the real markup, taken from the page on 28 Aug 2026, the day it
-  // was carrying "Retenciones en zona Estación Tren" while this app was telling everybody
-  // the network was running normally.
-  //
-  // That is the worst direction for this to fail in. A notice we cannot parse is a missing
-  // warning; silence reported as "todo normal" is a wrong one.
+  // buslugo.com publishes incidents as a bell in its navigation with a msg_list dropdown; this
+  // is the real markup from a day it carried a notice while the app said all was normal.
+  // A notice we cannot parse is a missing warning; silence reported as normal is a wrong one.
   const navMarkup = `
     <li role="presentation" class="dropdown">
       <a href="javascript:;" class="dropdown-toggle info-number" data-toggle="dropdown">
@@ -2939,13 +2623,9 @@ ok("a notice in the operator’s navigation bar is still a notice", () => {
 });
 
 ok("the city's traffic feed is read for closures and diversions, and for nothing else", () => {
-  // The Concello publishes nothing an app can read about roadworks. What it has is press
-  // feeds by tag, and three of them were read until 15 September 2026, when sixty days of
-  // them were audited: the bus tag was ridership records and plan presentations, the works
-  // tag a political statement, and the traffic tag one genuinely useful thing -- the road
-  // closures for a Saturday race -- which would have stayed on screen for two months. So
-  // now it is the traffic tag alone, a headline that announces a closure, a diversion or a
-  // restriction, and a week; the alternative is a bus app announcing a speech.
+  // Sixty days of three council feeds were audited: only the traffic tag carried anything a
+  // passenger could use, and it would have stayed on screen for two months. So: that tag,
+  // a headline announcing a closure, diversion or restriction, and a week.
   const recent = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toUTCString();
   const lastMonth = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toUTCString();
   const ancient = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toUTCString();
@@ -2960,10 +2640,8 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
   assert(wanted.length === 1, `a headline announcing closures yielded ${wanted.length} notices, expected 1`);
   assert(wanted[0].source === 'concello', 'a city notice has to say it came from the city');
 
-  // Free buses for a festival are a service change, and they were the one operational item
-  // the bus tag carried in a year. That tag is no longer read, and the traffic feed's
-  // headlines have to announce a change to the street: this one does not, and so it stays
-  // out rather than the filter growing a word for it.
+  // Free festival buses were the one operational item the bus tag carried in a year; that tag
+  // is not read and a traffic headline has to announce a change to the street.
   const festival = extractConcelloNotices(feed(item('AUTOBUSES GRATUÍTOS PARA O ARDE LUCUS', recent)));
   assert(festival.length === 0, `a headline with no closure in it yielded ${festival.length} notices`);
 
@@ -2974,11 +2652,8 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
   );
   assert(aside.length === 0, `a headline that is not about getting around yielded ${aside.length} notices`);
 
-  // Real, and it reached the screen: the traffic tag carries the council signing an
-  // agreement with the *Jefatura Provincial de Tráfico* about road-safety courses for
-  // schoolchildren. "Tráfico" was in the vocabulary, so a body with the word in its name
-  // read as a condition on the street. Topic words match any council story; only an event
-  // word means something changed for somebody trying to get around.
+  // A road-safety agreement with the traffic authority reached the screen because "tráfico"
+  // was in the vocabulary; only an event word means something changed for getting around.
   const institution = extractConcelloNotices(
     feed(
       item(
@@ -2993,9 +2668,8 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
     `an agreement about road-safety courses yielded ${institution.length} notices`,
   );
 
-  // "Apertura" used to be in the vocabulary, for this headline: the council demanding that
-  // Adif reopen a street. It reached the screen in September 2026 and it is a position,
-  // not a change on the street -- nothing was opened, nothing was closed that day.
+  // "Apertura" was in the vocabulary for a demand that a street be reopened: a position, not
+  // a change on the street.
   const reopening = extractConcelloNotices(
     feed(item('El Ayuntamiento exige a Adif la apertura inmediata al tráfico de la calle Conde Fontao', recent)),
   );
@@ -3008,10 +2682,8 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
   const older = extractConcelloNotices(feed(item('Cortes de tráfico por la carrera del sábado', ancient)));
   assert(older.length === 0, 'a press release from months ago is history, not news');
 
-  // Their body arrives as entity-encoded markup. Stripping tags does nothing to it,
-  // because at that point there are no tags — there is text that looks like tags, and the
-  // reader was shown `&lt;div class=&quot;field field-name-field-entradilla&quot;&gt;` in
-  // a line long enough to push the card off the side of the screen.
+  // The body arrives entity-encoded, so stripping tags does nothing and the reader saw
+  // `&lt;div class=...&gt;` in a line that pushed the card off the screen.
   const encoded = extractConcelloNotices(
     feed(
       item(
@@ -3033,12 +2705,8 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
 });
 
 ok('the Bolaño notice still describes the lines it names', () => {
-  // This is the one hand-written notice that makes a checkable claim: that lines 7, 8, 9
-  // and 12 have their head at Bolaño Ribadeneira. It used to make an unfalsifiable one
-  // beside it -- why the old town was reordered -- with no source recorded anywhere, and
-  // both halves read as equally solid. The half that survived is the half the pipeline
-  // can prove, so prove it: reroute any of the four and this notice becomes a lie that
-  // nothing else in the suite would notice.
+  // The one hand-written notice with a checkable claim: that four lines have their head at
+  // Bolaño Ribadeneira. Reroute any of them and the notice becomes a lie nothing else notices.
   for (const id of ['7', '8', '9', '12']) {
     const line = BUS_LINES.find((l) => l.id === id);
     assert(line, `line ${id} is named in the Bolaño notice but is not in the data`);
@@ -3054,15 +2722,9 @@ ok('the Bolaño notice still describes the lines it names', () => {
 });
 
 ok('a bus whose time has passed stays on the board, marked', () => {
-  // Measured against the operator's tracker at Rda. Muralla 118: a line 1.3 due at 19:18
-  // arrived at 19:23. The board kept it for sixty seconds and then advertised the next
-  // 1.3, ninety minutes out -- so while the bus was three, two and one minute away, the
-  // screen said 88, 87, 86. Whoever was waiting had been told to go home.
-  //
-  // A fixed weekday morning, not the wall clock. The first version of this check asked
-  // for a stop with arrivals "right now", which is true while the buses run and false
-  // after the last one -- and this suite's own weekly job starts at 05:23, before the
-  // first departure, so it would have failed every Monday from the day it was written.
+  // Measured against the operator's tracker: a bus five minutes late dropped off after sixty
+  // seconds and the board advertised the next one, ninety minutes out, while it was three
+  // minutes away. A fixed weekday morning, because the weekly job runs before the first bus.
   const probe = new Date(2026, 7, 19, 9, 0, 0); // a Wednesday, as the rest of this suite uses
 
   const subject = BUS_STOPS.map((s) => ({ stop: s, board: getArrivalsForStop(s.id, probe).arrivals }))
@@ -3095,13 +2757,8 @@ ok('a bus whose time has passed stays on the board, marked', () => {
 });
 
 ok('a line\u2019s trip time comes from the timetable, not from a road model', () => {
-  // The card showed the sum of `legSeconds` -- free-flow driving between consecutive
-  // stops -- under a heading a reader took for the length of the journey: the 1.1 stop
-  // list ran 06:58 to 07:36 and the card beside it said 25 min.
-  //
-  // The property that was broken is simple and does not depend on any particular number:
-  // a bus that stops 39 times cannot do the route faster than a car that never stops.
-  // Measured across all 48 directions the schedule runs 2 to 15 minutes longer, median 7.
+  // The card summed `legSeconds` (free-flow driving) under a heading a reader took for the
+  // journey: a bus that stops 39 times cannot beat a car that never stops.
   for (const line of BUS_LINES) {
     for (const [i, direction] of line.directions.entries()) {
       const scheduled = scheduledDuration(line, i, BUS_STOPS);
@@ -3120,8 +2777,7 @@ ok('a line\u2019s trip time comes from the timetable, not from a road model', ()
 
   // And the card has to be the thing asking. The property above held perfectly well while
   // the view went on summing legSeconds on its own, which is exactly the state found.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const view = readFileSync(join(root, 'src/components/LinesView.tsx'), 'utf8');
+  const view = read('src/components/LinesView.tsx');
   assert(
     /scheduledDuration\(/.test(view),
     'the line card no longer asks the timetable how long the trip takes',
@@ -3133,18 +2789,10 @@ ok('a line\u2019s trip time comes from the timetable, not from a road model', ()
 });
 
 ok('the API is matched case-sensitively, so the rate limiter cannot be walked round', () => {
-  // Express matches routes case-insensitively unless told otherwise, and every path
-  // comparison in the server is written in lower case. That let /api/PLAN reach the
-  // planner while `req.path.startsWith('/plan')` in the limiter saw '/PLAN' and returned
-  // false: measured at 35 of 35 requests served with no 429, against a cut-off at 30 for
-  // the same endpoint spelled in lower case. Four times the CPU an anonymous client can
-  // take on the one endpoint measured at ~24 ms a call.
-  //
-  // The fix is one setting rather than a .toLowerCase() at each comparison, because the
-  // bug was two layers disagreeing about what the path is. Remove the setting and the
-  // disagreement comes back everywhere at once, so this is what is guarded.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const server = readFileSync(join(root, 'server.ts'), 'utf8');
+  // Express matched routes case-insensitively while every path comparison was lower case, so
+  // /api/PLAN reached the planner past the rate limiter: 35 of 35 served, cut-off at 30.
+  // One setting rather than a lowercase at each comparison, so this guards the setting.
+  const server = read('server.ts');
   assert(
     /app\.set\(\s*'case sensitive routing'\s*,\s*true\s*\)/.test(server),
     'case-sensitive routing is off again, so /api/PLAN reaches the planner unlimited',
@@ -3152,7 +2800,7 @@ ok('the API is matched case-sensitively, so the rate limiter cannot be walked ro
 
   // And the setting only helps while the comparisons stay lower case; a mixed-case
   // literal would miss the very requests routing now lets through.
-  const limiter = readFileSync(join(root, 'src/security/rateLimit.ts'), 'utf8');
+  const limiter = read('src/security/rateLimit.ts');
   for (const [, literal] of limiter.matchAll(/req\.path\.startsWith\('([^']+)'\)/g)) {
     assert(
       literal === literal.toLowerCase(),
@@ -3162,14 +2810,8 @@ ok('the API is matched case-sensitively, so the rate limiter cannot be walked ro
 });
 
 ok('the operator’s own stop page is read by class, not by position', () => {
-  // Real markup, taken from info.urbanoslugo.com/qr-demo-paradas/jELq (HULA) at 22:50 on
-  // 30 Aug 2026, with the decorative <svg> paths collapsed and nothing else touched. This
-  // parser had no test at all, and it is the whole of the QR block on the stop board.
-  //
-  // Three things about the real page that a hand-written fixture would not have taught:
-  // an <svg> sits between the classed div and its <p>, so the field cannot be read as the
-  // first child; the line arrives as "L4.2" with a prefix that has to come off; and the
-  // time arrives as "20 min" rather than a bare number.
+  // Real markup from the operator's stop page, decorative <svg> paths collapsed. An <svg> sits
+  // between the classed div and its <p>, the line arrives as "L4.2" and the time as "20 min".
   const block = (line: string, itinerary: string, time: string) => `
     <div class="sae-content-info">
       <div class="sae-content-info-line"> <svg/> <p>${line}</p> </div>
@@ -3195,9 +2837,8 @@ ok('the operator’s own stop page is read by class, not by position', () => {
   assert(parseOperatorTimes('<html><body>Sen saídas</body></html>').length === 0,
     'a page with no blocks produced departures out of nothing');
 
-  // Malformed markup must not hang. The scan was measured at 1.6 s for a megabyte of
-  // unclosed blocks, which is why readCapped exists; this only pins that a quarter of the
-  // ceiling stays well inside a second.
+  // Malformed markup must not hang: the scan was 1.6 s for a megabyte of unclosed blocks,
+  // which is why readCapped exists; a quarter of the ceiling stays well inside a second.
   const started = Date.now();
   parseOperatorTimes('<div class="sae-content-info">'.repeat(4000));
   const spent = Date.now() - started;
@@ -3205,14 +2846,8 @@ ok('the operator’s own stop page is read by class, not by position', () => {
 });
 
 ok('nothing scraped reaches a Leaflet tooltip unescaped', () => {
-  // Leaflet takes HTML, not text. Verified in a browser rather than assumed: binding
-  // 'Rda. <b id="x">Muralla</b>' to a tooltip puts a real <b> element in the DOM.
-  //
-  // escapeHtml exists in the map folder for this, and its own comment says stop names come
-  // from a scrape -- but RouteMap and NearbyMiniMap never imported it, and carried eight
-  // tooltips of scraped names and line numbers straight into innerHTML between them. Three
-  // files had the control and two did not, which is the shape of a control that drifts.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // Leaflet takes HTML, not text: a name with a tag in it puts a real element in the DOM.
+  // Two maps carried scraped names straight into innerHTML while three escaped them.
   const dir = join(root, 'src/components/Map');
   const offenders: string[] = [];
 
@@ -3238,24 +2873,17 @@ ok('nothing scraped reaches a Leaflet tooltip unescaped', () => {
 });
 
 ok('the build compresses its assets and the server hands them over', () => {
-  // Self-hosting put 544 KB of entry chunk on the wire where 116 KB of brotli would do --
-  // four times over, to a phone on mobile data at a bus stop. GitHub Pages compresses on
-  // its own so the published site never had it; `npm start` is the documented way to
-  // self-host and it did.
-  //
-  // The fix is two halves that are useless apart: a build plugin that writes the .br and
-  // .gz, and a middleware that picks one. Either half alone silently does nothing, which
-  // is why they are checked together.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // Self-hosting put 544 KB on the wire where 116 KB of brotli would do. The fix is two
+  // halves useless apart: a build plugin that writes .br/.gz and a middleware that picks one.
 
-  const vite = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  const vite = read('vite.config.ts');
   assert(/emitCompressedAssets/.test(vite), 'the build no longer writes compressed assets');
   assert(
     /brotliCompressSync/.test(vite) && /gzipSync/.test(vite),
     'the build writes only one encoding; a client that takes the other pays full price',
   );
 
-  const server = readFileSync(join(root, 'server.ts'), 'utf8');
+  const server = read('server.ts');
   assert(/Content-Encoding/.test(server), 'the server no longer serves the compressed copy');
   assert(
     /'Vary', 'Accept-Encoding'/.test(server),
@@ -3275,20 +2903,9 @@ ok('the build compresses its assets and the server hands them over', () => {
 });
 
 ok('nothing on the critical path waits for a script over the network', () => {
-  // The theme script has to run before the first paint, so it blocks the parser wherever it
-  // sits. While it was a file that meant a whole round trip of nothing: traced on a
-  // throttled phone, the document finished at 890 ms, theme-init.js ran 954 -> 1538, and
-  // only then was the entry chunk asked for, at 1548.
-  //
-  // Two preload tags ahead of it were the first fix and are gone: once the script is inlined
-  // there is nothing to preload past, and measured against this same build they were 288 ms
-  // *worse* than not having them (3804 ms to first paint with, 3516 ms without, median of
-  // three at 6x CPU on Slow 4G). What replaced both is simply having no external script on
-  // the critical path at all.
-  //
-  // So the property is not "the preloads are above the script" any more. It is that the
-  // browser can reach the entry chunk without waiting for a network round trip first.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // The theme script blocks the parser wherever it sits; as a file it was a whole round trip
+  // before the entry chunk was asked for, and preload tags made it worse. The property is
+  // that the browser reaches the entry chunk without waiting for a network round trip.
   const built = join(root, 'dist', 'index.html');
   // Skipped rather than failed when there is no build, because CI runs the suite first.
   if (!existsSync(built)) return;
@@ -3310,20 +2927,13 @@ ok('nothing on the critical path waits for a script over the network', () => {
 });
 
 ok('the mini map is deferred once, where it cannot be forgotten', () => {
-  // `lazy()` alone defers the chunk until the component renders, which is not the same as
-  // being seen: below lg the stops tab keeps the board mounted behind `hidden`, so on a
-  // phone the board's map was built inside `display: none` on every cold start -- 255 KB
-  // over the wire and about 700 ms of blocked main thread at 6x CPU on Slow 4G, for a
-  // canvas nobody could see, plus a tile request for a map nobody had opened.
-  //
-  // Both screens used to declare their own `lazy()`. A third call site that imported the
-  // map directly would undo all of it and look perfectly ordinary, so the rule is that
-  // only the wrapper names it.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // `lazy()` alone defers the chunk until the component renders, and the board stays mounted
+  // behind `hidden`, so the map was built inside display:none on every cold start. The
+  // deferral lives in one wrapper, and only the wrapper may name the map.
   const wrapper = join('src', 'components', 'Map', 'LazyNearbyMiniMap.tsx');
   const itself = join('src', 'components', 'Map', 'NearbyMiniMap.tsx');
 
-  const lazy = readFileSync(join(root, wrapper), 'utf8');
+  const lazy = read(wrapper);
   assert(/IntersectionObserver/.test(lazy), 'the map no longer waits until it is on screen');
   assert(/h-\[240px\]/.test(lazy), 'the placeholder no longer holds the height the map takes');
 
@@ -3351,12 +2961,8 @@ ok('the mini map is deferred once, where it cannot be forgotten', () => {
 });
 
 ok('src/data holds only what ships, and the build inputs stay out of it', () => {
-  // Four files in src/data were build scaffolding the app never imported: the scrape and
-  // three intermediates, 1.4 MB between them. They cost nothing at runtime, which is why
-  // nobody noticed, but a reader could not tell which of the ten files ship and one
-  // distracted import would have put half a megabyte in the bundle with nothing to catch
-  // it. They live in data/ now.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // Four files in src/data were build scaffolding the app never imported, 1.4 MB one
+  // distracted import away from the bundle. They live in data/ now.
 
   const BUILD_ONLY = ['official-raw.json', 'osm-routes.json', 'routes.json', 'stop-amenities.json'];
   for (const name of BUILD_ONLY) {
@@ -3390,37 +2996,26 @@ ok('src/data holds only what ships, and the build inputs stay out of it', () => 
 });
 
 ok('the address the app calls for /api is the one the policy admits', () => {
-  // Two files decide whether a static build can reach a Worker, and they have to agree:
-  // src/services/apiUrl.ts builds the request URL, src/security/csp.ts adds that origin to
-  // connect-src. Name the variable differently in one of them and the build still
-  // succeeds -- it just fails in the browser, silently on Pages, where nobody is looking
-  // at a console.
-  //
-  // This does not prove the policy is right, only that both halves read the same setting;
-  // proving the rest means building twice, which `pnpm build` does anyway.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // apiUrl.ts builds the request URL and csp.ts admits the origin; name the setting
+  // differently in one and the build succeeds and fails silently in the browser.
   for (const file of ['src/services/apiUrl.ts', 'src/security/csp.ts']) {
     assert(
-      readFileSync(join(root, file), 'utf8').includes('VITE_API_ORIGIN'),
+      read(file).includes('VITE_API_ORIGIN'),
       `${file} no longer reads VITE_API_ORIGIN, so the request and the policy can disagree`,
     );
   }
 
-  // And csp.ts runs in Node, where import.meta.env does not exist. Reading it there would
-  // throw during the build config's own load, before anything else could report it.
-  // Comments stripped first: this file explains that rule in prose, and the first draft
-  // of the check failed on its own explanation.
-  const csp = readFileSync(join(root, 'src/security/csp.ts'), 'utf8')
+  // csp.ts runs in Node, where import.meta.env does not exist. Comments are stripped first:
+  // the first draft of this check failed on its own explanation.
+  const csp = read('src/security/csp.ts')
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '');
   assert(!csp.includes('import.meta.env'), 'csp.ts reads import.meta.env, which is undefined in Node');
 });
 
 ok('a hidden HTML comment does not come out as visible text', () => {
-  // The same `replace(/<[^>]+>/g, '')` lived in five files, and a comment ends at its
-  // first `>` rather than at `-->` — so everything a page author deliberately hid was
-  // being read out as text. Found by code scanning, then reproduced before believing it:
-  // one pass leaves "x --> visible" where this leaves "visible".
+  // `replace(/<[^>]+>/g, '')` lived in five files, and a comment ends at its first `>`, so
+  // everything a page author hid was read out as text. Reproduced before believed.
   assert.strictEqual(plainText('<!-- <p>x</p> --> visible'), 'visible');
   assert.strictEqual(plainText('<script>alert(1)</script>keep'), 'keep');
   assert.strictEqual(plainText('<style>a{}</style>keep'), 'keep');
@@ -3438,19 +3033,16 @@ ok('a hidden HTML comment does not come out as visible text', () => {
 });
 
 ok('"stops near me" answers nothing when you are not near any', () => {
-  // getNearbyStops ranks every stop and returns them all, which is what the planner and
-  // the line lists want. Read as an answer to a person it is nonsense outside Lugo: from
-  // Madrid the first result is Santa Comba, 423 km away, and a list of five stops reads
-  // as five options to anybody who does not check the units.
+  // getNearbyStops ranks every stop, which the planner wants; read as an answer to a person
+  // it is nonsense from Madrid, where the first result is 423 km away.
   const madrid = getNearbyStops(40.4168, -3.7038).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
   assert.strictEqual(madrid.length, 0, 'a phone in Madrid is being offered stops in Lugo');
 
   const coruna = getNearbyStops(43.3623, -8.4115).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
   assert.strictEqual(coruna.length, 0, 'a phone in A Coruña is being offered stops in Lugo');
 
-  // And the limit has to leave the network itself intact, including its loneliest corner.
-  // The widest gap between a stop and its nearest neighbour is about 3.5 km, so standing
-  // at any stop must still find that stop and standing between two must find one of them.
+  // The limit has to leave the network intact: the widest gap between neighbours is about
+  // 3.5 km, so standing at any stop still finds it.
   for (const stop of BUS_STOPS) {
     const here = getNearbyStops(stop.lat, stop.lng).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
     assert(here.length > 0, `standing at ${stop.name} finds no stop within the limit`);
@@ -3458,13 +3050,9 @@ ok('"stops near me" answers nothing when you are not near any', () => {
 });
 
 await okAsync('fifty people at one pole are one request to the operator, not fifty', async () => {
-  // The twenty-second cache only helps once a read has come back. Everything that arrives
-  // while one is still in flight used to miss and open its own connection: measured with
-  // tools/stressHttp.ts, fifty at once on a cold cache were fifty outbound requests, eight
-  // seconds, and a 502 for every one of them.
-  //
-  // That is somebody else's server, and the comment above the cache promises them "one
-  // outbound request a minute however many people are looking". This is that promise.
+  // The cache only helps once a read has come back: fifty requests on a cold cache were fifty
+  // outbound connections and fifty 502s against somebody else's server. This is the promise
+  // of one outbound request a minute however many people are looking.
   const realFetch = globalThis.fetch;
   let calls = 0;
   globalThis.fetch = (async () => {
@@ -3502,11 +3090,8 @@ await okAsync('fifty people at one pole are one request to the operator, not fif
 });
 
 await okAsync('the two servers answer the pole question the same way, and only for poles they know', async () => {
-  // Express and the Deno worker share one decision (src/services/operatorTimesRoute.ts)
-  // so the same code cannot get a 404 from one deployment and a 502 from the other. It
-  // was the one piece of services/ the suite never called; this walks its four answers
-  // with the operator stubbed, and makes sure no request leaves for a code we cannot
-  // resolve -- that is what keeps either server from being a relay for arbitrary codes.
+  // Express and the Deno worker share one decision, so the same code cannot get a 404 from
+  // one and a 502 from the other, and no request leaves for a code we cannot resolve.
   const realFetch = globalThis.fetch;
   const asked: string[] = [];
   // Read through a call: after assert(asked.length === 0) TypeScript narrows the length
@@ -3544,23 +3129,9 @@ await okAsync('the two servers answer the pole question the same way, and only f
 });
 
 ok('the published timing points still anchor as many stops as they can', () => {
-  // Two thirds of the network's passing times are modelled rather than printed, and the
-  // reason is the source, not the code. The operator publishes one table per line for the
-  // whole loop, with two to five timing points in it. So:
-  //
-  //   48 directions have a weekday pattern
-  //   38 of them have two or more printed rows that land on distinct stops of that direction
-  //   18 survive chaining, because the rest pair an outbound row with a return one
-  //
-  // 45 printed rows name no stop of the direction they were printed for, and 43 of those
-  // are genuine -- 1.1/volta runs Rúa Mercadorías to As Pedreiras and never passes
-  // Sindicatos, so the "Sindicatos" row is not its row. A one-edit fuzzy tier on the name
-  // matcher was tried against exactly this measurement and moved 18/48 to 18/48, so it was
-  // reverted rather than kept for the two spellings it did resolve.
-  //
-  // Nothing here can be raised by trying harder; it can only be lowered by a mistake. The
-  // numbers are pinned so that losing an anchor -- which silently turns printed times into
-  // estimates all along a route -- shows up as a failure and not as a quieter app.
+  // Two thirds of the passing times are modelled rather than printed, because the operator
+  // prints one table per loop with two to five timing points: 48 directions, 38 with rows
+  // on distinct stops, 18 surviving chaining. Pinned so a lost anchor shows as a failure.
   let directions = 0;
   let anchored = 0;
   let bracketed = 0;
@@ -3592,14 +3163,9 @@ ok('the published timing points still anchor as many stops as they can', () => {
 });
 
 ok('a line runs on the days the operator says it runs, and on no others', () => {
-  // Sixteen directions produce no expeditions on a Sunday -- 1.1, 1.3, 3.1, 5.1 and the
-  // four variants of the 11, both ways -- and an audit run on a Sunday cannot tell that
-  // apart from buildRuns quietly dropping them. The operator's own sentence settles it:
-  // those eight lines say "De lunes a viernes (laborables)" and the other sixteen say
-  // "Todos los días". So the question is not how many ran, it is whether what we build
-  // matches what the source says, line by line.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const raw = JSON.parse(readFileSync(join(root, 'data/official-raw.json'), 'utf8'));
+  // Sixteen directions run no Sunday expeditions and an audit on a Sunday cannot tell that
+  // from buildRuns dropping them; the operator's own sentence per line settles it.
+  const raw = JSON.parse(read('data/official-raw.json'));
   const source = new Map<string, { days: string }>(
     (raw.lines as { id: string; days: string }[]).map((l) => [l.id, l]),
   );
@@ -3638,18 +3204,10 @@ ok('a line runs on the days the operator says it runs, and on no others', () => 
 });
 
 ok('every stop the operator lists is on the route, or dropped for a stated reason', () => {
-  // The audit reported directions whose two halves differ -- 3.1 33/23, 13 15/7 -- with no
-  // way to tell a genuinely one-way itinerary from stops the build had lost. Rebuilding the
-  // itinerary from the scrape answers it: every stop the operator lists is either kept, or
-  // dropped for one of exactly two reasons, and both are countable.
-  //
-  // It found a real loss. Twelve of the 1198 scraped entries carry no coordinates, and one
-  // of them -- ps 1200, token uilP -- is Rda. Muralla 56 (Sindicatos), where fourteen lines
-  // call. Line 13's return direction had it in the operator's itinerary and not in ours.
-  // buildDataset now recovers a tokened pole; the other eleven have no position and no
-  // token any located pole shares, so they cannot be placed from this source at all.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const raw = JSON.parse(readFileSync(join(root, 'data/official-raw.json'), 'utf8'));
+  // The audit reported directions whose halves differ with no way to tell a one-way itinerary
+  // from lost stops. Rebuilt from the scrape, every listed stop is kept or dropped for one of
+  // two countable reasons; it found a fourteen-line pole missing from line 13's return.
+  const raw = JSON.parse(read('data/official-raw.json'));
   const source = new Map<string, { directions: { stops: number[] }[] }>(
     (raw.lines as { id: string; directions: { stops: number[] }[] }[]).map((l) => [l.id, l]),
   );
@@ -3680,9 +3238,8 @@ ok('every stop the operator lists is on the route, or dropped for a stated reaso
         kept.push(canonical);
       }
 
-      // 5.1's return has its order repaired against the surveyed itinerary, so the built
-      // sequence is a permutation of this one rather than this one. Everywhere else the
-      // two must agree exactly, order included.
+      // 5.1's return has its order repaired against the surveyed itinerary, so the built sequence
+      // is a permutation of the scrape's; everywhere else the two agree exactly.
       const sameSet = kept.length === direction.stops.length && kept.every((id) => direction.stops.includes(id));
       assert(
         sameSet,
@@ -3707,14 +3264,9 @@ ok('every stop the operator lists is on the route, or dropped for a stated reaso
 });
 
 ok('the bounded edit distance agrees with the matrix it replaced', () => {
-  // The fuzzy tier of the search stopped computing a distance and started answering
-  // "within this many edits", which let it skip a pair on a length difference alone and
-  // give up on a row that is already over budget. Both shortcuts are exact, and both are
-  // the kind of exact that is easy to get subtly wrong -- a bound that is one too tight
-  // is a search that quietly stops finding the typo it was written for.
-  //
-  // So: the plain matrix, kept here and nowhere else, checked against the shipped
-  // version over every word of every stop name in the network.
+  // The fuzzy tier answers "within this many edits" and skips on a length gap or an
+  // over-budget row; a bound one too tight quietly stops finding the typo it was written
+  // for. The plain matrix, kept here only, is checked over every word of every stop name.
   const matrix = (a: string, b: string): number => {
     const grid: number[][] = [];
     for (let i = 0; i <= b.length; i++) grid[i] = [i];
@@ -3759,16 +3311,8 @@ ok('the bounded edit distance agrees with the matrix it replaced', () => {
   }
   assert(pairs > 100_000, `only ${pairs} pairs compared, which is not a corpus`);
 
-  // And that it is still answering the bounded question rather than computing a distance.
-  //
-  // A ratio against the matrix above, not a stopwatch: a threshold in milliseconds says
-  // more about the machine running it than about the code, while both halves here do the
-  // same work on the same pairs. The pairs are the shape the app actually asks about --
-  // short words out of stop names against a query somebody has been typing for a while --
-  // because that is where the shortcuts pay: a word cannot be two edits from something
-  // three times its length, and the rows say so within three of them.
-  //
-  // Go back to computing the whole distance and this drops to about one.
+  // And it still answers the bounded question rather than computing a distance: a ratio
+  // against the matrix, not a stopwatch, over the short-word pairs the app actually asks about.
   const time = (run: () => void) => {
     const started = process.hrtime.bigint();
     run();
@@ -3791,15 +3335,8 @@ ok('the bounded edit distance agrees with the matrix it replaced', () => {
 });
 
 ok('a street can be found by any of the names people give it', () => {
-  // The operator writes "Avda. Américas 36". A reader types "Avenida das Américas", or
-  // "Avenida de las Américas", and used to get nothing: the abbreviation was expanded,
-  // the linking words were not, and neither spelling of them is in the data.
-  //
-  // The street types come from counting the dataset, not from guessing. 60 of the 417
-  // stops start with "Avda.", 36 with "Estda." and 10 with "Czda." — and the last two
-  // were missing from the expansion table, so forty-six stops could not be found by
-  // their street type at all. "Rúa" leads 107, more than any other word in the network,
-  // and a Spanish speaker in Lugo types "calle" for it.
+  // "Avenida das Américas" found nothing: the abbreviation was expanded, the linking words
+  // not. The street types come from counting the dataset, and two of them were missing.
   const best = (query: string) =>
     BUS_STOPS.map((s) => ({ s, score: calculateRelevanceScore(s.name, s.code, s.id, query, s.zone) }))
       .filter((r) => r.score > 0)
@@ -3850,9 +3387,8 @@ ok('a street can be found by any of the names people give it', () => {
     'a name made mostly of linking words stopped resolving to itself',
   );
 
-  // A query of nothing but dropped words used to leave the empty string, and every name
-  // contains the empty string: "de" scored all 417 at the word-boundary tier and handed
-  // back six of them at random.
+  // A query of only dropped words used to leave the empty string, which every name contains:
+  // "de" scored all 417 stops and handed back six at random.
   for (const nothing of ['de', 'da', 'de la', 'do', 'linea']) {
     const hit = best(nothing);
     assert(
@@ -3861,9 +3397,8 @@ ok('a street can be found by any of the names people give it', () => {
     );
   }
 
-  // A neighbourhood is how people say where they are, and the stop names do not carry
-  // it: none of the 28 stops in A Piringalla has the word in its name. The stop's zone
-  // is scored below every match on the name itself, so a name still wins.
+  // A neighbourhood is how people say where they are and the stop names do not carry it;
+  // the zone scores below every match on the name itself.
   for (const [area, least] of [['Piringalla', 20], ['O Ceao', 30], ['Campus USC', 20]] as const) {
     const found = BUS_STOPS.filter((s) => calculateRelevanceScore(s.name, s.code, s.id, area, s.zone) > 0);
     assert(found.length >= least, `"${area}" finds ${found.length} stops, expected at least ${least}`);
@@ -3871,10 +3406,8 @@ ok('a street can be found by any of the names people give it', () => {
 });
 
 ok('a line answers to the words people put in front of its number', () => {
-  // A line is stored as a number and its two termini. Nobody types it that way: "linea
-  // 12", "liña 12", "L12" and "bus 12" all returned nothing, because the exact-code test
-  // compares the raw query against "12" and the name has no such word in it. Only the
-  // bare number worked, which is not how anyone asks.
+  // "linea 12", "liña 12", "L12" and "bus 12" all returned nothing: only the bare number
+  // matched the exact-code test.
   for (const line of BUS_LINES) {
     for (const prefix of ['', 'linea ', 'liña ', 'línea ', 'line ', 'bus ', 'L']) {
       const query = `${prefix}${line.number}`;
@@ -3890,10 +3423,8 @@ ok('a line answers to the words people put in front of its number', () => {
 });
 
 ok('the pedestrian network is a graph and not a pile of lines', () => {
-  // Built by tools/buildWalkGraph.ts from what OSM calls a way. The thing that makes it a
-  // graph rather than a drawing is that two ways sharing a node id are joined, and the
-  // way to know that has gone wrong is that the network falls into pieces: a router on a
-  // shattered graph does not fail, it quietly answers "no route" for half the city.
+  // Two ways sharing a node id are joined; a router on a shattered graph does not fail, it
+  // quietly answers "no route" for half the city.
   const raw = readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8');
   const graph = JSON.parse(raw) as { scale: number; junctions: number[]; edges: number[] };
 
@@ -3935,9 +3466,8 @@ ok('the pedestrian network is a graph and not a pile of lines', () => {
   const km = Math.round(metresTotal / 1000);
   assert(km > 1500 && km < 4000, `${km} km of walkable way is not a plausible total for Lugo`);
 
-  // The measured figure when this was written was 98.7% in one piece; the rest are
-  // rural tracks and ends clipped by the bounding box. Well under that means the node
-  // ids stopped joining anything and every route would be a straight line again.
+  // Measured at 98.7% in one piece when written; well under that means the node ids stopped
+  // joining and every route would be a straight line again.
   const seen = new Set<number>([0]);
   const stack = [0];
   while (stack.length) {
@@ -3953,9 +3483,7 @@ ok('the pedestrian network is a graph and not a pile of lines', () => {
 });
 
 await okAsync('the walking router returns a route you could actually walk', async () => {
-  // A* over the graph above. The failure that matters is not "no answer" -- that is
-  // visible -- but a confident answer that is wrong, so these check the shape of it
-  // rather than trusting a single distance.
+  // The failure that matters is a confident wrong answer, so these check its shape.
   const muralla = BUS_STOPS.find((s) => s.name.startsWith('Rda. Muralla 56'))!;
   const ponte = BUS_STOPS.find((s) => s.name.startsWith('A Ponte (cruce'))!;
   const from: [number, number] = [muralla.lat, muralla.lng];
@@ -3964,9 +3492,8 @@ await okAsync('the walking router returns a route you could actually walk', asyn
   const route = await routeOnFoot(from, to);
   assert(route, 'no route between two stops in the middle of Lugo');
 
-  // Nothing on the ground is shorter than the line through it. A route that beats the
-  // crow means the walk was measured over a shortcut that does not exist -- a slice
-  // taken backwards, or an edge counted from the wrong end.
+  // A route shorter than the crow means a slice taken backwards or an edge counted from the
+  // wrong end.
   const straight = metresBetween(from[0], from[1], to[0], to[1]);
   assert(route!.meters >= straight, `${route!.meters} m route over a ${Math.round(straight)} m straight line`);
   // And not absurdly longer. Measured over 410 stop pairs the median detour is x1.35,
@@ -3999,12 +3526,8 @@ await okAsync('the walking router returns a route you could actually walk', asyn
   assert(short, 'no route to a point twenty metres away');
   assert(short!.meters < 120, `${short!.meters} m to walk twenty metres up the same street`);
 
-  // One route is not enough. Checked over a spread of real pairs, because the failure
-  // this catches only showed on endpoints that sit well back from the network -- a stop
-  // in a lay-by on the N-VI is 50 m from the nearest walkable way. The distance left that
-  // ground out of its total while the drawn line included it, so 125 of 2.631 measured
-  // legs reported less than they drew, by up to 101 m, and one answered 55 m for two
-  // points 72 m apart. A walk shorter than the line through it is not a walk.
+  // Checked over a spread of pairs: endpoints well back from the network (a lay-by on the
+  // N-VI) had their approach left out of the total while the drawn line included it.
   let sampled = 0;
   for (let i = 0; i < BUS_STOPS.length; i += 37) {
     for (let j = 11; j < BUS_STOPS.length; j += 53) {
@@ -4035,20 +3558,13 @@ await okAsync('the walking router returns a route you could actually walk', asyn
 });
 
 ok('the three front doors say the same true things', () => {
-  // The Galician README is the whole documentation, near fifteen hundred lines of
-  // measured figures. The Castilian and English ones are deliberately a single screen
-  // each: three copies of every number would be three places for a measurement to go
-  // stale, and this project's whole claim is that its figures are checkable.
-  //
-  // What cannot be in one language only is the honest labelling. So this checks that the
-  // summaries carry the two things a reader is owed whatever they read in — that the app
-  // is not official, and that no time in it is a measurement — and that the counts they
-  // do quote still match the dataset.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  // The Galician README is the whole documentation; the other two are one screen each so a
+  // figure has one place to go stale. What cannot be in one language only is the honest
+  // labelling: not official, no time a measurement, and the counts they quote.
   const doors = ['README.md', 'README.es.md', 'README.en.md'];
 
   for (const door of doors) {
-    const text = readFileSync(join(root, door), 'utf8');
+    const text = read(door);
 
     assert(/Monbus/.test(text) && /Concello de Lugo/.test(text), `${door} does not say who it is not`);
     assert(
@@ -4072,25 +3588,20 @@ ok('the three front doors say the same true things', () => {
   // And each summary has to point at the full document, or it is a dead end rather than
   // a front door.
   for (const door of ['README.es.md', 'README.en.md']) {
-    const text = readFileSync(join(root, door), 'utf8');
+    const text = read(door);
     assert(/\(README\.md\)/.test(text), `${door} does not link to the full README`);
     assert(/\(PRIVACY\.md\)/.test(text), `${door} does not link to the privacy page`);
   }
-  const gl = readFileSync(join(root, 'README.md'), 'utf8');
+  const gl = read('README.md');
   assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
 });
 
 ok('the surfaces seen before the README say "non oficial" first', () => {
-  // A search result, a link preview and the install prompt each show one line, and none
-  // of them shows the README. The meta description opened with "Horarios oficiais" and
-  // the manifest called the app "Bus Lugo" -- the operator's domain -- so the one line a
-  // reader saw was the one the whole README exists to deny. The rule README.md states,
-  // that "non oficial" goes in the description, is held here for the three lines that
-  // carry it; and the meta description stays under 160 characters, past which a search
-  // result cuts it and the word could fall off the end.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const html = readFileSync(join(root, 'index.html'), 'utf8');
-  const config = readFileSync(join(root, 'vite.config.ts'), 'utf8');
+  // A search result, a link preview and the install prompt each show one line and none shows
+  // the README; the description opened with "Horarios oficiais" and the manifest borrowed
+  // the operator's name. "Non oficial" leads, and the description stays under 160 characters.
+  const html = read('index.html');
+  const config = read('vite.config.ts');
   const meta = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? '';
   const og = /<meta property="og:description" content="([^"]*)"/.exec(html)?.[1] ?? '';
   const manifest = /description: '([^']*)'/.exec(config)?.[1] ?? '';
@@ -4105,19 +3616,9 @@ ok('the surfaces seen before the README say "non oficial" first', () => {
 });
 
 await okAsync('no option promises a bus the measured walk cannot reach', async () => {
-  // The plan is built from the estimated walk -- the straight line times 1.35 -- and the
-  // router then measures the pavement. When the walk to the first stop turns out longer
-  // than the cushion the plan handed back as a later departure, setting off in time would
-  // mean setting off before now: the bus is gone, and the arrival on screen is a time
-  // nobody can reach. Measured over 1,015 options with a bus in them, 180 were doing
-  // exactly that and nothing on screen said which.
-  //
-  // Two things answer it, and both are checked here. The planner can be told the walks
-  // that have been measured, so a stop that is really twelve minutes away stops passing
-  // for five *before* the candidates are ranked rather than after -- over 312 questions
-  // that took the unreachable answers from 47 to 5. And whatever survives that is
-  // labelled instead of repaired, because the alternative is printing a time that exists
-  // nowhere.
+  // The plan is built from the estimated walk and the router then measures the pavement;
+  // past the cushion the bus is gone and the arrival on screen is unreachable. The planner
+  // can be told the measured walks before ranking, and whatever survives is labelled.
   const PAIRS: [string, string][] = [
     ['Avenida das Américas', 'Rda. Muralla 56 (Sindicatos)'],
     ['Avenida das Américas', 'Hospital Lucus Augusti (HULA)'],
@@ -4135,9 +3636,8 @@ await okAsync('no option promises a bus the measured walk cannot reach', async (
     const [a, b] = hops[0];
     const route = await routeOnFoot(a, b);
     if (!route) return 0;
-    // What the plan itself allowed. Once a measured walk has been handed to planTrips the
-    // plan is already built on it, and charging the difference again would move a
-    // departure that is already right.
+    // Once a measured walk has been handed to planTrips the plan is built on it, and charging
+    // the difference again would move a departure that is already right.
     const allowed =
       plan.segments[0]?.type === 'walk'
         ? plan.segments[0].durationMinutes
@@ -4181,10 +3681,9 @@ await okAsync('no option promises a bus the measured walk cannot reach', async (
   );
 
   // The other half of the contract: what the retry cannot fix is said, not smoothed over.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   // The screen, the row of alternatives and the arithmetic they share.
   const view = ['RoutePlannerView.tsx', 'planner/TripOptions.tsx', 'planner/walkCorrection.ts']
-    .map((file) => readFileSync(join(root, 'src/components', file), 'utf8'))
+    .map((file) => read(`src/components/${file}`))
     .join('\n');
   assert(
     /arrival: shiftClock\(plan\.arrivalTime, fix\.after\)/.test(view),
@@ -4204,10 +3703,8 @@ await okAsync('no option promises a bus the measured walk cannot reach', async (
 });
 
 await okAsync('walking up a hill costs more than walking down it', async () => {
-  // OpenStreetMap has no elevation, so until the IGN's 5 m model was added to the graph
-  // every walk cost the same in both directions -- and Lugo has the Miño at the bottom of
-  // it and a walled town on top. The climb from the Ponte Romana up to the Praza Maior is
-  // about ninety metres of ascent over the same pavement in either direction.
+  // OpenStreetMap has no elevation; until the IGN model was added every walk cost the same
+  // both ways, and the climb from the river to the old town is about ninety metres.
   const graph = JSON.parse(
     readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8'),
   ) as { junctions: number[]; heights?: number[] };
@@ -4219,9 +3716,8 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
     `${graph.heights!.length} heights for ${junctionCount} junctions`,
   );
 
-  // Delta-coded, like the coordinates. Lugo's lowest ground is the river at about 357 m
-  // and the hills out towards Bóveda reach a little over 700; anything outside that is
-  // not this city, and a height map read wrong puts hills in the wrong places silently.
+  // Delta-coded like the coordinates. Anything outside the city's 357-700 m is a height map
+  // read wrong, which puts hills in the wrong places silently.
   let running = 0;
   let low = Infinity;
   let high = -Infinity;
@@ -4233,11 +3729,8 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
   assert(low > 300 && low < 400, `the lowest junction is at ${low} m`);
   assert(high > 600 && high < 900, `the highest junction is at ${high} m`);
 
-  // The climb charged is the one along the street, not the difference between its ends.
-  // A street that rises and falls between two junctions used to read as flat, and the
-  // edges where that happens are the long ones: 3.169 of the 29.489 hide some climb and
-  // 287 hide ten metres or more. If `up` and `down` ever went back to being derivable
-  // from the two heights, every one of those would silently go flat again.
+  // The climb charged is along the street, not the difference between its ends: 3,169 edges
+  // hide some climb and 287 hide ten metres, and they would all go flat again silently.
   const withAscent = JSON.parse(
     readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8'),
   ) as { edges: number[]; heights: number[]; up?: number[]; down?: number[] };
@@ -4263,11 +3756,8 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
     const climbsDown: number = withAscent.down![edgeIndex];
 
     assert(climbsUp >= 0 && climbsDown >= 0, `edge ${edgeIndex} climbs a negative amount`);
-    // A street that ends higher than it starts has to cost more going up it than coming
-    // down. The two are not exactly the height difference apart -- the profile is filtered
-    // to keep a metre of LiDAR noise from becoming a metre of hill, and filtering forwards
-    // and backwards are not the same operation -- so what is checked is the direction,
-    // over rises big enough for the filter not to be the whole story.
+    // Up must cost more than down over rises big enough for the noise filter not to be the
+    // whole story; the two are not exactly the height difference apart.
     if (Math.abs(rise) >= 5) {
       assert(
         Math.sign(climbsUp - climbsDown) === Math.sign(rise),
@@ -4286,12 +3776,8 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
   const down = await routeOnFoot([praza.lat, praza.lng], [ponte.lat, ponte.lng]);
   assert(up && down, 'no route between the bridge and the square');
 
-  // Not quite the same pavement, and that is the point. Once a climb costs something, the
-  // cheapest way up a hill is not always the cheapest way down it: the router will take a
-  // longer, gentler street uphill, which is what a person does. What would be wrong is a
-  // different trip -- so the two are held within a few per cent of each other rather than
-  // pinned to the metre, which is what this asserted while every edge cost the same in
-  // both directions.
+  // Once a climb costs something the cheapest way up is not the cheapest way down, so the
+  // two are held within a few per cent rather than pinned to the metre.
   const spread = Math.abs(up!.meters - down!.meters) / Math.max(up!.meters, down!.meters);
   assert(spread < 0.1, `${up!.meters} m up against ${down!.meters} m down is a different trip, not a different way up`);
   assert(
@@ -4301,33 +3787,19 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
 });
 
 ok('an itinerary has no minutes belonging to nothing', () => {
-  // A transfer carries a safety buffer -- two minutes on a published connecting time, four
-  // on an estimated one -- so a slightly late bus does not cost the connection. That buffer
-  // is time spent standing at the stop, and it was in the clock but in no segment: a bus
-  // arriving at 16:52 above a wait starting at 16:56, with four minutes belonging to
-  // nothing. 857 of 1.550 planned options had exactly that gap.
-  //
-  // It hid a worse thing. Starting the wait at the buffered minute put its two ends in the
-  // wrong order -- 09:06 to 09:00 -- and the check that walks a plan's timeline reads a
-  // step backwards as midnight, so a transfer whose connecting bus left the NEXT MORNING
-  // came out as a 1.441 minute gap and passed, while the itinerary printed it as a
-  // one-minute change. `buildTransfer` now refuses a wait longer than LONG_WAIT_MIN.
+  // The transfer buffer was in the clock but in no segment: a bus arriving at 16:52 above a
+  // wait starting at 16:56. It hid a worse thing: a wait starting at the buffered minute put
+  // its ends backwards and a next-morning connection passed as a one-minute change.
   const points = [...BUS_STOPS.slice(0, 60).map((s) => s.name), ...LUGO_LANDMARKS.map((l) => l.name)];
   let seed = 987654321;
   const roll = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 
-  // Two fixed clocks rather than whatever time the suite happens to run at.
-  //
-  // This used to call planTrips with the real one, and the third defect it found only
-  // exists in the few minutes before certain departures: measured on one pair, 40 of its
-  // 4.320 options across a day had it. So the check was green almost always and red for
-  // somebody else later, at a minute they could not reproduce. A test that finds a real
-  // bug one run in a hundred is a test that teaches people to re-run it.
+  // Two fixed clocks: read off the real one, the third defect only existed in the minutes
+  // before certain departures, so the check was green almost always and red for somebody else.
   const CLOCKS = [7 * 60 + 32, 13 * 60 + 40];
 
-  // The pair that had it, kept by name: two poles on Rúa Industria where the operator's
-  // timetable puts the bus at both of them in the same minute, so the leg printed
-  // "07:36 -> 07:36" above "1 min" -- a minute in the segment and in no part of the clock.
+  // The pair that had it: two poles the timetable puts the bus at in the same minute, so the
+  // leg printed "07:36 -> 07:36" above "1 min".
   const pairs: [string, string][] = [['Rúa industria (T. Pereira)', 'Rúa Industria (Sum. La Ronda)']];
   for (let i = 0; i < 120; i++) {
     const from = points[Math.floor(roll() * points.length)];
@@ -4372,15 +3844,13 @@ ok('an itinerary has no minutes belonging to nothing', () => {
 console.log('\nbasemap style');
 
 /**
- * The two style files in src/data are generated by tools/buildMapStyle.ts and are the
- * whole design of the map underneath everything else. What follows is the set of claims
- * they make, each of which has been false at some point.
+ * The two style files in src/data are generated by tools/buildMapStyle.ts. What follows is
+ * the set of claims they make, each of which has been false at some point.
  */
 const mapStyles = () => {
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   return {
-    light: JSON.parse(readFileSync(join(root, 'src/data/map-style-light.json'), 'utf8')),
-    dark: JSON.parse(readFileSync(join(root, 'src/data/map-style-dark.json'), 'utf8')),
+    light: JSON.parse(read('src/data/map-style-light.json')),
+    dark: JSON.parse(read('src/data/map-style-dark.json')),
   } as Record<string, { version: number; sprite: string; glyphs: string; sources: Record<string, { attribution?: string }>; layers: { id: string; type: string; paint?: Record<string, unknown> }[] }>;
 };
 
@@ -4420,11 +3890,8 @@ ok('the basemap style is still ours, and still credits who it came from', () => 
 });
 
 ok('no layer asks the sprite for an image it does not have', () => {
-  // The published dark style paints woodland with `fill-pattern: "wood-pattern"` and the
-  // sprite it names has 264 icons and no pattern among them, so every load of the dark
-  // map logged "Image 'wood-pattern' could not be loaded" and the woods came out
-  // unpainted. The generator deletes the property; this is the check that it stays gone,
-  // and that nobody adds a second one by hand.
+  // The published dark style names a sprite pattern the sprite does not have, so every load
+  // logged an error and the woods came out unpainted. The generator deletes it; it stays gone.
   for (const [theme, style] of Object.entries(mapStyles())) {
     for (const layer of style.layers) {
       assert(
@@ -4436,11 +3903,8 @@ ok('no layer asks the sprite for an image it does not have', () => {
 });
 
 ok('the street names fade in both themes, not just the dark one', () => {
-  // The two published styles are not one design with two palettes: dark names its layers
-  // with underscores and positron with hyphens. The adjustment that hides street names
-  // where our own stop labels arrive named only dark's three, so it never once applied to
-  // the light map -- and the runtime `try`/`catch` that forgave a rename upstream forgave
-  // an id that had never existed, in silence, for as long as it shipped.
+  // The two published styles name their layers differently, so the adjustment that hides
+  // street names under our labels applied to the dark map only, forgiven in silence.
   const styles = mapStyles();
   const fades = (theme: string, ids: string[]) => {
     const byId = new Map(styles[theme].layers.map((l) => [l.id, l]));
@@ -4469,23 +3933,9 @@ ok('nothing in the dark basemap competes with the line drawn on top of it', () =
 
   const ground = colour('background', 'background-color');
 
-  /*
-   * The routes are 6 px polylines with no casing, drawn straight onto whatever the
-   * basemap put there, so the only thing keeping a line visible is the gap between its
-   * colour and the street underneath it.
-   *
-   * There used to be no gap. `filter: brightness(2.8)` on the tile pane -- written for
-   * CARTO raster and left behind when the basemap became vector -- multiplied every
-   * colour in the style and not the routes drawn on the overlay pane above it. The
-   * faintest line, the 11, came out at 1,15 against the street it ran along.
-   *
-   * 1,45 is the floor rather than 1,5 because the 11 sits at 1,46 over a minor street and
-   * minor streets are 2,3 px wide at zoom 14. It is dark for a reason of its own -- the
-   * badge is white text at 10 px on that colour and had to clear 4,5:1 -- so the two
-   * requirements pull against each other and this is where they were balanced. If the
-   * basemap ever has to be brighter than this, the lever is a hairline casing under the
-   * route line, not another step here.
-   */
+  // The routes are 6 px polylines with no casing, so only the gap between a line's colour and
+  // the street keeps it visible; a raster-era brightness filter once left the faintest at
+  // 1.15. The floor is 1.45 because the 11 sits at 1.46 and its badge needs 4.5:1 on it.
   for (const street of ['highway_minor', 'highway_major_inner', 'highway_motorway_inner']) {
     const under = colour(street, 'line-color');
     for (const line of BUS_LINES) {
@@ -4517,17 +3967,8 @@ ok('nothing in the dark basemap competes with the line drawn on top of it', () =
 });
 
 ok('the light basemap draws blocks rather than outlines', () => {
-  /*
-   * The light style shipped for one commit as published, on the strength of having
-   * measured the route ink over the streets -- 4,04 at worst, which is fine -- and
-   * nothing else. The ground and the things standing on it had never been compared.
-   *
-   * Published, a building's fill was 1,08 over the ground and its outline 1,24: the
-   * outline separated almost twice as well as the mass did, so every footprint was drawn
-   * as a wireframe and the built-up part of Lugo was the same colour as the fields around
-   * it. Both halves of that are checked here, because the dark map had the identical pair
-   * of defects and only the dark one was fixed.
-   */
+  // Published, a building's fill was 1.08 over the ground and its outline 1.24, so every
+  // footprint was a wireframe and the town was the colour of the fields; both are checked.
   const light = mapStyles().light;
   const byId = new Map(light.layers.map((l) => [l.id, l]));
   const paint = (id: string, property: string): string => {
@@ -4557,12 +3998,9 @@ ok('the light basemap draws blocks rather than outlines', () => {
 });
 
 ok('the basemap is not being amplified behind the palette', () => {
-  // For months the dark map was painted through `filter: brightness(2.8)` on the tile
-  // pane, so the ground the style set to #171a1f reached the screen as #404850 and every
-  // value in the style meant something else. Any filter on that pane puts the palette
-  // back out of reach of the measurements above.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const css = readFileSync(join(root, 'src/index.css'), 'utf8');
+  // For months the dark map was painted through a brightness filter on the tile pane, so
+  // every value in the style meant something else on screen.
+  const css = read('src/index.css');
   const rule = css.match(/\.leaflet-tile-pane\s*\{[^}]*\}/);
   assert(
     !rule || !/filter\s*:/.test(rule[0]),
@@ -4573,12 +4011,9 @@ ok('the basemap is not being amplified behind the palette', () => {
 ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer takes the focus', () => {
   // Three things a screen reader or a keyboard found on 14 September 2026 that no
   // contrast or target measurement could see.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const read = (path: string) => readFileSync(join(root, path), 'utf8');
 
-  // With the menu open, fourteen Tab presses put focus on the QR button behind the
-  // drawer: `aria-modal` hides the page from a screen reader, not from the Tab key. Every
-  // overlay goes through one hook, so the wrap lives there and only there.
+  // With the menu open, fourteen Tab presses put focus on a button behind the drawer:
+  // `aria-modal` hides the page from a screen reader, not from the Tab key.
   const dialog = read('src/hooks/useDialog.ts');
   assert(/event\.key !== 'Tab'/.test(dialog) && /event\.shiftKey/.test(dialog), 'useDialog no longer wraps Tab inside the overlay');
 
@@ -4587,9 +4022,8 @@ ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer take
   const board = read('src/components/StopArrivalsView.tsx');
   assert(!/<ul[^>]*aria-live/.test(board), 'an arrivals list is a live region again');
 
-  // "Calcular ruta" unmounted the button under the focus, which fell to the top of the
-  // document; and with no route the sentence saying so sat in a column hidden behind the
-  // form on a phone. The answer column takes focus after every question, found or not.
+  // "Calcular ruta" unmounted the button under the focus, and the "no route" sentence sat
+  // hidden behind the form on a phone; the answer column takes focus after every question.
   const planner = read('src/components/RoutePlannerView.tsx');
   assert(/ref=\{answerRef\}\s+tabIndex=\{-1\}/.test(planner), 'the answer column can no longer take focus');
   // One reducer holds the rule: answering folds the form and counts the question, and
@@ -4604,8 +4038,6 @@ ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer take
 ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoom changes', () => {
   // measure:browser had four zoom steps at 2,133-4,055 ms of blocked main thread against
   // a budget of 900. Three things, each of which would come back quietly.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const read = (path: string) => readFileSync(join(root, path), 'utf8');
 
   // The map started with line 1.1 chosen -- the lines screen's default, passed through --
   // so a fresh map drew a subject line with its arrows over a choice nobody had made.
@@ -4630,33 +4062,25 @@ ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoo
 });
 
 ok('a page opened before a deploy reloads itself once when a chunk has gone', () => {
-  // The site is rebuilt several times a day for the notices snapshot, and every rebuild
-  // renames the hashed chunks; the service worker drops the old names. A page opened
-  // before that and asked for the map after it fetched a file that no longer existed and
-  // showed "A view failed to render" -- three times in one session on the live site.
-  // Vite raises `vite:preloadError` for exactly this; the page reloads on it, and only
-  // once, so a reload that lands on the same failure surfaces instead of looping.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const main = readFileSync(join(root, 'src/main.tsx'), 'utf8');
+  // Every rebuild renames the hashed chunks and the service worker drops the old names, so a
+  // page opened before a deploy failed to load the map. `vite:preloadError` reloads once.
+  const main = read('src/main.tsx');
   assert(/addEventListener\('vite:preloadError'/.test(main), 'the entry no longer listens for a failed chunk load');
   assert(/location\.reload\(\)/.test(main), 'a failed chunk load no longer reloads the page');
   assert(/sessionStorage\.getItem\(key\) === target\) return/.test(main), 'the reload is no longer limited to once per address');
 });
 
 ok('the letter paints before the search rows do', () => {
-  // The first keystroke scored the whole network and drew the rows in the same render as
-  // the character: 400 ms from key to paint at 6x CPU, 219 of them blocked. The rows are
-  // built from a deferred copy of the query and kept until it changes.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const topBar = readFileSync(join(root, 'src/components/TopBar.tsx'), 'utf8');
+  // The first keystroke scored the network and drew the rows in the same render as the
+  // character; the rows come from a deferred copy of the query and are kept until it changes.
+  const topBar = read('src/components/TopBar.tsx');
   assert(/useDeferredValue\(q\)/.test(topBar) && /useMemo\(\(\) => searchAll\(dq\), \[dq\]\)/.test(topBar), 'the search rows render in the same task as the keystroke again');
 });
 
 // Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which
 // is the kind of figure the front-doors rule exists for and the one nobody re-reads.
 ok('the README quotes the number of checks this file runs', () => {
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const readme = readFileSync(join(root, 'README.md'), 'utf8');
+  const readme = read('README.md');
   const quoted = readme.match(/^(\d+) comprobacións con asercións/m)?.[1];
   assert(quoted === String(checks + 1), `README says ${quoted ?? 'nothing'} checks; this file runs ${checks + 1}`);
 });
