@@ -56,25 +56,21 @@ export const fold = (s: string): string =>
 
 /**
  * One line per kind of problem, however many times it happens, and the first detail
- * seen. `report()` prints them and returns whether there were any.
+ * seen. `report()` prints `clean` when there were none, else every kind, and sets the
+ * exit code.
  */
-export function violations() {
+export function violations(clean: string, noun: string) {
   const seen = new Map<string, string>();
   return {
     fail(kind: string, detail: string) {
       if (!seen.has(kind)) seen.set(kind, detail);
     },
-    get count() {
-      return seen.size;
-    },
-    report(title: string): boolean {
-      if (!seen.size) {
-        console.log(`${title}: no violations`);
-        return false;
-      }
-      console.error(`${title}: ${seen.size} kind(s) of violation`);
-      for (const [kind, detail] of seen) console.error(`  ${kind}\n      first seen: ${detail}`);
-      return true;
+    report(): void {
+      if (!seen.size) return console.log(`${clean}\n`);
+      console.log(`\n${seen.size} kind(s) of ${noun}:\n`);
+      for (const [kind, detail] of seen) console.log(`  ${kind}\n      first seen: ${detail}`);
+      console.log('');
+      process.exitCode = 1;
     },
   };
 }
