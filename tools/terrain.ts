@@ -1,39 +1,19 @@
 /**
- * How high the ground is, from the best measurement of it that exists for Spain.
- *
- * OpenStreetMap has no elevation, so the walking router knows the path and not the climb
- * — and Lugo has the Miño at the bottom of it and a walled hill on top. A route that is
- * right about the pavement and silent about the slope is still wrong about the time.
- *
- * The source is the IGN's **MDT05**: the national terrain model at a 5 m grid, derived
- * from the airborne LiDAR of the PNOA programme, served as INSPIRE WCS coverages at
- * `servicios.idee.es/wcs-inspire/mdt`. The first version of this file read the Terrarium
- * tiles on AWS instead, which are about 28 m a pixel over Spain and are a global
- * composite; asking the national mapping agency for its own LiDAR is five times finer and
- * is what the data is actually for. It costs more requests, and they are spaced out.
- *
- * Coverages come back as uncompressed 16-bit TIFF, single sample, which is the simplest
- * shape a TIFF has. Decoding it here rather than from a package is seventy lines for one
- * known shape, against a dependency that ships a full raster stack to read some tiles at
- * build time.
+ * How high the ground is, from the IGN's MDT05: the national 5 m terrain model, from the
+ * PNOA LiDAR, served as INSPIRE WCS coverages. Five times finer than the global Terrarium
+ * tiles this first read. Coverages come back as uncompressed 16-bit single-sample TIFF,
+ * the simplest shape a TIFF has, so it is decoded here in seventy lines rather than by a
+ * raster stack pulled in to read a few tiles at build time.
  */
 
 /** The IGN's 5 m model, in ETRS89 geographic coordinates. */
 export const COVERAGE = 'Elevacion4258_5';
 const WCS = 'https://servicios.idee.es/wcs-inspire/mdt';
 
-/**
- * How much ground one request asks for.
- *
- * 0,01° is about 1,1 km north to south and 0,8 km east to west here, and comes back as
- * 222x222 pixels and 99 KB — a comfortable size to ask for and to keep. Bigger cells mean
- * fewer, heavier requests; this is small enough that a cell nobody walks in is never
- * fetched at all.
- */
+/** One request: 0,01° is about 1,1 x 0,8 km here, 222x222 pixels and 99 KB. Small enough that a cell nobody walks in is never fetched. */
 export const CELL = 0.01;
 
-export const cellKey = (lat: number, lng: number) =>
-  `${Math.floor(lat / CELL)}_${Math.floor(lng / CELL)}`;
+export const cellKey = (lat: number, lng: number) => `${Math.floor(lat / CELL)}_${Math.floor(lng / CELL)}`;
 
 export function cellUrl(key: string): string {
   const [latIndex, lngIndex] = key.split('_').map(Number);
