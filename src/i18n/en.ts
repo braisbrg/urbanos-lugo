@@ -27,7 +27,6 @@ export const en: Dict = {
     fares: 'Fares and information',
     language: 'Language',
     theme: 'Appearance',
-    themeAuto: 'Automatic',
     themeAutoShort: 'Auto',
     themeLight: 'Light',
     themeDark: 'Dark',
@@ -520,6 +519,8 @@ export const en: Dict = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `Line ${line} does not run today (${days}).`,
+    serviceOverToday: (last: string, first: string) =>
+      `Service is over for today (last departure at ${last}). First departure at ${first}.`,
     transferAt: (stop: string, line: string) =>
       `Change at "${stop}" to Line ${line}. Free within 75 minutes with the Tarxeta Cidadá.`,
     waitAt: (stop: string, line: string, to: string) => `At "${stop}". Line ${line} towards ${to}.`,

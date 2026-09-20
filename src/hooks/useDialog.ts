@@ -1,28 +1,10 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * The keyboard half of an overlay.
- *
- * The menu, the QR scanner and the favourites panel all cover the page, and all three
- * were plain `<div>`s: no Escape, no announced role, and focus left sitting on whatever
- * was behind them. Someone on a keyboard could open the menu and then have to tab
- * forward through the whole page to reach its close button; a screen reader would read
- * straight past it into content it was covering.
- *
- * This gives them the four things that fixes:
- *
- * - **Escape closes.** The one shortcut everybody already knows.
- * - **Focus moves in** on open, so the next Tab lands inside the overlay.
- * - **Focus stays in.** Tab past the last control wraps to the first, and Shift+Tab
- *   the other way. Without this, `aria-modal` hid the page from a screen reader while
- *   the keyboard walked straight out into it: with the menu open, fourteen presses put
- *   focus on the QR button behind the drawer, still open, and Enter would have opened
- *   the scanner on top of it.
- * - **Focus returns** to whatever opened it on close, so the reader is put back where
- *   they were rather than at the top of the document.
- *
- * The container also needs `role="dialog"` and `aria-modal="true"` — those are markup,
- * so they stay at each call site where they are visible next to the label.
+ * The keyboard half of an overlay: Escape closes, focus moves in on open, Tab wraps
+ * inside, and focus returns to the opener on close. Without the trap, `aria-modal` hid
+ * the page from a screen reader while the keyboard walked straight out into it.
+ * The container still needs `role="dialog"` and `aria-modal="true"` in the markup.
  */
 export function useDialog(open: boolean, onClose: () => void) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,20 +12,13 @@ export function useDialog(open: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!open) return;
-
     openerRef.current = document.activeElement;
 
-    // What the keyboard can reach inside, in document order. Visible only: the map's
-    // control sheet keeps parts of itself `hidden` by breakpoint, and a scrim with
-    // `tabIndex={-1}` is for the pointer, not the Tab key.
+    // Visible only: the map's sheet keeps parts of itself `hidden` by breakpoint.
     const focusables = () =>
-      [
-        ...(containerRef.current?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]',
-        ) ?? []),
-      ].filter((el) => el.tabIndex >= 0 && !el.matches(':disabled') && el.getClientRects().length > 0);
-
-    // The first thing inside that can take focus.
+      [...(containerRef.current?.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]') ?? [])].filter(
+        (el) => el.tabIndex >= 0 && !el.matches(':disabled') && el.getClientRects().length > 0,
+      );
     focusables()[0]?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -66,8 +41,7 @@ export function useDialog(open: boolean, onClose: () => void) {
 
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      // Only steal focus back if it is still inside the overlay being torn down —
-      // otherwise a click elsewhere would get yanked away from wherever it landed.
+      // Only take focus back if it is still inside the overlay being torn down.
       const active = document.activeElement;
       if (!active || active === document.body || containerRef.current?.contains(active)) {
         (openerRef.current as HTMLElement | null)?.focus?.();

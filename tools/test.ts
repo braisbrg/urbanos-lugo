@@ -12,8 +12,7 @@ import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { scheduledDuration } from '../src/utils/schedule';
-import { operatorTimesForStop, parseOperatorTimes } from '../src/services/operatorTimes';
-import { operatorTimesResponse } from '../src/services/operatorTimesRoute';
+import { operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
@@ -62,7 +61,7 @@ import {
   anchorIndex,
   isLineInService,
 } from '../src/utils/schedule';
-import { planTrips, planSmartTrip, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
+import { planTrips, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
 import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
 import { getScheduledBuses } from '../src/utils/vehicles';
@@ -778,7 +777,7 @@ ok('only real timing points are called published', () => {
 });
 
 ok('a planned trip states the provenance of every bus leg', () => {
-  const plan = planSmartTrip('Fonte dos Ranchos', 'HULA', { now: new Date(2026, 7, 19, 13, 30, 0) });
+  const plan = planTrips('Fonte dos Ranchos', 'HULA', { now: new Date(2026, 7, 19, 13, 30, 0) })[0] ?? null;
   assert(plan, 'no plan returned');
   for (const segment of plan!.segments) {
     if (segment.type !== 'bus') continue;
@@ -884,9 +883,9 @@ ok('a real corridor plans end to end', () => {
   // Line 5ES is published as "Fonte dos Ranchos => ... => HULA", so this must resolve.
   // Pinned: without a time these read the wall clock, so they passed by day and
   // failed after the last bus. A test that depends on when it runs is not a test.
-  const plan = planSmartTrip('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', {
+  const plan = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', {
     now: new Date(2026, 7, 20, 9, 30),
-  });
+  })[0] ?? null;
   assert(plan, 'no plan for Fonte dos Ranchos -> HULA, a corridor a single line covers');
   assert(plan!.durationMinutes > 0 && plan!.durationMinutes < 240, `implausible duration: ${plan!.durationMinutes} min`);
 });
@@ -911,7 +910,7 @@ ok('planning two connected stops returns a usable itinerary', () => {
   const from = busiest.id;
   const to = dir.stops[dir.stops.indexOf(busiest.id) + 3];
 
-  const plan = planSmartTrip(from, to, { now: new Date(2026, 7, 20, 9, 30) });
+  const plan = planTrips(from, to, { now: new Date(2026, 7, 20, 9, 30) })[0] ?? null;
   assert(plan, 'no plan returned for two stops on the same line');
   assert(plan!.segments.length > 0, 'empty plan');
   assert(plan!.durationMinutes > 0, 'zero-length trip');
@@ -1392,14 +1391,11 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
       else if (/\.tsx?$/.test(entry.name)) {
-        const source = readFileSync(full, 'utf8');
-        // sessionStorage too: it dies with the tab, but it is still the device keeping
-        // something, and the trip it keeps is where somebody is going.
-        for (const m of source.matchAll(/(?:local|session)Storage\.(?:setItem|removeItem)\(\s*(?:KEY|storageKey|'([^']+)')/g)) {
-          if (m[1]) written.add(m[1]);
-        }
-        // Keys held in a module constant, which is the shape the hooks use.
-        for (const m of source.matchAll(/^const (?:KEY|storageKey) = '([^']+)';/gm)) written.add(m[1]);
+        // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, wherever it is written
+        // from -- a hook argument, a module constant, the storage helper -- so the spelling
+        // is what is scanned for, not the call shape, which changes with every refactor.
+        // sessionStorage keys match too: the trip it keeps is where somebody is going.
+        for (const m of readFileSync(full, 'utf8').matchAll(/'(urbanos[-_]lugo[-_][a-z_-]+)'/g)) written.add(m[1]);
       }
     }
   };
@@ -2400,18 +2396,17 @@ ok('dark is the default, and only a choice is remembered', () => {
   const hook = readFileSync(join(root, 'src/hooks/useTheme.ts'), 'utf8');
   const html = readFileSync(join(root, 'index.html'), 'utf8');
 
-  assert(/return 'dark';/.test(hook), 'useTheme no longer falls back to dark');
+  assert(/\? stored : 'dark'/.test(hook), 'useTheme no longer falls back to dark');
   assert(
-    /if \(next === 'dark'\) localStorage.removeItem/.test(hook),
+    /next === 'dark' \? null : next/.test(hook),
     'the default is being written to storage, so clearing site data would not return to it',
   );
   assert(/class="dark"/.test(html), 'index.html no longer ships the dark class');
 
-  // Both read the same key, and nothing catches it if one of them changes.
-  const key = hook.match(/const KEY = '([^']+)'/)?.[1];
-  assert(key, 'useTheme has no storage key');
-  assert(THEME_INIT_SOURCE.includes(`'${key}'`), `the pre-paint theme script does not read ${key}`);
-  assert(key === THEME_STORAGE_KEY, `useTheme reads ${key} and themeInit.ts names ${THEME_STORAGE_KEY}`);
+  // Both read the same key: the hook imports the one themeInit.ts names, and nothing
+  // catches it if either stops.
+  assert(/THEME_STORAGE_KEY/.test(hook) && !/urbanos-lugo-theme/.test(hook), 'useTheme spells its own storage key instead of importing the one the pre-paint script reads');
+  assert(THEME_INIT_SOURCE.includes(`'${THEME_STORAGE_KEY}'`), `the pre-paint theme script does not read ${THEME_STORAGE_KEY}`);
 
   // The script has to survive into the page it is meant to run in, and it only gets there
   // if the build's replacement still finds its tag.
@@ -4187,7 +4182,10 @@ await okAsync('no option promises a bus the measured walk cannot reach', async (
 
   // The other half of the contract: what the retry cannot fix is said, not smoothed over.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const view = readFileSync(join(root, 'src/components/RoutePlannerView.tsx'), 'utf8');
+  // The screen, the row of alternatives and the arithmetic they share.
+  const view = ['RoutePlannerView.tsx', 'planner/TripOptions.tsx', 'planner/walkCorrection.ts']
+    .map((file) => readFileSync(join(root, 'src/components', file), 'utf8'))
+    .join('\n');
   assert(
     /arrival: shiftClock\(plan\.arrivalTime, fix\.after\)/.test(view),
     'the walk correction is moving the arrival again; a bus you cannot reach does not arrive later, it leaves without you',

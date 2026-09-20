@@ -1,36 +1,21 @@
-/** Server-side only: the operator sends no CORS header, so a browser cannot ask directly. */
-import { REPO_URL } from '../project';
-import { plainText } from '../utils/html';
-
 /**
- * What the operator says is coming, stop by stop.
+ * What the operator says is coming, stop by stop. Server-side only: they send no CORS header.
  *
  * Behind the QR sticker on every pole is `info.urbanoslugo.com/qr-demo-paradas/<code>`,
- * keyed by the very codes this app already uses — checked across forty stops spread
- * through the network on 28 Aug 2026, and all forty answered, fifteen of them poles that
- * carry no QR token in our own data.
- *
- * Whether those minutes are a vehicle's position or something else is not settled in
- * writing, so nothing here calls them measured. What is certain is who said them, and
- * that is what the interface says: the operator's number, beside ours.
- *
- * Two observations, neither of them proof:
- *  - Their countdown stalls and drops two minutes in sixty-one seconds. A countdown from
- *    a fixed departure time cannot do that; it falls one minute per minute and nothing
- *    else. So the number is being recomputed against something that moves.
- *  - Their markup calls itself `sae-`, which in this industry is *sistema de ayuda a la
- *    explotación* — the fleet system that knows where the buses are.
- *
- * Their robots.txt is an empty `Disallow:`, which is a machine-readable yes. This still
- * asks once per stop somebody actually opens, cached for twenty seconds, which is less
- * than their own page asks for itself every thirty.
+ * keyed by the codes this app already uses. Whether those minutes are a vehicle's
+ * position is not settled in writing (their countdown drops two minutes in sixty-one
+ * seconds, and their markup calls itself `sae-`), so nothing here calls them measured:
+ * they are what the operator says, and the interface says so. Their robots.txt is an
+ * empty `Disallow:`; this asks once per stop somebody opens, cached for twenty seconds.
  */
+import { REPO_URL } from '../project';
+import { poleCode } from '../data/transitData';
+import { findStop } from '../utils/places';
+import { plainText } from '../utils/html';
+import { readCapped } from './readCapped';
 
 const ENDPOINT = 'https://info.urbanoslugo.com/qr-demo-paradas';
 const UA = `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)`;
-
-import { readCapped } from './readCapped';
-
 /** Their own page refreshes every 30 s, so nothing is gained by asking more often. */
 const CACHE_TTL_MS = 20_000;
 
@@ -50,21 +35,15 @@ export interface OperatorTimes {
 }
 
 /**
- * Their page is HTML for a phone, not an API, but it is honestly marked up: one
- * `sae-content-info` block per departure, each field in its own classed div. Reading the
- * classes beats counting cells, which mistook that AVENIDA label for a stray fragment.
+ * Their page is HTML for a phone, honestly marked up: one `sae-content-info` block per
+ * departure, each field in its own classed div. Quadratic on markup whose blocks never
+ * close, bounded by readCapped's 512 KB to about 400 ms once per 20 s per stop.
  */
 export function parseOperatorTimes(html: string): OperatorDeparture[] {
   const text = (block: string, cls: string): string => {
     const m = new RegExp(`class="${cls}"[\\s\\S]*?<p>([\\s\\S]*?)</p>`, 'i').exec(block);
     return m ? plainText(m[1], '') : '';
   };
-
-  // This scan is quadratic on markup whose blocks never close -- 101 ms for
-  // 256 KB, 1.6 s for a megabyte. The ceiling is readCapped's 512 KB, so the worst case is
-  // about 400 ms, once per stop per 20 s cache window, on a self-hosted server only. Left
-  // as it is because the bound is real and the linear rewrite is fiddlier than the regex;
-  // walk it with indexOf the way the RSS scan is if that ever stops being true.
   const departures: OperatorDeparture[] = [];
   for (const block of html.match(/<div class="sae-content-info">[\s\S]*?<\/div>\s*<\/div>/g) ?? []) {
     const minutes = /^(\d+)/.exec(text(block, 'sae-content-info-time'));
@@ -79,59 +58,45 @@ export function parseOperatorTimes(html: string): OperatorDeparture[] {
 }
 
 const cache = new Map<string, OperatorTimes>();
-
-/**
- * The read already on its way, per stop code.
- *
- * The cache only helps once a read has finished, so it does nothing for the requests that
- * arrive while one is still in flight — they all miss, and every one of them opens its own
- * connection to buslugo.com. Fifty at once on a cold cache measured as fifty outbound
- * requests, eight seconds, and 502 for all fifty: the operator's site is not sized for that
- * and this project has no business sending it.
- *
- * It also made the promise above untrue. "One outbound request a minute however many people
- * are looking" is what the twenty-second cache buys under load, and it only buys it if
- * concurrent misses wait for the same answer instead of racing.
- *
- * Deleted in `finally`, so a failed read is retried by the next caller rather than cached
- * as a failure.
- */
+/** Concurrent misses wait for the same read: fifty at once on a cold cache were fifty outbound requests and fifty 502s. */
 const inFlight = new Map<string, Promise<OperatorTimes | null>>();
 
-/**
- * Null rather than an empty list when the page cannot be read.
- *
- * "No departures" and "we could not ask" are different things, and this app does not get
- * to round the second down to the first — the same rule the service notices follow.
- */
+/** Null rather than an empty list when the page cannot be read: "no departures" and "we could not ask" are different things. */
 export async function operatorTimesForStop(code: string): Promise<OperatorTimes | null> {
   const cached = cache.get(code);
   if (cached && Date.now() - new Date(cached.fetchedAt).getTime() < CACHE_TTL_MS) return cached;
-
   const already = inFlight.get(code);
   if (already) return already;
 
   const read = (async (): Promise<OperatorTimes | null> => {
     try {
-      const res = await fetch(`${ENDPOINT}/${encodeURIComponent(code)}`, {
-        headers: { 'User-Agent': UA },
-        signal: AbortSignal.timeout(8_000),
-      });
+      const res = await fetch(`${ENDPOINT}/${encodeURIComponent(code)}`, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(8_000) });
       if (!res.ok) return null;
-      const result: OperatorTimes = {
-        code,
-        departures: parseOperatorTimes(await readCapped(res)),
-        fetchedAt: new Date().toISOString(),
-      };
+      const result: OperatorTimes = { code, departures: parseOperatorTimes(await readCapped(res)), fetchedAt: new Date().toISOString() };
       cache.set(code, result);
       return result;
     } catch {
       return null;
     } finally {
-      inFlight.delete(code);
+      inFlight.delete(code); // a failed read is retried by the next caller, not cached
     }
   })();
-
   inFlight.set(code, read);
   return read;
+}
+
+/**
+ * The answer to "the operator's minutes at this stop", shared by the express route and the
+ * Deno worker so the two deployments cannot disagree. Only stops this app knows about:
+ * otherwise either deployment could fire arbitrary codes at the operator's site.
+ */
+export async function operatorTimesResponse(rawCode: string): Promise<{ status: number; body: unknown }> {
+  const stop = findStop(rawCode);
+  if (!stop) return { status: 404, body: { error: 'Unknown stop' } };
+  const code = poleCode(stop);
+  if (!code) return { status: 404, body: { error: 'That stop has no operator code' } };
+  const times = await operatorTimesForStop(code);
+  // Null means their page could not be read: 502, so the app shows only its own estimates.
+  if (!times) return { status: 502, body: { error: 'The operator could not be read' } };
+  return { status: 200, body: times };
 }

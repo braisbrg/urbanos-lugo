@@ -2,24 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { Lang, translations } from '../i18n';
 import { AlarmFailure, notify, requestNotificationPermission, ringAlarm, subscribePosition } from '../services/stopAlarm';
 import { RoutePlanResult } from '../types';
-import {
-  TripFix,
-  TripPlace,
-  TripState,
-  advanceTrip,
-  confirmBoarded,
-  missedBus,
-  packTrip,
-  startTrip,
-  tripProgress,
-  unpackTrip,
-} from '../utils/tripProgress';
+import { readString, writeString } from '../utils/storage';
+import { TripFix, TripPlace, TripState, advanceTrip, confirmBoarded, missedBus, packTrip, startTrip, tripProgress, unpackTrip } from '../utils/tripProgress';
 
-/**
- * The trip in progress, in `sessionStorage` -- which survives a reload and dies with the
- * tab, the exact life of a bus ride. `localStorage` would have been a record left on the
- * device saying this person went from X to Y and when. PRIVACY.md lists the key.
- */
+/** In `sessionStorage`: survives a reload and dies with the tab, the exact life of a bus ride. PRIVACY.md lists the key. */
 const KEY = 'urbanos-lugo-trip';
 
 export interface TripCompanion {
@@ -28,34 +14,16 @@ export interface TripCompanion {
   boarded: () => void;
   missed: () => void;
   finish: () => void;
-  /**
-   * The switch that keeps the screen from going dark during the ride. `null` where the
-   * browser has no such thing, so the screen can leave the control out rather than show
-   * one that does nothing.
-   */
+  /** The switch that keeps the screen on during the ride; null where the browser has no such thing. */
   keepAwake: { on: boolean; set: (on: boolean) => void } | null;
 }
 
-/**
- * Whether the screen can be asked to stay on at all.
- *
- * Asked once: the answer does not change while the page is open, and iOS Safari before
- * 16.4 -- which this app still supports -- says no. There the control is simply absent.
- */
 const CAN_KEEP_AWAKE = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
 
-/*
- * The phone's position, outside React.
- *
- * The trip is held above the tabs so a look at the map does not end it, which put this
- * hook in `App` -- and a GPS fix held in `App`'s state re-rendered every tab underneath
- * on every fix. Measured on a 6x-throttled CPU with the map mounted: 40 ms of script per
- * fix, 1.2 React commits per fix, and the same 42 ms with the companion not even on
- * screen. A bus gives a fix a second, so that was a minute of work per half-hour ride
- * spent redrawing lists nobody was looking at.
- *
- * So the fix lives here, in a store the companion screen subscribes to on its own. `App`
- * re-renders when the trip changes -- a handful of times per ride -- and nothing else.
+/**
+ * The phone's position, outside React: a fix a second held in `App`'s state re-rendered
+ * every tab underneath on every fix. The companion screen subscribes to this store on its
+ * own; `App` re-renders only when the trip changes.
  */
 interface PositionSnapshot {
   fix: TripFix | null;
@@ -74,46 +42,25 @@ const subscribe = (listener: () => void) => {
 const getSnapshot = () => snapshot;
 
 /** The last position the phone gave and whether it refused, for the screen that shows them. */
-export function useTripPosition(): PositionSnapshot {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+export const useTripPosition = (): PositionSnapshot => useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
 /**
- * The "vou no bus" mode, held above the tabs so a look at the map or a line does not end
- * the ride. The screen that shows it is `TripCompanionView`; this is everything it needs
- * to be true whether or not that screen is mounted: the position watch, the alert, the
- * remembered stops, and the copy in `sessionStorage`.
+ * The "vou no bus" mode, held above the tabs so a look at the map does not end the ride:
+ * the position watch, the alert, the remembered stops, and the copy in sessionStorage.
  */
 export function useTripCompanion(lang: Lang): TripCompanion {
-  const [trip, setTrip] = useState<TripState | null>(() => {
-    try {
-      return unpackTrip(sessionStorage.getItem(KEY));
-    } catch {
-      return null;
-    }
-  });
+  const [trip, setTrip] = useState<TripState | null>(() => unpackTrip(readString(KEY, sessionStorage)));
   // The watch's callback outlives any one render; it reads the trip through here.
   const tripRef = useRef(trip);
   tripRef.current = trip;
   const langRef = useRef(lang);
   langRef.current = lang;
 
-  // Every change is written through, and the end of the trip removes it.
   useEffect(() => {
-    try {
-      if (trip) sessionStorage.setItem(KEY, packTrip(trip));
-      else sessionStorage.removeItem(KEY);
-    } catch {
-      // Storage refused: the trip still works, it just will not survive a reload.
-    }
+    writeString(KEY, trip ? packTrip(trip) : null, sessionStorage);
   }, [trip]);
 
-  /*
-   * The position watch runs for exactly as long as there is a trip. Each fix is counted
-   * against the plan right here, and the trip only changes when the count did -- a stop
-   * reached, a boarding seen, the one alert per leg -- so most fixes end in the store
-   * above and nowhere else.
-   */
+  // The watch runs for exactly as long as there is a trip; most fixes end in the store above.
   const active = trip !== null;
   useEffect(() => {
     if (!active) return;
@@ -141,20 +88,8 @@ export function useTripCompanion(lang: Lang): TripCompanion {
     };
   }, [active]);
 
-  /*
-   * The screen, kept on -- only while asked, only while there is a trip, and only while
-   * the page is the one being looked at.
-   *
-   * A phone in a hand on a bus locks itself in thirty seconds, and a locked phone stops
-   * getting positions, so the one thing this mode is for stops working exactly when it is
-   * being used. The Screen Wake Lock is the honest fix: no dialog and no permission, the
-   * screen simply stops timing out, and the browser releases it by itself the moment the
-   * tab is hidden -- which is why it is re-requested on `visibilitychange`, when the
-   * reader comes back. What it costs is battery, which is why it is a switch the reader
-   * turns on and not a default; the switch says so in as many words.
-   *
-   * Off by default each trip and not remembered: nothing about it is stored anywhere.
-   */
+  // The Screen Wake Lock: no dialog, no permission, released by the browser when the tab
+  // hides, so it is re-requested on visibilitychange. A switch, not a default: it costs battery.
   const [keepAwakeOn, setKeepAwakeOn] = useState(false);
   useEffect(() => {
     if (!CAN_KEEP_AWAKE || !active || !keepAwakeOn) return;
@@ -165,9 +100,7 @@ export function useTripCompanion(lang: Lang): TripCompanion {
       try {
         sentinel = await navigator.wakeLock.request('screen');
       } catch {
-        // Low battery mode, or a browser that has the API and says no: the switch stays
-        // on, the screen behaves as it always did, and nothing is promised in between.
-        sentinel = null;
+        sentinel = null; // low battery mode, or a browser that says no
       }
     };
     void hold();
@@ -178,36 +111,19 @@ export function useTripCompanion(lang: Lang): TripCompanion {
       void sentinel?.release();
     };
   }, [active, keepAwakeOn]);
-  // A new trip starts with the switch off, whatever the last one chose.
   useEffect(() => {
     if (!active) setKeepAwakeOn(false);
   }, [active]);
 
   const start = useCallback((plan: RoutePlanResult, origin: TripPlace | null, destination: TripPlace | null) => {
     setTrip(startTrip(plan, origin, destination));
-    // The same single permission the board asks for; declining keeps the in-page alert.
     void requestNotificationPermission();
   }, []);
-
-  // Both answers are about the leg on screen, which is the one the last fix put the
-  // reader on -- so they are read against that fix, not against a render.
-  const boarded = useCallback(
-    () => setTrip((t) => (t ? confirmBoarded(t, tripProgress(t.plan, snapshot.fix, new Set(t.seen))) : t)),
-    [],
-  );
-  const missed = useCallback(
-    () =>
-      setTrip((t) =>
-        t ? missedBus(t, tripProgress(t.plan, snapshot.fix, new Set(t.seen)), new Date(), langRef.current) : t,
-      ),
-    [],
-  );
+  // Both answers are about the leg the last fix put the reader on.
+  const boarded = useCallback(() => setTrip((t) => (t ? confirmBoarded(t, tripProgress(t.plan, snapshot.fix, new Set(t.seen))) : t)), []);
+  const missed = useCallback(() => setTrip((t) => (t ? missedBus(t, tripProgress(t.plan, snapshot.fix, new Set(t.seen)), new Date(), langRef.current) : t)), []);
   const finish = useCallback(() => setTrip(null), []);
-
-  const keepAwake = useMemo(
-    () => (CAN_KEEP_AWAKE ? { on: keepAwakeOn, set: setKeepAwakeOn } : null),
-    [keepAwakeOn],
-  );
+  const keepAwake = useMemo(() => (CAN_KEEP_AWAKE ? { on: keepAwakeOn, set: setKeepAwakeOn } : null), [keepAwakeOn]);
 
   return { trip, start, boarded, missed, finish, keepAwake };
 }

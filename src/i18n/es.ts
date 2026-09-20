@@ -16,7 +16,6 @@ export const es: Dict = {
     fares: 'Tarifas e info',
     language: 'Idioma',
     theme: 'Apariencia',
-    themeAuto: 'Automática',
     themeAutoShort: 'Auto',
     themeLight: 'Clara',
     themeDark: 'Oscura',
@@ -509,6 +508,8 @@ export const es: Dict = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `La línea ${line} no presta servicio hoy (${days}).`,
+    serviceOverToday: (last: string, first: string) =>
+      `Servicio finalizado por hoy (última salida a las ${last}). Primera salida a las ${first}.`,
     transferAt: (stop: string, line: string) =>
       `Transbordo en "${stop}" a la Línea ${line}. Gratuito dentro de los 75 min con la Tarjeta Ciudadana.`,
     waitAt: (stop: string, line: string, to: string) =>

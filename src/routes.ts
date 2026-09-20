@@ -1,19 +1,10 @@
-import type { Tab } from './components/navSections';
+/** The tabs the shell can show. `info` and `fares` are reached from the menu, not the bar. */
+export type Tab = 'stops' | 'lines' | 'map' | 'plan' | 'info' | 'fares';
 
 /**
- * One slug per tab, and the only list of them.
- *
- * Three things need these words: the router reads them out of the address bar, sitemap.xml
- * advertises them, and the build writes a page at each one so it answers 200 rather than
- * 404. They were three separate lists, which is the same drift that had already cost the
- * fares screen its heading when one screen became two.
- *
- * It lives here, and not beside the router or the `Tab` type, because the build reads it
- * too: `vite.config.ts` runs in Node, where `import.meta.env` does not exist and pulling
- * in the icon library to reach a string would be absurd. Nothing in this file runs -- the
- * only import is a type, which the compiler erases.
- *
- * Galician, because that is the language the app is written in.
+ * One slug per tab, and the only list of them: the router reads them out of the address
+ * bar, sitemap.xml advertises them, and the build writes a page at each one. No other
+ * import, because vite.config.ts reads this in Node. Galician, like the app.
  */
 export const PATHS: Record<Tab, string> = {
   stops: 'paradas',

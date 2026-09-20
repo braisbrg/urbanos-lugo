@@ -1,25 +1,14 @@
 /**
- * Whether this device agrees with Lugo about what time it is.
- *
- * Every hour in the app comes from `Date.getHours()`, which is the device's local time,
- * and every hour in the timetable is Lugo's. For somebody standing at a pole those are
- * the same number and there is nothing to say. For a device on another timezone — a
- * phone that has not switched yet, a desktop with the wrong region — the whole board is
- * shifted by the difference and nothing on screen admits it.
- *
- * Rewriting eight "now" derivations to read a fixed zone would be the thorough fix, and
- * it would put the risk on the one thing this app must not get wrong. Saying so costs a
- * sentence, and the app already refuses to present a time as something it is not.
+ * Whether this device agrees with Lugo about what time it is. Every hour in the app is
+ * `Date.getHours()`, every hour in the timetable is Lugo's; on a device in another zone
+ * the whole board is shifted, so the board says so rather than rewriting eight "now"s.
  */
 const TIMETABLE_ZONE = 'Europe/Madrid';
 
-/** Lugo's UTC offset in minutes for a given instant, summer time included. */
+/** Lugo's UTC offset in minutes for an instant, or null on an engine without the tz database. */
 function timetableOffsetMinutes(at: Date): number | null {
   try {
-    const name = new Intl.DateTimeFormat('en', {
-      timeZone: TIMETABLE_ZONE,
-      timeZoneName: 'longOffset',
-    })
+    const name = new Intl.DateTimeFormat('en', { timeZone: TIMETABLE_ZONE, timeZoneName: 'longOffset' })
       .formatToParts(at)
       .find((part) => part.type === 'timeZoneName')?.value;
     // "GMT+2", "GMT+05:30", or plain "GMT" at zero.
@@ -29,21 +18,14 @@ function timetableOffsetMinutes(at: Date): number | null {
     const magnitude = Number(match[2]) * 60 + Number(match[3] ?? 0);
     return match[1] === '-' ? -magnitude : magnitude;
   } catch {
-    // An engine without the full tz database. Better to say nothing than to guess.
     return null;
   }
 }
 
-/**
- * How far this device's clock is from Lugo's, in minutes, or 0 when they agree.
- *
- * Positive means the device runs ahead of Lugo. Returns 0 rather than null when the
- * comparison cannot be made, because an unverifiable warning is worse than none.
- */
+/** Minutes this device runs ahead of Lugo, or 0 when they agree or it cannot be told. */
 export function clockDriftFromTimetable(at: Date = new Date()): number {
   const there = timetableOffsetMinutes(at);
-  if (there === null) return 0;
-  return -at.getTimezoneOffset() - there;
+  return there === null ? 0 : -at.getTimezoneOffset() - there;
 }
 
 /** The device's own zone, for naming it in the warning. */

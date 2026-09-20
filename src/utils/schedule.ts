@@ -1,22 +1,13 @@
 /**
  * Turns the operator's published timetable into a passing time for every stop.
  *
- * The old engine derived arrivals from `wallClockMinutes % frequency`, which produced
- * buses at 03:00 and ignored the real cadence. Here each published run is anchored to
- * the timing points it lists, and the stops in between are interpolated using the real
- * road travel time measured for each leg.
- *
- * Every time here is wall clock, not elapsed time: a bus published at 07:20 leaves at
- * 07:20 on the two nights a year the clocks move, so minute arithmetic is the right
- * model and Date arithmetic would be the wrong one. The one artefact is that a plan
- * spanning 02:00-03:00 on the March night names an hour the clock skips. Nothing in
- * this network runs then -- the first departure anywhere is 07:00 -- so only a
- * walking plan can span it. Not worth a second time model.
+ * Each published run is anchored to the timing points it lists; the stops in between are
+ * interpolated with the road time measured for each leg. Every time is wall-clock minutes,
+ * not elapsed time: a bus published at 07:20 leaves at 07:20 on the nights the clocks
+ * move, so minute arithmetic is the right model and Date arithmetic the wrong one.
  */
-import { BusLine, BusStop } from '../types';
+import { BusLine, BusStop, DayKind } from '../types';
 import { normalizeText } from './searchUtils';
-
-type DayKind = 'laborable' | 'sabado' | 'domingo';
 
 export const MINUTES_PER_DAY = 1440;
 
@@ -25,11 +16,9 @@ export function parseTimeToMinutes(time: string): number {
   return (h || 0) * 60 + (m || 0);
 }
 
+/** "HH:MM", wrapped past midnight. Rounded: interpolated times are fractional. */
 export function formatMinutes(total: number): string {
-  // Interpolated passing times are fractional; without rounding they render as
-  // "02:59.370277078085564".
-  const rounded = Math.round(total);
-  const n = ((rounded % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const n = (((Math.round(total) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY);
   return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
 }
 
@@ -43,19 +32,12 @@ export function dayKind(date: Date): DayKind {
   return d === 0 ? 'domingo' : d === 6 ? 'sabado' : 'laborable';
 }
 
-/**
- * Does this line run at all on this kind of day? Answered from the published service
- * patterns, which carry Saturday and Sunday separately; the old version guessed from a
- * free-text "days" label and reported weekend service the operator does not run.
- */
+/** Answered from the published service patterns, which carry Saturday and Sunday apart. */
 export function lineRunsOn(line: BusLine, kind: DayKind): boolean {
   return line.services.some((p) => p.days.includes(kind));
 }
 
-/**
- * Is `minutes` inside the line's service window? Handles night lines whose window
- * crosses midnight (22:30 -> 06:30), which the previous code reported as "finished".
- */
+/** Inside the line's window, including a night line whose window crosses midnight. */
 export function isWithinServiceWindow(line: BusLine, minutes: number): boolean {
   const first = parseTimeToMinutes(line.firstDeparture);
   const last = parseTimeToMinutes(line.lastDeparture);
@@ -63,89 +45,60 @@ export function isWithinServiceWindow(line: BusLine, minutes: number): boolean {
 }
 
 export function isLineInService(line: BusLine, now: Date = new Date()): boolean {
-  return (
-    lineRunsOn(line, dayKind(now)) &&
-    isWithinServiceWindow(line, now.getHours() * 60 + now.getMinutes())
-  );
-}
-
-/** Cumulative seconds from the first stop of a direction to each of its stops. */
-function cumulativeSeconds(legSeconds: number[], stopCount: number): number[] {
-  const out = [0];
-  for (let i = 1; i < stopCount; i++) {
-    // Two allowances the operator does not publish: 90 s for a leg whose road time the
-    // dataset build could not measure, and 20 s standing at each stop, which is the usual
-    // urban dwell. Both only apply where measurement failed; a measured leg overrides the
-    // first entirely.
-    out.push(out[i - 1] + (legSeconds[i - 1] ?? 90) + 20);
-  }
-  return out;
+  return lineRunsOn(line, dayKind(now)) && isWithinServiceWindow(line, now.getHours() * 60 + now.getMinutes());
 }
 
 /**
- * A single scheduled run: what time the bus passes each stop of one direction.
- * `minutes` may exceed 1440 for a run that finishes after midnight.
+ * Cumulative seconds from the first stop to each stop. Two allowances the operator does
+ * not publish: 90 s for a leg the build could not measure, 20 s standing at each stop.
  */
-interface ScheduledRun {
+function cumulativeSeconds(legSeconds: number[], stopCount: number): number[] {
+  const out = [0];
+  for (let i = 1; i < stopCount; i++) out.push(out[i - 1] + (legSeconds[i - 1] ?? 90) + 20);
+  return out;
+}
+
+/** One scheduled run: when the bus passes each stop of one direction. Minutes may exceed 1440. */
+export interface ScheduledRun {
   lineId: string;
   directionId: string;
-  /** Passing time in minutes-from-midnight, per stop index of the direction. */
   minutesByStopIndex: number[];
-  /**
-   * Stop indices whose time comes straight from the published table. Everything else
-   * is derived from measured road time, and the UI says so rather than presenting an
-   * estimate as a promise.
-   */
+  /** Stop indices whose time is literally in the operator's table; everything else is derived. */
   publishedStopIndices: number[];
-  /**
-   * Index of the last stop pinned to a printed timing point. From there to the terminus
-   * the clock is measured road time, which is the stretch a bus may be drawn on after
-   * the operator's own table already has it leaving on the return -- see
-   * `handoverMinutes`. 0 when nothing past the departure is printed.
-   */
+  /** Last stop pinned to a printed timing point; past it the clock is measured road time. */
   lastTimingPointIndex: number;
 }
 
 const runCache = new Map<string, ScheduledRun[]>();
 
-/** Every departure between `first` and `last` at the stated cadence. */
+/** Every departure between `first` and `last` at the stated cadence, bounded to a day. */
 function expandHeadway(first: number, last: number, headwayMinutes: number): number[] {
-  const end = last < first ? last + MINUTES_PER_DAY : last; // service running past midnight
+  const end = last < first ? last + MINUTES_PER_DAY : last;
   const step = Math.max(5, headwayMinutes);
   const out: number[] = [];
-  // 288 is a full day at the 5-minute floor, so this bounds a bad headway (0, negative,
-  // NaN) without ever truncating a real service.
   for (let t = first; t <= end && out.length < 288; t += step) out.push(t);
   return out;
 }
 
 /**
- * Best-matching stop index for a timetable timing point such as "Sindicatos".
- *
- * A plain substring test is not enough. "HULA" appears in both "HULA (Ent. Principal)"
- * and "Estda. Fonsagrada 102 (dir. HULA)" — the second is a stop on the way that merely
- * names the destination on its sign. Since a timing point sets an official time for
- * whatever it matches, landing on the signpost instead of the terminus moves a printed
- * time several stops up the route. So a name that *starts* with the timing point beats
- * one that merely contains it; ties still go to the earliest stop on the route, which is
- * where a timetable row for a departure point belongs.
+ * Best-matching stop index for a timing point such as "Sindicatos". A name that starts
+ * with the timing point beats one that merely contains it ("HULA" is in both "HULA (Ent.
+ * Principal)" and "Estda. Fonsagrada 102 (dir. HULA)"); ties go to the earliest stop.
  */
 export function anchorIndex(timingPoint: string, stopNames: string[]): number {
   const target = normalizeText(timingPoint);
   if (!target) return -1;
-
+  const words = target.split(' ').filter((w) => w.length > 3);
   let best = -1;
   let bestScore = 0;
   stopNames.forEach((name, i) => {
     const n = normalizeText(name);
-    let score = 0;
-    if (n === target) score = 100;
-    else if (n.startsWith(target)) score = 80;
-    else if (n.includes(target)) score = 60;
-    else {
-      const words = target.split(' ').filter((w) => w.length > 3);
-      if (words.length && words.every((w) => n.includes(w))) score = 40;
-    }
+    const score =
+      n === target ? 100
+      : n.startsWith(target) ? 80
+      : n.includes(target) ? 60
+      : words.length && words.every((w) => n.includes(w)) ? 40
+      : 0;
     if (score > bestScore) {
       bestScore = score;
       best = i;
@@ -154,99 +107,69 @@ export function anchorIndex(timingPoint: string, stopNames: string[]): number {
   return bestScore >= 40 ? best : -1;
 }
 
-const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+export const median = (xs: number[]): number => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+
+interface Anchor {
+  index: number;
+  times: number[];
+  fromPrevious?: number;
+}
 
 /**
- * The printed timing points we can safely chain, and the official minutes between them.
+ * The printed timing points that can be chained, with the official minutes between them.
  *
- * A cyclic line prints each timing point once for the whole loop, and the same street
- * often has a pole in each direction, so two rows can name stops that no single run
- * visits in that order. Pairing those column-by-column mixes the outbound and return
- * legs and produces departures that run backwards or land in the small hours — which is
- * why this used to trust exactly one anchor and model everything else.
- *
- * Chaining is safe once the pair is checked: the printed gap must be positive, plausible
- * as one leg, and in the same league as the measured road time. A return-leg mismatch
- * fails that by tens of minutes (line 5.1 prints 40 minutes for a stretch the road says
- * is 18), so it drops out and the model covers that stretch as before.
+ * A cyclic line prints each timing point once for the whole loop, so two rows can name
+ * stops no single run visits in that order. A pair is chained only when its printed gap
+ * is positive, plausible as one leg, and in the same league as the measured road time; a
+ * return-leg mismatch fails that by tens of minutes and drops out.
  */
-function publishedChain(
-  anchors: { index: number; times: number[] }[],
-  cum: number[],
-): { index: number; times: number[]; fromPrevious?: number }[] {
-  const chain: { index: number; times: number[]; fromPrevious?: number }[] = [];
+function publishedChain(anchors: Anchor[], cum: number[]): Anchor[] {
+  const chain: Anchor[] = [];
   for (const anchor of anchors) {
     const previous = chain[chain.length - 1];
     if (!previous) {
       chain.push(anchor);
       continue;
     }
-
-    const gaps: number[] = [];
     const columns = Math.min(previous.times.length, anchor.times.length);
+    const gaps: number[] = [];
     for (let k = 0; k < columns; k++) {
       const gap = anchor.times[k] - previous.times[k];
       if (gap > 0 && gap <= 60) gaps.push(gap);
     }
     if (gaps.length < Math.max(2, columns / 2)) continue;
-
     const printed = median(gaps);
     const measured = (cum[anchor.index] - cum[previous.index]) / 60;
     if (measured <= 0) continue;
     const ratio = printed / measured;
-    if (ratio < 0.5 || ratio > 2) continue; // the pair does not describe one run
-
+    if (ratio < 0.5 || ratio > 2) continue;
     chain.push({ ...anchor, fromPrevious: printed });
   }
   return chain;
 }
 
 /**
- * Minutes after the run's departure at which it passes each stop.
- *
- * Between two published timing points the measured road times are stretched to land
- * exactly on both, so the official times are honoured and the error in between is
- * bounded by that stretch instead of accumulating across the whole route. Outside the
- * published range there is nothing to interpolate against, so the road time stands.
+ * Minutes after departure at which the run passes each stop. Between two published points
+ * the road times are stretched to land on both; outside the published range they stand.
  */
-function offsetsFromChain(
-  chain: { index: number; times: number[]; fromPrevious?: number }[],
-  cum: number[],
-): number[] {
+function offsetsFromChain(chain: Anchor[], cum: number[]): number[] {
   const head = chain[0];
   const offsets = cum.map((c) => (c - cum[head.index]) / 60);
-
   let published = 0;
   for (let i = 1; i < chain.length; i++) {
     const from = chain[i - 1].index;
     const to = chain[i].index;
-    const measured = (cum[to] - cum[from]) / 60;
-    const scale = chain[i].fromPrevious! / measured;
-    const base = published;
-    for (let j = from + 1; j <= to; j++) {
-      offsets[j] = base + ((cum[j] - cum[from]) / 60) * scale;
-    }
+    const scale = chain[i].fromPrevious! / ((cum[to] - cum[from]) / 60);
+    for (let j = from + 1; j <= to; j++) offsets[j] = published + ((cum[j] - cum[from]) / 60) * scale;
     published += chain[i].fromPrevious!;
   }
-
-  // Past the last published point the road time carries on from where it left off.
   const tail = chain[chain.length - 1].index;
-  for (let j = tail + 1; j < cum.length; j++) {
-    offsets[j] = published + (cum[j] - cum[tail]) / 60;
-  }
+  for (let j = tail + 1; j < cum.length; j++) offsets[j] = published + (cum[j] - cum[tail]) / 60;
   return offsets;
 }
 
-/**
- * Build every run of a line's direction for one service day.
- * Returns [] when the line does not run that day.
- */
-export function buildRuns(
-  line: BusLine,
-  directionIndex: number,
-  stops: BusStop[],
-  dayType: DayKind = 'laborable',
-): ScheduledRun[] {
+/** Every run of a line's direction for one service day; [] when it does not run. */
+export function buildRuns(line: BusLine, directionIndex: number, stops: BusStop[], dayType: DayKind = 'laborable'): ScheduledRun[] {
   const key = `${line.id}|${directionIndex}|${dayType}`;
   const cached = runCache.get(key);
   if (cached) return cached;
@@ -260,66 +183,43 @@ export function buildRuns(
     const stopNames = direction.stops.map((id) => byId.get(id)?.name || id);
     const cum = cumulativeSeconds(direction.legSeconds || [], direction.stops.length);
 
-    // Anchor the published timing points onto this direction's stop list.
-    const anchors: { index: number; times: number[] }[] = [];
+    const anchors: Anchor[] = [];
     for (const row of pattern?.rows || []) {
       const idx = anchorIndex(row.timingPoint, stopNames);
-      if (idx >= 0 && !anchors.some((a) => a.index === idx)) {
-        anchors.push({ index: idx, times: row.times.map(parseTimeToMinutes) });
-      }
+      if (idx >= 0 && !anchors.some((a) => a.index === idx)) anchors.push({ index: idx, times: row.times.map(parseTimeToMinutes) });
     }
     anchors.sort((a, b) => a.index - b.index);
 
     const chain = publishedChain(anchors, cum);
     const head = chain[0];
     if (head) {
-      // With a stated cadence the operator prints only the first and last departure;
-      // fill the day in at that headway rather than running the line twice.
+      // With a stated cadence the operator prints only the first and last departure.
       const departures =
-        pattern?.headwayMinutes && head.times.length === 2
-          ? expandHeadway(head.times[0], head.times[1], pattern.headwayMinutes)
-          : head.times;
-
+        pattern?.headwayMinutes && head.times.length === 2 ? expandHeadway(head.times[0], head.times[1], pattern.headwayMinutes) : head.times;
       const offsets = offsetsFromChain(chain, cum);
-
-      // A stop counts as published for a run only when the time we work out for it is
-      // literally in the operator's table for that timing point. Marking every anchor of
-      // every run over-claimed twice: runs filled in at the stated headway are inferences
-      // (line 2 prints 07:15, 21:15 and "cada 30 min.", never 07:45), and where a table
-      // prints more departures at one timing point than another, the leg time is a median
-      // that lands a few minutes off the printed time for some individual runs.
+      // A stop is published for a run only when its time is literally in the table for that
+      // timing point: headway-filled runs are inferences, and a median leg time can land a
+      // few minutes off the printed time for some runs.
       const anchorTimes = chain.map((a) => new Set(a.times));
       const lastTimingPointIndex = chain[chain.length - 1].index;
-
       for (const departure of departures) {
         const minutesByStopIndex = offsets.map((o) => departure + o);
         result.push({
           lineId: line.id,
           directionId: direction.id,
           minutesByStopIndex,
-          publishedStopIndices: chain
-            .map((a) => a.index)
-            .filter((index, j) => anchorTimes[j].has(Math.round(minutesByStopIndex[index]))),
+          publishedStopIndices: chain.map((a) => a.index).filter((index, j) => anchorTimes[j].has(Math.round(minutesByStopIndex[index]))),
           lastTimingPointIndex,
         });
       }
     }
 
-    // No timing point of this direction appears in the published table: fall back to
-    // the headway between the first and last departure.
-    //
-    // Nothing here is published, so nothing here claims to be. This used to mark stop 0
-    // as official, which would put a printed-time badge on a departure the operator never
-    // printed. No direction in the current dataset reaches this branch — every one has at
-    // least one timing point that resolves — so that was a latent bug rather than a live
-    // one, and `npm test` cannot catch a regression here for the same reason. It is kept
-    // because a future line with unmatched timing points would land on it.
+    // No timing point resolves: fall back to the headway between first and last departure,
+    // and claim nothing as published. No current direction reaches this; kept for the next.
     if (!result.length) {
       const first = parseTimeToMinutes(line.firstDeparture);
       let last = parseTimeToMinutes(line.lastDeparture);
-      if (last < first) last += MINUTES_PER_DAY; // night line
-      // The headway of the pattern being built, not of whichever service happens to
-      // declare one first: a Saturday service can run at a different cadence.
+      if (last < first) last += MINUTES_PER_DAY;
       const headway = Math.max(10, pattern?.headwayMinutes ?? 30);
       for (let t = first; t <= last; t += headway) {
         result.push({
@@ -340,32 +240,14 @@ export function buildRuns(
 const handoverCache = new Map<string, Map<string, number>>();
 
 /**
- * The minute at which each run's marker must give way to the same bus's next leg.
+ * The minute at which each run's marker gives way to the same bus's next leg.
  *
- * A run is drawn from its departure to its arrival. But a line's two directions are one
- * vehicle turning around, and where the modelled arrival lands after the printed
- * departure of the leg it turns into, the map drew that bus twice: at 07:45 the 7's
- * 07:30 outbound was still 1.3 minutes short of A Ponte while its 07:45 return had
- * already left it, 139 m apart. On the 11 to Pías the outbound runs eight minutes past
- * its last timing point, and the return leaves Pías on that timing point's minute.
- *
- * So a run stops being drawn at the earliest departure of the opposite direction that
- * falls inside it -- with one rail: never before the run's last printed timing point. Up
- * to there the clock is the operator's, and a departure in that stretch is the other bus
- * of a line that runs two (the 6's return is pinned through Sindicatos, and the outbound
- * that leaves ten minutes earlier is the second vehicle, not this one turning). Past it
- * the clock is our own road time, and a departure the operator's table puts there --
- * printed, or filled in at its stated cadence -- outranks it.
- * The same rail is what keeps the last run of the day whole: nothing leaves after it
- * inside the stretch the operator printed.
- *
- * A departure can end only one run, the one whose arrival it is nearest to, so two
- * markers never vanish into one. The other keeps its full length, which at worst draws
- * a bus twice for a minute and never loses one.
- *
- * Keyed by `${directionIndex}|${runIndex}`; a run absent from the map is drawn until it
- * arrives. Nothing here moves a time: the runs are untouched, only how long a marker
- * stays on the road.
+ * A line's two directions are one vehicle turning around, and where the modelled arrival
+ * lands after the printed departure of the leg it turns into, the map drew the bus twice.
+ * So a run stops being drawn at the earliest opposite-direction departure inside it — never
+ * before its last printed timing point, where the clock is still the operator's and such a
+ * departure is the other bus of a two-bus line. A departure ends only the run whose arrival
+ * it is nearest to, so two markers never vanish into one. Keyed `${directionIndex}|${runIndex}`.
  */
 export function handoverMinutes(line: BusLine, stops: BusStop[], dayType: DayKind): Map<string, number> {
   const key = `${line.id}|${dayType}`;
@@ -375,13 +257,7 @@ export function handoverMinutes(line: BusLine, stops: BusStop[], dayType: DayKin
   const legs = line.directions.flatMap((_, dir) =>
     buildRuns(line, dir, stops, dayType).map((run, runIndex) => {
       const t = run.minutesByStopIndex;
-      return {
-        key: `${dir}|${runIndex}`,
-        dir,
-        start: t[0],
-        end: t[t.length - 1],
-        pinnedUntil: t[run.lastTimingPointIndex] ?? t[0],
-      };
+      return { key: `${dir}|${runIndex}`, dir, start: t[0], end: t[t.length - 1], pinnedUntil: t[run.lastTimingPointIndex] ?? t[0] };
     }),
   );
 
@@ -407,26 +283,11 @@ export function handoverMinutes(line: BusLine, stops: BusStop[], dayType: DayKin
 }
 
 /**
- * How long one whole trip takes, read off the operator's timetable.
- *
- * The line card used to sum `legSeconds` -- free-flow driving between consecutive stops --
- * and a reader took it for the length of the journey. It is not: it leaves out every
- * dwell. Measured on the eight directions whose printed table runs end to end, that came
- * out a median of five minutes short, and on the 4.2 fourteen.
- *
- * A built run already carries a minute for every stop index, anchored on the printed times
- * at each timing point and interpolated between them -- the same numbers the stop board
- * shows. First index to last is the answer, with no model of our own on top.
- *
- * Weekdays first because that is the timetable most lines publish; a line that only runs
- * at the weekend still gets one. `undefined` when no run can be built at all, so the
- * caller can say "no timetable" rather than print a zero.
+ * How long one whole trip takes, read off a built run (first index to last), which honours
+ * every printed timing point and every dwell. Summing `legSeconds` was a median of five
+ * minutes short. `undefined` when no run can be built, so the caller says "no timetable".
  */
-export function scheduledDuration(
-  line: BusLine,
-  directionIndex: number,
-  stops: BusStop[],
-): number | undefined {
+export function scheduledDuration(line: BusLine, directionIndex: number, stops: BusStop[]): number | undefined {
   const direction = line.directions[directionIndex];
   if (!direction) return undefined;
   const lastIndex = direction.stops.length - 1;

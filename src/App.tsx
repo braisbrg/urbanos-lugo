@@ -1,16 +1,10 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { Moon, X } from 'lucide-react';
 import { StopArrivalsView } from './components/StopArrivalsView';
 import { StopHome } from './components/StopHome';
 import { LinesView } from './components/LinesView';
 import { RoutePlannerView } from './components/RoutePlannerView';
 import { TripCompanionView } from './components/TripCompanionView';
-import { useTripCompanion } from './hooks/useTripCompanion';
-
-// Leaflet and its layers are only needed on the map tab, so they load with it rather
-// than sitting in the bundle every visitor downloads.
-const InteractiveMap = lazy(() =>
-  import('./components/Map/TransitMap').then((m) => ({ default: m.TransitMap })),
-);
 import { AlertsView } from './components/AlertsView';
 import { FaresView } from './components/FaresView';
 import { FavoritesDrawer } from './components/FavoritesDrawer';
@@ -18,274 +12,114 @@ import { QrScannerModal } from './components/QrScannerModal';
 import { TopBar } from './components/TopBar';
 import { BottomNav } from './components/BottomNav';
 import { SideNav } from './components/SideNav';
+import { MenuDrawer } from './components/MenuDrawer';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { useRecentStops } from './hooks/useRecentStops';
+import { useTripCompanion } from './hooks/useTripCompanion';
+import { useFavourites, useRecentStops } from './hooks/useStoredList';
 import { useTabRoute } from './hooks/useTabRoute';
 import { useServiceAlerts } from './hooks/useServiceAlerts';
-import { Lang, isLang, translations } from './i18n';
-import { MenuDrawer } from './components/MenuDrawer';
 import { useTheme } from './hooks/useTheme';
+import { Lang, LangContext, isLang, translations } from './i18n';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
-import type { Tab } from './components/navSections';
+import type { Tab } from './routes';
 import { isLineInService } from './utils/schedule';
 import { findStop } from './utils/places';
+import { readString, writeString } from './utils/storage';
 import { BusStop, BusLine } from './types';
-import { Moon, X } from 'lucide-react';
 
-/**
- * Favourites kept in localStorage, filtered against the ids that currently exist.
- * A rebuilt dataset changes stop ids, and the stale ones kept inflating the badge
- * ("5 favoritos" over a drawer showing two) because nothing ever pruned them.
- */
-function usePersistedIds(
-  storageKey: string,
-  known: Set<string>,
-): [string[], React.Dispatch<React.SetStateAction<string[]>>] {
-  const [ids, setIds] = useState<string[]>(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      if (Array.isArray(saved)) return saved.filter((id: unknown) => typeof id === 'string' && known.has(id));
-    } catch {
-      // corrupt entry: start clean rather than crash on load
-    }
-    return [];
-  });
+// Leaflet and its layers are only needed on the map tab, so they load with it.
+const InteractiveMap = lazy(() => import('./components/Map/TransitMap').then((m) => ({ default: m.TransitMap })));
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(ids));
-    } catch {
-      // storage full or blocked: favourites just do not persist
-    }
-  }, [storageKey, ids]);
+const LANG_KEY = 'urbanos-lugo-lang';
 
-  return [ids, setIds];
+/** Remembered, and seeded from the browser when there is no choice on record. */
+function initialLang(): Lang {
+  const stored = readString(LANG_KEY);
+  if (isLang(stored)) return stored;
+  const preferred = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'gl';
+  return isLang(preferred) ? preferred : 'gl';
 }
 
-function MapLoading({ lang }: { lang: Lang }) {
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex h-[540px] animate-pulse items-center justify-center rounded-card bg-surface text-body font-medium text-ink-3">
-        {translations(lang).map.loadingMap}
-      </div>
-    </div>
-  );
-}
+const stopIds = new Set(BUS_STOPS.map((s) => s.id));
+const lineIds = new Set(BUS_LINES.map((l) => l.id));
 
 export default function App() {
-  // The open tab lives in the address bar, so the back gesture moves between screens
-  // instead of leaving the site. See src/hooks/useTabRoute.ts.
+  // The open tab lives in the address bar, so the back gesture moves between screens.
   const [activeTab, setActiveTab] = useTabRoute('stops');
-  // Open on the busiest interchange rather than whichever stop happens to be first in
-  // the file; that used to land on a campus terminus with almost no service.
-  const [selectedStop, setSelectedStop] = useState<BusStop>(
-    () => [...BUS_STOPS].sort((a, b) => b.lines.length - a.lines.length)[0],
-  );
-  /**
-   * The board needs a stop from the first render, so it starts on the busiest one.
-   * The map must not: it draws the selected stop as a big blue dot, and drawing that
-   * over a stop nobody chose put a mark on the busiest stop that blinked in and out as
-   * the layer rebuilt on every zoom.
-   */
+  // The board needs a stop from the first render, so it opens on the busiest interchange.
+  const [selectedStop, setSelectedStop] = useState<BusStop>(() => [...BUS_STOPS].sort((a, b) => b.lines.length - a.lines.length)[0]);
+  /** The map must not draw that default as chosen: a big blue dot on a stop nobody picked. */
   const [stopWasChosen, setStopWasChosen] = useState(false);
-  /**
-   * What the reader asked the map to show, so it can stop guessing.
-   *
-   * The map keeps both a selected stop and a selected line, and arriving from a stop
-   * used to leave the previous line's filter on: the route was drawn, the other stops
-   * were hidden, and if the stop was not on that line it was not there at all.
-   */
+  /** What the reader asked the map to show, so it can stop guessing between its stop and its line. */
   const [mapFocus, setMapFocus] = useState<'stop' | 'line'>('line');
-  /**
-   * No line until somebody opens one. The lines screen falls back to the first line on
-   * its own; the map must not, for the same reason as the stop above: it started with
-   * 1.1 chosen, drawn on the kerb with its arrows -- 199 of them at zoom 16, rebuilt on
-   * every zoom step -- over a choice nobody had made.
-   */
+  /** No line until somebody opens one; the map started with 1.1 drawn over a choice nobody had made. */
   const [selectedLine, setSelectedLine] = useState<BusLine | null>(null);
   /**
-   * Asking for a line, rather than for the list of lines.
-   *
-   * Seven places offer a line — a stop's arrival row, the search bar, the map, the
-   * planner, saved lines, a shared ?linea= link — and all of them used to select it and
-   * switch tab. Below lg that arrives at the full list with the chosen line ticked in
-   * state and usually below the fold: somebody who asked for one line got twenty.
-   *
-   * A counter rather than a flag, so asking for the same line twice is still two asks.
-   * Zero means nobody asked and the list is what should show.
+   * Asking for a line, rather than for the list of lines. A counter, so asking for the same
+   * line twice is still two asks; zero means nobody asked and the list is what should show.
    */
+  const [lineRequest, setLineRequest] = useState(0);
+  /** A place chosen in the search box, on its way to the planner as a destination. Same counter trick. */
+  const [placeRequest, setPlaceRequest] = useState<{ query: string; nonce: number } | null>(null);
   /**
-   * Whether the map has ever been opened.
-   *
-   * The map used to be mounted and unmounted with the tab, which meant a fresh Leaflet
-   * container, a fresh WebGL context, a fresh style download and a fresh first paint
-   * every single time somebody came back to it — measured at four distinct map elements
-   * across three visits. That rebuild is what reads as the map resizing itself on the
-   * way in. It stays mounted now, hidden between visits, so the second visit shows the
-   * map already drawn and looking at wherever it was left.
-   *
-   * Still nothing before the first visit: the map is a lazy chunk and somebody who only
-   * ever checks a departure time should not pay to download a renderer.
+   * The map stays mounted between visits — a remount was a fresh WebGL context and a fresh
+   * style download every time — but nothing before the first: it is a lazy chunk.
    */
   const [mapEverOpened, setMapEverOpened] = useState(false);
   useEffect(() => {
     if (activeTab === 'map') setMapEverOpened(true);
   }, [activeTab]);
 
-  const [lineRequest, setLineRequest] = useState(0);
-  /**
-   * A place chosen in the search box, on its way to the planner as a destination.
-   *
-   * The counter is the same trick `lineRequest` uses: asking for the same place twice in
-   * a row has to be two requests, or the second tap does nothing.
-   */
-  const [placeRequest, setPlaceRequest] = useState<{ query: string; nonce: number } | null>(null);
+  // The stops tab opens on the saved-stops home; choosing a stop anywhere switches it to that stop's board.
+  const [showStopBoard, setShowStopBoard] = useState(false);
+  /** Set when a `?parada=` link or the scanner opened the board, i.e. somebody scanned that pole. */
+  const [qrStopId, setQrStopId] = useState<string | null>(null);
+  const [recentStopIds, rememberStop, clearRecentStops] = useRecentStops();
+  const [favoriteStopIds, toggleFavoriteStop] = useFavourites('urbanos_lugo_fav_stops', stopIds);
+  const [favoriteLineIds, toggleFavoriteLine] = useFavourites('urbanos_lugo_fav_lines', lineIds);
+  const [isNightBannerDismissed, setIsNightBannerDismissed] = useState(false);
+  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [theme, setTheme] = useTheme();
+  const [lang, setLang] = useState<Lang>(initialLang);
+  const t = translations(lang);
+
+  // The "no service" banner comes from the actual timetables, not from assuming the network sleeps 22:00-06:00.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const isOutOfService = !BUS_LINES.some((l) => isLineInService(l, now));
+  const firstDepartureTomorrow = useMemo(() => BUS_LINES.map((l) => l.firstDeparture).sort()[0], []);
+
+  /** The operator's notices, fetched once here for everybody who shows them. */
+  const alerts = useServiceAlerts();
+  /** The ride in progress, above the tabs: the planner is unmounted the moment the reader looks at the map. */
+  const companion = useTripCompanion(lang);
+
+  const screenTitle = ({ stops: t.nav.stops, lines: t.nav.lines, map: t.nav.map, plan: t.nav.plan, info: t.menu.alerts, fares: t.menu.fares } satisfies Record<Tab, string>)[activeTab];
+
+  // index.html ships Galician for the crawler; once the app knows who is reading, the page and the tab title say so.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.title = activeTab === 'stops' ? t.map.documentTitle : `${screenTitle} · ${t.nav.appName}`;
+    writeString(LANG_KEY, lang);
+  }, [lang, t, activeTab, screenTitle]);
+
   const openLine = (line: BusLine) => {
     setSelectedLine(line);
     setLineRequest((n) => n + 1);
     setActiveTab('lines');
   };
   /** The nav asks for a tab, not for a line, so Líneas opens on its list. */
-  const goToTab = (tab: typeof activeTab) => {
+  const goToTab = (tab: Tab) => {
     if (tab === 'lines') setLineRequest(0);
     setActiveTab(tab);
   };
-  // The stops tab opens on the saved-stops home; choosing a stop anywhere — search, QR,
-  // map, a saved stop — switches it to that stop's board, and Back returns here.
-  const [showStopBoard, setShowStopBoard] = useState(false);
-  /** Set when a `?parada=` link opened the board, i.e. somebody scanned that pole. */
-  const [qrStopId, setQrStopId] = useState<string | null>(null);
-  const [recentStopIds, rememberStop, clearRecentStops] = useRecentStops();
-  const [isNightBannerDismissed, setIsNightBannerDismissed] = useState(false);
-
-  // Derive the "no service" banner from the actual timetables rather than assuming
-  // the network sleeps between 22:00 and 06:00.
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(t);
-  }, []);
-
-  const linesInService = BUS_LINES.filter((l) => isLineInService(l, now));
-  const isOutOfService = linesInService.length === 0;
-  /**
-   * The operator's notices, fetched once here for everybody who shows them.
-   *
-   * The badge used to count the snapshot compiled into the bundle while the Avisos
-   * screen fetched the server. Two answers to one question, and on any deployment with
-   * a server running they disagreed: the bar said one incident and the page underneath
-   * said the network was running normally.
-   */
-  const alerts = useServiceAlerts();
-  const firstDepartureTomorrow = [...BUS_LINES]
-    .map((l) => l.firstDeparture)
-    .sort()[0];
-  const [favoriteStopIds, setFavoriteStopIds] = usePersistedIds(
-    'urbanos_lugo_fav_stops',
-    useMemo(() => new Set(BUS_STOPS.map((s) => s.id)), []),
-  );
-  const [favoriteLineIds, setFavoriteLineIds] = usePersistedIds(
-    'urbanos_lugo_fav_lines',
-    useMemo(() => new Set(BUS_LINES.map((l) => l.id)), []),
-  );
-
-  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
-  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [theme, setTheme] = useTheme();
-  /**
-   * The interface language, remembered, and seeded from the browser when there is no
-   * choice on record — a visitor arriving from the Camino should not have to find the
-   * menu before they can read the page.
-   */
-  const [lang, setLang] = useState<Lang>(() => {
-    // Same reason as the theme: private browsing and a full quota both throw here.
-    try {
-      const stored = localStorage.getItem('urbanos-lugo-lang');
-      if (isLang(stored)) return stored;
-    } catch {
-      // fall through to the browser's language
-    }
-    const preferred = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'gl';
-    return isLang(preferred) ? preferred : 'gl';
-  });
-  const t = translations(lang);
-
-  /**
-   * The ride in progress, above the tabs on purpose: the planner is unmounted the moment
-   * the reader looks at the map or a line, and a trip that ended there would be no trip.
-   * The hook keeps the position watch and the alert alive; the plan tab shows the screen.
-   */
-  const companion = useTripCompanion(lang);
-
-  // index.html hardcodes lang="gl"; keep it truthful when the reader switches so screen
-  // readers pronounce the page with the right voice.
-  /** What the page is about, in the reader's language: the <h1> below says the same. */
-  const screenTitle = (
-    {
-      stops: t.nav.stops,
-      lines: t.nav.lines,
-      map: t.nav.map,
-      plan: t.nav.plan,
-      info: t.menu.alerts,
-      fares: t.menu.fares,
-    } satisfies Record<Tab, string>
-  )[activeTab];
-
-  useEffect(() => {
-    document.documentElement.lang = lang;
-    // index.html ships a Galician title for the crawler; once the app knows who is
-    // reading, the tab should say so too -- and which screen it is on. The title was the
-    // same on all six, so a tab strip or a history list could not tell them apart.
-    document.title = activeTab === 'stops' ? t.map.documentTitle : `${screenTitle} · ${t.nav.appName}`;
-    try {
-      localStorage.setItem('urbanos-lugo-lang', lang);
-    } catch {
-      // The language still applies; it just will not survive a reload.
-    }
-  }, [lang, t, activeTab, screenTitle]);
-
-  // Check URL query parameters for direct QR links (e.g. ?parada=xRiq or ?stop=101)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const stopParam = params.get('parada') || params.get('stop') || params.get('qr') || params.get('ps');
-    const lineParam = params.get('linea') || params.get('line');
-
-    if (stopParam) {
-      // Same resolver the QR scanner uses, so a scanned link and a typed code behave alike.
-      const stop = findStop(stopParam);
-      if (stop) {
-        setSelectedStop(stop);
-        setShowStopBoard(true);
-        setActiveTab('stops');
-        // Which stop, not just that one arrived this way: tapping through to the pole
-        // across the road is an ordinary visit and must not inherit the QR's extras.
-        setQrStopId(stop.id);
-      }
-    }
-
-    if (lineParam) {
-      const line = BUS_LINES.find(
-        (l) => l.id.toLowerCase() === lineParam.toLowerCase() || l.number.toLowerCase() === lineParam.toLowerCase()
-      );
-      if (line) openLine(line);
-    }
-  }, []);
-
-  const handleToggleFavorite = (stopId: string) =>
-    setFavoriteStopIds((prev) =>
-      prev.includes(stopId) ? prev.filter((id) => id !== stopId) : [...prev, stopId],
-    );
-
-  const handleToggleFavoriteLine = (lineId: string) =>
-    setFavoriteLineIds((prev) =>
-      prev.includes(lineId) ? prev.filter((id) => id !== lineId) : [...prev, lineId],
-    );
-
-  // `viaQr` says the reader got here off the sticker on that pole -- the app's own
-  // scanner, or a camera that opened `?parada=`. It is cleared on every other route in,
-  // so walking to the next stop inside the app does not carry the last scan's extras.
-  const handleSelectStop = (stop: BusStop, viaQr = false) => {
+  /** `viaQr`: the reader got here off the sticker on that pole. Cleared on every other route in. */
+  const selectStop = (stop: BusStop, viaQr = false) => {
     setSelectedStop(stop);
     setStopWasChosen(true);
     rememberStop(stop.id);
@@ -293,244 +127,143 @@ export default function App() {
     setActiveTab('stops');
     setQrStopId(viaQr ? stop.id : null);
   };
-
-  const handleSelectLine = (line: BusLine) => {
-    setSelectedLine(line);
-  };
-
-  const handleViewOnMap = (stop: BusStop) => {
+  const viewStopOnMap = (stop: BusStop) => {
     setSelectedStop(stop);
     setStopWasChosen(true);
     setMapFocus('stop');
     setActiveTab('map');
   };
-
-  const handleViewLineOnMap = (line: BusLine) => {
+  const viewLineOnMap = (line: BusLine) => {
     setSelectedLine(line);
     setMapFocus('line');
     setActiveTab('map');
   };
 
+  // Direct QR links (`?parada=xRiq`, `?stop=101`) and shared lines (`?linea=`), resolved the way the scanner resolves them.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stopParam = params.get('parada') || params.get('stop') || params.get('qr') || params.get('ps');
+    const lineParam = params.get('linea') || params.get('line');
+    const stop = stopParam && findStop(stopParam);
+    if (stop) {
+      setSelectedStop(stop);
+      setShowStopBoard(true);
+      setActiveTab('stops');
+      setQrStopId(stop.id);
+    }
+    const line = lineParam && BUS_LINES.find((l) => l.id.toLowerCase() === lineParam.toLowerCase() || l.number.toLowerCase() === lineParam.toLowerCase());
+    if (line) openLine(line);
+  }, []);
+
   return (
-    <div className="flex h-viewport bg-bg text-ink lg:flex-row">
-      {/* First in the document, so it is the first Tab stop. It sat after the rail, which
-          on a desktop put twelve buttons before the link whose job is to skip them. */}
-      <a
-        href="#contido"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[2000] focus:m-2 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-body focus:font-bold focus:text-on-accent"
-      >
-        {t.nav.skipToContent}
-      </a>
-      <SideNav
-        activeTab={activeTab}
-        setActiveTab={goToTab}
-        alertCount={alerts.announcedIncidents}
-        tripActive={companion.trip !== null}
-        lang={lang}
-        setLang={setLang}
-        theme={theme}
-        setTheme={setTheme}
-      />
-      <div className="flex min-w-0 flex-1 flex-col">
-      <TopBar
-        onOpenFavorites={() => setIsFavoritesOpen(true)}
-        savedCount={favoriteStopIds.length + favoriteLineIds.length}
-        onSelectStop={handleSelectStop}
-        onSelectLine={(line) => {
-          openLine(line);
-        }}
-        onSelectPlace={(query) => {
-          setPlaceRequest((prev) => ({ query, nonce: (prev?.nonce ?? 0) + 1 }));
-          setActiveTab('plan');
-        }}
-        onOpenQrScanner={() => setIsQrModalOpen(true)}
-        onOpenMenu={() => setIsMenuOpen(true)}
-        lang={lang}
-      />
+    <LangContext.Provider value={lang}>
+      <div className="flex h-viewport bg-bg text-ink lg:flex-row">
+        {/* First in the document, so it is the first Tab stop. */}
+        <a href="#contido" className="sr-only focus:not-sr-only focus:absolute focus:z-[2000] focus:m-2 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-body focus:font-bold focus:text-on-accent">
+          {t.nav.skipToContent}
+        </a>
+        <SideNav activeTab={activeTab} setActiveTab={goToTab} alertCount={alerts.announcedIncidents} tripActive={companion.trip !== null} setLang={setLang} theme={theme} setTheme={setTheme} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar
+            onOpenFavorites={() => setIsFavoritesOpen(true)}
+            savedCount={favoriteStopIds.length + favoriteLineIds.length}
+            onSelectStop={selectStop}
+            onSelectLine={openLine}
+            onSelectPlace={(query) => {
+              setPlaceRequest((prev) => ({ query, nonce: (prev?.nonce ?? 0) + 1 }));
+              setActiveTab('plan');
+            }}
+            onOpenQrScanner={() => setIsQrModalOpen(true)}
+            onOpenMenu={() => setIsMenuOpen(true)}
+          />
 
-      {/* Nothing is running: the single most useful thing the app can say at 03:00 is
-          when the first bus goes, so that is the sentence, not a decorated panel.
+          {/* Nothing is running: the one useful sentence at 03:00 is when the first bus goes. Two lines, the whole row a link to the notices; the festival sentence keeps "no service" from being a lie on San Froilán. */}
+          {isOutOfService && !isNightBannerDismissed && (
+            <div className="flex items-center gap-1 border-b border-line bg-surface pl-3.5 pr-1">
+              <button onClick={() => setActiveTab('info')} className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left">
+                <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body font-semibold">{t.nightBanner.closed(firstDepartureTomorrow)}</span>
+                  <span className="block truncate text-label text-ink-3">{t.nightBanner.festivals} ›</span>
+                </span>
+                <span className="sr-only">{t.nightBanner.seeNotices}</span>
+              </button>
+              <button onClick={() => setIsNightBannerDismissed(true)} aria-label={t.nightBanner.dismiss} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-3">
+                <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
+              </button>
+            </div>
+          )}
 
-          It was a panel anyway -- 162 px measured on a 375x812, a fifth of the screen, on
-          every tab. With the search bar and the bottom nav that left 513 px for the screen
-          itself, and the route planner's form needs 762. Two lines now, and the whole row
-          is the link to the notices, so "Ver avisos" stops costing a 44 px row of its own.
+          <main id="contido" className="min-h-0 flex-1 overflow-y-auto">
+            <ErrorBoundary t={t} resetKey={activeTab}>
+              {/* One heading for the page, naming what is on screen: correct in both the one-pane and the two-pane layout. */}
+              <h1 className="sr-only">{screenTitle}</h1>
 
-          The festival sentence stays. It is what keeps "no service" from being a lie on the
-          night of San Froilán -- the operator runs extra buses and only ever announces them
-          as a notice -- so it is shortened and pointed at the notices, never dropped. */}
-      {isOutOfService && !isNightBannerDismissed && (
-        <div className="flex items-center gap-1 border-b border-line bg-surface pl-3.5 pr-1">
-          <button
-            onClick={() => setActiveTab('info')}
-            className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left"
-          >
-            <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-body font-semibold">
-                {t.nightBanner.closed(firstDepartureTomorrow)}
-              </span>
-              {/* The chevron is the affordance for the whole row; the label below is what
-                  a screen reader hears instead of a bare "See notices". */}
-              <span className="block truncate text-label text-ink-3">
-                {t.nightBanner.festivals} ›
-              </span>
-            </span>
-            <span className="sr-only">{t.nightBanner.seeNotices}</span>
-          </button>
-          <button
-            onClick={() => setIsNightBannerDismissed(true)}
-            aria-label={t.nightBanner.dismiss}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-3"
-          >
-            <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
-          </button>
+              {/* Below lg the two panes take turns; from lg up the saved stops stay beside the board. */}
+              {activeTab === 'stops' && (
+                <div className="mx-auto h-full w-full max-w-7xl lg:grid lg:grid-cols-12 lg:gap-6 lg:px-6 lg:pt-4">
+                  <div className={`lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? 'hidden' : ''}`}>
+                    <StopHome favoriteStopIds={favoriteStopIds} favoriteLineIds={favoriteLineIds} onSelectLine={openLine} recentStopIds={recentStopIds} onClearRecent={clearRecentStops} onSelectStop={selectStop} onOpenQrScanner={() => setIsQrModalOpen(true)} />
+                  </div>
+                  <div className={`lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
+                    <StopArrivalsView
+                      selectedStop={selectedStop}
+                      onSelectLine={openLine}
+                      onViewOnMap={viewStopOnMap}
+                      onSelectStop={selectStop}
+                      // Leaving the board un-chooses the stop for the map too.
+                      onBack={() => {
+                        setShowStopBoard(false);
+                        setStopWasChosen(false);
+                      }}
+                      isFavorite={favoriteStopIds.includes(selectedStop.id)}
+                      onToggleFavorite={toggleFavoriteStop}
+                      viaQr={qrStopId === selectedStop.id}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'lines' && (
+                <LinesView selectedLine={selectedLine} lineRequest={lineRequest} onSelectLine={setSelectedLine} onSelectStop={selectStop} onViewLineOnMap={viewLineOnMap} favoriteLineIds={favoriteLineIds} onToggleFavoriteLine={toggleFavoriteLine} />
+              )}
+
+              {mapEverOpened && (
+                <div className={activeTab === 'map' ? 'contents' : 'hidden'}>
+                  <Suspense
+                    fallback={
+                      <div className="max-w-7xl mx-auto px-4 py-10">
+                        <div className="flex h-[540px] animate-pulse items-center justify-center rounded-card bg-surface text-body font-medium text-ink-3">{t.map.loadingMap}</div>
+                      </div>
+                    }
+                  >
+                    <InteractiveMap selectedStop={stopWasChosen ? selectedStop : undefined} selectedLine={selectedLine} focus={mapFocus} onSelectStop={selectStop} onSelectLine={setSelectedLine} onOpenLine={openLine} />
+                  </Suspense>
+                </div>
+              )}
+
+              {activeTab === 'plan' && (companion.trip ? <TripCompanionView companion={companion} /> : <RoutePlannerView onSelectStop={selectStop} onSelectLine={openLine} destinationRequest={placeRequest} onStartTrip={companion.start} />)}
+              {activeTab === 'info' && <AlertsView alerts={alerts} />}
+              {activeTab === 'fares' && <FaresView />}
+            </ErrorBoundary>
+          </main>
+
+          <BottomNav activeTab={activeTab} setActiveTab={goToTab} tripActive={companion.trip !== null} />
         </div>
-      )}
 
-      {/* Main Content Area */}
-      <main id="contido" className="min-h-0 flex-1 overflow-y-auto">
-        {/* One heading for the page, naming what is on screen.
-            The desktop lays two panes side by side, so any per-pane <h1> gave the reader
-            two of them on the stops tab and an H2 > H1 outline on lines. A single
-            shell-level heading is correct in both layouts, and a reader jumping by
-            heading hears which section they are in before anything else. */}
-        <ErrorBoundary t={t} resetKey={activeTab}>
-        {/* `screenTitle` is a record and not a ternary chain: the chain ended in a
-            catch-all, so when the one screen became two the new tab inherited the old
-            one's heading and announced itself as the wrong screen to anyone navigating
-            by heading. Record<Tab, …> makes the next tab a compile error instead. */}
-        <h1 className="sr-only">{screenTitle}</h1>
-
-        {/* Below lg the two panes take turns; from lg up the saved stops stay beside the
-            board, so choosing another one never costs the board you were reading. */}
-        {activeTab === 'stops' && (
-          <div className="mx-auto h-full w-full max-w-7xl lg:grid lg:grid-cols-12 lg:gap-6 lg:px-6 lg:pt-4">
-            <div className={`lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? 'hidden' : ''}`}>
-              <StopHome
-                favoriteStopIds={favoriteStopIds}
-                favoriteLineIds={favoriteLineIds}
-                onSelectLine={(line) => {
-                  openLine(line);
-                }}
-                recentStopIds={recentStopIds}
-                onClearRecent={clearRecentStops}
-                onSelectStop={handleSelectStop}
-                onOpenQrScanner={() => setIsQrModalOpen(true)}
-                lang={lang}
-              />
-            </div>
-            <div className={`lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
-              <StopArrivalsView
-                selectedStop={selectedStop}
-                onSelectLine={(line) => {
-                  openLine(line);
-                }}
-                onViewOnMap={handleViewOnMap}
-                onSelectStop={handleSelectStop}
-                // Leaving the board un-chooses the stop for the map too: it kept the big
-                // blue dot on a stop the reader had already closed.
-                onBack={() => {
-                  setShowStopBoard(false);
-                  setStopWasChosen(false);
-                }}
-                isFavorite={favoriteStopIds.includes(selectedStop.id)}
-                onToggleFavorite={handleToggleFavorite}
-                viaQr={qrStopId === selectedStop.id}
-                lang={lang}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'lines' && (
-          <LinesView
-            selectedLine={selectedLine}
-            lineRequest={lineRequest}
-            onSelectLine={handleSelectLine}
-            onSelectStop={handleSelectStop}
-            onViewLineOnMap={handleViewLineOnMap}
-            favoriteLineIds={favoriteLineIds}
-            onToggleFavoriteLine={handleToggleFavoriteLine}
-            lang={lang}
-          />
-        )}
-
-        {mapEverOpened && (
-          <div className={activeTab === 'map' ? 'contents' : 'hidden'}>
-          <Suspense fallback={<MapLoading lang={lang} />}>
-            <InteractiveMap
-            selectedStop={stopWasChosen ? selectedStop : undefined}
-            selectedLine={selectedLine}
-            focus={mapFocus}
-            onSelectStop={handleSelectStop}
-            onSelectLine={(line) => {
-              setSelectedLine(line);
-            }}
-              onOpenLine={(line) => {
-                openLine(line);
-              }}
-              lang={lang}
-            />
-          </Suspense>
-          </div>
-        )}
-
-        {activeTab === 'plan' && companion.trip && <TripCompanionView companion={companion} lang={lang} />}
-        {activeTab === 'plan' && !companion.trip && (
-          <RoutePlannerView
-            onSelectStop={handleSelectStop}
-            onSelectLine={(line) => {
-              openLine(line);
-            }}
-            destinationRequest={placeRequest}
-            onStartTrip={companion.start}
-            lang={lang}
-          />
-        )}
-
-        {activeTab === 'info' && <AlertsView lang={lang} alerts={alerts} />}
-        {activeTab === 'fares' && <FaresView lang={lang} />}
-        </ErrorBoundary>
-      </main>
-
-      <BottomNav activeTab={activeTab} setActiveTab={goToTab} tripActive={companion.trip !== null} lang={lang} />
+        <MenuDrawer open={isMenuOpen} onClose={() => setIsMenuOpen(false)} onOpenTab={setActiveTab} alertCount={alerts.announcedIncidents} setLang={setLang} theme={theme} setTheme={setTheme} />
+        <FavoritesDrawer
+          isOpen={isFavoritesOpen}
+          onClose={() => setIsFavoritesOpen(false)}
+          favoriteStopIds={favoriteStopIds}
+          favoriteLineIds={favoriteLineIds}
+          onSelectStop={selectStop}
+          onSelectLine={openLine}
+          onRemoveFavoriteStop={toggleFavoriteStop}
+          onRemoveFavoriteLine={toggleFavoriteLine}
+        />
+        <QrScannerModal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} onSelectStop={(stop) => selectStop(stop, true)} />
       </div>
-
-      <MenuDrawer
-        open={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        onOpenTab={setActiveTab}
-        alertCount={alerts.announcedIncidents}
-        lang={lang}
-        setLang={setLang}
-        theme={theme}
-        setTheme={setTheme}
-      />
-
-      {/* Drawers & Modals */}
-      <FavoritesDrawer
-        isOpen={isFavoritesOpen}
-        onClose={() => setIsFavoritesOpen(false)}
-        favoriteStopIds={favoriteStopIds}
-        favoriteLineIds={favoriteLineIds}
-        onSelectStop={handleSelectStop}
-        onSelectLine={(line) => {
-          openLine(line);
-        }}
-        onRemoveFavoriteStop={handleToggleFavorite}
-        onRemoveFavoriteLine={handleToggleFavoriteLine}
-        lang={lang}
-      />
-
-      <QrScannerModal
-        isOpen={isQrModalOpen}
-        onClose={() => setIsQrModalOpen(false)}
-        onSelectStop={(stop) => handleSelectStop(stop, true)}
-        lang={lang}
-      />
-
-      {/* Geometric Balance Footer */}
-    </div>
+    </LangContext.Provider>
   );
 }

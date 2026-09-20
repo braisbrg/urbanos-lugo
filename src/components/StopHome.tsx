@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Compass, History, QrCode, Route, Star } from 'lucide-react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { Compass, History, QrCode, Route, Star, type LucideIcon } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
-import { BUS_LINES, BUS_STOPS } from '../data/transitData';
-import { NEARBY_STOP_LIMIT_METRES, getNearbyStops } from '../utils/places';
+import { lineById, stopById } from '../data/transitData';
+import { NEARBY_STOP_LIMIT_METRES, NearbyStop, getNearbyStops } from '../utils/places';
 import { getArrivalsForStop } from '../utils/arrivals';
-import { Lang, translations } from '../i18n';
-// Leaflet is heavy and this screen opens cold: the map arrives only once you ask to be
-// located, and then only once it is actually on screen.
+import { useT } from '../i18n';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { LineBadge } from './ui/LineBadge';
 
@@ -18,32 +16,49 @@ interface StopHomeProps {
   onClearRecent: () => void;
   onSelectStop: (stop: BusStop) => void;
   onOpenQrScanner: () => void;
-  lang: Lang;
 }
 
 /** How many departures to show per saved stop before it becomes a wall of numbers. */
 const PER_STOP = 3;
 
+const Heading = ({ icon: Icon, tint, children, action }: { icon: LucideIcon; tint: string; children: ReactNode; action?: ReactNode }) => (
+  <div className="mt-7 flex items-center gap-3">
+    <h2 className="flex flex-1 items-center gap-2 text-emph font-semibold">
+      <Icon className={`h-4.5 w-4.5 shrink-0 ${tint}`} strokeWidth={2} aria-hidden="true" />
+      {children}
+    </h2>
+    {action}
+  </div>
+);
+
+/** A stop as a plain row: the name, the zone and how many lines. */
+function StopRow({ stop, onSelect, trailing }: { stop: BusStop; onSelect: (stop: BusStop) => void; trailing?: ReactNode }) {
+  const t = useT();
+  return (
+    <li>
+      <button onClick={() => onSelect(stop)} className="flex w-full items-center gap-3 rounded-control border border-edge px-3.5 py-3 text-left">
+        <span className="min-w-0 flex-1">
+          <span title={stop.name} className="block truncate text-body font-semibold">
+            {stop.name}
+          </span>
+          <span className="block truncate text-label text-ink-3">
+            {trailing ? '' : `${stop.zone} · `}
+            {t.common.lines(stop.lines.length)}
+          </span>
+        </span>
+        {trailing}
+      </button>
+    </li>
+  );
+}
 
 /**
- * The landing screen for the stops tab: the two or three stops a regular traveller
- * actually uses, already showing their next departures, so the common case costs zero
- * taps and zero typing.
- *
- * Saved stops sit above "near me" on purpose. Geolocation takes a second, needs a
- * permission and can be refused; a saved stop is instant and always works, so it is
- * what the screen opens with.
+ * The landing screen for the stops tab: the two or three stops a regular traveller uses,
+ * already showing their next departures. Saved stops sit above "near me" on purpose:
+ * geolocation takes a second, needs a permission and can be refused.
  */
-export const StopHome: React.FC<StopHomeProps> = ({
-  favoriteStopIds,
-  favoriteLineIds,
-  onSelectLine,
-  recentStopIds,
-  onClearRecent,
-  onSelectStop,
-  onOpenQrScanner,
-  lang,
-}) => {
+export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recentStopIds, onClearRecent, onSelectStop, onOpenQrScanner }: StopHomeProps) {
+  const t = useT();
   // Minutes drift against the wall clock, so the board is recomputed rather than fetched.
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -51,12 +66,10 @@ export const StopHome: React.FC<StopHomeProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  const [nearby, setNearby] = useState<(BusStop & { walkMeters: number; walkMinutes: number })[]>([]);
+  const [nearby, setNearby] = useState<NearbyStop[]>([]);
   const [locatedAt, setLocatedAt] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-
-  const t = translations(lang);
 
   const locate = () => {
     if (!navigator.geolocation) return setLocationError(t.stopHome.unavailable);
@@ -64,22 +77,15 @@ export const StopHome: React.FC<StopHomeProps> = ({
     setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        // Within walking distance, not merely nearest. The network is one city: rank
-        // every stop against a phone in Madrid and the first answer is 423 km away, which
-        // reads as a list of five stops to anybody who does not check the units.
-        const near = getNearbyStops(pos.coords.latitude, pos.coords.longitude).filter(
-          (s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES,
-        );
+        // Within walking distance, not merely nearest: from Madrid the first answer is 423 km away.
+        const near = getNearbyStops(pos.coords.latitude, pos.coords.longitude).filter((s) => s.walkMeters <= NEARBY_STOP_LIMIT_METRES);
         setNearby(near.slice(0, 5));
-        // Only move the map to somewhere the network is. Outside it there is nothing to
-        // look at, and flying to another province would suggest otherwise.
         setLocatedAt(near.length ? [pos.coords.latitude, pos.coords.longitude] : null);
         setLocationError(near.length ? null : t.stopHome.outOfArea);
         setLocating(false);
       },
       () => {
-        // No silent fallback to the centre of Lugo: a list of stops labelled with
-        // distances the phone never measured would be worse than no list.
+        // No silent fallback to the centre of Lugo: distances the phone never measured would be worse than no list.
         setLocationError(t.stopHome.denied);
         setLocating(false);
       },
@@ -88,25 +94,17 @@ export const StopHome: React.FC<StopHomeProps> = ({
   };
 
   const saved = favoriteStopIds
-    .map((id) => BUS_STOPS.find((s) => s.id === id))
-    .filter((s): s is BusStop => Boolean(s))
+    .map(stopById)
+    .filter((s): s is BusStop => !!s)
     .map((stop) => ({ stop, arrivals: getArrivalsForStop(stop.id).arrivals.slice(0, PER_STOP) }));
+  const recent = recentStopIds.filter((id) => !favoriteStopIds.includes(id)).map(stopById).filter((s): s is BusStop => !!s);
 
-  /**
-   * A saved line, and when it next passes somewhere the reader actually stands.
-   *
-   * On its own a saved line was a shortcut to a page they could already reach from the
-   * lines tab in one tap — which is why it felt like it did nothing. Crossed with the
-   * stops they keep, it answers the question they saved it for.
-   */
+  // A saved line crossed with the stops the reader keeps: on its own it was a shortcut to a page one tap away.
+  const known = [...saved.map((s) => s.stop), ...recent];
   const savedLines = favoriteLineIds
-    .map((id) => BUS_LINES.find((l) => l.id === id))
-    .filter((l): l is BusLine => Boolean(l))
+    .map(lineById)
+    .filter((l): l is BusLine => !!l)
     .map((line) => {
-      const known = [
-        ...saved.map((s) => s.stop),
-        ...recentStopIds.map((id) => BUS_STOPS.find((s) => s.id === id)).filter((s): s is BusStop => Boolean(s)),
-      ];
       for (const stop of known) {
         if (!stop.lines.includes(line.id)) continue;
         const next = getArrivalsForStop(stop.id).arrivals.find((a) => a.lineId === line.id);
@@ -127,28 +125,12 @@ export const StopHome: React.FC<StopHomeProps> = ({
           <p className="text-body font-semibold">{t.stopHome.emptyTitle}</p>
           <p className="mt-1.5 text-body leading-relaxed text-ink-2">{t.stopHome.emptyBody}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              onClick={onOpenQrScanner}
-              className="flex h-11 items-center gap-2 rounded-control bg-accent px-4 text-body font-semibold text-on-accent"
-            >
+            <button onClick={onOpenQrScanner} className="flex h-11 items-center gap-2 rounded-control bg-accent px-4 text-body font-semibold text-on-accent">
               <QrCode className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
               {t.stopHome.scan}
             </button>
-            {/* A link, not a second chip.
-                It began as an inert span, and the first fix only made it work: it still
-                had a box, a magnifier and grey text, which is the shape of a search
-                field, sat next to a real button. Nothing here is a field — the field is
-                at the top of the screen and this sends you to it, so it is set as the
-                text action it is, in the house style used for "clear recent" below.
-
-                It earns its place because the sentence above names three ways in and
-                this is the only one with no control on this screen — and because on a
-                tall phone the top bar is the hardest thing to reach with a thumb, which
-                is the whole point of a button down here that puts the cursor up there. */}
-            <button
-              onClick={() => document.getElementById('site-search')?.focus()}
-              className="flex h-11 items-center px-1 text-body font-medium text-ink-2 underline"
-            >
+            {/* A link, not a field: the field is at the top of the screen, the hardest place for a thumb, and this puts the cursor there. */}
+            <button onClick={() => document.getElementById('site-search')?.focus()} className="flex h-11 items-center px-1 text-body font-medium text-ink-2 underline">
               {t.stopHome.orSearchAbove}
             </button>
           </div>
@@ -157,29 +139,20 @@ export const StopHome: React.FC<StopHomeProps> = ({
         <ul className="mt-3 flex flex-col gap-2">
           {saved.map(({ stop, arrivals }) => (
             <li key={stop.id}>
-              <button
-                onClick={() => onSelectStop(stop)}
-                className="w-full rounded-card border border-edge bg-surface p-3.5 text-left"
-              >
+              <button onClick={() => onSelectStop(stop)} className="w-full rounded-card border border-edge bg-surface p-3.5 text-left">
                 <span className="flex items-baseline justify-between gap-2">
                   <span title={stop.name} className="truncate text-emph font-semibold">
                     {stop.name}
                   </span>
                   <span className="tnum shrink-0 text-label text-ink-3">{stop.zone}</span>
                 </span>
-
                 {arrivals.length === 0 ? (
                   <span className="mt-2 block text-label text-ink-3">{t.stopHome.none}</span>
                 ) : (
                   <span className="mt-2.5 flex flex-wrap items-center gap-2">
                     {arrivals.map((a, i) => (
                       <span key={`${a.lineId}-${i}`} className="flex items-center gap-1.5">
-                        <span
-                          className="tnum flex h-[26px] min-w-[26px] items-center justify-center rounded-[5px] px-1.5 text-label font-bold text-white"
-                          style={{ backgroundColor: a.lineColor }}
-                        >
-                          {a.lineNumber}
-                        </span>
+                        <LineBadge number={a.lineNumber} color={a.lineColor} size="sm" className="h-[26px] min-w-[26px] rounded-[5px]" />
                         <span className="tnum text-body font-semibold">
                           {a.etaMinutes === 0 ? (
                             t.common.arrivingNow
@@ -201,31 +174,21 @@ export const StopHome: React.FC<StopHomeProps> = ({
         </ul>
       )}
 
-      {/* Looking a stop up is what everybody does; saving one is what almost nobody
-          does. The second visit should cost no typing either. */}
       {savedLines.length > 0 && (
-        <section className="mt-7">
-          <h2 className="flex items-center gap-2 text-emph font-semibold">
-            <Route className="h-4.5 w-4.5 shrink-0 text-accent" strokeWidth={1.8} aria-hidden="true" />
+        <section>
+          <Heading icon={Route} tint="text-accent">
             {t.stopHome.savedLines}
-          </h2>
+          </Heading>
           <ul className="mt-2 flex flex-col gap-1.5">
             {savedLines.map(({ line, stop, next }) => (
               <li key={line.id}>
-                <button
-                  onClick={() => onSelectLine(line)}
-                  style={{ '--line': line.color } as React.CSSProperties}
-                  className="tint tint-edge tint-strong flex w-full items-center gap-3 rounded-control border px-2.5 py-2 text-left"
-                >
+                <button onClick={() => onSelectLine(line)} style={{ '--line': line.color } as CSSProperties} className="tint tint-edge tint-strong flex w-full items-center gap-3 rounded-control border px-2.5 py-2 text-left">
                   <LineBadge number={line.number} color={line.color} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-body font-semibold" title={line.name}>
                       {line.name}
                     </span>
-                    <span
-                      className="block truncate text-label text-ink-2"
-                      title={stop ? t.stopHome.savedLinesAt(stop.name) : undefined}
-                    >
+                    <span className="block truncate text-label text-ink-2" title={stop ? t.stopHome.savedLinesAt(stop.name) : undefined}>
                       {stop ? t.stopHome.savedLinesAt(stop.name) : t.stopHome.savedLinesNoStop}
                     </span>
                   </span>
@@ -245,72 +208,38 @@ export const StopHome: React.FC<StopHomeProps> = ({
         </section>
       )}
 
-      {recentStopIds.filter((id) => !favoriteStopIds.includes(id)).length > 0 && (
+      {recent.length > 0 && (
         <>
-          <div className="mt-7 flex items-center gap-3">
-            <h2 className="flex flex-1 items-center gap-2 text-emph font-semibold">
-              <History className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
-              {t.stopHome.recent}
-            </h2>
-            <button onClick={onClearRecent} className="h-11 px-2 text-label font-medium text-ink-2 underline">
-              {t.stopHome.clearRecent}
-            </button>
-          </div>
+          <Heading
+            icon={History}
+            tint="text-ink-2"
+            action={
+              <button onClick={onClearRecent} className="h-11 px-2 text-label font-medium text-ink-2 underline">
+                {t.stopHome.clearRecent}
+              </button>
+            }
+          >
+            {t.stopHome.recent}
+          </Heading>
           <ul className="mt-1 flex flex-col gap-1.5">
-            {recentStopIds
-              .filter((id) => !favoriteStopIds.includes(id))
-              .map((id) => BUS_STOPS.find((s) => s.id === id))
-              .filter((s): s is BusStop => Boolean(s))
-              .map((stop) => (
-                <li key={stop.id}>
-                  <button
-                    onClick={() => onSelectStop(stop)}
-                    className="flex w-full items-center gap-3 rounded-control border border-edge px-3.5 py-3 text-left"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span title={stop.name} className="block truncate text-body font-semibold">
-                      {stop.name}
-                    </span>
-                      <span className="block truncate text-label text-ink-3">
-                        {stop.zone} · {t.common.lines(stop.lines.length)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
+            {recent.map((stop) => (
+              <StopRow key={stop.id} stop={stop} onSelect={onSelectStop} />
+            ))}
           </ul>
         </>
       )}
 
-      <h2 className="mt-7 flex items-center gap-2 text-emph font-semibold">
-        <Compass className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+      <Heading icon={Compass} tint="text-ink-2">
         {t.stopHome.near}
-      </h2>
-
+      </Heading>
       {locatedAt && (
         <div className="mt-2.5 overflow-hidden rounded-control border border-edge">
-          <LazyNearbyMiniMap
-            centre={{
-              lat: locatedAt[0],
-              lng: locatedAt[1],
-              label: t.stopHome.youAreHere,
-              kind: 'user',
-            }}
-            stops={nearby}
-            onSelectStop={onSelectStop}
-            lang={lang}
-            regionLabel={t.map.nearbyRegion}
-          />
+          <LazyNearbyMiniMap centre={{ lat: locatedAt[0], lng: locatedAt[1], label: t.stopHome.youAreHere, kind: 'user' }} stops={nearby} onSelectStop={onSelectStop} regionLabel={t.map.nearbyRegion} />
         </div>
       )}
-
       {nearby.length === 0 ? (
         <>
-          <button
-            onClick={locate}
-            disabled={locating}
-            className="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-control border border-edge bg-surface text-body font-semibold text-ink-2 disabled:opacity-60"
-          >
+          <button onClick={locate} disabled={locating} className="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-control border border-edge bg-surface text-body font-semibold text-ink-2 disabled:opacity-60">
             <Compass className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             {locating ? t.stopHome.locating : t.stopHome.locate}
           </button>
@@ -323,26 +252,20 @@ export const StopHome: React.FC<StopHomeProps> = ({
       ) : (
         <ul className="mt-2.5 flex flex-col gap-1.5">
           {nearby.map((stop) => (
-            <li key={stop.id}>
-              <button
-                onClick={() => onSelectStop(stop)}
-                className="flex w-full items-center gap-3 rounded-control border border-edge px-3.5 py-3 text-left"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold">{stop.name}</span>
-                  <span className="block truncate text-label text-ink-3">
-                    {t.common.lines(stop.lines.length)}
-                  </span>
-                </span>
+            <StopRow
+              key={stop.id}
+              stop={stop}
+              onSelect={onSelectStop}
+              trailing={
                 <span className="tnum shrink-0 text-right">
                   <span className="block text-body font-semibold">~{stop.walkMeters} m</span>
                   <span className="block text-label text-ink-3">{t.stopHome.walk(stop.walkMinutes)}</span>
                 </span>
-              </button>
-            </li>
+              }
+            />
           ))}
         </ul>
       )}
     </div>
   );
-};
+}

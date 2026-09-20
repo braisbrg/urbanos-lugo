@@ -1,142 +1,110 @@
+/**
+ * Where a time came from. Nothing in this app is a measurement: 'published' is printed by
+ * the operator for that stop, 'estimated' is derived from a departure plus measured road
+ * time. Every surface says which — an unlabelled time is a bug.
+ */
+export type Precision = 'published' | 'estimated';
+
+export type DayKind = 'laborable' | 'sabado' | 'domingo';
+export type DirectionId = 'ida' | 'volta' | 'circular';
+
 export interface BusStop {
   id: string; // e.g. "s19"
-  code: string; // Code shown on the pole; the operator's QR token when it has one
-  /**
-   * The operator numbers each stop once per line and direction, so one physical pole
-   * carries several of its ids. All of them are kept here so any QR link resolves.
-   */
+  code: string; // the code on the pole; the operator's QR token when it has one
+  /** The operator numbers a pole once per line and direction; all of them, so any QR link resolves. */
   officialIds?: number[];
   officialToken?: string | null;
   name: string; // e.g. "Rda. Muralla 56 (Sindicatos)"
-  /**
-   * Other labels the operator prints for this same pole — a Galician and a Spanish
-   * spelling, or a description from the opposite side of the road. Kept so that
-   * merging two listings into one pole does not make a published name unfindable.
-   */
+  /** Other labels the operator prints for this pole, so a merged listing stays findable. */
   aliases?: string[];
   lat: number;
   lng: number;
-  /**
-   * Set only when the coordinates are not the operator's. The generator takes the pole
-   * OpenStreetMap surveys under the same name when the operator's pin duplicates the
-   * neighbouring stop's -- see tools/buildDataset.ts; everything else is the operator's.
-   */
+  /** Set only when the coordinates are OpenStreetMap's, not the operator's (see tools/buildDataset.ts). */
   positionSource?: 'osm';
-  lines: string[]; // List of line IDs passing by, e.g. ["1.1", "1.2", "3.1", "4.1"]
+  lines: string[]; // line ids passing by, e.g. ["1.1", "1.2", "3.1"]
   zone?: string;
-  /**
-   * Surveyed amenities from OpenStreetMap. `null` means nobody has recorded it, which
-   * the UI shows as nothing rather than as a "no".
-   */
-  shelter: boolean | null; // Marquesina
+  /** Surveyed in OpenStreetMap. `null` means nobody recorded it, shown as nothing rather than "no". */
+  shelter: boolean | null;
   bench: boolean | null;
 }
 
+export interface BusDirection {
+  id: DirectionId;
+  /** `Sentido ${destination}`, in one language — do NOT render; use `directionLabel()`. */
+  name: string;
+  origin: string;
+  destination: string;
+  stops: string[]; // stop ids in sequence
+  pathCoordinates: [number, number][]; // [lat, lng] polyline along the real streets
+  /** Index into pathCoordinates for each stop, so the path can be sliced per leg. */
+  stopPathIndex: number[];
+  /** 'osm' is the surveyed itinerary; 'osrm' a car's route between stops, which detours where a bus does not. */
+  geometrySource?: 'osm' | 'osrm' | 'straight';
+  /** Real road metres and free-flow seconds between consecutive stops. */
+  legMeters: number[];
+  legSeconds: number[];
+  totalMeters: number;
+}
+
+export interface BusService {
+  days: DayKind[];
+  /** Set when the operator gives a cadence and prints only the first and last departure. */
+  headwayMinutes: number | null;
+  rows: { timingPoint: string; times: string[] }[];
+}
+
 export interface BusLine {
-  id: string; // "1.1", "1.2", "2", "3.1", "4.1", "5.1", etc.
-  number: string; // Display number
+  id: string; // "1.1", "2", "5ES"…
+  number: string;
   name: string; // e.g. "Campus USC - Fingoi - O Ceao"
-  color: string; // Hex color for line badge & map route
+  color: string;
   textColor: string;
   category: 'urbano' | 'hospital' | 'periferia' | 'rural' | 'especial';
   /**
-   * The next three are prose in the operator's own Spanish, written once by the
-   * generator, and they cannot follow the reader's language — do NOT render them.
-   * `daysLabel()` and `frequencyLabel()` in utils/serviceLabels say the same facts in
-   * any of the three. `description` is "name. days. frequency." and exists only so the
-   * search matches a line by what it says.
+   * Prose in the operator's Spanish, written once by the generator — do NOT render.
+   * `daysLabel()` / `frequencyLabel()` say the same facts in the reader's language;
+   * `description` exists only so the search matches a line by what it says.
    */
-  days: string; // e.g. "Todos los días" | "De lunes a viernes (laborables)"
-  frequency: string; // e.g. "Cada 30 min"
+  days: string;
+  frequency: string;
   description: string;
   firstDeparture: string; // "07:00"
   lastDeparture: string; // "22:30"
-  /**
-   * Published timetable, one pattern per kind of day the operator distinguishes.
-   * `headwayMinutes` is set when the operator gives a cadence and prints only the
-   * first and last departure instead of every one.
-   */
-  services: {
-    days: ('laborable' | 'sabado' | 'domingo')[];
-    headwayMinutes: number | null;
-    rows: { timingPoint: string; times: string[] }[];
-  }[];
-  directions: {
-    id: 'ida' | 'volta' | 'circular';
-    /** `Sentido ${destination}`, written by the generator in one language — do NOT
-     *  render it. `directionLabel()` in utils/serviceLabels says it in the reader's. */
-    name: string;
-    origin: string;
-    destination: string;
-    stops: string[]; // Stop IDs in sequence
-    pathCoordinates: [number, number][]; // Lat, Lng polyline following the real streets
-    /** Index into pathCoordinates for each stop, so the path can be sliced per leg. */
-    stopPathIndex: number[];
-    /**
-     * Where the drawn line comes from. 'osm' is the itinerary surveyed in OpenStreetMap;
-     * 'osrm' is a car's route between stops, which detours where a bus does not.
-     */
-    geometrySource?: 'osm' | 'osrm' | 'straight';
-    /** Real road distance in metres between consecutive stops. */
-    legMeters: number[];
-    /** Free-flow driving seconds between consecutive stops. */
-    legSeconds: number[];
-    totalMeters: number;
-  }[];
+  services: BusService[];
+  directions: BusDirection[];
 }
 
-/** One scheduled passing at one stop, with where its time came from. */
+/** One scheduled passing at one stop. No vehicleId, delay or occupancy: this network publishes none. */
 export interface StopArrival {
   lineId: string;
   lineNumber: string;
   lineName: string;
   lineColor: string;
   destination: string;
-  etaMinutes: number; // minutes until arrival (0 = Llegando / Chegando)
+  etaMinutes: number; // 0 = arriving now
   etaTime: string; // "14:22"
+  precision: Precision;
   /**
-   * 'published' = the operator prints this time for this stop.
-   * 'estimated'  = derived from the departure plus measured road time.
-   * Nothing here is ever a live position: this app receives none. The operator does
-   * publish its own minutes per stop, which the stop board shows separately and
-   * attributes to them rather than folding into these.
-   */
-  precision: 'published' | 'estimated';
-  /**
-   * Minutes since this departure was due, when it is past due and has not been dropped.
-   *
-   * Not a delay: this app has no idea where the bus is, and the timetable cannot tell a
-   * late bus from one that has already gone. It is the plain fact that the printed time
-   * has passed. The board says so and leaves the reader to look up the street, which is
-   * more use than removing the row and quoting the next service an hour later.
+   * Minutes since the printed time went by, while the row is kept. Not a delay — the
+   * timetable cannot tell a late bus from one already gone — just the fact that it passed.
    */
   overdueMinutes?: number;
 }
 
-// Deliberately absent from an arrival: vehicleId, delayMinutes, occupancy and
-// distanceMeters. This network publishes no vehicle feed, so every one of those would
-// have to be invented, and an invented fleet number or delay is exactly the kind of
-// detail a rider has no way to check.
-
-
 /**
- * Where a run should be right now if it is keeping to its timetable.
- *
- * Called `LiveBus` until it was renamed: nothing about it is live. The position is
- * interpolated along the surveyed route from a published departure, so a bus stuck in
- * traffic is still drawn on schedule. The old name was the last place in the codebase
- * still claiming a vehicle feed that does not exist.
+ * Where a run should be right now if it is keeping to its timetable: interpolated along
+ * the surveyed route from a published departure. Nothing about it is live.
  */
 export interface ScheduledBus {
   id: string;
   lineId: string;
   lineNumber: string;
   lineColor: string;
-  direction: 'ida' | 'volta' | 'circular';
+  direction: DirectionId;
   destination: string;
   currentLat: number;
   currentLng: number;
-  bearing: number; // Degrees 0-360
+  bearing: number; // degrees 0-360
   nextStopId: string;
   nextStopName: string;
   /** Expected crowding from the time of day; there is no occupancy feed. */
@@ -151,14 +119,8 @@ export interface ServiceAlert {
   date: string;
   description: string;
   active: boolean;
-  /**
-   * Who said it. The operator speaks about its own service; the Concello's press feed
-   * occasionally mentions the buses and is a different kind of claim, so a reader gets
-   * to know which they are looking at. Absent on the notices written into this app,
-   * which carry their own provenance line.
-   */
+  /** The operator speaks about its own service; the Concello's press feed is a different kind of claim. */
   source?: 'operator' | 'concello';
-  /** Where to read the whole thing, when the source publishes one. */
   link?: string;
 }
 
@@ -166,10 +128,26 @@ export interface TripFare {
   busLegs: number;
   /** Whether every transfer falls inside the free-transfer window. */
   transfersFree: boolean;
-  /** Minutes between boarding the first bus and the last one. */
   transferSpanMinutes: number;
   singleTicketEuros: number;
   citizenCardEuros: number;
+}
+
+export interface TripSegment {
+  type: 'walk' | 'wait' | 'bus';
+  line?: BusLine;
+  /** Which direction of `line` this leg rides, so the map can slice its geometry. */
+  directionId?: string;
+  precision?: Precision;
+  arrivalPrecision?: Precision;
+  fromStop?: BusStop;
+  toStop?: BusStop;
+  walkMeters?: number;
+  durationMinutes: number;
+  instruction: string;
+  stopsCount?: number;
+  departureTime?: string;
+  arrivalTime?: string;
 }
 
 export interface RoutePlanResult {
@@ -181,34 +159,11 @@ export interface RoutePlanResult {
   walkFromEndMeters: number;
   totalWaitMinutes: number;
   /**
-   * How much later than asked this plan sets off, because the bus was not there yet.
-   *
-   * The reader is told to leave at `departureTime` rather than to stand at the pole, so
-   * this is the cushion that decision spent. It is also the only cushion available if
-   * the walk turns out longer than the estimate: past it, the bus is gone.
+   * How much later than asked this plan sets off because the bus was not there yet. It is
+   * the only cushion available when the walk turns out longer than estimated.
    */
   slackMinutes: number;
   isServiceActive: boolean;
   serviceNotice?: string;
-  segments: {
-    type: 'walk' | 'wait' | 'bus';
-    line?: BusLine;
-    /** Which direction of `line` this leg rides, so the map can slice its geometry. */
-    directionId?: string;
-    /**
-     * Where the boarding time came from. 'published' is printed by the operator for
-     * that stop; 'estimated' is derived from the departure plus measured road time.
-     */
-    precision?: 'published' | 'estimated';
-    /** The same for the alighting time: whether the operator prints it for that stop. */
-    arrivalPrecision?: 'published' | 'estimated';
-    fromStop?: BusStop;
-    toStop?: BusStop;
-    walkMeters?: number;
-    durationMinutes: number;
-    instruction: string;
-    stopsCount?: number;
-    departureTime?: string;
-    arrivalTime?: string;
-  }[];
+  segments: TripSegment[];
 }

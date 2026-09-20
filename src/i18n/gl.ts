@@ -30,7 +30,6 @@ export const gl = {
     fares: 'Tarifas e info',
     language: 'Idioma',
     theme: 'Aparencia',
-    themeAuto: 'Automática',
     themeAutoShort: 'Auto',
     themeLight: 'Clara',
     themeDark: 'Escura',
@@ -550,6 +549,8 @@ export const gl = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `A liña ${line} non presta servizo hoxe (${days}).`,
+    serviceOverToday: (last: string, first: string) =>
+      `Servizo finalizado por hoxe (última saída ás ${last}). Primeira saída ás ${first}.`,
     // Cada paso xa leva a súa cabeceira: "12:18 → 12:22" e "4 min". Cando o texto
     // repetía as dúas cifras, a mesma hora e os mesmos minutos aparecían tres veces
     // nunha fila de 173 px. Aquí queda só o que a cabeceira non pode dicir.

@@ -1,9 +1,7 @@
 /**
- * "Tell me when to get off."
- *
- * Watches the device position and fires once the user comes within ALARM_RADIUS_M of the
- * chosen stop. It runs only while the page is open — a web page cannot wake itself in the
- * background, and the UI says so rather than implying otherwise.
+ * "Tell me when to get off": the device position, watched, and the alarm when it comes
+ * within ALARM_RADIUS_M of a stop. Runs only while the page is open — a web page cannot
+ * wake itself in the background, and the UI says so.
  */
 import { getDistanceMeters } from '../utils/geo';
 
@@ -24,28 +22,18 @@ interface PositionFix {
 type Listener = { onFix: (fix: PositionFix) => void; onError: (reason: AlarmFailure) => void };
 
 /**
- * One position watch for the whole app.
- *
- * The stop board's alarm and the trip companion both read the phone's position, and the
- * companion keeps reading it while the reader looks at another tab. Each opening its own
- * `watchPosition` would be two GPS clients on one phone, two permission prompts, and two
- * radii drifting apart over time. So there is one watch, started by whoever asks first
- * and cleared when the last listener leaves, and every alarm in the app is a listener on
- * it. It runs only while the page is open: a web page cannot wake itself in the
- * background, and the UI says so rather than implying otherwise.
+ * One position watch for the whole app: the board's alarm and the trip companion both read
+ * it, and two `watchPosition`s would be two GPS clients and two permission prompts. Started
+ * by whoever asks first, cleared when the last listener leaves.
  */
 const listeners = new Set<Listener>();
 let watchId: number | null = null;
 
-export function subscribePosition(
-  onFix: (fix: PositionFix) => void,
-  onError: (reason: AlarmFailure) => void,
-): () => void {
+export function subscribePosition(onFix: (fix: PositionFix) => void, onError: (reason: AlarmFailure) => void): () => void {
   if (!navigator.geolocation) {
     onError('unavailable');
     return () => {};
   }
-
   const listener: Listener = { onFix, onError };
   listeners.add(listener);
   if (watchId === null) {
@@ -60,7 +48,6 @@ export function subscribePosition(
       { enableHighAccuracy: true, maximumAge: 5_000, timeout: 20_000 },
     );
   }
-
   return () => {
     listeners.delete(listener);
     if (listeners.size === 0 && watchId !== null) {
@@ -70,12 +57,7 @@ export function subscribePosition(
   };
 }
 
-export function watchForStop(
-  target: { lat: number; lng: number },
-  onApproach: (distanceMeters: number) => void,
-  onDistance: (distanceMeters: number) => void,
-  onError: (reason: AlarmFailure) => void,
-): AlarmHandle {
+export function watchForStop(target: PositionFix, onApproach: (distanceMeters: number) => void, onDistance: (distanceMeters: number) => void, onError: (reason: AlarmFailure) => void): AlarmHandle {
   let fired = false;
   const stop = subscribePosition((fix) => {
     const distance = getDistanceMeters(fix.lat, fix.lng, target.lat, target.lng);
@@ -85,14 +67,10 @@ export function watchForStop(
       onApproach(distance);
     }
   }, onError);
-
   return { stop };
 }
 
-/**
- * Ask once for permission to show system notifications. Declining is fine: the in-page
- * banner, the vibration and the sound still fire while the app is open.
- */
+/** Ask once for system notifications. Declining is fine: the in-page banner, vibration and sound still fire. */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (typeof Notification === 'undefined') return false;
   if (Notification.permission === 'granted') return true;
@@ -111,18 +89,17 @@ export function notify(title: string, body: string): void {
       new Notification(title, { body, tag: 'urbanos-lugo', badge: '/icon-192.png', icon: '/icon-192.png' });
     }
   } catch {
-    /* some browsers refuse the constructor outside a service worker */
+    // some browsers refuse the constructor outside a service worker
   }
 }
 
-/** Vibrate and beep. Both are best-effort: silent failure is fine, a missed stop is not. */
+/** Vibrate and beep. Both best-effort: silent failure is fine, a missed stop is not. */
 export function ringAlarm(): void {
   try {
     navigator.vibrate?.([300, 120, 300, 120, 500]);
   } catch {
-    /* no vibration hardware */
+    // no vibration hardware
   }
-
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
@@ -132,7 +109,6 @@ export function ringAlarm(): void {
     gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.1);
     gain.connect(ctx.destination);
-
     const osc = ctx.createOscillator();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, ctx.currentTime);
@@ -143,6 +119,6 @@ export function ringAlarm(): void {
     osc.stop(ctx.currentTime + 1.2);
     osc.onended = () => ctx.close();
   } catch {
-    /* audio blocked until a user gesture; the banner and vibration still fire */
+    // audio blocked until a user gesture; the banner and vibration still fire
   }
 }

@@ -2,27 +2,12 @@ import L from 'leaflet';
 import type { BusStop } from '../../types';
 
 /**
- * The stop names written beside the dots, on a canvas of their own.
- *
- * They were permanent Leaflet tooltips: one DOM element per name, laid out by the
- * browser the moment it was inserted -- `direction: 'auto'` has to read the element's
- * width to choose its side, and Leaflet reads it again on every zoom and viewreset.
- * Each read is a forced layout of the page. Measured at 6x CPU over four zoom steps,
- * `Tooltip._setPosition` was the single largest frame left on the profile, 261 to
- * 553 ms, for a dozen or two names; spreading the names eight to a frame only spread
- * the same layouts over more frames.
- *
- * Text on a canvas costs no layout at all: `measureText` says how wide a name is, the
- * side is chosen from that, and the whole set is painted in one call per name. The
- * canvas hides during a zoom animation and is repainted when the map settles, the way
- * Leaflet's own non-animated overlays behave. What it gives up is CSS: the font, the
- * ink and the halo are read once from the page, and the halo is a stroke in the ground
- * colour rather than a text-shadow.
- *
- * Nothing here is interactive or read by assistive technology: the hover label on the
- * dot still carries the name and the pole code, and the lists carry everything.
+ * The stop names written beside the dots, on a canvas of their own. As permanent Leaflet
+ * tooltips each was a DOM element laid out on every zoom — `Tooltip._setPosition` was the
+ * largest frame on the profile. Text on a canvas costs no layout: `measureText` says how
+ * wide a name is, the side is chosen from that, the whole set is painted in one call.
+ * Not interactive and not read by assistive technology: the dot's hover label and the lists carry the name.
  */
-
 interface StopNamesOptions extends L.LayerOptions {
   /** Text and halo colours, already resolved for the theme being drawn. */
   ink: string;
@@ -32,7 +17,6 @@ interface StopNamesOptions extends L.LayerOptions {
 }
 
 const PANE = 'stopNames';
-/** From the dot's centre to the first letter, past the ring and a breath. */
 const GAP_PX = 5;
 const FONT_PX = 12;
 
@@ -77,7 +61,7 @@ const StopNamesLayer = L.Layer.extend({
     const canvas = this._canvas;
     const size = map.getSize();
     const dpr = window.devicePixelRatio || 1;
-    // Sizing the bitmap also clears it and resets the context, which is wanted.
+    // Sizing the bitmap also clears it and resets the context.
     canvas.width = size.x * dpr;
     canvas.height = size.y * dpr;
     canvas.style.width = `${size.x}px`;
