@@ -198,10 +198,7 @@ ok('route geometry follows the streets, not straight lines', () => {
     for (const dir of line.directions) {
       if (!dir.stopPathIndex?.length) continue;
       // A straight-line polyline has one point per stop; a snapped one has many more.
-      assert(
-        dir.pathCoordinates.length > dir.stops.length * 3,
-        `${line.id}/${dir.id} has only ${dir.pathCoordinates.length} points for ${dir.stops.length} stops`,
-      );
+      assert(dir.pathCoordinates.length > dir.stops.length * 3, `${line.id}/${dir.id} has only ${dir.pathCoordinates.length} points for ${dir.stops.length} stops`);
       assert(dir.stopPathIndex.length === dir.stops.length, `${line.id}/${dir.id} stopPathIndex length mismatch`);
     }
   }
@@ -214,15 +211,9 @@ ok('a stop never sits further along the route than the next one', () => {
     for (const dir of line.directions) {
       if (!dir.stopPathIndex?.length) continue;
       for (let i = 1; i < dir.stopPathIndex.length; i++) {
-        assert(
-          dir.stopPathIndex[i] >= dir.stopPathIndex[i - 1],
-          `${line.id}/${dir.id}: stop ${i} sits at vertex ${dir.stopPathIndex[i]}, behind stop ${i - 1} at ${dir.stopPathIndex[i - 1]}`,
-        );
+        assert(dir.stopPathIndex[i] >= dir.stopPathIndex[i - 1], `${line.id}/${dir.id}: stop ${i} sits at vertex ${dir.stopPathIndex[i]}, behind stop ${i - 1} at ${dir.stopPathIndex[i - 1]}`);
       }
-      assert(
-        Math.max(...dir.stopPathIndex) <= dir.pathCoordinates.length - 1,
-        `${line.id}/${dir.id} indexes a vertex the polyline does not have`,
-      );
+      assert(Math.max(...dir.stopPathIndex) <= dir.pathCoordinates.length - 1, `${line.id}/${dir.id} indexes a vertex the polyline does not have`);
     }
   }
 });
@@ -291,10 +282,7 @@ ok('measured leg distances are at least the straight-line distance', () => {
         if (!a || !b) return;
         const straight = getDistanceMeters(a.lat, a.lng, b.lat, b.lng);
         const floor = straight - offset(i) - offset(i + 1) - TOLERANCE_M;
-        assert(
-          m >= floor,
-          `${line.id}/${dir.id} leg ${i}: road ${m}m well under straight ${straight}m`,
-        );
+        assert(m >= floor, `${line.id}/${dir.id} leg ${i}: road ${m}m well under straight ${straight}m`);
       });
     }
   }
@@ -326,10 +314,7 @@ ok('a leg that drives far further than the crow flies is the route, not a bad sn
           const vertex = dir.pathCoordinates?.[at];
           assert(vertex, `${line.number}/${dir.id}: ${stop.name} has no vertex on the drawn line`);
           const off = getDistanceMeters(vertex![0], vertex![1], stop.lat, stop.lng);
-          assert(
-            off <= SNAP_M,
-            `${line.number}/${dir.id}: ${stop.name} is ${Math.round(off)} m off the line, so its ${road} m leg is a mis-snap and not a detour`,
-          );
+          assert(off <= SNAP_M, `${line.number}/${dir.id}: ${stop.name} is ${Math.round(off)} m off the line, so its ${road} m leg is a mis-snap and not a detour`);
         }
       });
     }
@@ -353,10 +338,7 @@ ok('a line ends each direction where the other one starts', () => {
       const start = at(startId);
       if (!end || !start) continue;
       const gap = getDistanceMeters(end.lat, end.lng, start.lat, start.lng);
-      assert(
-        gap < 500,
-        `line ${line.number} finishes at "${end.name}" but the other direction starts ${Math.round(gap)} m away at "${start.name}"`,
-      );
+      assert(gap < 500, `line ${line.number} finishes at "${end.name}" but the other direction starts ${Math.round(gap)} m away at "${start.name}"`);
     }
   }
 });
@@ -499,10 +481,7 @@ ok('the fleet is empty outside service hours', () => {
     const line = BUS_LINES.find((l) => l.id === b.lineId)!;
     return isWithinServiceWindow(line, 4 * 60);
   });
-  assert(
-    getScheduledBuses(deepNight).length === running.length,
-    'buses generated for lines that are not running at 04:00',
-  );
+  assert(getScheduledBuses(deepNight).length === running.length, 'buses generated for lines that are not running at 04:00');
 });
 
 ok('no line has two of its own buses on the same point', () => {
@@ -603,10 +582,7 @@ ok('walking wins when it is genuinely quicker', () => {
 
   const best = planTrips(near.name, neighbour.s.name, { now: midday })[0];
   assert(best, 'no plan at all');
-  assert(
-    best.segments.every((s) => s.type === 'walk'),
-    `expected the walk to win over ${best.durationMinutes} min of bus`,
-  );
+  assert(best.segments.every((s) => s.type === 'walk'), `expected the walk to win over ${best.durationMinutes} min of bus`);
 });
 
 ok('a better-connected stop a short walk away is considered', () => {
@@ -628,10 +604,7 @@ ok('every arrival states where its time came from', () => {
   const midday = new Date(2026, 7, 19, 13, 30, 0);
   for (const stop of BUS_STOPS.slice(0, 60)) {
     for (const arrival of getArrivalsForStop(stop.id, midday).arrivals) {
-      assert(
-        arrival.precision === 'published' || arrival.precision === 'estimated',
-        `${stop.id}/${arrival.lineId} has no stated precision`,
-      );
+      assert(arrival.precision === 'published' || arrival.precision === 'estimated', `${stop.id}/${arrival.lineId} has no stated precision`);
     }
   }
 });
@@ -653,10 +626,7 @@ ok('every published claim is backed by the row that names that stop', () => {
             const backing = (pattern?.rows ?? []).some(
               (row) => anchorIndex(row.timingPoint, names) === index && row.times.includes(at),
             );
-            assert(
-              backing,
-              `${line.number}/${direction.id}/${kind}: "${names[index]}" claims official ${at}, but no printed row for that stop shows it`,
-            );
+            assert(backing, `${line.number}/${direction.id}/${kind}: "${names[index]}" claims official ${at}, but no printed row for that stop shows it`);
           }
         }
       });
@@ -695,10 +665,7 @@ ok('a departure board never offers a bus that terminates there', () => {
       const line = BUS_LINES.find((l) => l.id === arrival.lineId)!;
       for (const direction of line.directions) {
         if (direction.destination !== arrival.destination) continue;
-        assert(
-          direction.stops[direction.stops.length - 1] !== stop.id,
-          `${stop.id}: ${arrival.lineNumber} to ${arrival.destination} ends here`,
-        );
+        assert(direction.stops[direction.stops.length - 1] !== stop.id, `${stop.id}: ${arrival.lineNumber} to ${arrival.destination} ends here`);
       }
     }
   }
@@ -736,10 +703,7 @@ ok('a planned trip states the provenance of every bus leg', () => {
   assert(plan, 'no plan returned');
   for (const segment of plan!.segments) {
     if (segment.type !== 'bus') continue;
-    assert(
-      segment.precision === 'published' || segment.precision === 'estimated',
-      'bus segment has no stated precision',
-    );
+    assert(segment.precision === 'published' || segment.precision === 'estimated', 'bus segment has no stated precision');
   }
 });
 
@@ -759,10 +723,7 @@ ok('a busy stop has a board at midday and none at 04:00', () => {
   const midday = getArrivalsForStop(busiest.id, new Date(2026, 7, 19, 13, 30, 0));
   assert(midday.stop, 'stop not resolved');
   assert(midday.arrivals.length > 0, `no arrivals at ${busiest.name} at 13:30`);
-  assert(
-    midday.arrivals.every((a) => a.etaMinutes >= 0),
-    'negative ETA',
-  );
+  assert(midday.arrivals.every((a) => a.etaMinutes >= 0), 'negative ETA');
   const night = getArrivalsForStop(busiest.id, new Date(2026, 7, 19, 4, 0, 0));
   assert(night.arrivals.length === 0, `${night.arrivals.length} arrivals invented at 04:00`);
 });
@@ -773,10 +734,7 @@ ok('every landmark sits near a real stop', () => {
   const MAX_M = 600;
   for (const lm of LUGO_LANDMARKS) {
     const nearest = getNearestStopToCoords(lm.lat, lm.lng);
-    assert(
-      nearest.walkMeters <= MAX_M,
-      `${lm.name} is ${nearest.walkMeters}m from the nearest stop (${nearest.stop.name})`,
-    );
+    assert(nearest.walkMeters <= MAX_M, `${lm.name} is ${nearest.walkMeters}m from the nearest stop (${nearest.stop.name})`);
   }
 });
 
@@ -795,10 +753,7 @@ ok('every quick destination points at a real, distinct place', () => {
   for (const { label, query } of QUICK_DESTINATIONS) {
     const resolved = resolveLocationQuery(query);
     assert(resolved !== null, `"${label}" (${query}) does not resolve`);
-    assert(
-      resolved!.nearestStop.lines.length > 0,
-      `"${label}" resolves to a stop no line serves`,
-    );
+    assert(resolved!.nearestStop.lines.length > 0, `"${label}" resolves to a stop no line serves`);
     const already = landed.get(resolved!.name);
     assert(!already, `"${label}" and "${already}" both land on ${resolved!.name}`);
     landed.set(resolved!.name, label);
@@ -823,10 +778,7 @@ ok('a place the app does not know resolves to nothing, not to a random stop', ()
   for (const q of ['<script>', 'zzzzqqqq', 'Puerta del Sol', '!!!!']) {
     assert(resolveLocationQuery(q) === null, `"${q}" resolved to something`);
   }
-  assert(
-    planTrips('zzzzqqqq', 'HULA', { now: new Date(2026, 7, 20, 9, 30) }).length === 0,
-    'planned a trip from a place that does not exist',
-  );
+  assert(planTrips('zzzzqqqq', 'HULA', { now: new Date(2026, 7, 20, 9, 30) }).length === 0, 'planned a trip from a place that does not exist');
 });
 
 ok('a real corridor plans end to end', () => {
@@ -863,10 +815,7 @@ ok('planning two connected stops returns a usable itinerary', () => {
   assert(plan, 'no plan returned for two stops on the same line');
   assert(plan!.segments.length > 0, 'empty plan');
   assert(plan!.durationMinutes > 0, 'zero-length trip');
-  assert(
-    plan!.segments.every((s) => s.durationMinutes >= 0),
-    'negative segment duration',
-  );
+  assert(plan!.segments.every((s) => s.durationMinutes >= 0), 'negative segment duration');
 });
 
 ok('an empty board still says when the next bus is', () => {
@@ -896,10 +845,7 @@ ok('a line badge can be read', () => {
   for (const line of BUS_LINES) {
     assert(/^#[0-9a-f]{6}$/i.test(line.color), `line ${line.number} has no usable colour`);
     const contrast = 1.05 / (luminance(line.color) + 0.05);
-    assert(
-      contrast >= 4.5,
-      `line ${line.number}: white on ${line.color} is ${contrast.toFixed(2)}:1, under the 4.5 small text needs`,
-    );
+    assert(contrast >= 4.5, `line ${line.number}: white on ${line.color} is ${contrast.toFixed(2)}:1, under the 4.5 small text needs`);
   }
 });
 
@@ -916,10 +862,7 @@ ok('published timing points are reproduced exactly', () => {
       for (const run of buildRuns(line, di, BUS_STOPS, 'laborable')) {
         for (const index of run.publishedStopIndices) {
           const time = formatMinutes(run.minutesByStopIndex[index] % 1440);
-          assert(
-            printed.has(time),
-            `line ${line.number} claims ${time} is published, but the table never prints it`,
-          );
+          assert(printed.has(time), `line ${line.number} claims ${time} is published, but the table never prints it`);
           verified++;
         }
       }
@@ -933,10 +876,7 @@ ok('a run passes its stops in order', () => {
     line.directions.forEach((_, di) => {
       for (const run of buildRuns(line, di, BUS_STOPS, 'laborable')) {
         for (let i = 1; i < run.minutesByStopIndex.length; i++) {
-          assert(
-            run.minutesByStopIndex[i] >= run.minutesByStopIndex[i - 1],
-            `line ${line.number} goes back in time between stops ${i - 1} and ${i}`,
-          );
+          assert(run.minutesByStopIndex[i] >= run.minutesByStopIndex[i - 1], `line ${line.number} goes back in time between stops ${i - 1} and ${i}`);
         }
       }
     });
@@ -983,10 +923,7 @@ ok('no itinerary asks you to board a bus that already left', () => {
     for (const plan of sampleTrips(now)) {
       const times = timeline(plan);
       for (let i = 1; i < times.length; i++) {
-        assert(
-          times[i] >= times[i - 1],
-          `plan runs backwards: ${plan.segments.map((s) => `${s.type} ${s.departureTime}-${s.arrivalTime}`).join(' | ')}`,
-        );
+        assert(times[i] >= times[i - 1], `plan runs backwards: ${plan.segments.map((s) => `${s.type} ${s.departureTime}-${s.arrivalTime}`).join(' | ')}`);
       }
     }
   }
@@ -1035,10 +972,7 @@ ok('an hours-long walk is never the headline suggestion when a bus exists', () =
     if (top.durationMinutes <= 75) continue;
     checked++;
     const bus = plans.find((p) => p.segments.some((seg) => seg.type === 'bus'));
-    assert(
-      !bus,
-      `${a.name} → ${b.name}: leads with a ${top.durationMinutes} min walk while a bus plan exists (${bus?.durationMinutes} min)`,
-    );
+    assert(!bus, `${a.name} → ${b.name}: leads with a ${top.durationMinutes} min walk while a bus plan exists (${bus?.durationMinutes} min)`);
   }
   assert(checked > 5, `only ${checked} long-walk plans found to judge`);
 });
@@ -1077,10 +1011,7 @@ ok('the three dictionaries have exactly the same shape', () => {
   for (const { lang, shape } of shapes.slice(1)) {
     for (const [path, kind] of reference.shape) {
       assert(shape.has(path), `${lang} is missing "${path}"`);
-      assert(
-        shape.get(path) === kind,
-        `${lang}."${path}" is a ${shape.get(path)} where ${reference.lang} has a ${kind}`,
-      );
+      assert(shape.get(path) === kind, `${lang}."${path}" is a ${shape.get(path)} where ${reference.lang} has a ${kind}`);
     }
     for (const path of shape.keys()) {
       assert(reference.shape.has(path), `${lang} has an extra key "${path}"`);
@@ -1092,10 +1023,7 @@ ok('the price a trip shows is the one anybody pays', () => {
   // The planner showed 0,45 € (the Tarxeta Cidadá price) as the cost of the trip, with the
   // 0,64 € a visitor pays struck through beside it. The default is what is true for whoever
   // is reading; the better fare is offered, never assumed.
-  assert(
-    FARES.singleTicket > FARES.citizenCard,
-    'the ordinary fare is no longer the dearer one, so this check is about the wrong number',
-  );
+  assert(FARES.singleTicket > FARES.citizenCard, 'the ordinary fare is no longer the dearer one, so this check is about the wrong number');
 
   const view = read('src/components/RoutePlannerView.tsx');
 
@@ -1103,16 +1031,10 @@ ok('the price a trip shows is the one anybody pays', () => {
   // ordinary fare. Take the first fare rendered in the file: it is the summary's.
   const firstFare = view.search(/fare\.(singleTicket|citizenCard)Euros/);
   assert(firstFare > 0, 'the planner no longer shows a fare at all');
-  assert(
-    /^fare\.singleTicketEuros/.test(view.slice(firstFare)),
-    'the first fare the planner shows is the discounted one; it should be the ordinary ticket',
-  );
+  assert(/^fare\.singleTicketEuros/.test(view.slice(firstFare)), 'the first fare the planner shows is the discounted one; it should be the ordinary ticket');
 
   // And no fare is ever struck through.
-  assert(
-    !/line-through/.test(view),
-    'a fare is crossed out again, which reads as a price that no longer applies',
-  );
+  assert(!/line-through/.test(view), 'a fare is crossed out again, which reads as a price that no longer applies');
 });
 
 ok('the Galician card is called what its own issuer calls it', () => {
@@ -1122,10 +1044,7 @@ ok('the Galician card is called what its own issuer calls it', () => {
   for (const file of files) {
     const source = read(file);
     assert(!/\bTPG\b/.test(source), `${file} still calls the card TPG; the issuer calls it TMG`);
-    assert(
-      !/transporte p[úu]blico de Galicia|public transport card \(TMG\)/i.test(source),
-      `${file} expands TMG as "public transport"; the M is for Metropolitano`,
-    );
+    assert(!/transporte p[úu]blico de Galicia|public transport card \(TMG\)/i.test(source), `${file} expands TMG as "public transport"; the M is for Metropolitano`);
   }
 
   // And the fare card itself still names it, in every language.
@@ -1142,60 +1061,36 @@ ok('every map gets its chrome from the one place that has it', () => {
   const mapDir = join(root, 'src/components/Map');
 
   const basemap = readFileSync(join(mapDir, 'basemap.ts'), 'utf8');
-  assert(
-    /attributionControl\?\.setPrefix\(false\)/.test(basemap),
-    'createBasemap no longer drops the "Leaflet" prefix, so every map prints it again',
-  );
+  assert(/attributionControl\?\.setPrefix\(false\)/.test(basemap), 'createBasemap no longer drops the "Leaflet" prefix, so every map prints it again');
 
   for (const file of readdirSync(mapDir).filter((f) => f.endsWith('.tsx'))) {
     const source = readFileSync(join(mapDir, file), 'utf8');
     if (!/\bL\.map\(/.test(source)) continue;
 
-    assert(
-      /createBasemap\(/.test(source),
-      `${file} builds a map without createBasemap, so it gets neither the basemap nor its attribution`,
-    );
-    assert(
-      !/setPrefix\(/.test(source),
-      `${file} sets the attribution prefix itself; that belongs in basemap.ts for all of them`,
-    );
+    assert(/createBasemap\(/.test(source), `${file} builds a map without createBasemap, so it gets neither the basemap nor its attribution`);
+    assert(!/setPrefix\(/.test(source), `${file} sets the attribution prefix itself; that belongs in basemap.ts for all of them`);
     // And its name and control titles in the reader's language. The route map was born
     // after the other two got theirs, and said "Zoom in" under a Galician itinerary.
-    assert(
-      /useMapChrome\(/.test(source),
-      `${file} builds a map without useMapChrome, so it is an unnamed tab stop with English zoom buttons`,
-    );
+    assert(/useMapChrome\(/.test(source), `${file} builds a map without useMapChrome, so it is an unnamed tab stop with English zoom buttons`);
   }
 
   // The two maps that live inside something the reader scrolls have to let them scroll.
   for (const file of ['RouteMap.tsx', 'NearbyMiniMap.tsx']) {
     const source = readFileSync(join(mapDir, file), 'utf8');
-    assert(
-      /scrollWheelZoom:\s*false/.test(source),
-      `${file} zooms on the scroll wheel, and it sits inside a page that scrolls`,
-    );
+    assert(/scrollWheelZoom:\s*false/.test(source), `${file} zooms on the scroll wheel, and it sits inside a page that scrolls`);
   }
 
   // The route map is built inside a column that is display:none on a phone, and Leaflet's
   // invalidateSize keeps the zoom worked out for the old box: three of twenty-nine pieces on screen.
   const routeMap = readFileSync(join(mapDir, 'RouteMap.tsx'), 'utf8');
-  assert(
-    /getBounds\(\)\.contains\(/.test(routeMap),
-    'RouteMap no longer checks that the trip is still on the map after a resize',
-  );
+  assert(/getBounds\(\)\.contains\(/.test(routeMap), 'RouteMap no longer checks that the trip is still on the map after a resize');
 
   // `fitBounds` rounds down to a whole zoom unless told otherwise: 46% of the box, then 67%
   // after an unrelated tap. The basemap is vector and draws at any zoom, so it owns the setting.
-  assert(
-    /map\.options\.zoomSnap = 0/.test(basemap),
-    'the basemap no longer turns off whole-level zoom snapping, so fitBounds wastes up to half of every map',
-  );
+  assert(/map\.options\.zoomSnap = 0/.test(basemap), 'the basemap no longer turns off whole-level zoom snapping, so fitBounds wastes up to half of every map');
   for (const file of readdirSync(mapDir).filter((f) => f.endsWith('.tsx'))) {
     const source = readFileSync(join(mapDir, file), 'utf8');
-    assert(
-      !/zoomSnap/.test(source),
-      `${file} sets zoomSnap itself; it comes from the basemap, like the attribution prefix`,
-    );
+    assert(!/zoomSnap/.test(source), `${file} sets zoomSnap itself; it comes from the basemap, like the attribution prefix`);
   }
 });
 
@@ -1209,29 +1104,17 @@ ok('the out-of-service banner still fits on two lines', () => {
   for (const lang of LANGS) {
     const t = translations(lang);
     const closed = t.nightBanner.closed('07:00');
-    assert(
-      closed.length <= BOLD_LINE,
-      `${lang}: "${closed}" is ${closed.length} characters and the banner's first line fits ${BOLD_LINE}`,
-    );
-    assert(
-      t.nightBanner.festivals.length <= SMALL_LINE,
-      `${lang}: "${t.nightBanner.festivals}" is ${t.nightBanner.festivals.length} characters and the second line fits ${SMALL_LINE}`,
-    );
+    assert(closed.length <= BOLD_LINE, `${lang}: "${closed}" is ${closed.length} characters and the banner's first line fits ${BOLD_LINE}`);
+    assert(t.nightBanner.festivals.length <= SMALL_LINE, `${lang}: "${t.nightBanner.festivals}" is ${t.nightBanner.festivals.length} characters and the second line fits ${SMALL_LINE}`);
     // The festival sentence keeps "no service" from being a lie on a festival night: extra
     // buses only ever appear as a notice. Shortening it is fine; dropping it is not.
-    assert(
-      /festa|fiesta|festival/i.test(t.nightBanner.festivals),
-      `${lang}: the banner no longer mentions the festival reinforcements`,
-    );
+    assert(/festa|fiesta|festival/i.test(t.nightBanner.festivals), `${lang}: the banner no longer mentions the festival reinforcements`);
   }
 
   // And the row is the link: "see notices" survives as the accessible name of the whole
   // bar rather than as a 44 px row of its own.
   const app = read('src/App.tsx');
-  assert(
-    /nightBanner\.seeNotices/.test(app) && /sr-only[^>]*>\s*\{t\.nightBanner\.seeNotices\}/.test(app),
-    'the notices link is no longer the accessible name of the banner row',
-  );
+  assert(/nightBanner\.seeNotices/.test(app) && /sr-only[^>]*>\s*\{t\.nightBanner\.seeNotices\}/.test(app), 'the notices link is no longer the accessible name of the banner row');
 });
 
 ok('no translated string is blank', () => {
@@ -1261,10 +1144,7 @@ ok('every language can plan a trip and gets prose in that language', () => {
     assert(plans.length > 0, `${lang}: no plan at all`);
     for (const segment of plans[0].segments) {
       assert(segment.instruction.trim().length > 0, `${lang}: a segment has no instruction`);
-      assert(
-        !segment.instruction.includes('undefined'),
-        `${lang}: "undefined" leaked into "${segment.instruction}"`,
-      );
+      assert(!segment.instruction.includes('undefined'), `${lang}: "undefined" leaked into "${segment.instruction}"`);
     }
     byLang.set(lang, plans[0].segments.map((seg) => seg.instruction).join(' | '));
   }
@@ -1298,10 +1178,7 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
 
   assert(written.size >= 4, `only found ${written.size} storage keys; the scan has stopped working`);
   for (const key of written) {
-    assert(
-      privacy.includes(`\`${key}\``),
-      `${key} is written to the device and PRIVACY.md does not mention it`,
-    );
+    assert(privacy.includes(`\`${key}\``), `${key} is written to the device and PRIVACY.md does not mention it`);
   }
 });
 
@@ -1333,10 +1210,7 @@ ok('the trip companion counts stops against the list, and never backwards', () =
   let seen = rememberPassed(start, new Set());
   const middle = Math.floor(ride.length / 2);
   const half = tripProgress(plan, at(ride[middle]), seen);
-  assert(
-    half.stopsRemaining < start.stopsRemaining,
-    `the count did not move between stop 0 and stop ${middle}`,
-  );
+  assert(half.stopsRemaining < start.stopsRemaining, `the count did not move between stop 0 and stop ${middle}`);
   assert(half.stops[0].passed && half.stops[middle].passed, 'the stops behind are not marked');
   assert(!half.stops[half.stops.length - 1].passed, 'the alighting stop is marked before arriving');
 
@@ -1344,10 +1218,7 @@ ok('the trip companion counts stops against the list, and never backwards', () =
   // every pole, so what was already reached is carried, or the list un-ticks itself.
   seen = rememberPassed(half, seen);
   const nowhere = tripProgress(plan, { lat: 43.05, lng: -7.65 }, seen);
-  assert(
-    nowhere.stopsRemaining === half.stopsRemaining,
-    `the count moved from ${half.stopsRemaining} to ${nowhere.stopsRemaining} on a fix between stops`,
-  );
+  assert(nowhere.stopsRemaining === half.stopsRemaining, `the count moved from ${half.stopsRemaining} to ${nowhere.stopsRemaining} on a fix between stops`);
 
   // At the alighting pole: nothing left, and it says so.
   const end = tripProgress(plan, at(ride[ride.length - 1]), seen);
@@ -1411,10 +1282,7 @@ ok('the trip companion moves through its phases on fixes alone, rings once a leg
   const legs = plan.segments.flatMap((seg, i) => (seg.type === 'bus' ? [i] : []));
   assert(legs.length === 2, `this check needs a transfer and the plan has ${legs.length} bus legs`);
   const [first, second] = legs.map((i) => plan.segments[i]);
-  assert(
-    first.toStop && second.fromStop && first.toStop.id !== second.fromStop.id,
-    'this check needs a transfer that walks between two poles',
-  );
+  assert(first.toStop && second.fromStop && first.toStop.id !== second.fromStop.id, 'this check needs a transfer that walks between two poles');
   const at = (stop: { lat: number; lng: number }) => ({ lat: stop.lat, lng: stop.lng });
   const stopsOf = (leg: number) => {
     const seg = plan.segments[leg];
@@ -1541,10 +1409,7 @@ ok('a trip survives a reload with its lines put back by id, and refuses one it c
   assert(!/"directions"/.test(text), 'the copy carries whole lines, not ids');
   const back = unpackTrip(text);
   assert(back, 'the copy could not be read back');
-  assert(
-    back.plan.segments.every((seg, i) => (seg.line?.id ?? null) === (plan.segments[i].line?.id ?? null)),
-    'lines did not come back by id',
-  );
+  assert(back.plan.segments.every((seg, i) => (seg.line?.id ?? null) === (plan.segments[i].line?.id ?? null)), 'lines did not come back by id');
   assert(back.plan.arrivalTime === plan.arrivalTime && back.seen[0] === 's1' && back.boardedLeg === 1, 'state lost on the way back');
   assert(back.origin?.name === 'A', 'the origin was lost');
 
@@ -1581,10 +1446,7 @@ ok('the answer column spaces its blocks in one place', () => {
   // bringing its own margin back would look right alone and put the column out again.
   for (const file of ['RoutePlannerView.tsx', 'LinesView.tsx']) {
     const view = read(`src/components/${file}`);
-    assert(
-      /className="space-y-4 bg-bg/.test(view),
-      `${file}: no card declares the rhythm its blocks depend on`,
-    );
+    assert(/className="space-y-4 bg-bg/.test(view), `${file}: no card declares the rhythm its blocks depend on`);
     // mb-1, mb-2 and mb-1.5 sit inside a block -- a heading above its own content -- and
     // are left alone. These were only ever used between blocks.
     for (const stray of ['mb-4', 'mb-5', 'mt-6', 'mt-5', 'mt-4', 'mb-2.5']) {
@@ -1609,10 +1471,7 @@ ok('nobody is sent to stand at a pole, and the soonest arrival leads', () => {
       const plans = planTrips(from, to, { now: new Date(2026, 8, 8, hour, 0, 0) });
       for (const plan of plans) {
         const departed = (parseTimeToMinutes(plan.departureTime) - nowMinutes + 1440) % 1440;
-        assert(
-          departed === plan.slackMinutes,
-          `${from} -> ${to} at ${hour}: leaves ${plan.departureTime}, ${departed} min after the question, but claims ${plan.slackMinutes}`,
-        );
+        assert(departed === plan.slackMinutes, `${from} -> ${to} at ${hour}: leaves ${plan.departureTime}, ${departed} min after the question, but claims ${plan.slackMinutes}`);
 
         // Standing before the first bus is capped at the margin that exists because these buses run
         // early; waits between buses are not: once in the system you cannot set off later.
@@ -1653,16 +1512,10 @@ ok('the itinerary prose does not repeat the figures its own row already shows', 
         // The bus step draws its own fields and never renders `instruction`.
         if (seg.type === 'bus') continue;
         const clock = seg.instruction.match(/\d{1,2}:\d{2}/);
-        assert(
-          !clock,
-          `${lang}: "${clock?.[0]}" is in the header already — "${seg.instruction}"`,
-        );
+        assert(!clock, `${lang}: "${clock?.[0]}" is in the header already — "${seg.instruction}"`);
         if (seg.walkMeters) {
           const metres = new RegExp(`\\b${seg.walkMeters}\\s*(m\\b|metros|metres)`);
-          assert(
-            !metres.test(seg.instruction),
-            `${lang}: ${seg.walkMeters} m is in the header already — "${seg.instruction}"`,
-          );
+          assert(!metres.test(seg.instruction), `${lang}: ${seg.walkMeters} m is in the header already — "${seg.instruction}"`);
         }
       }
     }
@@ -1698,18 +1551,11 @@ ok('no translated key is left with nothing reading it', () => {
     new RegExp(`\\.${namespace}\\.${key}\\b`).test(haystack) ||
     new RegExp(`\\bt\\.${key}\\b`).test(haystack);
 
-  assert(
-    !used('t.map.yourPositionAccurate(3)', 'map', 'yourPosition'),
-    'a key that only appears as another key’s prefix is still counting as used',
-  );
+  assert(!used('t.map.yourPositionAccurate(3)', 'map', 'yourPosition'), 'a key that only appears as another key’s prefix is still counting as used');
 
   const dead = keys.filter(({ ns: namespace, key }) => !used(sources, namespace, key));
 
-  assert(
-    dead.length === 0,
-    `${dead.length} translated ${dead.length === 1 ? 'key has' : 'keys have'} nothing reading them: ` +
-      dead.map((d) => `${d.ns}.${d.key}`).join(', '),
-  );
+  assert(dead.length === 0, `${dead.length} translated ${dead.length === 1 ? 'key has' : 'keys have'} nothing reading them: ` + dead.map((d) => `${d.ns}.${d.key}`).join(', '));
 });
 
 console.log('\nservice notices');
@@ -1721,10 +1567,7 @@ await okAsync('an unreachable operator page is never reported as "all normal"', 
   globalThis.fetch = (() => Promise.reject(new Error('offline'))) as typeof fetch;
   try {
     const result = await syncOfficialAlerts(true);
-    assert(
-      result.status === 'unreachable',
-      `a failed fetch reported "${result.status}" instead of "unreachable"`,
-    );
+    assert(result.status === 'unreachable', `a failed fetch reported "${result.status}" instead of "unreachable"`);
     assert(result.alerts.length === 0, 'a failed fetch invented notices');
   } finally {
     globalThis.fetch = realFetch;
@@ -1782,11 +1625,7 @@ ok('no view renders Galician or Spanish text of its own', () => {
     });
   }
 
-  assert(
-    offenders.length === 0,
-    `text typed straight into the markup instead of coming from the dictionary:\n  ` +
-      offenders.join('\n  '),
-  );
+  assert(offenders.length === 0, `text typed straight into the markup instead of coming from the dictionary:\n  ` + offenders.join('\n  '));
 });
 
 console.log('\nuntested corners');
@@ -1814,17 +1653,11 @@ ok('nearby stops come back nearest first, with a walk rather than a straight lin
 
   assert(nearby.length === BUS_STOPS.length, 'getNearbyStops dropped stops');
   for (let i = 1; i < nearby.length; i++) {
-    assert(
-      nearby[i].walkMeters >= nearby[i - 1].walkMeters,
-      `stop ${i} is closer than the one before it`,
-    );
+    assert(nearby[i].walkMeters >= nearby[i - 1].walkMeters, `stop ${i} is closer than the one before it`);
   }
 
   const straight = getDistanceMeters(cathedral.lat, cathedral.lng, nearby[0].lat, nearby[0].lng);
-  assert(
-    nearby[0].walkMeters >= straight,
-    `a walk of ${nearby[0].walkMeters} m is shorter than the ${Math.round(straight)} m straight line`,
-  );
+  assert(nearby[0].walkMeters >= straight, `a walk of ${nearby[0].walkMeters} m is shorter than the ${Math.round(straight)} m straight line`);
 });
 
 ok('the walked hops of a plan are real walks, and the last one reaches the destination', () => {
@@ -1845,10 +1678,7 @@ ok('the walked hops of a plan are real walks, and the last one reaches the desti
     assert(from[0] !== to[0] || from[1] !== to[1], 'a hop that starts where it ends');
   }
   const last = hops[hops.length - 1];
-  assert(
-    !last || (last[1][0] === destination!.lat && last[1][1] === destination!.lng),
-    'the last walked hop does not end at the destination',
-  );
+  assert(!last || (last[1][0] === destination!.lat && last[1][1] === destination!.lng), 'the last walked hop does not end at the destination');
 });
 
 await okAsync('a walking route asks nobody for anything', async () => {
@@ -1910,11 +1740,7 @@ ok('no colour is written straight into a class name', () => {
     }
   }
 
-  assert(
-    offenders.length === 0,
-    `${offenders.length} fixed palette classes, which will not follow the theme: ` +
-      [...new Set(offenders)].join(', '),
-  );
+  assert(offenders.length === 0, `${offenders.length} fixed palette classes, which will not follow the theme: ` + [...new Set(offenders)].join(', '));
 });
 
 ok('a saved snapshot stops speaking for the present once it is old', () => {
@@ -1936,10 +1762,7 @@ ok('the QR count on the map is the number of poles that have one', () => {
   // token for 271; the count and the claim have to be the same size.
   const withToken = BUS_STOPS.filter((s) => poleCode(s)).length;
   assert(withToken > 0, "no stop has a QR token at all");
-  assert(
-    withToken < BUS_STOPS.length,
-    "every stop has a token, so this test no longer proves anything",
-  );
+  assert(withToken < BUS_STOPS.length, "every stop has a token, so this test no longer proves anything");
   for (const s of BUS_STOPS) {
     const code = poleCode(s);
     assert(code === null || code === s.officialToken, `${s.name}: code is not the token`);
@@ -1950,7 +1773,7 @@ ok('a pole with no coordinates is recovered only when its token says which pole 
   // Twelve listings arrive with no coordinates; dropping all twelve cost a fourteen-line pole.
   // One is recovered because its live-panel token names a located pole; the others cannot be
   // placed from this source. Pinned so a thirteenth is noticed.
-  const raw = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'data/official-raw.json'), 'utf8'));
+  const raw = JSON.parse(read('data/official-raw.json'));
   const listings = raw.stops as { ps: number; token?: string; coords?: unknown }[];
   assert(listings.length === 1198, `the operator now lists ${listings.length} poles, not 1198`);
 
@@ -1965,10 +1788,7 @@ ok('a pole with no coordinates is recovered only when its token says which pole 
   // operator number — the whole point of recovering it.
   for (const listing of recovered) {
     const stop = placed.get(listing.token!)!;
-    assert(
-      stop.officialIds?.includes(listing.ps),
-      `${stop.name} does not carry the recovered operator number ${listing.ps}`,
-    );
+    assert(stop.officialIds?.includes(listing.ps), `${stop.name} does not carry the recovered operator number ${listing.ps}`);
   }
 
   // The eleven that stay out must stay out: none of them may have reached a stop.
@@ -2016,10 +1836,7 @@ ok('a route drawn from a car route says so', () => {
   }
   assert(!bySource.has('missing'), 'a direction is drawn with no record of where the shape came from');
   const approximate = [...(bySource.get('osrm') ?? []), ...(bySource.get('straight') ?? [])];
-  assert(
-    approximate.length <= 3,
-    `${approximate.length} directions are drawn from something other than a survey: ${approximate.join(', ')}`,
-  );
+  assert(approximate.length <= 3, `${approximate.length} directions are drawn from something other than a survey: ${approximate.join(', ')}`);
 });
 
 ok('a trip never rides a bus to reach a stop it could have walked to', () => {
@@ -2032,10 +1849,7 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
 
   const legs = (p: (typeof plans)[number]) => p.segments.filter((s) => s.type === 'bus');
   const head = plans[0];
-  assert(
-    legs(head).length <= 1,
-    `the headline changes bus ${legs(head).length - 1} time(s): ${legs(head).map((s) => `${s.line?.number} for ${s.stopsCount} stop(s)`).join(' then ')}`,
-  );
+  assert(legs(head).length <= 1, `the headline changes bus ${legs(head).length - 1} time(s): ${legs(head).map((s) => `${s.line?.number} for ${s.stopsCount} stop(s)`).join(' then ')}`);
 
   // No plan anywhere may ask you to ride a single stop. Across the network the best
   // such ride saved three minutes against walking, which a late bus erases.
@@ -2046,10 +1860,7 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
       for (const p of planTrips(from.name, to.name, NOON)) {
         const oneStop = legs(p).find((s) => (s.stopsCount ?? 9) <= 1);
         if (oneStop) {
-          assert(
-            false,
-            `${from.name} -> ${to.name} offers line ${oneStop.line?.number} for a single stop`,
-          );
+          assert(false, `${from.name} -> ${to.name} offers line ${oneStop.line?.number} for a single stop`);
         }
       }
     }
@@ -2073,11 +1884,7 @@ ok('a trip never rides a bus to reach a stop it could have walked to', () => {
       // Built inside the branch: an assert message is an argument, so it is evaluated
       // whether or not the assertion fails, and `simpler` is usually undefined.
       if (simpler) {
-        assert(
-          false,
-          `${from.name} -> ${to.name}: leads with ${legs(best).length} buses in ${best.durationMinutes} min, ` +
-            `when ${legs(simpler).length} would do it in the same time`,
-        );
+        assert(false, `${from.name} -> ${to.name}: leads with ${legs(best).length} buses in ${best.durationMinutes} min, ` + `when ${legs(simpler).length} would do it in the same time`);
       }
     }
   }
@@ -2090,18 +1897,12 @@ ok('the content security policy still refuses what it was written to refuse', ()
   const script = CSP_HEADER.match(/script-src ([^;]+)/)?.[1] ?? '';
   const hashes = [...script.matchAll(/'(sha256-[A-Za-z0-9+/=]+)'/g)].map((m) => m[1]);
   assert(hashes.length === 1, `script-src carries ${hashes.length} hashes, not exactly 1: "${script.trim()}"`);
-  assert(
-    script.trim() === `'self' '${hashes[0]}'`,
-    `script-src is "${script.trim()}", not 'self' plus exactly one hash`,
-  );
+  assert(script.trim() === `'self' '${hashes[0]}'`, `script-src is "${script.trim()}", not 'self' plus exactly one hash`);
   assert(hashes[0] === THEME_INIT_HASH, 'the policy hash is not the one computed from the theme script');
   // A hash and `'unsafe-inline'` are opposite things, and a browser that sees both ignores
   // the second; saying so by name makes the failure read as what it is.
   assert(!/unsafe-inline/.test(script), "script-src has taken 'unsafe-inline', which is not what a hash is for");
-  assert(
-    THEME_INIT_HASH === `sha256-${createHash('sha256').update(THEME_INIT_SOURCE, 'utf8').digest('base64')}`,
-    'THEME_INIT_HASH is not the digest of THEME_INIT_SOURCE',
-  );
+  assert(THEME_INIT_HASH === `sha256-${createHash('sha256').update(THEME_INIT_SOURCE, 'utf8').digest('base64')}`, 'THEME_INIT_HASH is not the digest of THEME_INIT_SOURCE');
 
   // And against the page that ships, when there is one to look at. CI runs the suite
   // before the build, so a missing dist is skipped rather than failed.
@@ -2113,14 +1914,8 @@ ok('the content security policy still refuses what it was written to refuse', ()
     const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
     assert(inline.length === 1, `the built page has ${inline.length} inline scripts, not exactly 1`);
     const digest = `sha256-${createHash('sha256').update(inline[0], 'utf8').digest('base64')}`;
-    assert(
-      digest === hashes[0],
-      `the built page inlines a script whose digest is ${digest}, which the policy does not allow`,
-    );
-    assert(
-      html.includes(`'${hashes[0]}'`),
-      'the meta policy in the built page does not carry the hash of its own inline script',
-    );
+    assert(digest === hashes[0], `the built page inlines a script whose digest is ${digest}, which the policy does not allow`);
+    assert(html.includes(`'${hashes[0]}'`), 'the meta policy in the built page does not carry the hash of its own inline script');
   }
 
   // The map renderer runs a worker bundled as a same-origin module; handed a cross-origin URL
@@ -2151,10 +1946,7 @@ ok('dark is the default, and only a choice is remembered', () => {
   const html = read('index.html');
 
   assert(/\? stored : 'dark'/.test(hook), 'useTheme no longer falls back to dark');
-  assert(
-    /next === 'dark' \? null : next/.test(hook),
-    'the default is being written to storage, so clearing site data would not return to it',
-  );
+  assert(/next === 'dark' \? null : next/.test(hook), 'the default is being written to storage, so clearing site data would not return to it');
   assert(/class="dark"/.test(html), 'index.html no longer ships the dark class');
 
   // Both read the same key: the hook imports the one themeInit.ts names, and nothing
@@ -2190,10 +1982,7 @@ ok('the repository URL is written in one place', () => {
     }
   };
   walk(join(root, 'src'));
-  assert(
-    offenders.length === 0,
-    `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`,
-  );
+  assert(offenders.length === 0, `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`);
   assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
 });
 
@@ -2214,11 +2003,7 @@ ok('the install-script setting uses the name the pinned pnpm reads', () => {
   const decided = new Map<string, string>();
   if (major >= 11) {
     const block = workspace.match(/^allowBuilds:\n((?:[ \t]+\S+:.*\n)+)/m);
-    assert(
-      block,
-      'pnpm 11 reads `allowBuilds` from pnpm-workspace.yaml and it is not there, so the ' +
-        'install stops on any dependency that has a build script',
-    );
+    assert(block, 'pnpm 11 reads `allowBuilds` from pnpm-workspace.yaml and it is not there, so the ' + 'install stops on any dependency that has a build script');
     for (const m of block![1].matchAll(/^[ \t]+(\S+):[ \t]*(\S+)/gm)) decided.set(m[1], m[2]);
   } else if (major === 10) {
     const block = workspace.match(/^onlyBuiltDependencies:\n((?:\s*-\s*\S+\n)+)/m);
@@ -2234,20 +2019,14 @@ ok('the install-script setting uses the name the pinned pnpm reads', () => {
   // is `false`: since 0.25 its binary arrives as an optional dependency.
   assert(decided.has('esbuild'), 'esbuild has an install script and no decision recorded for it');
   for (const [name, value] of decided) {
-    assert(
-      value === 'true' || value === 'false',
-      `${name} is set to "${value}"; pnpm writes that placeholder itself and then fails the install`,
-    );
+    assert(value === 'true' || value === 'false', `${name} is set to "${value}"; pnpm writes that placeholder itself and then fails the install`);
   }
   assert(decided.size <= 3, `${decided.size} packages named here; that list should stay short enough to read`);
 
   // And the settings live in exactly one place: leaving the old copy behind is how the
   // two disagree, and the one pnpm no longer reads is the one that looks reassuring.
   if (major >= 10) {
-    assert(
-      pkg.pnpm === undefined,
-      'package.json still has a "pnpm" field, which this pnpm ignores — move it or drop it',
-    );
+    assert(pkg.pnpm === undefined, 'package.json still has a "pnpm" field, which this pnpm ignores — move it or drop it');
   }
 });
 
@@ -2258,18 +2037,12 @@ ok('the policy is not sent in development, where it serves a blank page', () => 
 
   const line = server.split('\n').find((l) => l.includes("setHeader('Content-Security-Policy'"));
   assert(line, 'the server no longer sends a Content-Security-Policy at all');
-  assert(
-    /if \(!isDev\)/.test(line!),
-    `the CSP header is sent unconditionally, which breaks \`pnpm dev\`: ${line!.trim()}`,
-  );
+  assert(/if \(!isDev\)/.test(line!), `the CSP header is sent unconditionally, which breaks \`pnpm dev\`: ${line!.trim()}`);
 
   // The page carries its own copy for GitHub Pages, and that one must not reach dev
   // either -- it is injected when building, never written into the source HTML.
   const html = read('index.html');
-  assert(
-    !/Content-Security-Policy/.test(html),
-    'index.html has a CSP meta tag again; it applies to `vite dev` and blocks HMR',
-  );
+  assert(!/Content-Security-Policy/.test(html), 'index.html has a CSP meta tag again; it applies to `vite dev` and blocks HMR');
   const vite = read('vite.config.ts');
   assert(/apply: 'build'/.test(vite), 'the CSP injector no longer limits itself to builds');
 });
@@ -2368,10 +2141,7 @@ ok('a code that names no stop resolves to nothing, not to somebody else', () => 
     if (stop.code) assert(findStop(stop.code)?.id === stop.id, `code ${stop.code} no longer resolves`);
     // Three names belong to two poles each, so a name resolves to one of them; a reader who
     // needs a specific pole has its code.
-    assert(
-      findStop(stop.name)?.name === stop.name,
-      `name "${stop.name}" no longer resolves`,
-    );
+    assert(findStop(stop.name)?.name === stop.name, `name "${stop.name}" no longer resolves`);
     for (const official of stop.officialIds ?? []) {
       assert(findStop(String(official)), `operator number ${official} no longer resolves`);
     }
@@ -2437,10 +2207,7 @@ ok('the search-engine tags are omitted rather than guessed', () => {
     assert(siteUrl(bad) === null, `"${bad}" was accepted as a site URL`);
   }
   assert(siteUrl('http://localhost:3001') === 'http://localhost:3001/', 'localhost is refused, so a local build cannot be checked');
-  assert(
-    siteUrl('https://braisbrg.github.io/urbanos-lugo') === 'https://braisbrg.github.io/urbanos-lugo/',
-    'the trailing slash is not added, so every generated URL would be joined wrong',
-  );
+  assert(siteUrl('https://braisbrg.github.io/urbanos-lugo') === 'https://braisbrg.github.io/urbanos-lugo/', 'the trailing slash is not added, so every generated URL would be joined wrong');
 });
 
 ok('the structured data does not pass this off as the operator', () => {
@@ -2451,10 +2218,7 @@ ok('the structured data does not pass this off as the operator', () => {
 
   assert(data['@type'] === 'WebApplication', `@type is ${data['@type']}`);
   assert(data.url === site, 'the url field does not match the site');
-  assert(
-    /non oficial/i.test(String(data.disambiguatingDescription)),
-    'the structured data no longer says the project is unofficial',
-  );
+  assert(/non oficial/i.test(String(data.disambiguatingDescription)), 'the structured data no longer says the project is unofficial');
   assert(data.isAccessibleForFree === true, 'it is free and should say so');
 
   // robots.txt has to point at a sitemap that is actually emitted beside it.
@@ -2539,10 +2303,7 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
   const slugs = Object.values(PATHS);
   assert(slugs.length === 6, `${slugs.length} tabs have a path, expected 6: ${slugs.join(', ')}`);
   assert(new Set(slugs).size === slugs.length, `two tabs share a path: ${slugs.join(', ')}`);
-  assert(
-    /from '\.\.\/routes'/.test(hook),
-    'useTabRoute no longer reads the shared route record, so the sitemap can drift from it',
-  );
+  assert(/from '\.\.\/routes'/.test(hook), 'useTabRoute no longer reads the shared route record, so the sitemap can drift from it');
   for (const slug of slugs) {
     assert(SITE_PATHS.includes(slug), `"${slug}" is a tab route but is not in the sitemap`);
   }
@@ -2551,19 +2312,13 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
   // history entry twice and a back press appeared to do nothing.
   const go = hook.slice(hook.indexOf('const go ='));
   const updater = go.slice(go.indexOf('setTab('));
-  assert(
-    !/pushState/.test(updater),
-    'history.pushState is back inside the state updater, which double-pushes in development',
-  );
+  assert(!/pushState/.test(updater), 'history.pushState is back inside the state updater, which double-pushes in development');
 
   // Without 404.html a mistyped link lands on GitHub's own page; without a page per tab every
   // path in sitemap.xml answers 404 and link previews are skipped.
   const vite = read('vite.config.ts');
   assert(/404\.html/.test(vite), 'the SPA fallback copy is gone, so tab paths break on GitHub Pages');
-  assert(
-    /SITE_PATHS/.test(vite),
-    'the build no longer writes a page per route, so every path in the sitemap answers 404',
-  );
+  assert(/SITE_PATHS/.test(vite), 'the build no longer writes a page per route, so every path in the sitemap answers 404');
 });
 
 ok('the hand-written notices are dated, not declared current', () => {
@@ -2581,10 +2336,7 @@ ok('the hand-written notices are dated, not declared current', () => {
   for (const lang of ['gl', 'es', 'en']) {
     const dict = read(`src/i18n/${lang}.ts`);
     const block = dict.slice(dict.indexOf('notices: ['), dict.indexOf('],', dict.indexOf('notices: [')));
-    assert(
-      !/\bdate:/.test(block),
-      `${lang}.ts gives the hand-written notices a date of their own again; the review date is the only one that is true`,
-    );
+    assert(!/\bdate:/.test(block), `${lang}.ts gives the hand-written notices a date of their own again; the review date is the only one that is true`);
   }
 });
 
@@ -2606,20 +2358,11 @@ ok("a notice in the operator’s navigation bar is still a notice", () => {
 
   const found = extractAlertsFromHtml(navMarkup);
   assert(found.length === 1, `the bell dropdown yielded ${found.length} notices, expected 1`);
-  assert(
-    /Retenciones/.test(found[0].title),
-    `the notice came back as "${found[0].title}" rather than what the page said`,
-  );
-  assert(
-    found[0].severity === 'warning',
-    'traffic being held up is a warning, not a note',
-  );
+  assert(/Retenciones/.test(found[0].title), `the notice came back as "${found[0].title}" rather than what the page said`);
+  assert(found[0].severity === 'warning', 'traffic being held up is a warning, not a note');
 
   // A page with no notices at all must stay empty rather than inventing one.
-  assert(
-    extractAlertsFromHtml('<html><body><p>Nada que declarar</p></body></html>').length === 0,
-    'a page with no notice list produced a notice anyway',
-  );
+  assert(extractAlertsFromHtml('<html><body><p>Nada que declarar</p></body></html>').length === 0, 'a page with no notice list produced a notice anyway');
 });
 
 ok("the city's traffic feed is read for closures and diversions, and for nothing else", () => {
@@ -2663,10 +2406,7 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
       ),
     ),
   );
-  assert(
-    institution.length === 0,
-    `an agreement about road-safety courses yielded ${institution.length} notices`,
-  );
+  assert(institution.length === 0, `an agreement about road-safety courses yielded ${institution.length} notices`);
 
   // "Apertura" was in the vocabulary for a demand that a street be reopened: a position, not
   // a change on the street.
@@ -2694,14 +2434,8 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
     ),
   );
   assert(encoded.length === 1, 'the encoded item did not come through at all');
-  assert(
-    !/[<>]|&[a-z]+;/i.test(encoded[0].description),
-    `markup survived into the description: "${encoded[0].description}"`,
-  );
-  assert(
-    encoded[0].description === 'A rúa estará cortada',
-    `expected the prose alone, got "${encoded[0].description}"`,
-  );
+  assert(!/[<>]|&[a-z]+;/i.test(encoded[0].description), `markup survived into the description: "${encoded[0].description}"`);
+  assert(encoded[0].description === 'A rúa estará cortada', `expected the prose alone, got "${encoded[0].description}"`);
 });
 
 ok('the Bolaño notice still describes the lines it names', () => {
@@ -2710,15 +2444,9 @@ ok('the Bolaño notice still describes the lines it names', () => {
   for (const id of ['7', '8', '9', '12']) {
     const line = BUS_LINES.find((l) => l.id === id);
     assert(line, `line ${id} is named in the Bolaño notice but is not in the data`);
-    assert(
-      /^Bolaño Ribadeneira/.test(line!.name),
-      `the notice says line ${id} starts at Bolaño Ribadeneira; the operator calls it "${line!.name}"`,
-    );
+    assert(/^Bolaño Ribadeneira/.test(line!.name), `the notice says line ${id} starts at Bolaño Ribadeneira; the operator calls it "${line!.name}"`);
   }
-  assert(
-    BUS_STOPS.some((s) => s.name === 'Bolaño Ribadeneira 1'),
-    'the stop the notice names is gone from the dataset',
-  );
+  assert(BUS_STOPS.some((s) => s.name === 'Bolaño Ribadeneira 1'), 'the stop the notice names is gone from the dataset');
 });
 
 ok('a bus whose time has passed stays on the board, marked', () => {
@@ -2740,10 +2468,7 @@ ok('a bus whose time has passed stays on the board, marked', () => {
   const after = getArrivalsForStop(stop.id, fourLate).arrivals;
   const kept = after.find((a) => a.etaTime === first.etaTime);
   assert(kept, `the ${first.lineNumber} due at ${first.etaTime} was dropped four minutes later`);
-  assert(
-    kept!.overdueMinutes === 4,
-    `it is on the board but says overdueMinutes ${kept!.overdueMinutes}, expected 4`,
-  );
+  assert(kept!.overdueMinutes === 4, `it is on the board but says overdueMinutes ${kept!.overdueMinutes}, expected 4`);
 
   // And it is not still being called "arriving": that is the most confident label on the
   // screen and this is the least certain row on it.
@@ -2762,10 +2487,7 @@ ok('a line\u2019s trip time comes from the timetable, not from a road model', ()
   for (const line of BUS_LINES) {
     for (const [i, direction] of line.directions.entries()) {
       const scheduled = scheduledDuration(line, i, BUS_STOPS);
-      assert(
-        scheduled !== undefined,
-        `${line.id} direction ${i} has a timetable this app cannot build a run from`,
-      );
+      assert(scheduled !== undefined, `${line.id} direction ${i} has a timetable this app cannot build a run from`);
       const freeFlow = direction.legSeconds.reduce((a, b) => a + b, 0) / 60;
       assert(
         scheduled! > freeFlow,
@@ -2778,14 +2500,8 @@ ok('a line\u2019s trip time comes from the timetable, not from a road model', ()
   // And the card has to be the thing asking. The property above held perfectly well while
   // the view went on summing legSeconds on its own, which is exactly the state found.
   const view = read('src/components/LinesView.tsx');
-  assert(
-    /scheduledDuration\(/.test(view),
-    'the line card no longer asks the timetable how long the trip takes',
-  );
-  assert(
-    !/legSeconds\.reduce/.test(view),
-    'the line card is summing legSeconds again, which is driving time with no stops in it',
-  );
+  assert(/scheduledDuration\(/.test(view), 'the line card no longer asks the timetable how long the trip takes');
+  assert(!/legSeconds\.reduce/.test(view), 'the line card is summing legSeconds again, which is driving time with no stops in it');
 });
 
 ok('the API is matched case-sensitively, so the rate limiter cannot be walked round', () => {
@@ -2793,19 +2509,13 @@ ok('the API is matched case-sensitively, so the rate limiter cannot be walked ro
   // /api/PLAN reached the planner past the rate limiter: 35 of 35 served, cut-off at 30.
   // One setting rather than a lowercase at each comparison, so this guards the setting.
   const server = read('server.ts');
-  assert(
-    /app\.set\(\s*'case sensitive routing'\s*,\s*true\s*\)/.test(server),
-    'case-sensitive routing is off again, so /api/PLAN reaches the planner unlimited',
-  );
+  assert(/app\.set\(\s*'case sensitive routing'\s*,\s*true\s*\)/.test(server), 'case-sensitive routing is off again, so /api/PLAN reaches the planner unlimited');
 
   // And the setting only helps while the comparisons stay lower case; a mixed-case
   // literal would miss the very requests routing now lets through.
   const limiter = read('src/security/rateLimit.ts');
   for (const [, literal] of limiter.matchAll(/req\.path\.startsWith\('([^']+)'\)/g)) {
-    assert(
-      literal === literal.toLowerCase(),
-      `the limiter compares req.path against "${literal}", which routing will never produce`,
-    );
+    assert(literal === literal.toLowerCase(), `the limiter compares req.path against "${literal}", which routing will never produce`);
   }
 });
 
@@ -2866,10 +2576,7 @@ ok('nothing scraped reaches a Leaflet tooltip unescaped', () => {
     }
   }
 
-  assert(
-    offenders.length === 0,
-    `scraped text reaches a Leaflet tooltip without escapeHtml:\n    ${offenders.join('\n    ')}`,
-  );
+  assert(offenders.length === 0, `scraped text reaches a Leaflet tooltip without escapeHtml:\n    ${offenders.join('\n    ')}`);
 });
 
 ok('the build compresses its assets and the server hands them over', () => {
@@ -2878,17 +2585,11 @@ ok('the build compresses its assets and the server hands them over', () => {
 
   const vite = read('vite.config.ts');
   assert(/emitCompressedAssets/.test(vite), 'the build no longer writes compressed assets');
-  assert(
-    /brotliCompressSync/.test(vite) && /gzipSync/.test(vite),
-    'the build writes only one encoding; a client that takes the other pays full price',
-  );
+  assert(/brotliCompressSync/.test(vite) && /gzipSync/.test(vite), 'the build writes only one encoding; a client that takes the other pays full price');
 
   const server = read('server.ts');
   assert(/Content-Encoding/.test(server), 'the server no longer serves the compressed copy');
-  assert(
-    /'Vary', 'Accept-Encoding'/.test(server),
-    'Vary is gone, so a shared cache could hand a brotli body to a client that cannot read it',
-  );
+  assert(/'Vary', 'Accept-Encoding'/.test(server), 'Vary is gone, so a shared cache could hand a brotli body to a client that cannot read it');
 
   // And if there is a build to look at, the files really are there. Skipped rather than
   // failed when there is not, because the suite runs before the build in CI.
@@ -2896,10 +2597,7 @@ ok('the build compresses its assets and the server hands them over', () => {
   if (!existsSync(assets)) return;
   const entry = readdirSync(assets).find((f) => /^index-.*\.js$/.test(f));
   if (!entry) return;
-  assert(
-    existsSync(join(assets, entry + '.br')) && existsSync(join(assets, entry + '.gz')),
-    `dist has ${entry} but no compressed copy beside it`,
-  );
+  assert(existsSync(join(assets, entry + '.br')) && existsSync(join(assets, entry + '.gz')), `dist has ${entry} but no compressed copy beside it`);
 });
 
 ok('nothing on the critical path waits for a script over the network', () => {
@@ -2920,10 +2618,7 @@ ok('nothing on the critical path waits for a script over the network', () => {
   const blocking = [...before.matchAll(/<script\b([^>]*)\bsrc=/g)]
     .map((m) => m[1])
     .filter((attrs) => !/\b(async|defer|type="module")\b/.test(attrs));
-  assert(
-    blocking.length === 0,
-    `${blocking.length} external script(s) block the parser before the entry chunk: ${blocking.join(' | ')}`,
-  );
+  assert(blocking.length === 0, `${blocking.length} external script(s) block the parser before the entry chunk: ${blocking.join(' | ')}`);
 });
 
 ok('the mini map is deferred once, where it cannot be forgotten', () => {
@@ -2954,10 +2649,7 @@ ok('the mini map is deferred once, where it cannot be forgotten', () => {
     }
   };
   walk(join(root, 'src'));
-  assert(
-    offenders.length === 0,
-    `imports the mini map directly instead of LazyNearbyMiniMap: ${offenders.join(', ')}`,
-  );
+  assert(offenders.length === 0, `imports the mini map directly instead of LazyNearbyMiniMap: ${offenders.join(', ')}`);
 });
 
 ok('src/data holds only what ships, and the build inputs stay out of it', () => {
@@ -2966,10 +2658,7 @@ ok('src/data holds only what ships, and the build inputs stay out of it', () => 
 
   const BUILD_ONLY = ['official-raw.json', 'osm-routes.json', 'routes.json', 'stop-amenities.json'];
   for (const name of BUILD_ONLY) {
-    assert(
-      !existsSync(join(root, 'src', 'data', name)),
-      `${name} is back in src/data; it is a build input and the app never reads it`,
-    );
+    assert(!existsSync(join(root, 'src', 'data', name)), `${name} is back in src/data; it is a build input and the app never reads it`);
     assert(existsSync(join(root, 'data', name)), `data/${name} is missing, so the build cannot run`);
   }
 
@@ -2999,10 +2688,7 @@ ok('the address the app calls for /api is the one the policy admits', () => {
   // apiUrl.ts builds the request URL and csp.ts admits the origin; name the setting
   // differently in one and the build succeeds and fails silently in the browser.
   for (const file of ['src/services/apiUrl.ts', 'src/security/csp.ts']) {
-    assert(
-      read(file).includes('VITE_API_ORIGIN'),
-      `${file} no longer reads VITE_API_ORIGIN, so the request and the policy can disagree`,
-    );
+    assert(read(file).includes('VITE_API_ORIGIN'), `${file} no longer reads VITE_API_ORIGIN, so the request and the policy can disagree`);
   }
 
   // csp.ts runs in Node, where import.meta.env does not exist. Comments are stripped first:
@@ -3067,10 +2753,7 @@ await okAsync('fifty people at one pole are one request to the operator, not fif
     const code = `stress-${Date.now()}`; // never cached by anything else in this run
     const answers = await Promise.all(Array.from({ length: 50 }, () => operatorTimesForStop(code)));
     assert(calls === 1, `fifty concurrent readers made ${calls} requests to the operator, not 1`);
-    assert(
-      answers.every((a) => a === answers[0]),
-      'the concurrent readers did not all get the same answer',
-    );
+    assert(answers.every((a) => a === answers[0]), 'the concurrent readers did not all get the same answer');
     assert(answers[0]?.departures.length === 1, 'the coalesced answer lost its departures');
 
     // A failed read must not be remembered as a failure: the next caller has to be allowed
@@ -3241,10 +2924,7 @@ ok('every stop the operator lists is on the route, or dropped for a stated reaso
       // 5.1's return has its order repaired against the surveyed itinerary, so the built sequence
       // is a permutation of the scrape's; everywhere else the two agree exactly.
       const sameSet = kept.length === direction.stops.length && kept.every((id) => direction.stops.includes(id));
-      assert(
-        sameSet,
-        `${line.number}/${direction.id}: the scrape gives ${kept.length} stops, the dataset has ${direction.stops.length}`,
-      );
+      assert(sameSet, `${line.number}/${direction.id}: the scrape gives ${kept.length} stops, the dataset has ${direction.stops.length}`);
     });
   }
 
@@ -3257,10 +2937,7 @@ ok('every stop the operator lists is on the route, or dropped for a stated reaso
   // in the city and it went missing from a line that calls there.
   const thirteen = BUS_LINES.find((l) => l.number === '13')!;
   const sindicatos = BUS_STOPS.find((s) => s.officialToken === 'uilP')!;
-  assert(
-    thirteen.directions[1].stops.includes(sindicatos.id),
-    'line 13 no longer calls at Rda. Muralla 56 (Sindicatos) on the way back',
-  );
+  assert(thirteen.directions[1].stops.includes(sindicatos.id), 'line 13 no longer calls at Rda. Muralla 56 (Sindicatos) on the way back');
 });
 
 ok('the bounded edit distance agrees with the matrix it replaced', () => {
@@ -3302,10 +2979,7 @@ ok('the bounded edit distance agrees with the matrix it replaced', () => {
         pairs++;
         const bounded = withinEditDistance(word, query, max);
         const plain = matrix(word, query) <= max;
-        assert(
-          bounded === plain,
-          `withinEditDistance("${word}", "${query}", ${max}) said ${bounded}, the matrix says ${plain}`,
-        );
+        assert(bounded === plain, `withinEditDistance("${word}", "${query}", ${max}) said ${bounded}, the matrix says ${plain}`);
       }
     }
   }
@@ -3328,10 +3002,7 @@ ok('the bounded edit distance agrees with the matrix it replaced', () => {
   plain(); // once each first, so neither side pays for the other's warm-up
   const fast = time(bounded);
   const slow = time(plain);
-  assert(
-    slow > fast * 10,
-    `the bounded check is only ${(slow / fast).toFixed(1)}x the matrix (${fast.toFixed(1)} vs ${slow.toFixed(1)} ms); it is computing distances again`,
-  );
+  assert(slow > fast * 10, `the bounded check is only ${(slow / fast).toFixed(1)}x the matrix (${fast.toFixed(1)} vs ${slow.toFixed(1)} ms); it is computing distances again`);
 });
 
 ok('a street can be found by any of the names people give it', () => {
@@ -3382,19 +3053,13 @@ ok('a street can be found by any of the names people give it', () => {
   }
 
   // Dropping the linking words must not make unrelated names collide.
-  assert(
-    /Fonte dos Ranchos/.test(best('Fonte dos Ranchos')?.s.name ?? ''),
-    'a name made mostly of linking words stopped resolving to itself',
-  );
+  assert(/Fonte dos Ranchos/.test(best('Fonte dos Ranchos')?.s.name ?? ''), 'a name made mostly of linking words stopped resolving to itself');
 
   // A query of only dropped words used to leave the empty string, which every name contains:
   // "de" scored all 417 stops and handed back six at random.
   for (const nothing of ['de', 'da', 'de la', 'do', 'linea']) {
     const hit = best(nothing);
-    assert(
-      !hit || normalizeText(hit.s.name).includes(normalizeText(nothing)),
-      `"${nothing}" resolves to ${hit?.s.name}, which does not contain it`,
-    );
+    assert(!hit || normalizeText(hit.s.name).includes(normalizeText(nothing)), `"${nothing}" resolves to ${hit?.s.name}, which does not contain it`);
   }
 
   // A neighbourhood is how people say where they are and the stop names do not carry it;
@@ -3425,7 +3090,7 @@ ok('a line answers to the words people put in front of its number', () => {
 ok('the pedestrian network is a graph and not a pile of lines', () => {
   // Two ways sharing a node id are joined; a router on a shattered graph does not fail, it
   // quietly answers "no route" for half the city.
-  const raw = readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8');
+  const raw = read('src/data/walk-network.json');
   const graph = JSON.parse(raw) as { scale: number; junctions: number[]; edges: number[] };
 
   assert(graph.scale === 100_000, `coordinates are stored at 1e-5; found scale ${graph.scale}`);
@@ -3506,10 +3171,7 @@ await okAsync('the walking router returns a route you could actually walk', asyn
   for (let i = 1; i < route!.path.length; i++) {
     drawn += metresBetween(route!.path[i - 1][0], route!.path[i - 1][1], route!.path[i][0], route!.path[i][1]);
   }
-  assert(
-    Math.abs(drawn - route!.meters) < route!.meters * 0.02 + 5,
-    `the polyline is ${Math.round(drawn)} m but the route claims ${route!.meters} m`,
-  );
+  assert(Math.abs(drawn - route!.meters) < route!.meters * 0.02 + 5, `the polyline is ${Math.round(drawn)} m but the route claims ${route!.meters} m`);
 
   // It starts where you are and ends where you asked, not at the nearest corner.
   assert(route!.path[0][0] === from[0] && route!.path[0][1] === from[1], 'the route does not start at the origin');
@@ -3542,15 +3204,9 @@ await okAsync('the walking router returns a route you could actually walk', asyn
       for (let p = 1; p < leg.path.length; p++) {
         drew += metresBetween(leg.path[p - 1][0], leg.path[p - 1][1], leg.path[p][0], leg.path[p][1]);
       }
-      assert(
-        Math.abs(drew - leg.meters) <= leg.meters * 0.02 + 8,
-        `${a.name} -> ${b.name}: draws ${Math.round(drew)} m, reports ${leg.meters} m`,
-      );
+      assert(Math.abs(drew - leg.meters) <= leg.meters * 0.02 + 8, `${a.name} -> ${b.name}: draws ${Math.round(drew)} m, reports ${leg.meters} m`);
       const asTheCrowFlies = metresBetween(a.lat, a.lng, b.lat, b.lng);
-      assert(
-        leg.meters >= asTheCrowFlies - 1,
-        `${a.name} -> ${b.name}: ${leg.meters} m over a ${Math.round(asTheCrowFlies)} m straight line`,
-      );
+      assert(leg.meters >= asTheCrowFlies - 1, `${a.name} -> ${b.name}: ${leg.meters} m over a ${Math.round(asTheCrowFlies)} m straight line`);
       assert(leg.minutes >= 1, `${a.name} -> ${b.name}: a walk of ${leg.minutes} min`);
     }
   }
@@ -3567,10 +3223,7 @@ ok('the three front doors say the same true things', () => {
     const text = read(door);
 
     assert(/Monbus/.test(text) && /Concello de Lugo/.test(text), `${door} does not say who it is not`);
-    assert(
-      /HORARIO OFICIAL/.test(text) && /ESTIMADO/.test(text),
-      `${door} does not show the two labels every time carries`,
-    );
+    assert(/HORARIO OFICIAL/.test(text) && /ESTIMADO/.test(text), `${door} does not show the two labels every time carries`);
 
     // Every count it states about the network has to be the count the network has.
     for (const [claimed, what, actual] of [
@@ -3675,28 +3328,16 @@ await okAsync('no option promises a bus the measured walk cannot reach', async (
   }
 
   assert(before > 0, 'the sample no longer contains the case this check exists for');
-  assert(
-    after < before,
-    `telling the planner the measured walks fixed none of the ${before} unreachable answers`,
-  );
+  assert(after < before, `telling the planner the measured walks fixed none of the ${before} unreachable answers`);
 
   // The other half of the contract: what the retry cannot fix is said, not smoothed over.
   // The screen, the row of alternatives and the arithmetic they share.
   const view = ['RoutePlannerView.tsx', 'planner/TripOptions.tsx', 'planner/walkCorrection.ts']
     .map((file) => read(`src/components/${file}`))
     .join('\n');
-  assert(
-    /arrival: shiftClock\(plan\.arrivalTime, fix\.after\)/.test(view),
-    'the walk correction is moving the arrival again; a bus you cannot reach does not arrive later, it leaves without you',
-  );
-  assert(
-    (view.match(/unreachableWalk/g) ?? []).length >= 2,
-    'nothing on the row or the headline says the measured walk does not reach that bus',
-  );
-  assert(
-    /replannedRef\.current = true;/.test(view),
-    'the replan is no longer capped at one; plan -> measure -> plan can oscillate forever',
-  );
+  assert(/arrival: shiftClock\(plan\.arrivalTime, fix\.after\)/.test(view), 'the walk correction is moving the arrival again; a bus you cannot reach does not arrive later, it leaves without you');
+  assert((view.match(/unreachableWalk/g) ?? []).length >= 2, 'nothing on the row or the headline says the measured walk does not reach that bus');
+  assert(/replannedRef\.current = true;/.test(view), 'the replan is no longer capped at one; plan -> measure -> plan can oscillate forever');
   for (const lang of LANGS) {
     assert(translations(lang).planner.unreachableWalk.trim().length > 0, `${lang}: nothing to say it with`);
   }
@@ -3706,15 +3347,12 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
   // OpenStreetMap has no elevation; until the IGN model was added every walk cost the same
   // both ways, and the climb from the river to the old town is about ninety metres.
   const graph = JSON.parse(
-    readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8'),
+    read('src/data/walk-network.json'),
   ) as { junctions: number[]; heights?: number[] };
 
   const junctionCount = graph.junctions.length / 2;
   assert(graph.heights, 'the graph carries no heights; run pnpm run data:elevation');
-  assert(
-    graph.heights!.length === junctionCount,
-    `${graph.heights!.length} heights for ${junctionCount} junctions`,
-  );
+  assert(graph.heights!.length === junctionCount, `${graph.heights!.length} heights for ${junctionCount} junctions`);
 
   // Delta-coded like the coordinates. Anything outside the city's 357-700 m is a height map
   // read wrong, which puts hills in the wrong places silently.
@@ -3732,7 +3370,7 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
   // The climb charged is along the street, not the difference between its ends: 3,169 edges
   // hide some climb and 287 hide ten metres, and they would all go flat again silently.
   const withAscent = JSON.parse(
-    readFileSync(new URL('../src/data/walk-network.json', import.meta.url), 'utf8'),
+    read('src/data/walk-network.json'),
   ) as { edges: number[]; heights: number[]; up?: number[]; down?: number[] };
 
   assert(withAscent.up && withAscent.down, 'the graph carries no per-edge ascent');
@@ -3759,10 +3397,7 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
     // Up must cost more than down over rises big enough for the noise filter not to be the
     // whole story; the two are not exactly the height difference apart.
     if (Math.abs(rise) >= 5) {
-      assert(
-        Math.sign(climbsUp - climbsDown) === Math.sign(rise),
-        `edge ${edgeIndex} rises ${rise} m but costs ${climbsUp} m up against ${climbsDown} m down`,
-      );
+      assert(Math.sign(climbsUp - climbsDown) === Math.sign(rise), `edge ${edgeIndex} rises ${rise} m but costs ${climbsUp} m up against ${climbsDown} m down`);
     }
     if (rise <= 0 && climbsUp > 0) hiddenClimbs++;
     at += 5 + shape * 2;
@@ -3780,10 +3415,7 @@ await okAsync('walking up a hill costs more than walking down it', async () => {
   // two are held within a few per cent rather than pinned to the metre.
   const spread = Math.abs(up!.meters - down!.meters) / Math.max(up!.meters, down!.meters);
   assert(spread < 0.1, `${up!.meters} m up against ${down!.meters} m down is a different trip, not a different way up`);
-  assert(
-    up!.minutes > down!.minutes,
-    `${up!.minutes} min up the hill against ${down!.minutes} min down it`,
-  );
+  assert(up!.minutes > down!.minutes, `${up!.minutes} min up the hill against ${down!.minutes} min down it`);
 });
 
 ok('an itinerary has no minutes belonging to nothing', () => {
@@ -3830,10 +3462,7 @@ ok('an itinerary has no minutes belonging to nothing', () => {
       for (const s of plan.segments) {
         if (!s.departureTime || !s.arrivalTime) continue;
         const span = parseTimeToMinutes(s.arrivalTime) - parseTimeToMinutes(s.departureTime);
-        assert(
-          span >= 0 || span + 1440 === (s.durationMinutes ?? 0),
-          `${trip}: a ${s.type} leg runs ${s.departureTime} to ${s.arrivalTime}`,
-        );
+        assert(span >= 0 || span + 1440 === (s.durationMinutes ?? 0), `${trip}: a ${s.type} leg runs ${s.departureTime} to ${s.arrivalTime}`);
       }
     }
     }
@@ -3873,10 +3502,7 @@ ok('the basemap style is still ours, and still credits who it came from', () => 
     // Tiles, sprites and glyphs stay on the one host the policy in src/security/csp.ts
     // admits. Pointing any of them elsewhere is a policy change, not a style change.
     for (const url of [style.sprite, style.glyphs]) {
-      assert(
-        url.startsWith('https://tiles.openfreemap.org/'),
-        `${theme}: ${url} is not served by OpenFreeMap, so the policy would block it`,
-      );
+      assert(url.startsWith('https://tiles.openfreemap.org/'), `${theme}: ${url} is not served by OpenFreeMap, so the policy would block it`);
     }
     // Their terms ask for the credit and the file carries it as well as the map control,
     // so a style lifted out of here on its own still says where it came from.
@@ -3894,10 +3520,7 @@ ok('no layer asks the sprite for an image it does not have', () => {
   // logged an error and the woods came out unpainted. The generator deletes it; it stays gone.
   for (const [theme, style] of Object.entries(mapStyles())) {
     for (const layer of style.layers) {
-      assert(
-        !('fill-pattern' in (layer.paint ?? {})),
-        `${theme}: ${layer.id} paints with a fill-pattern, which this sprite cannot supply`,
-      );
+      assert(!('fill-pattern' in (layer.paint ?? {})), `${theme}: ${layer.id} paints with a fill-pattern, which this sprite cannot supply`);
     }
   }
 });
@@ -3912,10 +3535,7 @@ ok('the street names fade in both themes, not just the dark one', () => {
       const layer = byId.get(id);
       assert(layer, `${theme}: there is no layer called ${id} to fade`);
       const opacity = layer!.paint?.['text-opacity'];
-      assert(
-        Array.isArray(opacity) && JSON.stringify(opacity).includes('16.5'),
-        `${theme}: ${id} does not fade out where the stop labels take over`,
-      );
+      assert(Array.isArray(opacity) && JSON.stringify(opacity).includes('16.5'), `${theme}: ${id} does not fade out where the stop labels take over`);
     }
   };
   fades('dark', ['highway_name_other', 'highway_name_motorway']);
@@ -3940,10 +3560,7 @@ ok('nothing in the dark basemap competes with the line drawn on top of it', () =
     const under = colour(street, 'line-color');
     for (const line of BUS_LINES) {
       const ratio = contrast(line.color, under);
-      assert(
-        ratio >= 1.45,
-        `line ${line.number} (${line.color}) is ${ratio.toFixed(2)} against ${street} (${under})`,
-      );
+      assert(ratio >= 1.45, `line ${line.number} (${line.color}) is ${ratio.toFixed(2)} against ${street} (${under})`);
     }
   }
 
@@ -3983,10 +3600,7 @@ ok('the light basemap draws blocks rather than outlines', () => {
   assert(/^#[0-9a-f]{6}$/i.test(ground), `the light ground is ${ground}, which this cannot measure`);
 
   const fill = paint('building', 'fill-color');
-  assert(
-    paint('building', 'fill-outline-color') === fill,
-    'a light building is outlined in a different colour from its fill, so a block reads as linework',
-  );
+  assert(paint('building', 'fill-outline-color') === fill, 'a light building is outlined in a different colour from its fill, so a block reads as linework');
   const step = contrast(fill, ground);
   assert(step >= 1.15, `a light building is ${step.toFixed(2)} over the ground, which reads as the ground`);
 
@@ -4002,10 +3616,7 @@ ok('the basemap is not being amplified behind the palette', () => {
   // every value in the style meant something else on screen.
   const css = read('src/index.css');
   const rule = css.match(/\.leaflet-tile-pane\s*\{[^}]*\}/);
-  assert(
-    !rule || !/filter\s*:/.test(rule[0]),
-    `the tile pane is filtered again: ${rule?.[0].replace(/\s+/g, ' ')}`,
-  );
+  assert(!rule || !/filter\s*:/.test(rule[0]), `the tile pane is filtered again: ${rule?.[0].replace(/\s+/g, ' ')}`);
 });
 
 ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer takes the focus', () => {
@@ -4028,10 +3639,7 @@ ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer take
   assert(/ref=\{answerRef\}\s+tabIndex=\{-1\}/.test(planner), 'the answer column can no longer take focus');
   // One reducer holds the rule: answering folds the form and counts the question, and
   // the calculate handler goes through it rather than through three setters again.
-  assert(
-    /action === 'answer'\s*\?\s*\{ formOpen: false, asked: true, answered: state\.answered \+ 1 \}/.test(planner),
-    'answering no longer folds the form and counts the question in one move',
-  );
+  assert(/action === 'answer'\s*\?\s*\{ formOpen: false, asked: true, answered: state\.answered \+ 1 \}/.test(planner), 'answering no longer folds the form and counts the question in one move');
   assert(/ask\('answer'\);/.test(planner), 'the calculate handler no longer answers through the reducer');
 });
 
