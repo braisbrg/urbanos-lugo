@@ -64,24 +64,24 @@ import { getScheduledBuses } from '../src/utils/vehicles';
 import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
 
-
-/** Every .ts/.tsx under a directory, for checks that read the source rather than run it. */
-function listSourceFiles(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...listSourceFiles(full));
-    else if (/\.tsx?$/.test(entry.name)) out.push(full);
-  }
-  return out;
-}
-
-
 hydrateGeometry();
 
 /** The repository root, and a file under it, for the checks that read the source rather than run it. */
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
+const relative = (full: string) => full.slice(root.length + 1);
+
+/** Every file under a directory whose name matches, for the same checks. */
+function listSourceFiles(dir: string, match = /\.tsx?$/): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...listSourceFiles(full, match));
+    else if (match.test(entry.name)) out.push(full);
+  }
+  return out;
+}
+const sourcesUnder = (...dirs: string[]) => dirs.flatMap((dir) => listSourceFiles(join(root, dir)));
 
 
 let checks = 0;
@@ -1163,18 +1163,11 @@ ok('PRIVACY.md lists every key this app writes to the device', () => {
   const privacy = read('PRIVACY.md');
 
   const written = new Set<string>();
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (/\.tsx?$/.test(entry.name)) {
-        // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, so the spelling is what is
-        // scanned for, not the call shape. sessionStorage keys match too.
-        for (const m of readFileSync(full, 'utf8').matchAll(/'(urbanos[-_]lugo[-_][a-z_-]+)'/g)) written.add(m[1]);
-      }
-    }
-  };
-  walk(join(root, 'src'));
+  // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, so the spelling is what is
+  // scanned for, not the call shape. sessionStorage keys match too.
+  for (const full of sourcesUnder('src')) {
+    for (const m of readFileSync(full, 'utf8').matchAll(/'(urbanos[-_]lugo[-_][a-z_-]+)'/g)) written.add(m[1]);
+  }
 
   assert(written.size >= 4, `only found ${written.size} storage keys; the scan has stopped working`);
   for (const key of written) {
@@ -1420,22 +1413,14 @@ ok('a trip survives a reload with its lines put back by id, and refuses one it c
 
 ok('one alert radius, shared by the board and the trip companion', () => {
   // The board's alarm and the ride's alert are one alarm: one radius, one ring, one prompt.
-  const src = join(root, 'src');
   const radii: string[] = [];
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (/\.tsx?$/.test(entry.name) && /RADIUS_M\s*=/.test(readFileSync(full, 'utf8'))) {
-        for (const m of readFileSync(full, 'utf8').matchAll(/export const (\w*RADIUS_M) = (\d+)/g)) radii.push(`${m[1]}=${m[2]}`);
-      }
-    }
-  };
-  walk(src);
+  for (const full of sourcesUnder('src')) {
+    for (const m of readFileSync(full, 'utf8').matchAll(/export const (\w*RADIUS_M) = (\d+)/g)) radii.push(`${m[1]}=${m[2]}`);
+  }
   assert(radii.includes(`ALARM_RADIUS_M=${ALARM_RADIUS_M}`), 'the alarm radius moved out of stopAlarm.ts');
   assert(radii.filter((r) => r.startsWith('ALARM_RADIUS_M')).length === 1, `${radii.join(', ')}: the alert radius is declared more than once`);
-  const companion = readFileSync(join(src, 'components/TripCompanionView.tsx'), 'utf8');
-  const hook = readFileSync(join(src, 'hooks/useTripCompanion.ts'), 'utf8');
+  const companion = read('src/components/TripCompanionView.tsx');
+  const hook = read('src/hooks/useTripCompanion.ts');
   assert(!/watchPosition\(/.test(companion + hook), 'the companion opened its own GPS watch instead of the shared one');
   assert(/subscribePosition\(/.test(hook) && /ringAlarm\(\)/.test(hook), 'the companion does not ring the board\'s alarm');
 });
@@ -1540,7 +1525,7 @@ ok('no translated key is left with nothing reading it', () => {
   }
   assert(keys.length > 100, `only found ${keys.length} keys — the parser is not reading the dictionary`);
 
-  const sources = listSourceFiles(join(root, 'src'))
+  const sources = sourcesUnder('src')
     .filter((file) => !file.replace(/\\/g, '/').includes('/i18n/'))
     .map((file) => readFileSync(file, 'utf8'))
     .join('\n');
@@ -1602,7 +1587,7 @@ ok('no view renders Galician or Spanish text of its own', () => {
   const marked = /(Liñas?|Líneas?|Paradas|Saída|Chegada|Frecuencia|Avisos|Tarifas|Buscar|Amosar|Ocultar|Espera|Percorrido|Traxecto|Trayecto|Marquesiña|Marquesina|Escanear|Aparencia|Apariencia|localización|Camiñar|Conexión|HORARIO OFICIAL|ESTIMADO)/;
 
   const offenders: string[] = [];
-  for (const file of listSourceFiles(join(root, 'src'))) {
+  for (const file of sourcesUnder('src')) {
     // The dictionaries are supposed to be full of Galician and Spanish.
     if (!/\.tsx?$/.test(file) || file.split(sep).includes('i18n')) continue;
     // So is seo.ts: the structured data is build-time metadata in one language, not an
@@ -1733,7 +1718,7 @@ ok('no colour is written straight into a class name', () => {
   );
 
   const offenders: string[] = [];
-  for (const file of listSourceFiles(join(root, 'src'))) {
+  for (const file of sourcesUnder('src')) {
     if (!/\.tsx?$/.test(file)) continue;
     for (const hit of readFileSync(file, 'utf8').match(PALETTE) ?? []) {
       offenders.push(`${file.split(/[\/]/).pop()}  ${hit}`);
@@ -1966,22 +1951,9 @@ ok('dark is the default, and only a choice is remembered', () => {
 ok('the repository URL is written in one place', () => {
   // Two things break quietly on a rename: the "wrong place" link and the User-Agent buslugo
   // sees. Prose may spell the URL out; shipped code may not.
-  const offenders: string[] = [];
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-        continue;
-      }
-      if (!/\.(ts|tsx)$/.test(entry.name)) continue;
-      if (full.endsWith(join('src', 'project.ts'))) continue;
-      if (/github\.com\/braisbrg/.test(readFileSync(full, 'utf8'))) {
-        offenders.push(full.slice(root.length + 1));
-      }
-    }
-  };
-  walk(join(root, 'src'));
+  const offenders = sourcesUnder('src')
+    .filter((full) => !full.endsWith(join('src', 'project.ts')) && /github\.com\/braisbrg/.test(readFileSync(full, 'utf8')))
+    .map(relative);
   assert(offenders.length === 0, `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`);
   assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
 });
@@ -2052,41 +2024,23 @@ ok('no comment quotes a stop count the dataset no longer has', () => {
   // asserting the old one. Only counts about stops in src/ are checked; "used to" is history.
   const total = BUS_STOPS.length;
   const wrong: string[] = [];
-
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-        continue;
+  for (const full of sourcesUnder('src')) {
+    // Split on either ending: a stray carriage return broke "used to" across the join below.
+    const lines = readFileSync(full, 'utf8').split(/\r?\n/);
+    lines.forEach((line, i) => {
+      if (!/^\s*(\/\/|\*|\/\*)/.test(line)) return;
+      // The marker that makes a quotation history can sit a line or two above the number, with
+      // "used to" split across the wrap and a comment asterisk between the words.
+      const sentence = lines
+        .slice(Math.max(0, i - 2), i + 1)
+        .map((l) => l.replace(/^\s*(\/\/|\*|\/\*\*?)\s?/, ''))
+        .join(' ');
+      if (/used to|antes|adoitaba|read "/.test(sentence)) return;
+      for (const m of [...line.matchAll(/\b(\d{3})\s+(stops|paradas|dots|poles|postes)\b/g), ...line.matchAll(/\bof the (\d{3})\b/g)]) {
+        if (Number(m[1]) !== total) wrong.push(`${relative(full)}:${i + 1} says "${m[0]}", the dataset has ${total}`);
       }
-      if (!/\.(ts|tsx)$/.test(entry.name)) continue;
-      // Split on either ending: a stray carriage return broke "used to" across the join below.
-      const lines = readFileSync(full, 'utf8').split(/\r?\n/);
-      lines.forEach((line, i) => {
-          if (!/^\s*(\/\/|\*|\/\*)/.test(line)) return;
-          // The marker that makes a quotation history can sit a line or two above the number, with
-          // "used to" split across the wrap and a comment asterisk between the words.
-          const sentence = lines
-            .slice(Math.max(0, i - 2), i + 1)
-            .map((l) => l.replace(/^\s*(\/\/|\*|\/\*\*?)\s?/, ''))
-            .join(' ');
-          if (/used to|antes|adoitaba|read "/.test(sentence)) return;
-          for (const m of line.matchAll(/\b(\d{3})\s+(stops|paradas|dots|poles|postes)\b/g)) {
-            if (Number(m[1]) !== total) {
-              wrong.push(`${full.slice(root.length + 1)}:${i + 1} says "${m[0]}", the dataset has ${total}`);
-            }
-          }
-          for (const m of line.matchAll(/\bof the (\d{3})\b/g)) {
-            if (Number(m[1]) !== total) {
-              wrong.push(`${full.slice(root.length + 1)}:${i + 1} says "of the ${m[1]}", the dataset has ${total}`);
-            }
-          }
-      });
-    }
-  };
-  walk(join(root, 'src'));
-
+    });
+  }
   assert(wrong.length === 0, wrong.join('; '));
 });
 
@@ -2176,27 +2130,12 @@ ok('no source file mixes its line endings', () => {
   // This repository used to check out CRLF on Windows, and one bare "\n" among hundreds of
   // CRLFs is invisible in an editor and a whole-file diff later; it also broke a check here.
   const mixed: string[] = [];
-
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (/node_modules|dist|\.git/.test(entry.name)) continue;
-        walk(full);
-        continue;
-      }
-      if (!/\.(ts|tsx|css|html)$/.test(entry.name)) continue;
-      const text = readFileSync(full, 'utf8');
-      const crlf = (text.match(/\r\n/g) ?? []).length;
-      const lf = (text.match(/(?<!\r)\n/g) ?? []).length;
-      if (crlf > 0 && lf > 0) {
-        mixed.push(`${full.slice(root.length + 1)} (${crlf} CRLF, ${lf} LF)`);
-      }
-    }
-  };
-  walk(join(root, 'src'));
-  walk(join(root, 'tools'));
-
+  for (const full of [...listSourceFiles(join(root, 'src'), /\.(ts|tsx|css|html)$/), ...listSourceFiles(join(root, 'tools'), /\.(ts|tsx|css|html)$/)]) {
+    const text = readFileSync(full, 'utf8');
+    const crlf = (text.match(/\r\n/g) ?? []).length;
+    const lf = (text.match(/(?<!\r)\n/g) ?? []).length;
+    if (crlf > 0 && lf > 0) mixed.push(`${relative(full)} (${crlf} CRLF, ${lf} LF)`);
+  }
   assert(mixed.length === 0, `mixed line endings in ${mixed.join(', ')}`);
 });
 
@@ -2632,23 +2571,10 @@ ok('the mini map is deferred once, where it cannot be forgotten', () => {
   assert(/IntersectionObserver/.test(lazy), 'the map no longer waits until it is on screen');
   assert(/h-\[240px\]/.test(lazy), 'the placeholder no longer holds the height the map takes');
 
-  const offenders: string[] = [];
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-        continue;
-      }
-      if (!/\.tsx?$/.test(entry.name)) continue;
-      const relative = full.slice(root.length + 1);
-      if (relative === wrapper || relative === itself) continue;
-      const source = readFileSync(full, 'utf8');
-      // A type-only import costs nothing at runtime; a value import is the whole map.
-      if (/^\s*import\s+(?!type\b)[^;]*['"][^'"]*\/NearbyMiniMap['"]/m.test(source)) offenders.push(relative);
-    }
-  };
-  walk(join(root, 'src'));
+  // A type-only import costs nothing at runtime; a value import is the whole map.
+  const offenders = sourcesUnder('src')
+    .map(relative)
+    .filter((file) => file !== wrapper && file !== itself && /^\s*import\s+(?!type\b)[^;]*['"][^'"]*\/NearbyMiniMap['"]/m.test(read(file)));
   assert(offenders.length === 0, `imports the mini map directly instead of LazyNearbyMiniMap: ${offenders.join(', ')}`);
 });
 
@@ -2664,17 +2590,9 @@ ok('src/data holds only what ships, and the build inputs stay out of it', () => 
 
   // And nothing under src/ may import one of them, whatever directory it sits in.
   const offenders: string[] = [];
-  const walk = (dir: string): string[] =>
-    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) return walk(full);
-      return /\.tsx?$/.test(entry.name) ? [full] : [];
-    });
-  for (const file of walk(join(root, 'src'))) {
+  for (const file of sourcesUnder('src')) {
     const text = readFileSync(file, 'utf8');
-    for (const name of BUILD_ONLY) {
-      if (text.includes(name)) offenders.push(`${file.slice(root.length + 1)} names ${name}`);
-    }
+    for (const name of BUILD_ONLY) if (text.includes(name)) offenders.push(`${relative(file)} names ${name}`);
   }
   assert(offenders.length === 0, `a build input reached the app:\n    ${offenders.join('\n    ')}`);
 
