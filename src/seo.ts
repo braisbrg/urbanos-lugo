@@ -1,15 +1,9 @@
 /**
- * What search engines are told about this site.
- *
- * All of it is generated at build time from one URL, because the same build is deployed
- * to a project page under `/<repo>/` and could be deployed to a bare domain, and a
- * canonical or a sitemap with the wrong origin is worse than none: it points crawlers at
- * pages that do not exist.
- *
- * `SITE_URL` is set by the workflow. Without it the tags are omitted entirely rather
- * than guessed, so a local build never ships a canonical pointing at somebody's laptop.
+ * What search engines are told about this site, generated at build time from one URL:
+ * the same build is deployed under `/<repo>/` and could be deployed to a bare domain, and
+ * a canonical or a sitemap with the wrong origin points crawlers at pages that do not
+ * exist. Without `SITE_URL` the tags are omitted rather than guessed.
  */
-
 import type { Tab } from './components/navSections';
 import { PATHS } from './routes';
 
@@ -25,14 +19,7 @@ export function siteUrl(raw: string | undefined): string | null {
   }
 }
 
-/**
- * Structured data.
- *
- * `WebApplication` rather than anything that would read as the operator's own service:
- * this is a reader for a public timetable, and `disambiguatingDescription` says so in
- * the one field a crawler is likely to surface. Nothing here claims AULUSA or the
- * Concello publishes it.
- */
+/** `WebApplication`, and `disambiguatingDescription` says whose service it is not. */
 export function structuredData(site: string): string {
   return JSON.stringify({
     '@context': 'https://schema.org',
@@ -62,32 +49,15 @@ export function robotsTxt(site: string): string {
   return ['User-agent: *', 'Allow: /', '', `Sitemap: ${site}sitemap.xml`, ''].join('\n');
 }
 
-/**
- * The paths a crawler should know about: the root and one per tab.
- *
- * Taken from the router's own record rather than typed out again, because the copy that
- * used to be here was free to drift from it and nothing would have said so.
- */
+/** The root and one path per tab, from the router's own record so the two cannot drift. */
 export const SITE_PATHS = ['', ...Object.values(PATHS)];
 
-/**
- * The address of a route, as the sitemap, the canonical and the share button spell it.
- *
- * With the trailing slash: each tab is a directory with an index.html in it, and Pages
- * answers `/linhas` with a 301 to `/linhas/`. Six of the seven sitemap entries redirected,
- * and every shared link took the extra round trip.
- */
+/** With the trailing slash: each tab is a directory with an index.html, and Pages 301s `/linhas` to `/linhas/`. */
 export function routeUrl(site: string, route: string): string {
   return route ? `${site}${route}/` : site;
 }
 
-/**
- * The sitemap.
- *
- * Seven entries: the root and the six tabs. Individual stops and lines are deliberately
- * absent — they have no URL of their own, and listing pages that render as an empty
- * shell to a crawler would be worse than listing nothing.
- */
+/** Seven entries. Stops and lines have no URL of their own, and an empty shell listed is worse than nothing. */
 export function sitemapXml(site: string, paths: string[] = SITE_PATHS): string {
   const urls = paths.map((p) => `  <url><loc>${routeUrl(site, p)}</loc></url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
@@ -99,12 +69,9 @@ export interface PageHead {
 }
 
 /**
- * What each page says about itself, in Galician, for the crawler and the link preview.
- *
- * Every copy of index.html used to carry the root's title and description, so a search
- * engine saw one page seven times over. "Non oficial" opens every description on purpose,
- * and "bus" is in every title because it is the word people search, not "urbanos".
- * Nothing here promises live positions: this network publishes none.
+ * What each page says about itself, in Galician. "Non oficial" opens every description
+ * on purpose, "bus" is in every title because it is the word people search, and nothing
+ * promises live positions: this network publishes none.
  */
 export const ROOT_HEAD: PageHead = {
   title: 'Urbanos de Lugo | Bus urbano: liñas, horarios e paradas',
@@ -151,9 +118,9 @@ export function pageHead(route: string): PageHead {
 }
 
 /**
- * The built index.html, re-headed for one route: its own title, description and
- * canonical. The root's tags are the anchors, so index.html has to carry exactly
- * `ROOT_HEAD` -- tools/test.ts holds the two together.
+ * The built index.html, re-headed for one route: its own title, description, canonical
+ * and static <h1>. The root's tags are the anchors, so index.html has to carry exactly
+ * `ROOT_HEAD`; tools/test.ts holds the two together.
  */
 export function pageHtml(html: string, route: string, site: string | null): string {
   const head = pageHead(route);
@@ -162,7 +129,6 @@ export function pageHtml(html: string, route: string, site: string | null): stri
     .replace(/(<meta name="description" content=")[^"]*/, `$1${head.description}`)
     .replace(/(<meta property="og:title" content=")[^"]*/, `$1${head.title}`)
     .replace(/(<meta property="og:description" content=")[^"]*/, `$1${head.description}`)
-    // The static <h1> inside #root, for crawlers that do not run the app.
     .replace(/(<h1[^>]*>)[^<]*(<\/h1>)/, `$1${head.title}$2`);
   return site ? out.replace(`<link rel="canonical" href="${site}" />`, `<link rel="canonical" href="${routeUrl(site, route)}" />`) : out;
 }
