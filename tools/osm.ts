@@ -1,13 +1,9 @@
-import { metresBetween } from '../src/utils/geo';
-
 /**
- * Talking to OpenStreetMap: the bits the importer and the weekly check both need.
- *
- * They were only in `importOsmRoutes.ts`, which calls `main()` on import, so anything
- * else that wanted them had to copy them. A second copy of `stitch` would be a second
- * answer to "how long is this route", and the whole point of the weekly check is that
- * the two answers are comparable.
+ * Talking to OpenStreetMap: what the importer and the weekly check both need. One
+ * `stitch` rather than two, so the two answers to "how long is this route" are comparable.
  */
+import { metresBetween } from '../src/utils/geo';
+import { sleep } from './lib';
 
 /** Lugo and its parishes, wide enough for the 11's runs out to Bóveda and Santa Comba. */
 export const BBOX = '42.95,-7.68,43.10,-7.45';
@@ -17,16 +13,19 @@ export const ROUTE_QUERY = `[out:json][timeout:180];
 relation["type"="route"]["route"="bus"]["network"~"Lugo"](${BBOX});
 out geom;`;
 
-/** Unrounded on purpose: these metres are summed along a polyline, and rounding each
- *  segment first would not add up to the same length. */
-export const distance = (a: [number, number], b: [number, number]): number =>
-  metresBetween(a[0], a[1], b[0], b[1]);
+/** Every way used by those relations, with its tags, for the access survey. */
+const WAY_TAG_QUERY = `[out:json][timeout:180];
+relation["type"="route"]["route"="bus"]["network"~"Lugo"](${BBOX})->.r;
+way(r.r);
+out tags geom;`;
+
+/** Unrounded on purpose: summed along a polyline, rounded segments would not add up. */
+export const distance = (a: [number, number], b: [number, number]): number => metresBetween(a[0], a[1], b[0], b[1]);
 
 /**
- * One ordered polyline from a relation's way members.
- *
- * A relation lists ways in travel order but each way keeps its own drawing direction, so
- * every way is appended by whichever end touches what came before.
+ * One ordered polyline from a relation's way members. A relation lists ways in travel
+ * order but each way keeps its own drawing direction, so every way is appended by
+ * whichever end touches what came before.
  */
 export function stitch(members: any[]): [number, number][] {
   const path: [number, number][] = [];
@@ -38,9 +37,7 @@ export function stitch(members: any[]): [number, number][] {
       continue;
     }
     const tail = path[path.length - 1];
-    const forward = distance(tail, way[0]);
-    const backward = distance(tail, way[way.length - 1]);
-    path.push(...(backward < forward ? [...way].reverse() : way));
+    path.push(...(distance(tail, way[way.length - 1]) < distance(tail, way[0]) ? [...way].reverse() : way));
   }
   return path;
 }
@@ -58,53 +55,24 @@ export async function overpass(query: string, attempts = 3): Promise<any | null>
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: 'data=' + encodeURIComponent(query),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'UrbanosLugoOpenData/1.0',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'UrbanosLugoOpenData/1.0' },
     });
     if (res.ok) return res.json();
     if (attempt === attempts) {
       console.warn(`  ! Overpass answered ${res.status} after ${attempts} tries`);
       return null;
     }
-    await new Promise((r) => setTimeout(r, attempt * 20_000));
+    await sleep(attempt * 20_000);
   }
   return null;
 }
 
-/** Every way used by those relations, with its tags, for the access survey. */
-const WAY_TAG_QUERY = `[out:json][timeout:180];
-relation["type"="route"]["route"="bus"]["network"~"Lugo"](${BBOX})->.r;
-way(r.r);
-out tags geom;`;
-
 /**
- * Closed to motor vehicles, with no exception for buses recorded.
- *
- * A relation says where a mapper believes the bus goes; these tags are a different survey
- * of the same street, and the two disagree. Nothing in open data resolves it, so it is
- * measured and reported rather than decided.
- *
- * Surveyed once, way by way, so the disagreement is about streets rather than about a
- * total: the nine flagged routes run over **fourteen** distinct ways, in two groups.
- *
- * Thirteen of them are the historic-centre terminus of lines 7, 8, 9 and 12 — Rúa Bolaño
- * Rivadeneira, Rúa Montevideo and Rúa de San Fernando, `highway=pedestrian`, one of them
- * also `access=no motor_vehicle=private`, none carrying `bus=yes` or `psv=yes`. The
- * itinerary is not what is wrong here: all four lines are *published* as terminating at
- * "Casco Histórico (Bolaño)", and the OSM `route=bus` relations — mapped by OSM's own
- * contributors — run over these ways. So OSM says in one place that the bus goes there and
- * in another that no vehicle may. The missing tag is `psv=yes`, and it belongs upstream in
- * OSM, not in a fixup here; rerouting a bus away from its own published terminus to satisfy
- * a tag would make the map wrong to make the survey quiet.
- *
- * The fourteenth is way 368828180, 317 m of `highway=track` on line 11 between Calde and
- * Ramón Ferreiro. Same shape of argument and a weaker claim: a rural line on a track is
- * ordinary, and `track` says nothing about buses either way.
- *
- * checkOsmGeometry watches the total, so a mapper adding the exception shows up as a drop
- * and the notice about the terminus gets rewritten.
+ * Closed to motor vehicles, with no exception for buses recorded. A relation says where a
+ * mapper believes the bus goes; these tags are a different survey of the same street, and
+ * where they disagree (the historic-centre terminus, and one rural track) it is measured
+ * and reported rather than decided: the README has the streets and the metres, and the
+ * missing `psv=yes` belongs upstream in OSM.
  */
 export function closedToBuses(tags: any): boolean {
   if (['yes', 'designated'].includes(tags.bus) || ['yes', 'designated'].includes(tags.psv)) return false;
@@ -122,11 +90,7 @@ export function restrictedMeters(members: any[], wayTags: Map<number, any>): num
     if (member.type !== 'way' || !member.geometry) continue;
     const tags = wayTags.get(member.ref);
     if (!tags || !closedToBuses(tags)) continue;
-    for (let i = 1; i < member.geometry.length; i++) {
-      const a = member.geometry[i - 1];
-      const b = member.geometry[i];
-      metres += distance([a.lat, a.lon], [b.lat, b.lon]);
-    }
+    metres += pathMeters(member.geometry.map((p: any) => [p.lat, p.lon]));
   }
   return Math.round(metres);
 }
@@ -134,7 +98,5 @@ export function restrictedMeters(members: any[], wayTags: Map<number, any>): num
 /** The way tags of every route way, keyed by way id. Empty when Overpass will not answer. */
 export async function fetchWayTags(): Promise<Map<number, any>> {
   const json = await overpass(WAY_TAG_QUERY);
-  const tags = new Map<number, any>();
-  for (const way of json?.elements ?? []) tags.set(way.id, way.tags || {});
-  return tags;
+  return new Map((json?.elements ?? []).map((way: any) => [way.id, way.tags || {}]));
 }

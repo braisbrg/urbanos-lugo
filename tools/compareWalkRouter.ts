@@ -2,26 +2,22 @@
  * Is our walking router right, or only fast?
  *
  * `src/utils/walkRouter.ts` replaced a request to OSM's own foot router, and replacing
- * something is a claim: that the answers are as good. Being quick and self-contained is
- * worth nothing if it says twenty minutes where the real walk is thirty-five.
+ * something is a claim that the answers are as good. Sampled pairs of real endpoints are
+ * routed here and at routing.openstreetmap.de, and the difference reported as a
+ * distribution: some disagreement is expected (different profiles, different foot speed),
+ * a long tail is what a wrong turn or a missing connection looks like.
  *
- * So this asks both. Sampled pairs of real endpoints — stop to stop, stop to place,
- * place to place — routed here and at routing.openstreetmap.de, and the difference
- * reported as a distribution rather than a verdict. Some disagreement is expected and
- * fine: they use different profiles and OSRM's foot speed is not ours. What would not be
- * fine is a long tail, which is what a wrong turn or a missing connection looks like.
- *
- * Not in CI, not in `pnpm test`, and not on a schedule. It hits somebody else's free
- * server at their stated one request a second, so it is run by hand when the router or
- * the network changes, and cached so a re-run costs nothing:
+ * Not in CI and not on a schedule: it hits somebody else's free server at their stated
+ * one request a second, by hand, when the router or the network changes, and cached:
  *   pnpm run compare:walk
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { BUS_STOPS } from '../src/data/transitData';
-import { LUGO_LANDMARKS } from '../src/utils/places';
 import { metresBetween } from '../src/utils/geo';
+import { LUGO_LANDMARKS } from '../src/utils/places';
 import { routeOnFoot } from '../src/utils/walkRouter';
+import { percentile, readJson, sleep } from './lib';
 
 const FOOT_ROUTER = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
 const CACHE = '.cache/walk-comparison.json';
@@ -33,44 +29,37 @@ interface Theirs {
   meters: number;
   minutes: number;
 }
+type Point = [number, number];
 
-const cache: Record<string, Theirs | null> = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, 'utf8')) : {};
+const cache: Record<string, Theirs | null> = existsSync(CACHE) ? readJson(CACHE) : {};
+const keyOf = (from: Point, to: Point) => `${from[0].toFixed(5)},${from[1].toFixed(5)}>${to[0].toFixed(5)},${to[1].toFixed(5)}`;
 let lastCall = 0;
 
-async function theirRoute(from: [number, number], to: [number, number]): Promise<Theirs | null> {
-  const key = `${from[0].toFixed(5)},${from[1].toFixed(5)}>${to[0].toFixed(5)},${to[1].toFixed(5)}`;
-  if (key in cache) return cache[key];
-
+async function theirRoute(key: string, from: Point, to: Point): Promise<Theirs | null> {
   const wait = MIN_GAP_MS - (Date.now() - lastCall);
-  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  if (wait > 0) await sleep(wait);
   lastCall = Date.now();
-
   try {
-    const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
-    const res = await fetch(`${FOOT_ROUTER}/${coords}?overview=false`, {
+    const res = await fetch(`${FOOT_ROUTER}/${from[1]},${from[0]};${to[1]},${to[0]}?overview=false`, {
       headers: { 'User-Agent': 'UrbanosLugoOpenData/1.0 (walk router comparison, run by hand)' },
     });
     if (!res.ok) throw new Error(String(res.status));
     const json = await res.json();
     if (json.code !== 'Ok' || !json.routes?.length) throw new Error(json.code ?? 'no route');
     const route = json.routes[0];
-    cache[key] = { meters: Math.round(route.distance), minutes: Math.round(route.duration / 60) };
+    return { meters: Math.round(route.distance), minutes: Math.round(route.duration / 60) };
   } catch (error) {
     console.warn(`  ! ${key}: ${(error as Error).message}`);
-    cache[key] = null;
+    return null;
   }
-  return cache[key];
 }
 
-/* Deterministic sample, so two runs compare the same walks. */
+// Deterministic sample, so two runs compare the same walks.
 let seed = 20260908;
 const random = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(random() * xs.length)];
 
-const points: { name: string; at: [number, number] }[] = [
-  ...BUS_STOPS.map((s) => ({ name: s.name, at: [s.lat, s.lng] as [number, number] })),
-  ...LUGO_LANDMARKS.map((l) => ({ name: l.name, at: [l.lat, l.lng] as [number, number] })),
-];
+const points: { name: string; at: Point }[] = [...BUS_STOPS, ...LUGO_LANDMARKS].map((p) => ({ name: p.name, at: [p.lat, p.lng] }));
 
 async function main() {
   mkdirSync(dirname(CACHE), { recursive: true });
@@ -94,21 +83,17 @@ async function main() {
       console.log(`  -  no route here: ${a.name} -> ${b.name}`);
       continue;
     }
-    const wasCached = `${a.at[0].toFixed(5)},${a.at[1].toFixed(5)}>${b.at[0].toFixed(5)},${b.at[1].toFixed(5)}` in cache;
-    const theirs = await theirRoute(a.at, b.at);
-    if (!wasCached) asked++;
+    const key = keyOf(a.at, b.at);
+    if (!(key in cache)) {
+      asked++;
+      cache[key] = await theirRoute(key, a.at, b.at);
+    }
+    const theirs = cache[key];
     if (!theirs) {
       noRouteThere++;
       continue;
     }
-
-    rows.push({
-      name: `${a.name} -> ${b.name}`,
-      ours: ours.meters,
-      theirs: theirs.meters,
-      oursMin: ours.minutes,
-      theirsMin: theirs.minutes,
-    });
+    rows.push({ name: `${a.name} -> ${b.name}`, ours: ours.meters, theirs: theirs.meters, oursMin: ours.minutes, theirsMin: theirs.minutes });
     process.stdout.write('.');
   }
 
@@ -118,22 +103,17 @@ async function main() {
   if (!rows.length) return;
 
   const pct = rows.map((r) => ((r.ours - r.theirs) / r.theirs) * 100);
-  const sorted = [...pct].sort((a, b) => a - b);
-  const at = (q: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * q))];
-
   console.log('\ndistance, ours against theirs:');
-  console.log(`  median  ${at(0.5).toFixed(1)}%`);
-  console.log(`  p10 ${at(0.1).toFixed(1)}%   p90 ${at(0.9).toFixed(1)}%`);
-  console.log(`  worst   ${sorted[0].toFixed(1)}%  /  ${sorted[sorted.length - 1].toFixed(1)}%`);
+  console.log(`  median  ${percentile(pct, 50).toFixed(1)}%`);
+  console.log(`  p10 ${percentile(pct, 10).toFixed(1)}%   p90 ${percentile(pct, 90).toFixed(1)}%`);
+  console.log(`  worst   ${Math.min(...pct).toFixed(1)}%  /  ${Math.max(...pct).toFixed(1)}%`);
 
-  const within = (limit: number) => rows.filter((r) => Math.abs((r.ours - r.theirs) / r.theirs) * 100 <= limit).length;
+  const within = (limit: number) => pct.filter((p) => Math.abs(p) <= limit).length;
   console.log(`\n  ${within(10)} of ${rows.length} within 10%, ${within(25)} within 25%`);
 
   console.log('\nthe five that disagree most:');
   for (const row of [...rows].sort((a, b) => Math.abs(b.ours - b.theirs) - Math.abs(a.ours - a.theirs)).slice(0, 5)) {
-    console.log(
-      `  ours ${String(row.ours).padStart(5)} m / ${String(row.oursMin).padStart(3)} min   theirs ${String(row.theirs).padStart(5)} m / ${String(row.theirsMin).padStart(3)} min   ${row.name}`,
-    );
+    console.log(`  ours ${String(row.ours).padStart(5)} m / ${String(row.oursMin).padStart(3)} min   theirs ${String(row.theirs).padStart(5)} m / ${String(row.theirsMin).padStart(3)} min   ${row.name}`);
   }
 }
 
