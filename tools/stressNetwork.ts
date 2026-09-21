@@ -105,6 +105,7 @@ async function apiTrouble(browser: Browser, trouble: Trouble): Promise<void> {
   report('API requests intercepted', String(intercepted), intercepted === 0);
   exceptionsReport(thrown);
   await page.send('Fetch.disable');
+  await page.close();
 }
 
 async function offlineSecondVisit(browser: Browser): Promise<void> {
@@ -148,6 +149,7 @@ async function offlineSecondVisit(browser: Browser): Promise<void> {
   report('notices screen shows a dated answer', ms(shown) + which, shown < 0 || shown > 3500);
   exceptionsReport(thrown);
   await browser.offline(false);
+  await page.close();
 }
 
 console.log(`against ${BASE}; committed snapshot from ${alertSnapshot.fetchedAt}, ${alertSnapshot.alerts.length} notice(s)`);

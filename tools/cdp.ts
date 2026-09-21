@@ -130,6 +130,7 @@ export class Session {
   constructor(
     private readonly conn: Connection,
     readonly sessionId: string,
+    private readonly targetId: string,
   ) {}
 
   send<T = Params>(method: string, params: Params = {}): Promise<T> {
@@ -211,8 +212,9 @@ export class Session {
     return list;
   }
 
+  /** Closing is a browser-level command, keyed by target: sent through the page's own session it was refused, silently, and every page a run opened stayed open. */
   close(): Promise<unknown> {
-    return this.send('Target.closeTarget', {}).catch(() => undefined);
+    return this.conn.send('Target.closeTarget', { targetId: this.targetId }).catch(() => undefined);
   }
 }
 
@@ -294,7 +296,7 @@ export async function launch(executable: string, headless = true): Promise<Brows
     async newPage() {
       const { targetId } = (await conn.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
       const { sessionId } = (await conn.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
-      const session = new Session(conn, sessionId);
+      const session = new Session(conn, sessionId, targetId);
       for (const domain of ['Page', 'Runtime', 'Network', 'Performance', 'DOM']) await session.send(`${domain}.enable`);
       return session;
     },

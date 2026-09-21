@@ -59,9 +59,11 @@ export function useFavourites(key: string, known: Set<string>): [string[], (id: 
 }
 
 const isString = (x: unknown): x is string => typeof x === 'string';
+const sameString = (a: string, b: string) => a === b;
+const sameRoute = (a: RecentRoute, b: RecentRoute) => a.from === b.from && a.to === b.to;
 
 /** The last six stops opened: enough for a commute and its variations. */
-export const useRecentStops = () => useRecent<string>('urbanos-lugo-recent-stops', 6, isString, (a, b) => a === b);
+export const useRecentStops = () => useRecent<string>('urbanos-lugo-recent-stops', 6, isString, sameString);
 
 export interface RecentRoute {
   from: string;
@@ -72,5 +74,4 @@ const isRoute = (x: unknown): x is RecentRoute =>
   typeof x === 'object' && x !== null && isString((x as RecentRoute).from) && isString((x as RecentRoute).to);
 
 /** The last four trips planned, as typed. Four fills the form's width on a phone. */
-export const useRecentRoutes = () =>
-  useRecent<RecentRoute>('urbanos-lugo-recent-routes', 4, isRoute, (a, b) => a.from === b.from && a.to === b.to);
+export const useRecentRoutes = () => useRecent<RecentRoute>('urbanos-lugo-recent-routes', 4, isRoute, sameRoute);
