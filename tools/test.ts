@@ -13,7 +13,7 @@ import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
 import { createHash } from 'node:crypto';
 import { REPO_URL } from '../src/project';
-import { ROOT_HEAD, SITE_PATHS, pageHead, pageHtml, robotsTxt, routeUrl, siteUrl, sitemapXml, structuredData } from '../src/seo';
+import { ROOT_HEAD, SITE_PATHS, canonicalUrl, pageHead, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
@@ -29,10 +29,12 @@ import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
 import { routeOnFoot } from '../src/utils/walkRouter';
 import { metresBetween } from '../src/utils/geo';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
-import { buildRuns, handoverMinutes, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
+import { HOLIDAY_YEARS, buildRuns, dayKind, handoverMinutes, isHoliday, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
+import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
+import festivos from '../src/data/festivos.json';
 import { planTrips, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
-import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
+import { getArrivalsForStop, getNextLineDeparture, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
 import { getScheduledBuses } from '../src/utils/vehicles';
 import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
@@ -1054,6 +1056,32 @@ ok('every map gets its chrome from the one place that has it', () => {
   }
 });
 
+ok('a lost WebGL context ends in a raster map, not a blank one', () => {
+  // Seen once in a production console; forced, the basemap goes blank while the routes and
+  // stops on Leaflet's own canvas stay, with no word to the reader. The basemap listens for
+  // the loss and the return, waits a grace while the page is visible, then swaps itself for
+  // the raster fallback and remembers for the session. All in a browser: this reads the source.
+  const basemap = read('src/components/Map/basemap.ts');
+  assert(/webglcontextlost/.test(basemap) && /webglcontextrestored/.test(basemap), 'the basemap no longer watches for the context going and coming back');
+  const grace = Number(basemap.match(/CONTEXT_GRACE_MS = ([\d_]+)/)?.[1].replace(/_/g, ''));
+  assert(grace >= 2000 && grace <= 15000, `the grace is ${grace} ms: under 2 s it gives up on a context the browser was about to restore, over 15 s the blank is a screen`);
+
+  const swap = basemap.slice(basemap.indexOf('const armGrace'), basemap.indexOf('CONTEXT_GRACE_MS);'));
+  assert(swap.length > 0, 'the grace timer is gone from the basemap');
+  for (const [what, pattern] of [
+    ['counts only while the page is visible', /visibilityState !== 'visible'/],
+    ['remembers for the session', /webgl2 = false/],
+    ['removes the dead layer', /removeLayer\(layer\)/],
+    ['puts the raster fallback in its place', /createBasemap\(shown\)\.addTo\(map\)/],
+  ] as const) {
+    assert(pattern.test(swap), `the fallback no longer ${what}`);
+  }
+  // A map born raster never goes through the vector path, so it needs the same dropped
+  // prefix, or it prints the two-line "Leaflet | © OpenStreetMap contributors" credit.
+  const raster = basemap.slice(basemap.indexOf('if (!hasWebGL2())'), basemap.indexOf('return raster;'));
+  assert(/setPrefix\(false\)/.test(raster), 'the raster fallback prints the "Leaflet" prefix that the vector path drops');
+});
+
 ok('the out-of-service banner still fits on two lines', () => {
   // The banner was a 162 px panel on a 375 px phone; it is two truncating lines now, and a
   // longer translation is cut off rather than wrapped. Measured at 375 px the column takes
@@ -1699,6 +1727,58 @@ ok('a saved snapshot stops speaking for the present once it is old', () => {
   assert(isSnapshotStale('not a date', now), 'an unreadable date is not a fresh one');
 });
 
+ok('the notices snapshot is a file beside the page, not part of the bundle', () => {
+  // The scheduled deploy refreshes the snapshot before every build; imported, its timestamp
+  // renamed the entry chunk and the five that import from it, half a megabyte gzipped, five
+  // to seven times a day under pages that were open. As a file under public/ it keeps its
+  // name, a refresh moves 1.4 KB, and the service worker precaches it for the Avisos screen offline.
+  const snapshot = JSON.parse(read('public/alerts.json'));
+  assert(Array.isArray(snapshot.alerts) && typeof snapshot.fetchedAt === 'string', 'public/alerts.json is not a dated snapshot');
+  for (const file of sourcesUnder('src')) {
+    assert(!/from\s+['"][^'"]*alerts\.json['"]/.test(readFileSync(file, 'utf8')), `${relative(file)} imports the notices snapshot, which puts its timestamp back into the bundle`);
+  }
+  assert(/fetch\(`\$\{import\.meta\.env\.BASE_URL\}alerts\.json`\)/.test(read('src/hooks/useServiceAlerts.ts')), 'the hook no longer fetches the snapshot from beside the page');
+  assert(/at\('public\/alerts\.json'\)/.test(read('tools/fetchAlerts.ts')), 'fetchAlerts writes the snapshot somewhere the page cannot fetch it from');
+  assert(/globPatterns: \['\*\*\/\*\.\{[^}]*json[^}]*\}'\]/.test(read('vite.config.ts')), 'the service worker no longer precaches json, so the snapshot is gone offline');
+});
+
+await okAsync('the capped read returns every byte under the cap, whatever the chunking', async () => {
+  // This lived in checkParsersUnchanged.ts, which fetched two live pages twice on every push
+  // to prove it. A round trip is a poor way to test a decoder, and it could not test the one
+  // thing that goes wrong in a streaming read: a multi-byte character split across chunks,
+  // which turns "Muiño" into "Mui\ufffd\ufffdo" without {stream: true}.
+  const text = ('Praza Maior — Muiño do Rato, 0,64 € 🚌 ' + 'ñ'.repeat(50) + '\n').repeat(400);
+  const bytes = new TextEncoder().encode(text);
+  const chunked = (size: number) =>
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          for (let i = 0; i < bytes.length; i += size) controller.enqueue(bytes.subarray(i, i + size));
+          controller.close();
+        },
+      }),
+    );
+  for (const size of [1, 7, 1024]) assert((await readCapped(chunked(size))) === text, `a body read in ${size}-byte chunks came back changed`);
+
+  // The ceiling: cut, and cut to the cap rather than to some multiple of the chunk.
+  const big = 'y'.repeat(MAX_BODY_BYTES * 3);
+  const one = await readCapped(new Response(big));
+  assert(one.length < big.length, 'a body three times the cap came back whole');
+  assert(one.length === MAX_BODY_BYTES, `the read stopped at ${one.length} bytes, not the cap of ${MAX_BODY_BYTES}`);
+  const many = await readCapped(
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          const chunk = new TextEncoder().encode('y'.repeat(65536));
+          for (let i = 0; i < 24; i++) controller.enqueue(chunk);
+          controller.close();
+        },
+      }),
+    ),
+  );
+  assert(many.length === MAX_BODY_BYTES, `chunked, the read stopped at ${many.length} bytes, not the cap`);
+});
+
 ok('the QR count on the map is the number of poles that have one', () => {
   // The map header counted every stop as having a QR code while the operator publishes a
   // token for 271; the count and the claim have to be the same size.
@@ -2124,10 +2204,17 @@ ok('the structured data does not pass this off as the operator', () => {
 
   // With the trailing slash: each tab is a directory on Pages, and the bare path is a
   // 301 to it -- six of the seven sitemap entries redirected.
-  const map = sitemapXml(site, ['', 'paradas']);
+  const map = sitemapXml(site, ['', 'linhas']);
   assert(map.includes(`<loc>${site}</loc>`), 'the sitemap is missing the site root');
-  assert(map.includes(`<loc>${site}paradas/</loc>`), 'a path passed to the sitemap did not come out with its slash');
-  assert(!map.includes('//paradas'), 'joining the site URL to a path doubled the slash');
+  assert(map.includes(`<loc>${site}linhas/</loc>`), 'a path passed to the sitemap did not come out with its slash');
+  assert(!map.includes('//linhas'), 'joining the site URL to a path doubled the slash');
+  // One screen, one address: the root and /paradas/ draw the same stops screen, and Search
+  // Console read two canonicals as "Duplicate, Google chose a different canonical", rightly.
+  assert(canonicalUrl(site, 'paradas') === site, `the stops tab's canonical is ${canonicalUrl(site, 'paradas')}, not the root`);
+  assert(canonicalUrl(site, 'linhas') === `${site}linhas/`, 'a tab that is its own screen lost its canonical');
+  const full = sitemapXml(site);
+  assert(!full.includes(`${site}paradas/`), 'the sitemap still lists /paradas/, which is the root under another name');
+  assert((full.match(/<loc>/g) ?? []).length === 6, `the sitemap has ${(full.match(/<loc>/g) ?? []).length} entries, expected 6`);
 });
 
 ok('every tab page has its own title, description and canonical', () => {
@@ -2170,7 +2257,8 @@ ok('every tab page has its own title, description and canonical', () => {
     assert(page.includes(`<meta name="description" content="${head.description}"`), `the ${route || 'root'} page did not get its description`);
     assert(page.includes(`<meta property="og:title" content="${head.title}"`), `the ${route || 'root'} page did not get its og:title`);
     assert(page.includes(`>${head.title}</h1>`), `the ${route || 'root'} page did not get its own <h1>`);
-    assert(page.includes(`<link rel="canonical" href="${routeUrl(site, route)}" />`), `the ${route || 'root'} page canonical is not its own address`);
+    // Its own address, except the stops tab, which is the root's screen and says so.
+    assert(page.includes(`<link rel="canonical" href="${canonicalUrl(site, route)}" />`), `the ${route || 'root'} page canonical is not ${canonicalUrl(site, route)}`);
     assert((page.match(/rel="canonical"/g) ?? []).length === 1, `the ${route || 'root'} page has more than one canonical`);
   }
 
@@ -2259,6 +2347,10 @@ ok("a notice in the operator’s navigation bar is still a notice", () => {
 
   // A page with no notices at all must stay empty rather than inventing one.
   assert(extractAlertsFromHtml('<html><body><p>Nada que declarar</p></body></html>').length === 0, 'a page with no notice list produced a notice anyway');
+  // Nor is the bell's own "nothing to report" item: on 19 September 2026 it was shown as
+  // a notice, counted on the badge and reported as an active incident.
+  const quietMarkup = navMarkup.replace('<i class="fa fa-exclamation-triangle"></i> Retenciones en zona Estación Tren', 'No existen avisos en este momento');
+  assert(extractAlertsFromHtml(quietMarkup).length === 0, 'the "no notices" item in the bell dropdown was reported as a notice');
 });
 
 ok("the city's traffic feed is read for closures and diversions, and for nothing else", () => {
@@ -2336,6 +2428,14 @@ ok('a bus whose time has passed stays on the board, marked', () => {
 
   const [first] = subject!.board;
   const [hh, mm] = first.etaTime.split(':').map(Number);
+  // At the minute on its own row it is "now", not late: an interpolated time on the half
+  // minute, printed as the next whole minute and judged from the half, was a minute
+  // overdue at the very minute its row announced.
+  const onTheMinute = new Date(probe);
+  onTheMinute.setHours(hh, mm, 0, 0);
+  const due = getArrivalsForStop(stop.id, onTheMinute).arrivals.find((a) => a.etaTime === first.etaTime);
+  assert(due, `the ${first.lineNumber} due at ${first.etaTime} is not on the board at ${first.etaTime}`);
+  assert(due!.overdueMinutes === undefined && due!.etaMinutes === 0, `at its own minute the row says eta ${due!.etaMinutes}, overdue ${due!.overdueMinutes}`);
   const fourLate = new Date(probe);
   fourLate.setHours(hh, mm + 4, 0, 0);
 
@@ -2353,6 +2453,61 @@ ok('a bus whose time has passed stays on the board, marked', () => {
   wayLate.setHours(hh, mm + 20, 0, 0);
   const gone = getArrivalsForStop(stop.id, wayLate).arrivals.find((a) => a.etaTime === first.etaTime);
   assert(!gone, `the ${first.lineNumber} due at ${first.etaTime} was still listed twenty minutes on`);
+});
+
+ok('a line that does not run today is next offered on a day it does run', () => {
+  // The planner's weekend pass found it: asked on a Saturday, a weekday-only line was offered
+  // at "tomorrow 07:19", a Sunday, when it does not run either.
+  const weekdayOnly = BUS_LINES.find((l) => l.services.every((p) => p.days.length === 1 && p.days[0] === 'laborable'));
+  assert(weekdayOnly, 'no weekday-only line to ask about');
+  const line = weekdayOnly!;
+  const direction = line.directions[0];
+  const answer = getNextLineDeparture('gl', line, direction.id, direction.stops[0], 7 * 60 + 20, new Date(2026, 7, 22, 7, 20, 0));
+  assert(!answer.isServiceActive, `the ${line.id} on a Saturday is marked active`);
+  const daysAhead = Math.floor(answer.departureMinutes / (24 * 60));
+  assert(daysAhead === 2, `the ${line.id} asked on a Saturday is offered ${daysAhead} day(s) ahead, expected 2 (Monday)`);
+  // And on a Friday evening, after its last run, tomorrow is Saturday: two days as well.
+  const late = getNextLineDeparture('gl', line, direction.id, direction.stops[0], 23 * 60, new Date(2026, 7, 21, 23, 0, 0));
+  assert(Math.floor(late.departureMinutes / (24 * 60)) >= 1, `the ${line.id} on a Friday night is offered today`);
+});
+
+ok('a public holiday runs the Sunday timetable, and the file that says which days expires loudly', () => {
+  // "Domingos e festivos" is what the operator prints, and to this app a holiday Monday was
+  // a Monday: the weekday grid, labelled HORARIO OFICIAL, for buses running the Sunday one.
+  const monday12Oct = new Date(2026, 9, 12, 10, 0);
+  assert(monday12Oct.getDay() === 1, 'the probe date is not a Monday');
+  assert(dayKind(monday12Oct) === 'domingo', `12 October 2026 reads as ${dayKind(monday12Oct)}, not as a Sunday`);
+  assert(dayKind(new Date(2026, 9, 13, 10, 0)) === 'laborable', 'the day after the holiday is not a weekday again');
+  assert(isHoliday(new Date(2026, 1, 17)), 'Martes de Entroido, a local holiday, is not a holiday');
+  assert(!isHoliday(new Date(2026, 4, 17)), '17 May 2026 is a Sunday the decree did not substitute, and must not be listed twice over');
+
+  const weekdayOnly = BUS_LINES.find((l) => l.services.every((p) => p.days.length === 1 && p.days[0] === 'laborable'))!;
+  const sundays = BUS_LINES.find((l) => l.services.some((p) => p.days.includes('domingo')))!;
+  assert(!lineRunsOn(weekdayOnly, dayKind(monday12Oct)), `the ${weekdayOnly.id} runs on a holiday Monday`);
+  assert(lineRunsOn(sundays, dayKind(monday12Oct)), `the ${sundays.id}, which runs on Sundays, does not run on a holiday Monday`);
+  // The next-day fallback looks past the holiday: asked on the Sunday before, a weekday-only
+  // line is next offered on the Tuesday.
+  const dir = weekdayOnly.directions[0];
+  const next = getNextLineDeparture('gl', weekdayOnly, dir.id, dir.stops[0], 10 * 60, new Date(2026, 9, 11, 10, 0));
+  assert(Math.floor(next.departureMinutes / (24 * 60)) === 2, `asked on the Sunday before a holiday Monday, the ${weekdayOnly.id} is offered ${Math.floor(next.departureMinutes / (24 * 60))} day(s) ahead, expected 2`);
+  assert(/festivo|holiday/i.test(getNextLineDeparture('gl', weekdayOnly, dir.id, dir.stops[0], 10 * 60, monday12Oct).serviceNotice ?? ''), 'the notice on a holiday does not say it is one');
+
+  // The file itself: every day well-formed and inside its year, in order, no repeats, each
+  // year with a DOG source; and the current year has to be there, or a holiday this year is
+  // a weekday again without anyone noticing. Failing on 1 January is the point.
+  for (const [year, entry] of Object.entries(festivos)) {
+    assert(entry.source.length > 0 && entry.source.every((s) => /DOG/.test(s)), `${year} has no DOG source`);
+    let last = '';
+    for (const day of entry.days) {
+      assert(/^\d{4}-\d{2}-\d{2}$/.test(day) && day.startsWith(year + '-'), `${day} is not a date inside ${year}`);
+      assert(!Number.isNaN(Date.parse(day)), `${day} is not a real date`);
+      assert(day > last, `${day} is out of order or repeated`);
+      last = day;
+    }
+    assert(entry.days.length >= 12 && entry.days.length <= 16, `${year} lists ${entry.days.length} holidays; Galicia plus two local ones is 14`);
+  }
+  const thisYear = String(new Date().getFullYear());
+  assert(HOLIDAY_YEARS.includes(thisYear), `src/data/festivos.json has no entry for ${thisYear}: add the year's holidays from the DOG (see the 2026 entry for the sources)`);
 });
 
 ok('a line\u2019s trip time comes from the timetable, not from a road model', () => {
@@ -3523,6 +3678,36 @@ ok('the letter paints before the search rows do', () => {
   // character; the rows come from a deferred copy of the query and are kept until it changes.
   const topBar = read('src/components/TopBar.tsx');
   assert(/useDeferredValue\(q\)/.test(topBar) && /useMemo\(\(\) => searchAll\(dq\), \[dq\]\)/.test(topBar), 'the search rows render in the same task as the keystroke again');
+});
+
+ok('what the phone hides behind a menu, the button says; the board answers before it asks', () => {
+  // Three things a phone got wrong and a desktop did not, each of which would come back
+  // as an unremarkable tidy-up: the notice count lived only inside the drawer; search rows
+  // truncated the one part that told three poles of a street apart; and the "board at
+  // another hour" picker pushed the first departure to the 479th pixel of an 812 px phone.
+  const topBar = read('src/components/TopBar.tsx');
+  assert(/alertCount > 0 && \(/.test(topBar), 'the phone menu button no longer carries the notice count');
+  assert(/alertCount=\{alerts\.announcedIncidents\}/.test(read('src/App.tsx')), 'App no longer hands the notice count to the top bar');
+  assert(!/className="block truncate[^"]*">\s*\{(stop|lm)\.name\}/.test(topBar), 'a search row truncates the stop or place name again');
+  const board = read('src/components/StopArrivalsView.tsx');
+  assert(board.indexOf('type="time"') > board.indexOf('{soon.map('), 'the time picker sits above the arrivals again');
+});
+
+ok('motion moves the interface, never a number; and the two things the first round got wrong', () => {
+  // Nineteen small animations, all CSS; two came back wrong from the browser: the pressed
+  // segment read as transparent to audit:browser (the thumb is a sibling), and a padded card
+  // as the fold's grid item left a 30 px stub when folded to 0fr.
+  const css = read('src/index.css');
+  assert(/\.seg-on\s*\{[^}]*background:\s*var\(--c-ink\)/.test(css), 'the pressed segment no longer carries its own fill at rest');
+  assert(/\.fold > \*\s*\{[^}]*overflow: hidden;[^}]*min-height: 0/.test(css), 'the fold item is no longer clipped and free to shrink');
+  const planner = read('src/components/RoutePlannerView.tsx');
+  const fold = planner.indexOf('className={`fold fold-lg-open fold-clear');
+  assert(fold > 0 && /^\s*<div>\s*$/m.test(planner.slice(fold, planner.indexOf('rounded-card', fold))), 'the planner folds the padded card directly again: a 30 px stub when closed');
+  // A rolling count is a live reading, and the only screen with one bus and one number is
+  // the ride; the board, with fifteen changing at once, would read as tracked.
+  assert(/anim-roll-in/.test(read('src/components/TripCompanionView.tsx')), 'the ride no longer rolls its one count');
+  assert(!/anim-roll-in/.test(read('src/components/StopArrivalsView.tsx')), 'the arrivals board rolls its minutes: it reads as live');
+  assert(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation-duration: 0\.01ms !important/.test(css), 'reduced motion no longer stops the animations');
 });
 
 // Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which

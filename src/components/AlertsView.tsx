@@ -142,8 +142,9 @@ export function AlertsView({ alerts }: AlertsViewProps) {
 
         {liveAlerts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* The council's feed dates its items; the operator's bell does not, so its `date` is the moment this app read the page, and says so. */}
             {liveAlerts.map((alert) => (
-              <AlertCard key={alert.id} alert={alert} when={formatInstant(alert.date, locale)} source={alert.source === 'concello' ? t.fares.sourceConcello : t.fares.sourceOperator} />
+              <AlertCard key={alert.id} alert={alert} when={alert.source === 'concello' ? formatInstant(alert.date, locale) : t.fares.seenAt(formatInstant(alert.date, locale))} source={alert.source === 'concello' ? t.fares.sourceConcello : t.fares.sourceOperator} />
             ))}
           </div>
         ) : (
@@ -164,7 +165,8 @@ export function AlertsView({ alerts }: AlertsViewProps) {
                   <span>&bull;</span>
                   <span>
                     {t.fares.source}{' '}
-                    <a href="https://buslugo.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent underline">
+                    {/* One line of text is a 70x16 box; padding pulled back by its own margin gives the thumb 44 px without moving the line. */}
+                    <a href="https://buslugo.com" target="_blank" rel="noopener noreferrer" className="inline-block py-3.5 -my-3.5 font-semibold text-accent underline">
                       buslugo.com
                     </a>
                   </span>

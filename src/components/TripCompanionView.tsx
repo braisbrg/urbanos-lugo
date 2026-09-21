@@ -73,7 +73,7 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
       {/* The one thing that matters, first and biggest. While the alert stands the whole card turns. */}
       <div className={`space-y-4 rounded-card border p-6 shadow-sm ${phase === 'alighting' ? 'border-warn bg-warn/40' : 'border-edge bg-bg'}`}>
         {phase === 'alighting' && segment?.toStop && (
-          <p role="alert" className="rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
+          <p role="alert" className="anim-rise rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
             {t.arrivals.alarmFired(segment.toStop.name)}
           </p>
         )}
@@ -99,7 +99,12 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
                   <LineBadge number={segment.line.number} color={segment.line.color} size="md" />
                   <span className="sr-only">{t.planner.departureLabel}</span>
                   <span className="tnum text-emph font-semibold text-ink">{times.none ? '—' : formatMinutes(times.departureMinutes)}</span>
-                  {!times.none && minutesToDeparture >= 0 && <span className="tnum text-body text-ink-3">{t.companion.inMinutes(minutesToDeparture)}</span>}
+                  {/* Keyed on the minute, so the new count rolls into place: one bus, one number, labelled underneath. On the board, fifteen rolling at once would read as live. */}
+                  {!times.none && minutesToDeparture >= 0 && (
+                    <span key={minutesToDeparture} className="anim-roll-in tnum inline-block text-body text-ink-3">
+                      {t.companion.inMinutes(minutesToDeparture)}
+                    </span>
+                  )}
                 </div>
                 {!times.none && (
                   <div className="mt-2">
@@ -121,7 +126,9 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
               </span>
               {minutesToAlighting !== null && (
                 <span className="flex items-baseline gap-2">
-                  <span className="tnum text-emph font-semibold text-ink">{minutesToAlighting >= 0 ? `~${minutesToAlighting} ${t.common.min}` : t.common.overdue(-minutesToAlighting)}</span>
+                  <span key={minutesToAlighting} className="anim-roll-in tnum inline-block text-emph font-semibold text-ink">
+                    {minutesToAlighting >= 0 ? `~${minutesToAlighting} ${t.common.min}` : t.common.overdue(-minutesToAlighting)}
+                  </span>
                   <span className="text-ink-3" aria-hidden="true">
                     ·
                   </span>
@@ -141,7 +148,7 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
 
         {/* Asked, not guessed: the printed departure plus three minutes has gone by and the phone has not seen the bus move. */}
         {asking && segment?.line && (
-          <div role="group" aria-live="polite" className="space-y-2 rounded-md border border-warn bg-warn/40 p-3">
+          <div role="group" aria-live="polite" className="anim-rise space-y-2 rounded-md border border-warn bg-warn/40 p-3">
             <p className="text-body font-semibold text-ink">{t.companion.caughtIt(segment.line.number, formatMinutes(times.departureMinutes))}</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={companion.boarded} className="flex min-h-11 items-center justify-center rounded-control bg-accent px-3 text-body font-semibold text-on-accent">
@@ -199,8 +206,9 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
               const isNext = stop.id === nextStop?.id;
               return (
                 <li key={stop.id} aria-current={isNext ? 'step' : undefined} className={`flex min-h-11 items-center gap-3 px-3 py-2 ${passed ? 'text-ink-3' : 'text-ink'}`}>
-                  <span className="flex w-4 shrink-0 justify-center" aria-hidden="true">
-                    {passed ? <Check className="h-4 w-4 text-official" strokeWidth={2.6} /> : isNext ? <ArrowRight className="h-4 w-4 text-accent" strokeWidth={2.6} /> : <span className="h-1.5 w-1.5 rounded-full bg-ink-3" />}
+                  {/* The arrow is where the GPS says you are, the one measured thing on this screen, so it is the one thing that pulses. */}
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center ${isNext ? 'live-dot' : ''}`} aria-hidden="true">
+                    {passed ? <Check className="anim-tick-in h-4 w-4 text-official" strokeWidth={2.6} /> : isNext ? <ArrowRight className="anim-drop h-4 w-4 text-accent" strokeWidth={2.6} /> : <span className="h-1.5 w-1.5 rounded-full bg-ink-3" />}
                   </span>
                   <span className={`min-w-0 flex-1 text-body ${passed ? 'line-through' : 'font-semibold'}`}>{stop.name}</span>
                   <span className="shrink-0 text-label font-semibold text-ink-2">{stop.isAlighting ? t.companion.alightHere : passed ? t.companion.passed : isNext ? t.companion.next : ''}</span>
@@ -212,7 +220,7 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
       )}
 
       {/* Always in reach: the mode ends when the reader says so, never on its own. */}
-      <div className="sticky bottom-0 z-10 -mx-3.5 border-t border-line bg-bg/95 px-3.5 py-3 backdrop-blur-sm lg:-mx-6 lg:px-6">
+      <div className="anim-sheet-up sticky bottom-0 z-10 -mx-3.5 border-t border-line bg-bg/95 px-3.5 py-3 backdrop-blur-sm lg:-mx-6 lg:px-6">
         <button type="button" onClick={companion.finish} className={`flex min-h-12 w-full items-center justify-center rounded-control px-4 text-body font-semibold ${phase === 'walking' ? 'bg-accent text-on-accent' : 'border border-edge bg-bg text-ink'}`}>
           {phase === 'walking' ? t.companion.arrivedDone : t.companion.finish}
         </button>

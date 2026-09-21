@@ -45,16 +45,20 @@ jobs:
 
       # The checks that were written and then never run by anything.
       #
-      # Three tools under tools/ walk the whole dataset rather than a sample — 180,144
-      # boards and 401,109 departures for the invariants, 630 origin/destination pairs and
-      # 27,348 journeys for the planner — and each sets a failing exit code when something
-      # does not hold. None of them was referenced by a script, a workflow or another file,
-      # so nothing had run them since they were written, and a check nobody runs is a file.
-      # Twenty-four seconds, measured, for coverage `pnpm test` cannot reach.
+      # Two tools under tools/ walk the whole dataset rather than a sample — 240,192
+      # boards, 512,106 departures and 10,623 window edges for the invariants, over a
+      # weekday, a weekend and a public holiday; 1,050 origin/destination pairs over a
+      # weekday and a weekend and 36,876 journeys for the
+      # planner — and each sets a failing exit code when something does not hold. None of
+      # them was referenced by a script, a workflow or another file, so nothing had run
+      # them since they were written, and a check nobody runs is a file. About twenty
+      # seconds, measured, for coverage `pnpm test` cannot reach.
       #
-      # Two more stay out on purpose: stressHttp needs a server listening, and
-      # compareOperatorTimes reads the operator's own site — which is not a thing to do to
-      # somebody else's server on every push. Both have scripts instead.
+      # Everything here is offline and deterministic, on purpose. checkParsersUnchanged.ts
+      # used to run in this step and fetched two live pages twice on every push; it now
+      # runs weekly in check-source.yml, with the other tools that read other people's
+      # sites. stressHttp needs a server listening and compareOperatorTimes reads the
+      # operator's own site; both have scripts instead.
       - run: pnpm run check:deep
 
       # A dependency bump that breaks the build is the failure this is here to catch, and

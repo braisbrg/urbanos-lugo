@@ -19,7 +19,8 @@ export function useDialog(open: boolean, onClose: () => void) {
       [...(containerRef.current?.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]') ?? [])].filter(
         (el) => el.tabIndex >= 0 && !el.matches(':disabled') && el.getClientRects().length > 0,
       );
-    focusables()[0]?.focus();
+    // preventScroll: focusing a button in the map's stop sheet while it slides up scrolled the map's own overflow box, and the map jumped by the sheet's height.
+    focusables()[0]?.focus({ preventScroll: true });
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

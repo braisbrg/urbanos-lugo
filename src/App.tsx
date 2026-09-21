@@ -172,10 +172,13 @@ export default function App() {
             }}
             onOpenQrScanner={() => setIsQrModalOpen(true)}
             onOpenMenu={() => setIsMenuOpen(true)}
+            alertCount={alerts.announcedIncidents}
           />
 
           {/* Nothing is running: the one useful sentence at 03:00 is when the first bus goes. Two lines, the whole row a link to the notices; the festival sentence keeps "no service" from being a lie on San Froilán. */}
-          {isOutOfService && !isNightBannerDismissed && (
+          {isOutOfService && (
+            <div className={`fold ${isNightBannerDismissed ? 'fold-closed' : ''}`}>
+              <div>
             <div className="flex items-center gap-1 border-b border-line bg-surface pl-3.5 pr-1">
               <button onClick={() => setActiveTab('info')} className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left">
                 <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
@@ -189,9 +192,11 @@ export default function App() {
                 <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
               </button>
             </div>
+              </div>
+            </div>
           )}
 
-          <main id="contido" className="min-h-0 flex-1 overflow-y-auto">
+          <main id="contido" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
             <ErrorBoundary t={t} resetKey={activeTab}>
               {/* One heading for the page, naming what is on screen: correct in both the one-pane and the two-pane layout. */}
               <h1 className="sr-only">{screenTitle}</h1>
@@ -202,7 +207,8 @@ export default function App() {
                   <div className={`lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? 'hidden' : ''}`}>
                     <StopHome favoriteStopIds={favoriteStopIds} favoriteLineIds={favoriteLineIds} onSelectLine={openLine} recentStopIds={recentStopIds} onClearRecent={clearRecentStops} onSelectStop={selectStop} onOpenQrScanner={() => setIsQrModalOpen(true)} />
                   </div>
-                  <div className={`lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
+                  {/* In from the right when it takes the list's place, like every push on a phone; the way back is not animated. From lg up the panes never take turns. */}
+                  <div className={`anim-push-in lg:animate-none lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
                     <StopArrivalsView
                       selectedStop={selectedStop}
                       onSelectLine={openLine}

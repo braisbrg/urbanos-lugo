@@ -1428,3 +1428,333 @@ historial recortado, a idea da Raspberry ao final. Despois, `v1.1.2`. E o 16, á
 o título metido nunha `RegExp` era unha alternancia, e o check pasaba con media
 cabeceira. Agora extrae o texto do `<h1>` e compárao co título; con «Urbanos de Lugo » a
 secas falla, comprobado.
+
+## Rolda 19: o contexto WebGL que non volve — 19 de setembro de 2026
+
+O punto 7 das NOTAS, o «WebGL context lost» visto unha vez na consola de produción sen
+que se anotase que pasou co mapa. Forzado nun Chromium con `WEBGL_lose_context` sobre
+o mapa da rede, en `pnpm dev`.
+
+**O que fai o renderizador só.** Ao perder o contexto, MapLibre 6.9 destrúe o pintor e
+garda o estilo; ao recuperalo, volve montar o estilo e pinta. Medido: `restoreContext()`
+aos 2 s e o mapa vectorial de volta, aliñado coas paradas, sen erro na consola. Ese caso
+non precisaba nada noso, e non se tocou.
+
+**O que non facía ninguén.** Perdido e non devolto, o mapa base quedaba en branco para
+sempre —as liñas e as paradas, que Leaflet pinta no seu propio lenzo, seguían enriba dun
+rectángulo escuro— e a consola calada. Agora `createBasemap` escoita os dous eventos do
+renderizador: cinco segundos sen volver, contados só mentres a páxina está visible —un
+teléfono que devolve o contexto ao volver ao primeiro plano non ten que volver a un mapa
+peor—, e a capa vectorial quítase do mapa e ponse no seu sitio a ráster que xa existía
+para os dispositivos sen WebGL2. Medido: aos 5 s, cero lenzos de MapLibre, doce teselas
+de OpenStreetMap cargadas, a atribución cambiada, as liñas e paradas onde estaban. E a
+sesión lémbrao: o seguinte mapa que se abriu (o do planificador) naceu ráster.
+
+**Atopado de paso.** Un mapa nacido ráster imprimía «Leaflet | © OpenStreetMap
+contributors», o prefixo que a vía vectorial quita desde a rolda 14 e a ráster non
+quitaba: a liña de dúas filas que se quitou por algo. Xa o quita nas dúas vías.
+
+**A proba morde.** Un check na suite le a fonte (o resto corre nun navegador): a graza
+entre 2 e 15 s, os dous eventos, o cambio de capa, a memoria de sesión, e o prefixo na
+vía ráster. Reintroducidos dous fallos —graza de 500 ms, e a memoria quitada— e o check
+falla nos dous. 151 comprobacións.
+
+## Rolda 20: revisión enteira, coas ferramentas da casa — 19 de setembro de 2026
+
+Pedida como revisión completa —rendemento, operación, mantemento— e feita coas medicións
+que o proxecto xa ten, todas corridas de novo hoxe, e con dúas comprobacións que non tiña.
+
+### Medido, e dentro do orzamento
+
+- `measure:engine`: taboleiro mediana 0,0 ms e peor 3,6 ms nas 417 paradas; planificador
+  mediana 14 ms, p95 37 ms, peor 77 ms sobre 72 pares (mellor que os 25/67/82 que anota o
+  limitador); busca ao tope 0,8 ms. `measure:parsers`: o caso cuadrático dos bloques sen
+  pechar segue onde o deixou a rolda 16 —1,7 s por megabyte, uns 400 ms no teito de 512
+  KB— e segue decidido así, co motivo no código.
+- `measure:browser` (6× CPU, Slow 4G, 390×844): primeira pintura 2.880 ms de 4.000; 192 KB
+  en 10 peticións; abrir o mapa 1.359 ms de 6.000; doce voltas ao mapa deixan 0 lenzos, 0
+  nodos e 0 oíntes de máis, 0,94 MB de heap; a tecla máis lenta 128 ms de 600; media hora
+  de taboleiro, 0 ms bloqueados. `audit:browser`: 741/744 textos medidos nos dous temas,
+  0 de contraste, 0 baixo 12 px, 0 baixo 44 px, consola limpa en carga fresca, o teclado
+  queda no menú.
+- `data:audit`, `validate:times`, `reconcile:selftest` (5/5 fallos cazados): o de sempre,
+  417 paradas, 24 liñas, 48 sentidos con xeometría. `pnpm audit`: sen vulnerabilidades;
+  `pnpm outdated`: tres menores, cousa de Dependabot.
+- Exportacións que ninguén importa, contadas cun guión sobre `src/`: dúas de 188, e as
+  dúas a propósito. Cabeceiras de seguridade, limitador, precomprimidos e `/api/health`
+  no servidor: todo no seu sitio.
+
+### Atopado e arranxado
+
+**A instantánea de avisos renomeaba medio paquete cada hora.** `deploy-pages.yml` corre
+`fetchAlerts.ts` antes de cada build programada, e o ficheiro leva a hora da lectura
+dentro. Ía importado no anaco de entrada, e Rollup nomea cada anaco polo seu contido e
+polo dos que importa: medido construíndo dúas veces con `fetchedAt` unha hora máis
+tarde, renomeábanse seis ficheiros —`index`, `TransitMap`, `RouteMap`, `NearbyMiniMap`,
+`routeGeometry` e o renderizador do mapa, 311 KB gzip el só—, medio megabyte comprimido
+por refresco, cinco a sete veces ao día, sen que cambiase unha liña de código. Era a
+causa da recarga por «anaco desaparecido» que a rolda 18 arranxou polo lado do síntoma.
+Agora a instantánea é `public/alerts.json`, un ficheiro á beira da páxina que o *hook*
+le por `fetch` e o *service worker* precachea; un ficheiro que non se pode ler di
+`unreachable`, non «todo normal». Medido igual: cero anacos renomeados, cambian
+`alerts.json` (1,3 KB) e o manifesto do *service worker*. `stress:network` de novo, as
+catro formas: a copia datada aos 2.093 ms coa API colgada, aos 156 ms co 500, substituída
+pola resposta tardía, e unha resposta con data sen rede. Check na suite (152).
+
+**«No existen avisos en este momento» contaba como unha incidencia.** O desplegable da
+campá do operador leva ese texto nun día tranquilo, e o analizador só descartaba os
+elementos baleiros: a app amosaba unha tarxeta co texto, o distintivo da navegación
+contaba un aviso, e o estado era `active_incidents`. Visto hoxe en `/api/alerts` no
+servidor local. Descártase o elemento que di que non hai avisos; reintroducido o fallo,
+o check falla.
+
+**A data dun aviso do operador era a hora da lectura, sen dicilo.** O operador non
+imprime data nos seus avisos; o que hai é o instante en que esta app leu a páxina, e a
+tarxeta amosábao como unha hora a secas. Agora di «Lido o …» nas tres linguas; as notas
+do Concello, que traen data propia, seguen coa súa.
+
+### Mirado e deixado
+
+- O `favicon.svg` pídese tres veces na carga fría (4,5 KB, despois da primeira pintura):
+  a pestana, a precaché e a icona do manifesto. Non paga.
+- `express.static` sen `immutable` para `/assets/`: só afecta ao autoaloxamento e o
+  *service worker* xa serve os anacos; Pages pon a súa propia caché.
+- Sen `SIGTERM` no servidor: as respostas duran 20 ms e Node sae igual.
+- Os dous compoñentes grandes (`RoutePlannerView`, 1.615 liñas; `TransitMap`, 1.170)
+  seguen a regra do punto 6 das NOTAS: non se abren en frío.
+
+---
+
+## Rolda 21: a app contra as leis de UX — 19 de setembro de 2026
+
+As trinta de lawsofux.com, unha por unha, contra o código e contra a app en marcha
+(servidor de desenvolvemento, 375×812 e 1280×800). Medido antes de afirmar: as suxestións
+do buscador píntanse en 14 ms, unha ruta calcúlase en 83 ms, todo botón de icona mide
+44×44, os tabs 60 px. Vinte e sete cúmprense e as decisións que as cumpren xa estaban
+escritas en DECIDIDO.md sen nomear a lei. Tres non se cumprían, e as tres só no móbil:
+
+### Atopado e arranxado
+
+**O taboleiro preguntaba antes de responder.** No móbil, a primeira saída dunha parada
+empezaba no píxel 479 de 812: por riba ían o título, os catro botóns, Próximas/Por liña,
+o selector «ver o paso ás» e «outras liñas preto». A ruta xa recibira este tratamento (a
+resposta do 1.493 ao 103) e o taboleiro non. O selector de hora é a pregunta da noite
+anterior, non a do poste —dío o seu propio comentario—, así que baixa debaixo da lista,
+pregado coma as outras ferramentas; a frase que avisa de que se está a ver outra hora
+queda enriba da lista e leva o botón de volver a agora. Medido despois: a primeira saída
+no 426, dúas filas enteiras á vista onde antes había unha e media. «Outras liñas preto»
+queda enriba a propósito: é a saída cando a espera é longa e non se pode esconder detrás
+de catorce liñas.
+
+**Os avisos non existían para quen non abría o menú.** O contador vivía dentro do
+caixón; o botón ☰ non levaba nada, e no escritorio o carril amósao sempre. Agora o botón
+leva o mesmo distintivo que a fila do caixón, e o seu nome para o lector de pantalla di
+cantos hai. Verificado servindo un aviso falso ao *hook* desde a consola: «1» na esquina
+do botón, `aria-label` «Menú. Avisos do servizo (1)».
+
+**O buscador cortaba xusto o que distinguía.** A 375 px, unha rúa con seis postes
+devolvía seis filas co mesmo principio e o final en puntos suspensivos: a parte truncada
+—o paréntese co lugar— era a única que os separaba, e DECIDIDO prometía que nada corta o
+nome dunha parada. O nome
+das paradas e dos sitios pasa a ir enteiro, en dúas liñas cando as precisa (o máis longo
+da rede ten 50 caracteres); a liña secundaria pode seguir cortándose.
+
+Un check na suite para os tres (153).
+
+### Mirado e deixado
+
+- Os catro botóns de icona do taboleiro sen rótulo: estrela, mapa e compartir son
+  convención; a campá («avisarme ao chegar») non o é de todo. Leva `aria-label` e
+  `title`; un rótulo visible custa unha fila máis xusto onde acabamos de gañar unha.
+- A cabeceira do taboleiro segue a ocupar o que ocupa: apertar os recheos gañaría vinte
+  píxeles e cambiaría o ritmo de toda a pantalla.
+
+## Rolda 21: as auditorías, auditadas — 19 de setembro de 2026
+
+Pedido: que as ferramentas de medir sexan o máis próximas á perfección que se poida, e
+que non deixen de ver o resto por seguir o seu guión. Lidas de arriba a abaixo as nove
+—`auditBrowser`, `stressBrowser` e `cdp`, `stressInvariants`, `stressPlanner`,
+`checkParsersUnchanged`, `stressEngine`, `stressParsers`, `fullAudit`, `validateRideTimes`—
+preguntándolle a cada unha que mide, como, e que non mira.
+
+### O que non miraban, e agora miran
+
+**`audit:browser`.** Medía contraste, tamaño e obxectivo, e só sobre nodos de texto. Non
+miraba: a opacidade herdada (un texto a 0,6 medíase a 1: puntuaba 5,5 e vía 3,6); o texto
+tecleado nin o *placeholder* dun campo (ningún texto propio: o buscador e os dous campos do
+planificador non puntuaban nada); o nome accesible dos controis (un botón só con icona é
+«botón» para un lector de pantalla); as imaxes sen `alt`; o `lang`; que haxa un só `<h1>`;
+o desbordamento lateral a 320 px (o ancho de *reflow* da WCAG) e co texto ao 200% (o
+«texto máis grande» dun móbil, punto 9 da lista do iPhone); Escape no menú; e
+`prefers-reduced-motion`, que o CSS declara e ninguén comprobaba que se cumprise. Todo
+iso mídese agora, e a saída di cantos controis contou con nome para que un cero non sexa
+un sensor apagado.
+
+**`measure:browser`.** Non medía o desprazamento de deseño (CLS), nin poñía orzamento aos
+bytes —a cifra imprimíase e xa—, nin miraba a segunda visita, que para unha app instalada
+é todas menos unha. Agora: CLS con orzamento 0,1 nas dúas visitas (medido 0,000), 260 KB
+en total e 250 antes do primeiro pintado, e unha rolda «second» que espera a que o
+*service worker* remate de instalar e volve entrar con todo acelerado: 1.360 ms ata pintar na rolda completa (824 só)
+a 6×, 8 de 8 respostas do *worker*, 0 KB pola rede fóra dos avisos.
+
+**`stressInvariants`.** A reixa de dez minutos mostrea a ventá de atraso estatisticamente
+e cazaría unha fila que quedase de máis, pero nunca unha soltada de menos. Engadida a
+sonda no minuto exacto, 8.121 saídas: presente no seu minuto sen atraso, presente a +4
+marcada, fóra a +7, fóra a −122. **Atopou** unha: unha hora interpolada a 08:16,5
+imprimíase como 08:17 e ás 08:17:00 xa levaba «1 min de atraso» —tarde antes da hora da
+súa propia fila—. O atraso cóntase agora desde o minuto impreso. Check na suite.
+
+**`stressPlanner`.** Só un mércores, e sen invariantes de sentido nin de procedencia.
+Agora un sábado e un domingo tamén (1.050 pares, 36.876 viaxes), e por tramo: que o
+sentido nomeado visite a parada de subida antes ca a de baixada (un tramo ao revés ten as
+dúas paradas na liña e lese perfectamente en pantalla), que o reconto de paradas sexa o
+do sentido, que cada hora de subida e baixada diga de onde vén, que os tramos encadeen, e
+que unha liña que non circula ese día só se ofreza marcada e co seu aviso. **Atopou**
+unha: preguntado un sábado por unha liña de laborables, o planificador ofrecíaa «mañá ás
+07:19» —domingo, cando tampouco circula—. O recuo vai agora ao seguinte día en que a liña
+si circula (luns). Check na suite.
+
+**`checkParsersUnchanged`.** Era unha porta de `check:deep` en cada *push* e facía catro
+peticións a servidores alleos para probar o que un decodificador pode probar en local; sen
+rede dicía «nada comparado, nada afirmado» e quedaba en verde. O que comparaba —capado
+contra sen capar— vai agora na suite, byte a byte e cos caracteres partidos entre anacos
+(unha «ñ» partida en dous é o que un `TextDecoder` sen `stream` converte en dous
+`U+FFFD`, e non había check). A ferramenta queda para a man e para o luns de
+`check-source.yml`, e aprendeu o que si precisa rede: se en horas de servizo a páxina do
+poste deixa de dar saídas, é o HTML o que cambiou. `check:deep` é agora só as dúas
+varreduras, locais e deterministas, e CLAUDE.md, CONTRIBUTING.md e ci.yml dino.
+
+### O que as ferramentas novas atoparon na app
+
+- A fila de liñas saía 42 px pola dereita co texto ao 200% (`linhas/lista`): a frecuencia
+  e o distintivo «N en ruta» son `shrink-0` e a fila non envolvía; e o que facía
+  desprazar a páxina enteira era o `sr-only` do distintivo, un cadro de 1 px posicionado
+  fóra da pantalla, que ningún ollo atopa. A fila envolve.
+- A ligazón «buslugo.com» ao pé do estado dos avisos, 70×16: un obxectivo baixo 44 que non
+  se vía porque a rolda anterior correu co aviso «No existen avisos» en pantalla e sen a
+  tarxeta de estado. Recheo de 14 px arriba e abaixo, devolto por marxe: 44 sen mover a liña.
+- Escape no menú deixaba o foco no `<body>`: falso positivo do método, non da app. Abrir o
+  menú con `click()` desde un guión non pon o foco no botón, así que o *hook* lembraba
+  `<body>` como quen abriu. Abrindo como o fai un teclado —foco no botón e activación— o
+  foco volve a el. Queda anotado porque é o que pasa en Safari, onde un toque non pon o
+  foco nun botón: alí o foco volve ao `<body>` tamén, e non hai xeito de sabelo desde o
+  *hook* sen que llo digan.
+
+### O que ningunha varredura vía, e segue sen ver
+
+**Os festivos.** `dayKind()` só distingue laborable, sábado e domingo. Un festivo entre
+semana é «laborable» para a app e «domingos e festivos» para o operador: ese día o
+taboleiro amosa un cadro que non circula, etiquetado HORARIO OFICIAL. Ningunha varredura
+pasa por un festivo, e o README dicía «os festivos locais non se distinguen dos
+domingos», que era o contrario do que fai o código. Corrixido o README; a saída é dato
+con fonte e mantemento anual, e vai ás NOTAS como punto 9, decisión do dono.
+
+### Mirado e deixado
+
+A pseudoelemento `::before/::after` con texto (iconas de fonte) non se mide: esta app non
+os usa para texto. O foco visible (`:focus-visible`) non se comproba desde CDP porque
+Chrome decide se o aplica segundo a última entrada e un `focus()` desde guión non é unha
+entrada; queda para a lista do iPhone. O `favicon.svg` segue pedíndose tres veces (4,5 KB,
+despois de pintar). As dúas horas de cambio de hora (marzo, outubro) non entran nas
+varreduras: o servizo non circula ás 02:30.
+
+---
+
+## Rolda 22: o movemento, decidido sobre demos e medido despois — 20 de setembro de 2026
+
+Dezanove animacións pequenas, escollidas peza a peza sobre un catálogo con demo de cada
+unha e as súas versións (o que se decidiu, e por que, está en DECIDIDO.md). Todo CSS en
+`index.css` —quince clases dun xesto cada unha, un `.fold` e un control segmentado
+compartido— e cero dependencias: `rareui.com` mirouse compoñente a compoñente e non hai
+nada que importar; o que valía (unha campá que soa) son catro liñas.
+
+### Atopado e arranxado
+
+**O botón premido do control segmentado daba 1,00:1.** `audit:browser`, a primeira
+pasada: o pulgar que esvara é un irmán absoluto debaixo dos botóns, e a auditoría le o
+fondo do botón, non o do que ten detrás. Transparente sobre a páxina, texto da cor da
+páxina: o único fallo de contraste en 400 elementos, nos dous temas. O botón premido
+leva agora o seu recheo en repouso e mantéñeno transparente só os 200 ms que o pulgar
+tarda en chegar (`seg-reveal`); a auditoría volve a 0, e o que se ve é o mesmo.
+
+**Un pregue que deixaba un tallo de 30 px.** O formulario da ruta pregado a `0fr`
+quedaba en 29,6 px: unha fila de grid non encolle por debaixo do recheo e o bordo do seu
+elemento, e o elemento era a propia tarxeta con `p-3.5`. Un envoltorio sen recheo entre
+o pregue e a tarxeta, e o pregado mide 0. O mesmo no aviso nocturno.
+
+**As listas de suxestións do planificador quedarían cortadas.** `overflow: hidden` no
+elemento pregado é o que fai o pregue, pero en repouso e aberto corta as listas absolutas
+que colgan dos dous campos (224 px, e debaixo do segundo campo hai uns 230). O
+formulario recorta só mentres se move —`fold-moving`, que quita o `transitionend` do
+propio elemento e non o dun fillo— e queda libre o resto do tempo.
+
+### Medido
+
+Co documento oculto o navegador conxela transicións e animacións, así que os estados
+finais medíronse anulando as duracións: pregue pechado 0 px e `visibility: hidden`,
+aberto 468 px; pulgar do segmentado exactamente sobre o botón premido (210 = 210 px)
+nos dous controis; inversión do traxecto a `rotate(180deg)` cos campos intercambiados;
+opcións ocultas 0 → 90 px; mapa 240 → 0 → 240 co Leaflet sen reconstruír; cada
+superposición coa súa animación resolta (`slide-in`, `sheet-up`, `scale-in`, `drop`).
+Carga fresca sen erros nin recursos fallidos; `audit:browser` completo: contraste 0,
+obxectivos 0, con `prefers-reduced-motion` nada segue animándose. Un check na suite
+(156) garda os dous fallos e a regra de que o taboleiro non roda.
+
+### Mirado e deixado
+
+- O cambio de sentido na ficha de liña só funde a lista: os seus dous botóns teñen o
+  ancho do texto e un pulgar pediría columnas iguais que cortarían os nomes.
+- O cursor de paradas en «Vou nesta» non esvara: as filas teñen altura variable. A
+  frecha cae sobre a fila nova e o tick aparece na pasada, que é o que ocorreu.
+- Tema e idioma no menú, e as pestanas de favoritos, seguen sen pulgar: son axustes,
+  non vistas.
+
+### Segunda pasada, co teléfono na man — 21 de setembro de 2026
+
+Cinco cousas vistas nun repaso rápido da app en marcha, e o que había detrás de cada
+unha. A lección repítese: os estados finais medíronse co documento oculto, e o que se ve
+con el á vista era outra cousa.
+
+**O formulario da ruta medía 929 px nun teléfono de 375.** O botón de calcular saía
+pola dereita e o control de hora ensinaba só «Ahora». Un elemento de grid ten como
+mínimo automático o seu min-content, e o da tarxeta —dous campos, un carril de atallos—
+son 929 px: o `.fold` estirábao a iso e o resto da pantalla con el. `min-width: 0` no
+elemento e unha columna explícita `minmax(0, 1fr)`. A auditoría dicía «desbordamento 0»
+porque mide o `scrollWidth` do documento e as pantallas fan scroll dentro de `<main>`;
+agora mide os dous, e reintroducido o fallo devolve «553 px máis ancha có seu scroller»
+nos dous temas.
+
+**Ao tocar unha parada, o mapa daba un salto.** `useDialog` pon o foco no primeiro
+control da ficha ao abrila, e a ficha estaba aínda 372 px por debaixo do bordo do mapa,
+subindo. O navegador desprazou a caixa `overflow: hidden` do mapa para chegar ao botón:
+medido, 372 px de scroll; con `focus({ preventScroll: true })`, 0. Vale para as catro
+superposicións, que están fixas e non precisan desprazamento ningún.
+
+**Ao calcular, a pantalla caía sobre o mapa.** O foco ía á resposta no mesmo instante,
+e o navegador desprazaba ata onde a resposta estaba nese instante: debaixo do
+formulario aínda aberto. Cando o pregue lle quitou os 470 px de enriba, a vista quedou
+470 px máis abaixo, no mapa. O foco vai agora sen desprazar e o desprazamento faino o
+`transitionend` do pregue; medido cun scroll previo de 380 px, a resposta queda no 71.
+
+**O velo dos favoritos e do QR era claro no tema escuro.** `bg-ink/60`: a tinta é clara
+no escuro. Viña de antes; a entrada animada fixo que se mirase. Os tres velos levan
+agora o token feito para iso, `bg-scrim`, escuro nos dous temas.
+
+**A estrela só saltaba nas paradas.** A da ficha de liña era outra copia do botón. Un
+só compoñente, `ui/SaveStar.tsx`, coa bandeira de «premido» dentro e o pai dándolle
+`key` pola parada ou a liña, que é o que a reinicia.
+
+**Inverter orixe e destino pregaba o formulario debaixo do dedo.** A inversión
+recalculaba e o recálculo pregaba, así que o botón que acababas de premer desaparecía e
+o xiro non se vía nunca. Un cambio nos campos non é unha resposta: inverte, recalcula
+(no escritorio a resposta actualízase ao lado) e non prega. Medido: pregue aberto,
+icona a 180°, campos intercambiados, a barra co traxecto novo.
+
+De paso: no escritorio nunca se prega e por tanto nunca chega un `transitionend`, así
+que `fold-moving` quedaba posto e recortaba as listas de suxestións; de `lg` para arriba
+o pregue do planificador non recorta nunca. E `<main>` leva `overflow-x: hidden`, que
+un panel que entra desde a dereita non poida facer scroll lateral nin 180 ms.
+
+O latexo do GPS (13) non se pode ver sen ir no bus: só aparece coa viaxe en marcha,
+cando o GPS viu pasar a segunda parada ou o lector dixo «si, vou nel». Comprobado que a
+clase anima (2 s, infinito) e que a fila da seguinte parada a leva.

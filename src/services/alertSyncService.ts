@@ -150,6 +150,9 @@ const noticeFrom = (id: string, text: string, title: string): ServiceAlert => ({
  * list item per notice. Nothing in that markup says "alert" to a general scraper, which is
  * how the app once said "running normally" on a day their header read "Retenciones".
  */
+/** The bell's own "nothing to report" item: read as one active incident on 19 September 2026, it put a badge on the navigation for a card saying there were no notices. */
+const QUIET = /^no(n)?\s+(existen?|ha[iy])\s+avisos\b/i;
+
 function extractNavNotices(html: string): ServiceAlert[] {
   const list = html.match(/<ul[^>]*class="[^"]*msg_list[^"]*"[^>]*>([\s\S]*?)<\/ul>/i);
   if (!list) return [];
@@ -157,7 +160,7 @@ function extractNavNotices(html: string): ServiceAlert[] {
   for (const item of blocks(list[1], list[1].toLowerCase(), '<li', '</li>')) {
     const text = plainText(item);
     // A bare "no notices" item, or an empty <li>, is not an incident.
-    if (text.length < 6) continue;
+    if (text.length < 6 || QUIET.test(text)) continue;
     notices.push(noticeFrom(`nav-notice-${notices.length + 1}`, text, clip(text, 90)));
   }
   return notices;

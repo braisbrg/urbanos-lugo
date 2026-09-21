@@ -246,7 +246,7 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
           )}
         </>
       ) : (
-        <ul className="mt-2.5 flex flex-col gap-1.5">
+        <ul className="anim-rise mt-2.5 flex flex-col gap-1.5">
           {nearby.map((stop) => (
             <StopRow
               key={stop.id}

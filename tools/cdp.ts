@@ -362,6 +362,16 @@ export const PROBE_SOURCE = `
   observe('paint', (e) => { w.__probe.paint[e.name] = Math.round(e.startTime); });
   observe('largest-contentful-paint', (e) => { w.__probe.paint['lcp'] = Math.round(e.startTime); });
   observe('event', (e) => w.__probe.events.push([e.name, Math.round(e.processingStart - e.startTime), Math.round(e.duration), Math.round(e.startTime)]), { durationThreshold: 16 });
+  // Layout shift, summed the way Chrome scores it (shifts within 500 ms of an input do not
+  // count): a board that jumps when the times arrive shows up here and nowhere else.
+  w.__probe.cls = 0;
+  w.__probe.shifts = [];
+  observe('layout-shift', (e) => {
+    if (e.hadRecentInput) return;
+    w.__probe.cls += e.value;
+    const node = (e.sources || [])[0] && e.sources[0].node;
+    w.__probe.shifts.push([Math.round(e.startTime), Math.round(e.value * 1000) / 1000, node ? node.tagName.toLowerCase() + '.' + String(node.className || '').split(' ').slice(0, 2).join('.') : '?']);
+  });
 
   const add = EventTarget.prototype.addEventListener;
   const drop = EventTarget.prototype.removeEventListener;
@@ -425,6 +435,9 @@ export interface Probe {
   resizes: number;
   commits: number;
   events: [string, number, number, number][];
+  /** Cumulative layout shift, and each shift as [when, score, what moved]. */
+  cls: number;
+  shifts: [number, number, string][];
 }
 
 /** Total time the main thread spent in tasks over 50 ms: the part a finger notices. */

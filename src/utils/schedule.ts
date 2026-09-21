@@ -6,6 +6,7 @@
  * not elapsed time: a bus published at 07:20 leaves at 07:20 on the nights the clocks
  * move, so minute arithmetic is the right model and Date arithmetic the wrong one.
  */
+import festivos from '../data/festivos.json';
 import { BusLine, BusStop, DayKind } from '../types';
 import { normalizeText } from './searchUtils';
 
@@ -27,9 +28,28 @@ export function minutesNow(date: Date = new Date()): number {
   return date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 }
 
+/**
+ * The days the operator runs the Sunday timetable on that are not Sundays: "domingos e
+ * festivos". Dates, not rules: each year's holidays are decided by decree (the Galician
+ * calendar, in the DOG) and by resolution (the two local ones), and the substitutions
+ * move, so src/data/festivos.json lists them per year with their DOG entries, and
+ * tools/test.ts refuses a year the file does not cover.
+ */
+const HOLIDAYS = new Set(Object.values(festivos).flatMap((year) => year.days));
+
+/** `YYYY-MM-DD` in the device's own calendar, which is the one the reader lives in. */
+const isoDay = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+/** A public holiday in Lugo, on any day of the week. */
+export const isHoliday = (date: Date): boolean => HOLIDAYS.has(isoDay(date));
+
+/** The years festivos.json covers, for the check that keeps it current. */
+export const HOLIDAY_YEARS = Object.keys(festivos);
+
 export function dayKind(date: Date): DayKind {
   const d = date.getDay();
-  return d === 0 ? 'domingo' : d === 6 ? 'sabado' : 'laborable';
+  if (d === 0 || isHoliday(date)) return 'domingo';
+  return d === 6 ? 'sabado' : 'laborable';
 }
 
 /** Answered from the published service patterns, which carry Saturday and Sunday apart. */

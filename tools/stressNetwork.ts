@@ -11,7 +11,7 @@
  * than the hook allows before showing the committed snapshot, a late answer still
  * replaces that snapshot, and nothing throws. Run by hand, not a gate.
  */
-import alertSnapshot from '../src/data/alerts.json';
+import alertSnapshot from '../public/alerts.json';
 import { translations } from '../src/i18n';
 import { BASE, OFFLINE, phonePage, withBrowser, type Browser, type Session } from './cdp';
 import { sleep } from './lib';

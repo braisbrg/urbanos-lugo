@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { ArrowLeft, Bell, Check, Clock, Map as MapIcon, Share2, Star } from 'lucide-react';
+import { ArrowLeft, Bell, Check, ChevronDown, Clock, Map as MapIcon, Share2 } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../types';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { lineById, poleCode } from '../data/transitData';
@@ -11,7 +11,7 @@ import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';
 import { useOperatorTimes } from '../hooks/useOperatorTimes';
 import { Provenance } from './ui/Provenance';
 import { LineBadge } from './ui/LineBadge';
-import { IconButton, Notice, Segmented } from './ui/controls';
+import { IconButton, Notice, SaveStar, Segmented } from './ui/controls';
 import { watchForStop, ringAlarm, notify, requestNotificationPermission, ALARM_RADIUS_M, AlarmHandle } from '../services/stopAlarm';
 
 interface StopArrivalsViewProps {
@@ -116,6 +116,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
   const [alarmDistance, setAlarmDistance] = useState<number | null>(null);
   const [alarmFired, setAlarmFired] = useState(false);
   const [alarmError, setAlarmError] = useState<string | null>(null);
+  const [bellPressedAt, setBellPressedAt] = useState<string | null>(null);
   const alarmRef = useRef<AlarmHandle | null>(null);
   const stopAlarm = () => {
     alarmRef.current?.stop();
@@ -283,11 +284,21 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-1.5">
-          <IconButton icon={Star} label={isFavorite ? t.arrivals.unfav : t.arrivals.fav} on={isFavorite} fill={isFavorite} onClick={() => onToggleFavorite(selectedStop.id)} />
+          <SaveStar key={selectedStop.id} on={isFavorite} label={isFavorite ? t.arrivals.unfav : t.arrivals.fav} onToggle={() => onToggleFavorite(selectedStop.id)} />
           <IconButton icon={MapIcon} label={t.arrivals.map} onClick={() => onViewOnMap(selectedStop)} />
-          <IconButton icon={Bell} label={alarmOn ? t.arrivals.alarmOn : t.arrivals.alarmCta} title={t.arrivals.alarmHelp} on={alarmOn} onClick={toggleAlarm} />
+          <IconButton
+            icon={Bell}
+            label={alarmOn ? t.arrivals.alarmOn : t.arrivals.alarmCta}
+            title={t.arrivals.alarmHelp}
+            on={alarmOn}
+            iconClassName={alarmOn && bellPressedAt === selectedStop.id ? 'anim-ring' : ''}
+            onClick={() => {
+              setBellPressedAt(selectedStop.id);
+              toggleAlarm();
+            }}
+          />
           <button onClick={copyShareLink} aria-label={copiedLink ? t.arrivals.copied : t.arrivals.share} className="flex h-11 w-11 items-center justify-center rounded-control border border-edge bg-surface text-ink-2">
-            {copiedLink ? <Check className="h-4.5 w-4.5 text-official" strokeWidth={2.4} aria-hidden="true" /> : <Share2 className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />}
+            {copiedLink ? <Check className="anim-tick-in h-4.5 w-4.5 text-official" strokeWidth={2.4} aria-hidden="true" /> : <Share2 className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />}
           </button>
           {/* The tick is the confirmation for the eye; this is the one for the ear. */}
           <span role="status" className="sr-only">
@@ -297,36 +308,24 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       </header>
 
       {/* By time when you will take whatever comes, by line when you are waiting for one in particular. */}
-      <Segmented
-        variant="outline"
-        className="border-b border-line py-3"
-        value={view}
-        onChange={setView}
-        options={[
-          { id: 'next', label: t.arrivals.viewNext, title: t.arrivals.viewNextHint },
-          { id: 'byLine', label: t.arrivals.viewByLine, title: t.arrivals.viewByLineHint },
-        ]}
-      />
-
-      <div className="flex flex-wrap items-center gap-2 border-b border-line py-3">
-        <label className="flex items-center gap-2 text-label font-semibold text-ink-2">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
-          <span className="shrink-0">{t.arrivals.atTimeLabel}</span>
-          <input type="time" value={atTime} onChange={(e) => setAtTime(e.target.value)} className="h-11 rounded-control border border-edge bg-bg px-2 font-mono text-body text-ink" />
-        </label>
-        {atTime && (
-          <button onClick={() => setAtTime('')} className="h-11 rounded-control border border-edge px-3 text-label font-semibold text-ink-2">
-            {t.arrivals.backToNow}
-          </button>
-        )}
+      <div className="border-b border-line py-3">
+        <Segmented
+          value={view}
+          onChange={setView}
+          options={[
+            { id: 'next', label: t.arrivals.viewNext, title: t.arrivals.viewNextHint },
+            { id: 'byLine', label: t.arrivals.viewByLine, title: t.arrivals.viewByLineHint },
+          ]}
+        />
       </div>
 
       {/* Folded, directly under the toggle: at a stop with fourteen lines the list runs past the fold. */}
       {nearbyLines.length > 0 && (
-        <details className="mt-3 rounded-control border border-edge bg-surface">
+        <details className="disclosure mt-3 rounded-control border border-edge bg-surface">
           <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
             {t.arrivals.nearbyLinesTitle}
             <span className="tnum rounded-control border border-edge px-1.5 py-0.5 text-ink-3">{nearbyLines.length}</span>
+            <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </summary>
           <div className="px-3 pb-3">
             <p className="text-label text-ink-3">{t.arrivals.nearbyLinesHint}</p>
@@ -347,8 +346,15 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         </details>
       )}
 
-      {/* Every row below is a scheduled passing for an hour the reader chose, and the countdown counts from that hour. */}
-      {atTime && <Notice>{t.arrivals.showingAt(atTime)}</Notice>}
+      {/* Every row below is a scheduled passing for an hour the reader chose, and the countdown counts from that hour; this is where it is undone. */}
+      {atTime && (
+        <div className="anim-rise mt-3 flex flex-wrap items-center justify-between gap-2 rounded-control border border-edge bg-surface py-1.5 pl-3 pr-1.5 text-label font-semibold text-ink-2">
+          <span>{t.arrivals.showingAt(atTime)}</span>
+          <button onClick={() => setAtTime('')} className="h-11 rounded-control border border-edge px-3 text-label font-semibold text-ink-2">
+            {t.arrivals.backToNow}
+          </button>
+        </div>
+      )}
 
       {(alarmOn || alarmError) && (
         <Notice role={alarmFired ? 'alert' : undefined}>
@@ -379,7 +385,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       )}
 
       {firedMessage && (
-        <div role="alert" className="mt-3 flex items-start justify-between gap-3 rounded-control bg-official p-3 text-label font-semibold text-on-official">
+        <div role="alert" className="anim-rise mt-3 flex items-start justify-between gap-3 rounded-control bg-official p-3 text-label font-semibold text-on-official">
           <span>{firedMessage}</span>
           <button onClick={() => setFiredMessage(null)} aria-label={t.arrivals.dismiss} className="shrink-0 underline">
             ✕
@@ -413,7 +419,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
           {nextService && <p className="mt-2 text-body font-semibold">{t.arrivals.nextServiceAt(nextService.lineNumber, nextService.time, nextService.destination)}</p>}
         </div>
       ) : view === 'next' ? (
-        <ul className="mt-1">
+        <ul className="anim-fade mt-1">
           {soon.map((a, idx) => (
             <li key={`${a.lineId}-${a.etaTime}-${idx}`} className="border-b border-line px-3 py-3.5">
               <div className="flex items-center gap-3">
@@ -433,7 +439,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
           ))}
         </ul>
       ) : (
-        <ul className="mt-3 flex flex-col gap-2.5">
+        <ul className="anim-fade mt-3 flex flex-col gap-2.5">
           {groups.map((g) => (
             <li key={g.key} className="tint tint-edge overflow-hidden rounded-card border" style={tint(g.lineColor)}>
               <div className="flex items-center gap-3 p-3">
@@ -465,6 +471,19 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       )}
 
       {view === 'next' && beyondCount > 0 && <p className="mt-3 text-label text-ink-3">{t.arrivals.beyond(beyondCount)}</p>}
+
+      {/* Under the answer, not over it: the night-before question, folded like the other tools. */}
+      <details className="disclosure mt-3 rounded-control border border-edge bg-surface">
+        <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
+          <Clock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+          {t.arrivals.atTimeSummary}
+          <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+        </summary>
+        <label className="flex flex-wrap items-center gap-2 px-3 pb-3 text-label font-semibold text-ink-2">
+          <span className="shrink-0">{t.arrivals.atTimeLabel}</span>
+          <input type="time" value={atTime} onChange={(e) => setAtTime(e.target.value)} className="h-11 rounded-control border border-edge bg-bg px-2 font-mono text-body text-ink" />
+        </label>
+      </details>
       {Object.keys(watches).length > 0 && <Notice>{t.arrivals.watchForeground}</Notice>}
 
       {/* Drawn above the question it serves: the other poles nearby are how you tell which one is yours. */}
@@ -475,8 +494,11 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         </div>
       </section>
 
-      <details className="mt-4 border-t border-line pt-3">
-        <summary className="flex min-h-11 cursor-pointer items-center text-label font-semibold text-ink-2">{t.arrivals.reportPosition}</summary>
+      <details className="disclosure mt-4 border-t border-line pt-3">
+        <summary className="flex min-h-11 cursor-pointer items-center text-label font-semibold text-ink-2">
+          {t.arrivals.reportPosition}
+          <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+        </summary>
         <p className="text-label leading-relaxed text-ink-3">{t.arrivals.positionChecked}</p>
         <p className="mt-1.5 text-label leading-relaxed text-ink-3">{t.arrivals.reportNotCouncil}</p>
         <a href={reportUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center text-label font-semibold text-accent underline">
@@ -487,8 +509,11 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       {anyOverdue && <p className="mt-4 border-t border-line pt-3.5 text-label leading-relaxed text-ink-3">{t.common.overdueNote}</p>}
 
       {nonePublished ? (
-        <details className="mt-4 border-t border-line pt-3">
-          <summary className="flex h-11 cursor-pointer items-center text-label font-semibold text-ink-2">{t.arrivals.whyEstimatedTitle}</summary>
+        <details className="disclosure mt-4 border-t border-line pt-3">
+          <summary className="flex h-11 cursor-pointer items-center text-label font-semibold text-ink-2">
+            {t.arrivals.whyEstimatedTitle}
+            <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+          </summary>
           <p className="pb-1 text-label leading-relaxed text-ink-3">{t.arrivals.whyEstimated(timingPoints.published, timingPoints.total)}</p>
         </details>
       ) : (

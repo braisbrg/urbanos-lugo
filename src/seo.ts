@@ -57,9 +57,22 @@ export function routeUrl(site: string, route: string): string {
   return route ? `${site}${route}/` : site;
 }
 
-/** Seven entries. Stops and lines have no URL of their own, and an empty shell listed is worse than nothing. */
+/**
+ * The one address a screen is indexed under. The root *is* the stops tab: `/` and
+ * `/paradas/` draw the same screen, and Search Console read two canonicals as "Duplicate,
+ * Google chose a different canonical", rightly. So the stops tab points at the root and
+ * stays out of the sitemap; the page still answers 200 with its own title.
+ */
+export function canonicalUrl(site: string, route: string): string {
+  return routeUrl(site, route === PATHS.stops ? '' : route);
+}
+
+/** Six entries: the root and the five tabs that are not the root by another name. Stops and lines have no URL of their own. */
 export function sitemapXml(site: string, paths: string[] = SITE_PATHS): string {
-  const urls = paths.map((p) => `  <url><loc>${routeUrl(site, p)}</loc></url>`).join('\n');
+  const urls = paths
+    .filter((p) => canonicalUrl(site, p) === routeUrl(site, p))
+    .map((p) => `  <url><loc>${routeUrl(site, p)}</loc></url>`)
+    .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
 
@@ -130,5 +143,5 @@ export function pageHtml(html: string, route: string, site: string | null): stri
     .replace(/(<meta property="og:title" content=")[^"]*/, `$1${head.title}`)
     .replace(/(<meta property="og:description" content=")[^"]*/, `$1${head.description}`)
     .replace(/(<h1[^>]*>)[^<]*(<\/h1>)/, `$1${head.title}$2`);
-  return site ? out.replace(`<link rel="canonical" href="${site}" />`, `<link rel="canonical" href="${routeUrl(site, route)}" />`) : out;
+  return site ? out.replace(`<link rel="canonical" href="${site}" />`, `<link rel="canonical" href="${canonicalUrl(site, route)}" />`) : out;
 }

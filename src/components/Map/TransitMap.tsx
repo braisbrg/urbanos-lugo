@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { ChevronDown, LocateFixed, SlidersHorizontal } from 'lucide-react';
+import { LocateFixed, SlidersHorizontal } from 'lucide-react';
 import { useT } from '../../i18n';
 import { BusStop, BusLine } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, lineById, poleCode } from '../../data/transitData';
@@ -16,6 +16,7 @@ import { RouteLayer } from './RouteLayer';
 import { StopLayer } from './StopLayer';
 import { StopSheet } from './StopSheet';
 import { VehicleLayer } from './VehicleLayer';
+import { LineChips } from './LineChips';
 import { AROUND_STOP_RADIUS_M, MapControls, NEARBY_RADIUS_M, type Layer, type Preset } from './MapControls';
 import { useFollowMe } from './useFollowMe';
 
@@ -78,8 +79,6 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
   const [tappedStop, setTappedStop] = useState<BusStop | null>(null);
   /** The controls pulled up over the map; only means anything below `lg`. */
   const [sheetOpen, setSheetOpen] = useState(false);
-  /** The line chips unfolded into a grid, for the twenty you cannot find by swiping blind. */
-  const [linesExpanded, setLinesExpanded] = useState(false);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
   const sheetRef = useDialog(sheetOpen, closeSheet);
 
@@ -116,20 +115,6 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
   // The list has to agree with the map: offering all twenty-four while drawing four read as the filter doing nothing.
   const listedLines = scopeLineIds ? BUS_LINES.filter((l) => scopeLineIds.includes(l.id)) : BUS_LINES;
 
-  /** The numbers more than one line answers to (four are numbered 11), so only those chips carry a branch name. */
-  const sharedNumbers = useMemo(() => {
-    const seen = new Set<string>();
-    const shared = new Set<string>();
-    for (const line of BUS_LINES) (seen.has(line.number) ? shared : seen).add(line.number);
-    return shared;
-  }, []);
-  /** The far end of a line's name, without its own number and without the parenthetical naming the stop. */
-  const destinationOf = (line: BusLine) => {
-    let end = line.name.split(' - ').pop()?.trim() ?? '';
-    if (end.endsWith(` ${line.number}`)) end = end.slice(0, -line.number.length - 1).trim();
-    const paren = end.indexOf(' (');
-    return paren > 0 ? end.slice(0, paren) : end;
-  };
 
   // A line chosen somewhere else becomes the only one on the map; one picked here must not (onSelectLine reports every pick upward).
   useEffect(() => {
@@ -160,7 +145,6 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
     // Asking for a line is asking to see it, and for whatever covers the map to get out of its way.
     setLayers((l) => ({ ...l, routes: true }));
     setSheetOpen(false);
-    setLinesExpanded(false);
     // Frame everything picked: two lines up is a comparison.
     if (map && next.length) fitLines(map, next);
   };
@@ -201,7 +185,6 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
   }, []);
 
   const locateLabel = follow.isLocating ? t.map.locating : follow.isFollowing ? t.map.stopFollowing : t.map.myLocation;
-  const chip = 'pointer-events-auto flex h-11 shrink-0 items-center rounded-full border shadow-sm backdrop-blur-xs';
 
   return (
     // No page padding on a phone: the map is the screen there, edge to edge.
@@ -281,50 +264,7 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
             />
 
             {/* Two controls cannot wait a viewport away on a phone: which line, and where you are. They ride over the map below `lg`. */}
-            <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] lg:hidden">
-              <div className={`no-scrollbar flex gap-1.5 px-3 py-2.5 ${linesExpanded ? 'max-h-[45dvh] flex-wrap overflow-y-auto' : 'overflow-x-auto'}`}>
-                <button
-                  type="button"
-                  onClick={() => handlePreset('all')}
-                  aria-pressed={pickedLineIds.length === 0}
-                  className={`${chip} px-4 text-label font-semibold ${pickedLineIds.length === 0 ? 'border-accent bg-accent text-on-accent' : 'border-edge bg-bg/95 text-ink-2'}`}
-                >
-                  {t.map.allLines}
-                </button>
-                {/* Second, not last: at the end of a row that scrolls, "stop making me scroll" is only reachable by scrolling. */}
-                <button
-                  type="button"
-                  onClick={() => setLinesExpanded((v) => !v)}
-                  aria-expanded={linesExpanded}
-                  aria-label={linesExpanded ? t.map.collapseLines : t.map.expandLines}
-                  title={linesExpanded ? t.map.collapseLines : t.map.expandLines}
-                  className={`${chip} gap-1 border-edge bg-bg/95 px-3.5 text-label font-bold text-ink-2`}
-                >
-                  <span className="tnum">{listedLines.length}</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform motion-reduce:transition-none ${linesExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
-                </button>
-                {/* The number is the chip; the name goes to the accessible name. */}
-                {listedLines.map((line) => {
-                  const isSelected = pickedLineIds.includes(line.id);
-                  const branch = sharedNumbers.has(line.number) ? destinationOf(line) : '';
-                  return (
-                    <button
-                      key={line.id}
-                      type="button"
-                      onClick={() => handleSelectLine(line)}
-                      aria-pressed={isSelected}
-                      aria-label={line.name}
-                      title={line.name}
-                      className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-label font-black text-white shadow-sm ${isSelected ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''}`}
-                      style={{ backgroundColor: line.color }}
-                    >
-                      <span>{line.number}</span>
-                      {branch && <span className="max-w-28 truncate font-semibold opacity-90">{branch}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <LineChips listed={listedLines} picked={pickedLineIds} onToggle={handleSelectLine} onAll={() => handlePreset('all')} />
 
             {/* Orientation, one thumb's reach from the bottom corner; the zoom control has the other. */}
             <button

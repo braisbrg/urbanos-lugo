@@ -96,10 +96,16 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const shownOptions = useMemo(() => planOptions.slice(0, MAX_OPTIONS), [planOptions]);
 
   // Focus lands on the answer column after every question: the button folds away with the form.
+  // Without preventScroll the page dropped onto the map the instant the fold started; the
+  // fold's own end scrolls the answer into view instead.
   const answerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (answered) answerRef.current?.focus();
+    if (answered) answerRef.current?.focus({ preventScroll: true });
   }, [answered]);
+  /** The form is mid-fold: clipping stays on until the transition ends, not a child's. */
+  const [folding, setFolding] = useState(false);
+  /** Counts every question, and turns the swap arrow with it; the fields are keyed on it so they fade in with their new text. */
+  const [swaps, setSwaps] = useState(0);
   /** Where the button on the map jumps to. */
   const stepsRef = useRef<HTMLDivElement>(null);
 
@@ -170,7 +176,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   };
 
   const [questions, setQuestions] = useState(0);
-  const calculate = (orig = originQuery, dest = destQuery, gps = userLocation) => {
+  const calculate = (orig = originQuery, dest = destQuery, gps = userLocation, fold = true) => {
     if (!orig.trim() || !dest.trim()) return;
     const opts = { ...timeOptions(), userLocation: gps };
     askedRef.current = { orig, dest, opts };
@@ -179,7 +185,11 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
     setPlanOptions(plans);
     setChosenOption(0);
     setQuestions((n) => n + 1);
-    ask('answer');
+    if (fold) {
+      setFolding(true);
+      ask('answer');
+    }
+    setSwaps((n) => n + 1);
     if (plans.length) rememberRoute({ from: orig.trim(), to: dest.trim() });
     setEndpoints({ origin: toPoint(resolveLocationQuery(orig, gps)), destination: toPoint(resolveLocationQuery(dest, gps)) });
     setActiveInput(null);
@@ -192,10 +202,11 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
     calculate(originQuery, destinationRequest.query);
   }, [destinationRequest?.nonce]);
 
+  // Inverting must not fold the form under the finger that pressed it.
   const swap = () => {
     setOriginQuery(destQuery);
     setDestQuery(originQuery);
-    calculate(destQuery, originQuery);
+    calculate(destQuery, originQuery, userLocation, false);
   };
 
   const useGps = () => {
@@ -243,7 +254,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
     <button
       type="button"
       onClick={() => planResult && onStartTrip(planResult, endpoints.origin ?? null, endpoints.destination ?? null)}
-      className={`flex w-full items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-on-accent ${prominent ? 'h-14 text-emph' : 'h-12 text-body'}`}
+      className={`flex w-full items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-on-accent ${prominent ? 'anim-attention h-14 text-emph' : 'h-12 text-body'}`}
     >
       <Bus className={prominent ? 'h-5 w-5 shrink-0' : 'h-4.5 w-4.5 shrink-0'} strokeWidth={2} aria-hidden="true" />
       {t.companion.start}
@@ -258,7 +269,15 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
         <div ref={formRef} className="space-y-4 lg:col-span-5 lg:sticky lg:top-4 lg:self-start">
           {/* What you asked for, in one line, and the way in and out of the fields. */}
           {asked && (
-            <button type="button" onClick={() => ask('toggleForm')} aria-expanded={formOpen} className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setFolding(true);
+                ask('toggleForm');
+              }}
+              aria-expanded={formOpen}
+              className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden"
+            >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
               <span title={`${originQuery} → ${destQuery}`} className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
                 {originQuery} → {destQuery}
@@ -267,11 +286,22 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
             </button>
           )}
 
-          <div className={`bg-bg rounded-card p-3.5 sm:p-6 shadow-sm border border-edge ${folded ? 'hidden lg:block' : ''}`}>
+          <div
+            className={`fold fold-lg-open fold-clear ${folded ? 'fold-closed' : ''} ${folding ? 'fold-moving' : ''}`}
+            onTransitionEnd={(e) => {
+              if (e.target !== e.currentTarget) return;
+              setFolding(false);
+              if (folded) answerRef.current?.scrollIntoView({ block: 'nearest' });
+            }}
+          >
+            {/* A bare wrapper: the row can only shrink to its item's padding and border, so the card itself as the item left a 30 px stub when folded. */}
+            <div>
+          <div className="bg-bg rounded-card p-3.5 sm:p-6 shadow-sm border border-edge">
             <h2 className="sr-only">{t.planner.title}</h2>
             <div className="relative">
               <div className="relative rounded-card border border-edge bg-surface">
                 <PlaceField
+                  key={`origin-${swaps}`}
                   id="input-origin-query"
                   {...fieldFor('origin', originQuery)}
                   display={originQuery === 'my_location' ? `📍 ${t.map.myLocation}` : undefined}
@@ -285,6 +315,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 </span>
                 <div className="mx-3.5 border-t border-line" aria-hidden="true" />
                 <PlaceField
+                  key={`dest-${swaps}`}
                   id="input-dest-query"
                   {...fieldFor('dest', destQuery)}
                   placeholder={t.planner.placeholderDest}
@@ -299,12 +330,13 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   aria-label={t.planner.swap}
                   title={t.planner.swap}
                 >
-                  <ArrowDownUp className="relative h-4 w-4" />
+                  {/* Turns with the swap, so the button shows what it just did to the fields. */}
+                  <ArrowDownUp className="relative h-4 w-4 transition-transform duration-[260ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]" style={{ transform: `rotate(${swaps * 180}deg)` }} />
                 </button>
               </div>
 
               <div className="mt-3">
-                <Segmented options={(['now', 'depart', 'arrive'] as const).map((mode) => ({ id: mode, label: t.planner.timeModes[mode] }))} value={timeMode} onChange={setTimeMode} />
+                <Segmented dense options={(['now', 'depart', 'arrive'] as const).map((mode) => ({ id: mode, label: t.planner.timeModes[mode] }))} value={timeMode} onChange={setTimeMode} />
                 {timeMode !== 'now' && (
                   <label className="mt-2 flex items-center gap-2 text-label font-semibold text-ink-2">
                     <Clock className="w-3.5 h-3.5 text-accent shrink-0" />
@@ -377,9 +409,11 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
               </div>
             </div>
           </div>
+            </div>
+          </div>
         </div>
 
-        <div ref={answerRef} tabIndex={-1} className={`space-y-4 lg:col-span-7 lg:block ${folded ? '' : 'hidden'}`}>
+        <div ref={answerRef} tabIndex={-1} className={`anim-rise space-y-4 lg:animate-none lg:col-span-7 lg:block ${folded ? '' : 'hidden'}`}>
           {planResult && shown ? (
             /* The column owns the rhythm; the blocks say nothing about spacing. */
             <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
@@ -396,7 +430,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
               {canStart && boardingSoon && startTripButton(true)}
 
               {/* The three numbers that answer "should I do this trip", on one baseline: how long on the left, when on the right. */}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-3">
+              <div key={answered} className="anim-rise flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-3">
                 <span className="flex items-baseline gap-2">
                   <span className="tnum text-num font-bold tracking-[-0.025em]">{shown.durationMinutes}</span>
                   <span className="text-body text-ink-3">{t.common.min}</span>
@@ -420,10 +454,10 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
               {canStart && !boardingSoon && startTripButton(false)}
 
               {/* The small print, folded: worth reading once, not on the way to the thing that was asked for. */}
-              <details className="rounded-md border border-edge bg-surface/40">
+              <details className="disclosure rounded-md border border-edge bg-surface/40">
                 <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-label font-semibold text-ink-2">
                   <span className="sr-only">{t.planner.tripInfoTitle}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+                  <ChevronDown className="disclosure-chevron h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
                   <span className="flex flex-1 items-baseline justify-between gap-3 font-mono">
                     {measuredWalk && (
                       <span className="flex items-baseline gap-1.5 text-ink">
@@ -484,7 +518,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                     {showMap ? t.planner.hideMap : t.planner.showMap}
                   </button>
                 </div>
-                {showMap && (
+                <div className={`fold ${showMap ? '' : 'fold-closed'}`}>
                   <div className="relative">
                     <Suspense fallback={<div className="w-full h-[240px] sm:h-[280px] rounded-card bg-surface animate-pulse" />}>
                       <RouteMap plan={planResult} origin={endpoints.origin} destination={endpoints.destination} walkPaths={walkPaths} className="w-full h-[240px] sm:h-[280px] rounded-card overflow-hidden border border-edge z-0" />
@@ -501,7 +535,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                       </span>
                     </button>
                   </div>
-                )}
+                </div>
               </div>
 
               <div ref={stepsRef} className="scroll-mt-3">

@@ -28,6 +28,17 @@ const OPENFREEMAP_ATTRIBUTION =
 const OSM_FALLBACK_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
+/**
+ * How long a lost WebGL context is given to come back. "WebGL context lost" was seen in
+ * a production console; forced (WEBGL_lose_context), the basemap goes blank with no word
+ * to the reader while the routes and stops, on Leaflet's own canvas, stay. The renderer
+ * handles the loss and the return itself; what it does not do is notice that the return
+ * never came. A browser that restores a context does so within a second or two, so five
+ * is past that and still a hiccup rather than a screen. Counted only while the page is
+ * visible: a phone that hands the context back on return must not come back to a worse map.
+ */
+const CONTEXT_GRACE_MS = 5_000;
+
 /** Asked once: a probe context per map would leak contexts, and browsers cap how many exist. */
 let webgl2: boolean | null = null;
 function hasWebGL2(): boolean {
@@ -47,6 +58,12 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   if (!hasWebGL2()) {
     const raster = L.tileLayer(OSM_FALLBACK_TILES, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }) as L.TileLayer & { setBasemapTheme(isDark: boolean): void };
     raster.setBasemapTheme = () => {}; // one style to fall back to, nothing to switch
+    // The "Leaflet" prefix goes on this path too, or a map born raster prints the two-line credit.
+    const baseOnAdd = raster.onAdd.bind(raster);
+    raster.onAdd = (map: L.Map) => {
+      map.attributionControl?.setPrefix(false);
+      return baseOnAdd(map);
+    };
     return raster;
   }
 
@@ -61,6 +78,29 @@ export function createBasemap(isDark: boolean): BasemapLayer {
   let observer: ResizeObserver | null = null;
   let onVisible: (() => void) | null = null;
   let attached: L.Map | null = null;
+  /** The theme the renderer was given: a second setStyle while the first is loading rebuilds the whole style. */
+  let shown = isDark;
+
+  /**
+   * A context that was lost and not given back: swap this layer for the raster fallback
+   * on the same map, and remember it for the session, because a device whose context went
+   * away once is not a device to keep asking. The callers keep their handle to this layer,
+   * and setBasemapTheme on a removed layer has no renderer to restyle, so they need not know.
+   */
+  let lost = false;
+  let grace: ReturnType<typeof setTimeout> | undefined;
+  const armGrace = () => {
+    clearTimeout(grace);
+    grace = setTimeout(() => {
+      // Hidden: onVisible arms it again, once there is a reader to give up in front of.
+      if (!lost || !attached || document.visibilityState !== 'visible') return;
+      const map = attached;
+      webgl2 = false;
+      map.removeLayer(layer);
+      map.options.zoomSnap = 1; // raster tiles at a fractional zoom are scaled, and blurry
+      createBasemap(shown).addTo(map);
+    }, CONTEXT_GRACE_MS);
+  };
 
   /**
    * Put the renderer back in step with Leaflet. Nobody else tells it the container
@@ -88,7 +128,16 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     // levels left the default trip at 46% of its box.
     map.options.zoomSnap = 0;
     // The first paint lands on an empty view before the style has arrived; once is enough.
-    layer.getMaplibreMap()?.once('load', resync);
+    const gl = layer.getMaplibreMap();
+    gl?.once('load', resync);
+    gl?.on('webglcontextlost', () => {
+      lost = true;
+      if (document.visibilityState === 'visible') armGrace();
+    });
+    gl?.on('webglcontextrestored', () => {
+      lost = false;
+      clearTimeout(grace);
+    });
     // Leaflet's own container, not the renderer's: the canvas wrapper is absolutely
     // positioned inside a pane and never reports a size change.
     const container = map.getContainer();
@@ -98,7 +147,9 @@ export function createBasemap(isDark: boolean): BasemapLayer {
     }
     // A phone unlocked again, or a page restored from the back/forward cache: nothing resized.
     onVisible = () => {
-      if (document.visibilityState === 'visible') resync();
+      if (document.visibilityState !== 'visible') return;
+      resync();
+      if (lost) armGrace();
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('pageshow', onVisible);
@@ -113,12 +164,11 @@ export function createBasemap(isDark: boolean): BasemapLayer {
       window.removeEventListener('pageshow', onVisible);
       onVisible = null;
     }
+    clearTimeout(grace);
     attached = null;
     return baseOnRemove(map);
   };
 
-  /** The theme the renderer was given: a second setStyle while the first is loading rebuilds the whole style. */
-  let shown = isDark;
   layer.setBasemapTheme = (dark: boolean) => {
     if (dark === shown) return;
     shown = dark;

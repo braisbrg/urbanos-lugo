@@ -1,5 +1,6 @@
 /**
- * Snapshots the operator's service notices into src/data/alerts.json.
+ * Snapshots the operator's service notices into public/alerts.json: a file beside the page,
+ * not an import, so a refresh moves 1.4 KB and not the entry chunk and everything that imports it.
  *
  *   npx tsx tools/fetchAlerts.ts
  *
@@ -21,7 +22,7 @@ async function main() {
     return;
   }
 
-  writeJson(at('src/data/alerts.json'), { ...result, fetchedAt: new Date().toISOString() });
+  writeJson(at('public/alerts.json'), { ...result, fetchedAt: new Date().toISOString() });
   console.log(`${result.alerts.length} notice(s) from ${result.sourceUrl}`);
   console.log(`status: ${result.status}`);
 }

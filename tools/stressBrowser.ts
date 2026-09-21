@@ -3,7 +3,7 @@
  *
  *   pnpm build && PORT=3002 pnpm start     # in another terminal
  *   pnpm measure:browser                   # everything
- *   pnpm measure:browser start             # one round: start | map | typing | session
+ *   pnpm measure:browser start             # one round: start | second | map | typing | session
  *
  * A real Chromium throttled to a cheap handset on bad coverage, reporting what the main
  * thread was doing. The numbers are machine-relative; the comparison is not, so every
@@ -22,13 +22,15 @@ let failures = 0;
 const budget = (label: string, value: number, max: number, unit = 'ms'): void => {
   const over = value > max;
   if (over) failures++;
-  report(label, `${value.toFixed(0)} ${unit}`, over ? `<-- over ${max} ${unit}` : `(budget ${max} ${unit})`);
+  // A budget under 1 is a score, not a count of milliseconds, and wants its decimals.
+  const shown = max < 1 ? value.toFixed(3) : value.toFixed(0);
+  report(label, `${shown} ${unit}`.trim(), over ? `<-- over ${max} ${unit}`.trim() : `(budget ${max} ${unit})`.replace(/ \)$/, ')'));
 };
 
 /** A page throttled to the phone, with the probe already installed. */
-async function throttled(browser: Browser, opts: { network?: boolean } = {}, ...extra: string[]): Promise<Session> {
+async function throttled(browser: Browser, opts: { cpu?: number; network?: boolean } = {}, ...extra: string[]): Promise<Session> {
   const page = await phonePage(browser, PROBE_SOURCE, ...extra);
-  await page.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
+  await page.send('Emulation.setCPUThrottlingRate', { rate: opts.cpu ?? CPU_THROTTLE });
   if (opts.network !== false) await page.send('Network.emulateNetworkConditions', SLOW_4G);
   await page.send('Network.setCacheDisabled', { cacheDisabled: true });
   return page;
@@ -37,6 +39,11 @@ async function throttled(browser: Browser, opts: { network?: boolean } = {}, ...
 const probeOf = (page: Session): Promise<Probe> => page.evaluate<Probe>('window.__probe');
 const reset = (page: Session) => page.evaluate('window.__probeReset()');
 const longest = (probe: Probe) => `${Math.max(0, ...probe.longtasks.map(([, d]) => d)).toFixed(0)} ms`;
+/** Google's "good" threshold: the number that catches a board jumping when its times land. */
+const layoutShift = (probe: Probe) => {
+  budget('cumulative layout shift', Math.round(probe.cls * 1000) / 1000, 0.1, '');
+  for (const [when, score, what] of probe.shifts.slice(0, 5)) report('  shifted', score.toFixed(3), `at ${when} ms: ${what}`);
+};
 const mb = (n: number) => `${(n / 1048576).toFixed(2)} MB`;
 const top = (title: string, rows: { label: string; ms: number }[], n: number) => {
   console.log(`\n  ${title}`);
@@ -107,16 +114,21 @@ async function coldStart(browser: Browser): Promise<void> {
   const at = (t: number) => Math.round(t - first);
   const fcp = probe.paint['first-contentful-paint'] ?? 0;
   const bytes = (list: typeof requests) => list.reduce((t, r) => t + r.size, 0);
-  const kb = (n: number) => `${(n / 1024).toFixed(0)} KB`;
 
   budget('first contentful paint', fcp, 4000);
   budget('largest contentful paint', probe.paint['lcp'] ?? 0, 5000);
   budget('main thread blocked (tasks over 50 ms)', blockingMs(probe), 1500);
   report('longest single task', longest(probe), `${probe.longtasks.length} long tasks`);
+  layoutShift(probe);
 
+  // Budgets on the bytes: a dependency bump that adds 60 KB to the entry chunk would
+  // otherwise be a bigger number in a log nobody reads. Set from the measured 186 / 192 KB
+  // with a third of headroom; the README's table quotes them.
   const beforePaint = requests.filter((r) => at(r.end) <= fcp);
-  report('bytes over the wire, all of them', kb(bytes(requests)), `${requests.length} requests`);
-  report('bytes that arrived before first paint', kb(bytes(beforePaint)), `${beforePaint.length} requests`);
+  budget('bytes over the wire, all of them', Math.round(bytes(requests) / 1024), 260, 'KB');
+  report('  requests', `${requests.length}`, '');
+  budget('bytes that arrived before first paint', Math.round(bytes(beforePaint) / 1024), 250, 'KB');
+  report('  requests before paint', `${beforePaint.length}`, '');
 
   console.log('\n  the whole waterfall, in the order the browser asked');
   for (const r of [...requests].sort((a, b) => a.start - b.start)) {
@@ -153,6 +165,72 @@ async function coldStart(browser: Browser): Promise<void> {
   );
   console.log(`\n  what was on screen: ${screen.path}  ${screen.maps} map(s), ${screen.canvases} canvas`);
   for (const h of screen.headings) console.log(`    ${h}`);
+
+  await page.close();
+}
+
+/**
+ * The visit that is not cold, which for an installed app is every visit but the first:
+ * the network is out of the picture, and what decides the screen is the parse and first
+ * render on a throttled phone, and whether the page moves after it has painted. Same
+ * throttles as the cold start, the cache on, the service worker left as the cold start
+ * registered it; bytes that still cross the wire are what the precache does not cover.
+ */
+async function warmStart(browser: Browser): Promise<void> {
+  console.log(`\nsecond visit -- ${CPU_THROTTLE}x CPU, Slow 4G, service worker and cache from the first`);
+
+  // Let the first visit finish installing: on Slow 4G the precache is still arriving when
+  // the cold start's six seconds are up. Unthrottled, until the worker is in charge and
+  // the cache has stopped growing, which is the state every later visit starts from.
+  const settle = await throttled(browser, { cpu: 1, network: false });
+  await settle.send('Network.setCacheDisabled', { cacheDisabled: false });
+  await settle.goto(BASE);
+  const cached = await settle.evaluate<number>(`(async () => {
+    if (!('serviceWorker' in navigator)) return -1;
+    await navigator.serviceWorker.ready;
+    const count = async () => { let n = 0; for (const k of await caches.keys()) n += (await (await caches.open(k)).keys()).length; return n; };
+    let last = -1;
+    for (let i = 0; i < 60; i++) {
+      const n = await count();
+      if (n > 0 && n === last) return n;
+      last = n;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    return last;
+  })()`);
+  await settle.close();
+  report('precached by the first visit', `${cached} files`, cached > 0 ? '' : '<-- no service worker cache to visit from');
+  if (cached <= 0) failures++;
+
+  const page = await throttled(browser);
+  await page.send('Network.setCacheDisabled', { cacheDisabled: false });
+  const fromNetwork: { url: string; size: number }[] = [];
+  const served = new Map<string, string>();
+  page.on('Network.responseReceived', (p) => {
+    const r = p.response as { url: string; fromServiceWorker?: boolean; fromDiskCache?: boolean; fromPrefetchCache?: boolean };
+    const kind = r.fromServiceWorker ? 'sw' : r.fromDiskCache || r.fromPrefetchCache ? 'cache' : 'network';
+    served.set(p.requestId as string, kind);
+    if (kind === 'network') fromNetwork.push({ url: r.url, size: 0 });
+  });
+  page.on('Network.loadingFinished', (p) => {
+    if (served.get(p.requestId as string) !== 'network') return;
+    const entry = fromNetwork[fromNetwork.length - 1];
+    if (entry) entry.size = (p.encodedDataLength as number) ?? 0;
+  });
+
+  await page.goto(BASE);
+  await sleep(6000);
+  const probe = await probeOf(page);
+  budget('first contentful paint', probe.paint['first-contentful-paint'] ?? 0, 2500);
+  budget('main thread blocked (tasks over 50 ms)', blockingMs(probe), 1500);
+  layoutShift(probe);
+  const kinds = [...served.values()];
+  report('responses from the service worker', `${kinds.filter((k) => k === 'sw').length}`, `of ${kinds.length}`);
+  // The notices endpoint is the one request that has to leave; anything else still
+  // crossing the wire is a file the precache should have had.
+  const stray = fromNetwork.filter((r) => !/\/api\/alerts|\/alerts(\?|$)/.test(r.url));
+  budget('bytes over the wire, beyond the notices', Math.round(stray.reduce((t, r) => t + r.size, 0) / 1024), 4, 'KB');
+  for (const r of stray.slice(0, 6)) report('  from the network', `${(r.size / 1024).toFixed(1)} KB`, r.url.replace(BASE, ''));
 
   await page.close();
 }
@@ -412,7 +490,7 @@ async function longSession(browser: Browser): Promise<void> {
   await page.close();
 }
 
-const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, map: mapTab, typing, session: longSession };
+const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, session: longSession };
 const chosen = process.argv[2] ? [process.argv[2]] : Object.keys(rounds);
 const unknown = chosen.find((name) => !rounds[name]);
 if (unknown) {

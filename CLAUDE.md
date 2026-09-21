@@ -30,15 +30,14 @@ nothing merges without them. A change is not done until all four are green:
 
 ```
 pnpm run lint          # tsc --noEmit
-pnpm test              # tools/test.ts — prints "N checks passed" (150 as of this writing)
-pnpm run check:deep    # invariants + planner + parser sweeps over the whole dataset, ~24s
+pnpm test              # tools/test.ts — prints "N checks passed" (157 as of this writing)
+pnpm run check:deep    # invariant + planner sweeps over the whole dataset, ~20s
 pnpm run build         # vite build + esbuild of the server bundle
 ```
 
-`lint`, `test` and `build` are offline and free to re-run as often as you like.
-`check:deep` is not: its third sweep, `checkParsersUnchanged.ts`, fetches two live pages
-twice each. It degrades to "nothing compared, nothing claimed" when they're unreachable,
-so it is safe offline — but run it once when the work is done, not on every iteration.
+All four are offline and deterministic; re-run them as often as you like. The parser
+check that used to ride inside `check:deep` and fetch two live pages is now
+`pnpm run check:parsers`: by hand, once, or weekly in `check-source.yml`.
 
 Everyday: `pnpm dev` (Express + Vite on `server.ts`), `pnpm start` (built server),
 `pnpm preview`, `pnpm clean`, `pnpm run worker:build`.
@@ -95,7 +94,7 @@ The whole suite is one file: `tools/test.ts`, plain `assert`, no framework, run 
 Leave a check behind for logic you add or fix, in that style. Never delete, relax or
 comment out an existing check to get to green — if one fails, the code is what's wrong.
 
-`pnpm run check:deep` is the other half: three sweeps over the full dataset that `pnpm
+`pnpm run check:deep` is the other half: two sweeps over the full dataset that `pnpm
 test` cannot reach. Run it before claiming a data or planner change works.
 
 </important>
@@ -157,15 +156,14 @@ build-time dataset instead.
 
 `reconcile.ts`, `checkFares.ts`, `checkOsmGeometry.ts`, `compareOperatorTimes.ts`,
 `importOfficialData.ts`, `importOsmRoutes.ts`, `importStopAmenities.ts`,
-`fetchAlerts.ts`, `calibrateWalking.ts` and `importFonts.ts` read `buslugo.com`, the
-council's feed or the Overpass API — servers this project does not own and has no
-agreement with. So does `checkParsersUnchanged.ts`, which is easy to miss because
-`pnpm run check:deep` carries it: four requests every time that script runs.
+`fetchAlerts.ts`, `calibrateWalking.ts`, `importFonts.ts` and `checkParsersUnchanged.ts`
+(`pnpm run check:parsers`, four requests) read `buslugo.com`, the council's feed or the
+Overpass API — servers this project does not own and has no agreement with.
 
 They are run by hand, or on the weekly schedule in `.github/workflows/check-source.yml`,
 and their answers are committed so a rebuild costs nothing. Do not put any of them in a
 loop, a watch, a retry or a per-turn check — including an automated loop of your own, such
-as a `/goal` condition that re-runs `check:deep` every turn. One accidental loop is
+as a `/goal` condition that re-runs one of them every turn. One accidental loop is
 hundreds of requests against somebody else's site.
 
 </important>

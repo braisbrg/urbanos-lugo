@@ -190,8 +190,9 @@ export default defineConfig({
       workbox: {
         // The geometry chunk is ~490 KB; the default 2 MB cap would drop it silently.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        // The typeface is served from this origin, so it is precached with everything else.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // The typeface is served from this origin, so it is precached with everything else;
+        // json is the notices snapshot, public/alerts.json, revisioned so a refresh moves only it.
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/\/api\//],
         runtimeCaching: [

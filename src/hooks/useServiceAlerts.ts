@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AlertSyncResult } from '../services/alertSyncService';
-import alertSnapshot from '../data/alerts.json';
 import { isSnapshotStale } from '../utils/snapshotAge';
 import { apiUrl } from '../services/apiUrl';
 
@@ -13,13 +12,35 @@ const COOLDOWN_SECONDS = 30;
 /** How long an unanswered first request keeps the screen empty before the snapshot shows. */
 export const SNAPSHOT_AFTER_MS = 2000;
 
-/** The committed snapshot, narrowed at the one boundary rather than cast. */
-function readSnapshot(raw: typeof alertSnapshot): AlertSyncResult {
+/** What public/alerts.json holds: the sync result plus the time the job took it. */
+type Snapshot = AlertSyncResult & { fetchedAt?: string };
+
+/** The snapshot, narrowed at the one boundary rather than cast: parsed JSON says nothing about `status`. */
+function readSnapshot(raw: Partial<Snapshot> & { status?: string }): Snapshot {
   return {
+    lastSyncTime: '',
+    sourceUrl: '',
+    message: '',
     ...raw,
     status: raw.status === 'active_incidents' ? 'active_incidents' : raw.status === 'unreachable' ? 'unreachable' : 'operational_normal',
     alerts: (raw.alerts ?? []) as AlertSyncResult['alerts'],
   };
+}
+
+/**
+ * The snapshot is a file beside the page, not an import: imported, the scheduled job that
+ * rewrites it renamed the entry chunk and five more, half a megabyte gzipped, under pages
+ * that were open. As a file it is one 1.4 KB request, precached so it answers offline.
+ * Fetched once per page and remembered, including its failure: unreadable reads as
+ * `unreachable`, which is the honest status when nothing could be read.
+ */
+let snapshot: Promise<Snapshot> | null = null;
+function loadSnapshot(): Promise<Snapshot> {
+  snapshot ??= fetch(`${import.meta.env.BASE_URL}alerts.json`)
+    .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+    .then(readSnapshot)
+    .catch(() => readSnapshot({ status: 'unreachable' }));
+  return snapshot;
 }
 
 export interface ServiceAlerts {
@@ -40,9 +61,10 @@ export function useServiceAlerts(): ServiceAlerts {
   const [cooldown, setCooldown] = useState(0);
   const answered = useRef(false);
 
-  const showSnapshot = () => {
-    setData(readSnapshot(alertSnapshot));
-    setSnapshotAt(alertSnapshot.fetchedAt ?? null);
+  const showSnapshot = async () => {
+    const saved = await loadSnapshot();
+    setData(saved);
+    setSnapshotAt(saved.fetchedAt ?? null);
   };
 
   const refresh = useCallback(
@@ -59,7 +81,7 @@ export function useServiceAlerts(): ServiceAlerts {
         setSnapshotAt(null);
       } catch {
         // No server (static hosting) or it is down: the dated snapshot, never passed off as live.
-        showSnapshot();
+        await showSnapshot();
       } finally {
         answered.current = true;
         if (force) setCooldown(COOLDOWN_SECONDS);
@@ -72,8 +94,13 @@ export function useServiceAlerts(): ServiceAlerts {
   // A server that neither answers nor fails left an empty list, which reads as "no incidents".
   useEffect(() => {
     refresh(false);
-    const patience = setTimeout(() => {
-      if (!answered.current) showSnapshot();
+    const patience = setTimeout(async () => {
+      if (answered.current) return;
+      const saved = await loadSnapshot();
+      // Checked again: the live answer may have landed while the file was being read.
+      if (answered.current) return;
+      setData(saved);
+      setSnapshotAt(saved.fetchedAt ?? null);
     }, SNAPSHOT_AFTER_MS);
     return () => clearTimeout(patience);
   }, []);

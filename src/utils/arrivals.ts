@@ -6,7 +6,7 @@ import { BUS_STOPS, BUS_LINES, lineById, stopName } from '../data/transitData';
 import { daysLabel } from './serviceLabels';
 import { Lang, translations } from '../i18n';
 import { BusStop, BusLine, Precision, StopArrival } from '../types';
-import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, lineRunsOn, minutesNow, parseTimeToMinutes } from './schedule';
+import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, isHoliday, lineRunsOn, minutesNow, parseTimeToMinutes } from './schedule';
 import { findStop } from './places';
 
 /** Expected crowding from the time of day alone: a prior, labelled as such wherever shown. */
@@ -78,7 +78,9 @@ export function getArrivalsForStop(stopIdOrCode: string, now: Date = new Date())
         // Three, so the by-line view can derive a headway instead of asserting a frequency.
         .slice(0, 3)
         .forEach(({ minutes, published }) => {
-          const late = Math.round(nowMinutes - minutes);
+          // Late is counted from the minute the board prints: rounded separately, a run at
+          // 08:16.5 printed as 08:17 was marked overdue at 08:17:00, before its own row's time.
+          const late = Math.floor(nowMinutes) - Math.round(minutes);
           arrivals.push({
             lineId: line.id,
             lineNumber: line.number,
@@ -207,12 +209,22 @@ export function getNextLineDeparture(
   }
 
   // No run at all: the line does not serve this stop today.
-  const fallback = parseTimeToMinutes(line.firstDeparture) + dayOffset + MINUTES_PER_DAY;
+  // The next departure is on the next day the line runs, which is not always tomorrow: a
+  // weekday-only line asked about on a Saturday was offered at "tomorrow 07:19", a Sunday.
+  // A line that runs on no day at all keeps tomorrow rather than nothing.
+  let daysAhead = 1;
+  for (; daysAhead < 7; daysAhead++) {
+    const then = new Date(now);
+    then.setDate(then.getDate() + daysAhead);
+    if (lineRunsOn(line, dayKind(then))) break;
+  }
+  if (daysAhead === 7) daysAhead = 1;
+  const fallback = parseTimeToMinutes(line.firstDeparture) + dayOffset + daysAhead * MINUTES_PER_DAY;
   return {
     departureMinutes: Math.round(fallback),
     waitMinutes: Math.max(0, Math.round(fallback - targetMinutes)),
     isServiceActive: false,
-    serviceNotice: t.notRunningToday(line.number, daysLabel(line, lang)),
+    serviceNotice: t.notRunningToday(line.number, daysLabel(line, lang)) + (isHoliday(now) ? ` ${translations(lang).lines.holidayToday}` : ''),
     precision,
   };
 }
