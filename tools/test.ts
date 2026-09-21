@@ -257,9 +257,7 @@ ok('every drawn bus stays on its own route', () => {
     for (const bus of fleet) {
       const line = BUS_LINES.find((l) => l.id === bus.lineId)!;
       const dir = line.directions.find((d) => d.id === bus.direction)!;
-      const nearest = Math.min(
-        ...dir.pathCoordinates.map(([lat, lng]) => getDistanceMeters(lat, lng, bus.currentLat, bus.currentLng)),
-      );
+      const nearest = Math.min(...dir.pathCoordinates.map(([lat, lng]) => getDistanceMeters(lat, lng, bus.currentLat, bus.currentLng)));
       assert(nearest < 60, `line ${bus.lineNumber} is ${Math.round(nearest)} m off its route at ${hour}:25`);
     }
   }
@@ -592,9 +590,7 @@ ok('a better-connected stop a short walk away is considered', () => {
   const options = planTrips('Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)', { now: midday });
   const withBus = options.filter((p) => p.segments.some((s) => s.type === 'bus'));
   assert(withBus.length > 1, 'expected several bus itineraries');
-  const boardingStops = new Set(
-    withBus.map((p) => p.segments.find((s) => s.type === 'bus')?.fromStop?.id),
-  );
+  const boardingStops = new Set(withBus.map((p) => p.segments.find((s) => s.type === 'bus')?.fromStop?.id));
   assert(boardingStops.size > 1, 'every itinerary boards at the same stop');
 });
 
@@ -617,15 +613,11 @@ ok('every published claim is backed by the row that names that stop', () => {
     for (const kind of ['laborable', 'sabado', 'domingo'] as const) {
       const pattern = line.services.find((p) => p.days.includes(kind));
       line.directions.forEach((direction, i) => {
-        const names = direction.stops.map(
-          (id) => BUS_STOPS.find((s) => s.id === id)?.name ?? id,
-        );
+        const names = direction.stops.map((id) => BUS_STOPS.find((s) => s.id === id)?.name ?? id);
         for (const run of buildRuns(line, i, BUS_STOPS, kind)) {
           for (const index of run.publishedStopIndices) {
             const at = formatMinutes(run.minutesByStopIndex[index]);
-            const backing = (pattern?.rows ?? []).some(
-              (row) => anchorIndex(row.timingPoint, names) === index && row.times.includes(at),
-            );
+            const backing = (pattern?.rows ?? []).some((row) => anchorIndex(row.timingPoint, names) === index && row.times.includes(at));
             assert(backing, `${line.number}/${direction.id}/${kind}: "${names[index]}" claims official ${at}, but no printed row for that stop shows it`);
           }
         }
@@ -679,10 +671,7 @@ ok('only real timing points are called published', () => {
   for (const stop of BUS_STOPS) {
     for (const arrival of getArrivalsForStop(stop.id, midday).arrivals) {
       const line = BUS_LINES.find((l) => l.id === arrival.lineId)!;
-      const dirIndex = Math.max(
-        0,
-        line.directions.findIndex((d) => d.destination === arrival.destination),
-      );
+      const dirIndex = Math.max(0, line.directions.findIndex((d) => d.destination === arrival.destination));
       const direction = line.directions[dirIndex];
       const stopIndex = direction.stops.indexOf(stop.id);
       const runs = buildRuns(line, dirIndex, BUS_STOPS, 'laborable');
@@ -984,9 +973,7 @@ ok('the options offered are visibly different from each other', () => {
     const a = urban[(i * 37) % urban.length];
     const b = urban[(i * 91 + 13) % urban.length];
     if (a.id === b.id) continue;
-    const labels = planTrips(a.name, b.name, { now }).map(
-      (p) => p.segments.filter((s) => s.type === 'bus').map((s) => s.line!.number).join('>') || 'walk',
-    );
+    const labels = planTrips(a.name, b.name, { now }).map((p) => p.segments.filter((s) => s.type === 'bus').map((s) => s.line!.number).join('>') || 'walk');
     assert(new Set(labels).size === labels.length, `duplicate option "${labels.join(', ')}"`);
   }
 });
@@ -1712,10 +1699,7 @@ ok('no colour is written straight into a class name', () => {
   // crept back, invisible to a sweep that only knew bg- and text-. This is the ratchet.
   const FAMILY = /bg|text|border|ring|fill|stroke|from|via|to|divide|outline|shadow|placeholder/;
   const HUE = /slate|gray|zinc|neutral|stone|blue|sky|indigo|amber|yellow|orange|green|emerald|teal|red|rose|pink|purple|violet/;
-  const PALETTE = new RegExp(
-    String.raw`\b(?:${FAMILY.source})(?::[a-z-]+)?-(?:${HUE.source})-\d{2,3}\b`,
-    'g',
-  );
+  const PALETTE = new RegExp(String.raw`\b(?:${FAMILY.source})(?::[a-z-]+)?-(?:${HUE.source})-\d{2,3}\b`, 'g');
 
   const offenders: string[] = [];
   for (const file of sourcesUnder('src')) {
@@ -2316,9 +2300,7 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
     `<item><title>${title}</title><description>${description}</description>` +
     `<pubDate>${when}</pubDate><link>https://concellodelugo.gal/x</link></item>`;
 
-  const wanted = extractConcelloNotices(
-    feed(item('El Ayuntamiento informa de los cortes de tráfico para este sábado con motivo de la carrera', recent)),
-  );
+  const wanted = extractConcelloNotices(feed(item('El Ayuntamiento informa de los cortes de tráfico para este sábado con motivo de la carrera', recent)));
   assert(wanted.length === 1, `a headline announcing closures yielded ${wanted.length} notices, expected 1`);
   assert(wanted[0].source === 'concello', 'a city notice has to say it came from the city');
 
@@ -2329,29 +2311,17 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
 
   // Matching the body as well as the headline let two of these through when it was first
   // written: a police communiqué and a speech, both of which mention the streets.
-  const aside = extractConcelloNotices(
-    feed(item('Comunicado de prensa da Policía Local', recent, 'houbo cortes de tráfico e obras na rúa')),
-  );
+  const aside = extractConcelloNotices(feed(item('Comunicado de prensa da Policía Local', recent, 'houbo cortes de tráfico e obras na rúa')));
   assert(aside.length === 0, `a headline that is not about getting around yielded ${aside.length} notices`);
 
   // A road-safety agreement with the traffic authority reached the screen because "tráfico"
   // was in the vocabulary; only an event word means something changed for getting around.
-  const institution = extractConcelloNotices(
-    feed(
-      item(
-        'El Ayuntamiento y la Jefatura Provincial de Tráfico de Lugo firmarán un acuerdo ' +
-          'para impulsar los cursos de educación vial',
-        recent,
-      ),
-    ),
-  );
+  const institution = extractConcelloNotices(feed(item('El Ayuntamiento y la Jefatura Provincial de Tráfico de Lugo firmarán un acuerdo para impulsar los cursos de educación vial', recent)));
   assert(institution.length === 0, `an agreement about road-safety courses yielded ${institution.length} notices`);
 
   // "Apertura" was in the vocabulary for a demand that a street be reopened: a position, not
   // a change on the street.
-  const reopening = extractConcelloNotices(
-    feed(item('El Ayuntamiento exige a Adif la apertura inmediata al tráfico de la calle Conde Fontao', recent)),
-  );
+  const reopening = extractConcelloNotices(feed(item('El Ayuntamiento exige a Adif la apertura inmediata al tráfico de la calle Conde Fontao', recent)));
   assert(reopening.length === 0, `a demand about a street yielded ${reopening.length} notices`);
 
   // A closure is news for about a week. The race closures published on a Thursday were
@@ -2363,15 +2333,7 @@ ok("the city's traffic feed is read for closures and diversions, and for nothing
 
   // The body arrives entity-encoded, so stripping tags does nothing and the reader saw
   // `&lt;div class=...&gt;` in a line that pushed the card off the screen.
-  const encoded = extractConcelloNotices(
-    feed(
-      item(
-        'Corte de tráfico na rúa Nova',
-        recent,
-        '&lt;div class=&quot;field&quot;&gt;&lt;p&gt;A rúa estará cortada&lt;/p&gt;&lt;/div&gt;',
-      ),
-    ),
-  );
+  const encoded = extractConcelloNotices(feed(item('Corte de tráfico na rúa Nova', recent, '&lt;div class=&quot;field&quot;&gt;&lt;p&gt;A rúa estará cortada&lt;/p&gt;&lt;/div&gt;')));
   assert(encoded.length === 1, 'the encoded item did not come through at all');
   assert(!/[<>]|&[a-z]+;/i.test(encoded[0].description), `markup survived into the description: "${encoded[0].description}"`);
   assert(encoded[0].description === 'A rúa estará cortada', `expected the prose alone, got "${encoded[0].description}"`);
@@ -2743,10 +2705,7 @@ ok('the published timing points still anchor as many stops as they can', () => {
       const runs = buildRuns(line, di, BUS_STOPS, 'laborable');
       if (!runs.length) return;
       directions++;
-      const anchors = runs.reduce<number[]>(
-        (best, r) => (r.publishedStopIndices.length > best.length ? r.publishedStopIndices : best),
-        [],
-      );
+      const anchors = runs.reduce<number[]>((best, r) => (r.publishedStopIndices.length > best.length ? r.publishedStopIndices : best), []);
       if (anchors.length > 1) anchored++;
       const first = anchors[0] ?? 0;
       const last = anchors[anchors.length - 1] ?? 0;
@@ -2767,9 +2726,7 @@ ok('a line runs on the days the operator says it runs, and on no others', () => 
   // Sixteen directions run no Sunday expeditions and an audit on a Sunday cannot tell that
   // from buildRuns dropping them; the operator's own sentence per line settles it.
   const raw = JSON.parse(read('data/official-raw.json'));
-  const source = new Map<string, { days: string }>(
-    (raw.lines as { id: string; days: string }[]).map((l) => [l.id, l]),
-  );
+  const source = new Map<string, { days: string }>((raw.lines as { id: string; days: string }[]).map((l) => [l.id, l]));
 
   let weekdayOnly = 0;
   let everyDay = 0;
@@ -2778,14 +2735,8 @@ ok('a line runs on the days the operator says it runs, and on no others', () => 
     assert(said, `${line.number} is in the dataset but not in the scrape`);
 
     const built = new Set((line.services ?? []).flatMap((s) => s.days));
-    const sundayRuns = line.directions.reduce(
-      (n, _, i) => n + buildRuns(line, i, BUS_STOPS, 'domingo').length,
-      0,
-    );
-    const weekdayRuns = line.directions.reduce(
-      (n, _, i) => n + buildRuns(line, i, BUS_STOPS, 'laborable').length,
-      0,
-    );
+    const sundayRuns = line.directions.reduce((n, _, i) => n + buildRuns(line, i, BUS_STOPS, 'domingo').length, 0);
+    const weekdayRuns = line.directions.reduce((n, _, i) => n + buildRuns(line, i, BUS_STOPS, 'laborable').length, 0);
     assert(weekdayRuns > 0, `${line.number} produces no weekday expedition at all`);
 
     if (/laborable/i.test(said!)) {
@@ -2809,9 +2760,7 @@ ok('every stop the operator lists is on the route, or dropped for a stated reaso
   // from lost stops. Rebuilt from the scrape, every listed stop is kept or dropped for one of
   // two countable reasons; it found a fourteen-line pole missing from line 13's return.
   const raw = JSON.parse(read('data/official-raw.json'));
-  const source = new Map<string, { directions: { stops: number[] }[] }>(
-    (raw.lines as { id: string; directions: { stops: number[] }[] }[]).map((l) => [l.id, l]),
-  );
+  const source = new Map<string, { directions: { stops: number[] }[] }>((raw.lines as { id: string; directions: { stops: number[] }[] }[]).map((l) => [l.id, l]));
 
   const canonicalByPs = new Map<number, string>();
   for (const stop of BUS_STOPS) for (const ps of stop.officialIds ?? []) canonicalByPs.set(ps, stop.id);
