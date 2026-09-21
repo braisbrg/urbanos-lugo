@@ -396,9 +396,7 @@ async function longSession(browser: Browser): Promise<void> {
   const after = await footprint(page);
   const probe = await probeOf(page);
 
-  const screen = await page.evaluate<{ heading: string; ticks: number; intervals: number }>(
-    `({ heading: (document.querySelector('h2, h1') || {}).textContent || '', ticks: Number((document.querySelector('[data-tick]') || {}).dataset ? document.querySelector('[data-tick]').dataset.tick : -1), intervals: window.__probe.intervals })`,
-  );
+  const screen = await page.evaluate<{ heading: string; intervals: number }>(`({ heading: (document.querySelector('h2, h1') || {}).textContent || '', intervals: window.__probe.intervals })`);
   report('what was on screen', screen.heading.slice(0, 34), `${screen.intervals} intervals live`);
   report('endpoint answers served', `${served}`, `${(served / minutes).toFixed(1)} a minute`);
   report('DOM nodes', `${after.nodes - before.nodes}`, `${before.nodes} -> ${after.nodes}`);

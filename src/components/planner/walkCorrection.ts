@@ -2,10 +2,9 @@ import type { RoutePlanResult } from '../../types';
 import { formatMinutes, parseTimeToMinutes } from '../../utils/schedule';
 import { estimateWalk } from '../../utils/places';
 import { getDistanceMeters } from '../../utils/geo';
-import { WalkingPath, walkHopKey, walkHopsOf } from '../../services/walkingPath';
+import { WalkingPath, WalkPaths, walkHopKey, walkHopsOf } from '../../services/walkingPath';
 
 export type Point = { lat: number; lng: number; name: string };
-export type WalkPaths = Record<string, WalkingPath | null>;
 export interface Endpoints {
   origin?: Point;
   destination?: Point;

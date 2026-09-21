@@ -6,7 +6,9 @@ import { SectionLabel } from './ui/SectionLabel';
 import { useT } from '../i18n';
 import { TripCompanion, useTripPosition } from '../hooks/useTripCompanion';
 import { ALARM_RADIUS_M } from '../services/stopAlarm';
-import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
+import { walkHopsOf } from '../services/walkingPath';
+import { useWalkPaths } from '../hooks/useWalkPaths';
+import { useClock } from '../hooks/useClock';
 import { formatMinutes, minutesNow } from '../utils/schedule';
 import { currentLeg, legTimes, shouldAskIfMissed, tripPhase, tripProgress } from '../utils/tripProgress';
 
@@ -29,28 +31,12 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
   const { trip } = companion;
   // The position comes from its own store, so a fix redraws this screen and nothing above it.
   const { fix, gpsError } = useTripPosition();
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const tick = setInterval(() => setNow(new Date()), TICK_MS);
-    return () => clearInterval(tick);
-  }, []);
+  const now = useClock(TICK_MS);
   const progress = useMemo(() => (trip ? tripProgress(trip.plan, fix, new Set(trip.seen)) : null), [trip, fix]);
 
   // The real pavement for every walked hop, routed on the device and not carried in the stored trip.
-  const [walkPaths, setWalkPaths] = useState<Record<string, WalkingPath | null>>({});
   const hops = useMemo(() => walkHopsOf(trip?.plan ?? null, trip?.origin ?? undefined, trip?.destination ?? undefined), [trip?.plan, trip?.origin, trip?.destination]);
-  useEffect(() => {
-    if (!hops.length) return;
-    const controller = new AbortController();
-    for (const [a, b] of hops) {
-      fetchWalkingPath(a, b, controller.signal)
-        .then((path) => {
-          if (!controller.signal.aborted) setWalkPaths((prev) => ({ ...prev, [walkHopKey(a, b)]: path }));
-        })
-        .catch(() => {});
-    }
-    return () => controller.abort();
-  }, [hops]);
+  const walkPaths = useWalkPaths(hops);
 
   // Focusable so the mode's arrival is announced; start at the top, which is where the answer is.
   const headingRef = useRef<HTMLHeadingElement>(null);

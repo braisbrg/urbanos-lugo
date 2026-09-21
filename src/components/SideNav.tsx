@@ -1,18 +1,14 @@
 import { asideSections, navSections, type Tab } from './navSections';
 import { tabLink } from '../hooks/useTabRoute';
-import type { ThemeChoice } from '../hooks/useTheme';
-import { useT, type Lang } from '../i18n';
-import { Settings } from './ui/Settings';
+import { useT } from '../i18n';
+import { Settings, type SettingsProps } from './ui/Settings';
 
-interface SideNavProps {
+interface SideNavProps extends SettingsProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   alertCount: number;
   /** A ride is being followed: the Ruta row says so from any other section. */
   tripActive?: boolean;
-  setLang: (lang: Lang) => void;
-  theme: ThemeChoice;
-  setTheme: (choice: ThemeChoice) => void;
 }
 
 const row = (on: boolean) => `flex h-11 items-center gap-3 rounded-control px-3 text-left text-body ${on ? 'bg-ink font-semibold text-bg' : 'font-medium text-ink-2'}`;
@@ -22,7 +18,7 @@ const row = (on: boolean) => `flex h-11 items-center gap-3 rounded-control px-3 
  * where a pointer lives instead of where a thumb reaches, with the settings at its foot.
  * Never rendered below lg.
  */
-export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = false, setLang, theme, setTheme }: SideNavProps) {
+export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = false, ...settings }: SideNavProps) {
   const t = useT();
   return (
     // A landmark, so a screen reader moving by landmark does not meet a rail with holes in it.
@@ -60,7 +56,7 @@ export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = fals
       </div>
 
       <div className="mt-auto flex flex-col gap-3 border-t border-line p-3.5">
-        <Settings theme={theme} setTheme={setTheme} setLang={setLang} />
+        <Settings {...settings} />
         <p className="px-1 text-label leading-relaxed text-ink-3">{t.menu.sourceShort}</p>
       </div>
     </aside>

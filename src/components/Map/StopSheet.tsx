@@ -5,6 +5,7 @@ import { lineById, poleCode } from '../../data/transitData';
 import { getArrivalsForStop } from '../../utils/arrivals';
 import { useT } from '../../i18n';
 import { useDialog } from '../../hooks/useDialog';
+import { useClock } from '../../hooks/useClock';
 import { LineBadge } from '../ui/LineBadge';
 import { Provenance } from '../ui/Provenance';
 
@@ -32,12 +33,8 @@ export function StopSheet({ stop, onClose, onOpenLine, onShowLinesHere, onOpenFu
   const t = useT();
   const dialogRef = useDialog(true, onClose);
 
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((n) => n + 1), REFRESH_MS);
-    return () => clearInterval(id);
-  }, []);
-  const arrivals = useMemo(() => getArrivalsForStop(stop.id).arrivals.slice(0, SHOWN), [stop.id, tick]);
+  const now = useClock(REFRESH_MS);
+  const arrivals = useMemo(() => getArrivalsForStop(stop.id, now).arrivals.slice(0, SHOWN), [stop.id, now]);
 
   const code = poleCode(stop);
   const when = (a: StopArrival) => {

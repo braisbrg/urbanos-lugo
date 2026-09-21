@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { ChevronDown, LocateFixed, SlidersHorizontal } from 'lucide-react';
 import { useT } from '../../i18n';
-import { BusStop, BusLine, ScheduledBus } from '../../types';
+import { BusStop, BusLine } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, lineById, poleCode } from '../../data/transitData';
 import { getScheduledBuses } from '../../utils/vehicles';
 import { getNearbyLines, NearbyLine } from '../../utils/places';
 import { useIsDark } from '../../hooks/useIsDark';
 import { useDialog } from '../../hooks/useDialog';
 import { useLeafletMap } from '../../hooks/useLeafletMap';
+import { useClock } from '../../hooks/useClock';
 import { useRouteGeometry } from '../../data/routeGeometry';
 import { mapColors } from './palette';
 import { RouteLayer } from './RouteLayer';
@@ -68,7 +69,8 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
   const [pickedLineIds, setPickedLineIds] = useState<string[]>(selectedLine ? [selectedLine.id] : []);
   const [preset, setPreset] = useState<Preset>('all');
   const [layers, setLayers] = useState<Record<Layer, boolean>>({ stops: true, buses: true, routes: true });
-  const [buses, setBuses] = useState<ScheduledBus[]>([]);
+  const now = useClock(3000);
+  const buses = useMemo(() => getScheduledBuses(now), [now]);
   const [nearbyLines, setNearbyLines] = useState<NearbyLine[]>([]);
   /** The stop whose neighbourhood is on show — the one whose sheet asked, not whichever screen selected one. */
   const [aroundStop, setAroundStop] = useState<BusStop | null>(null);
@@ -148,13 +150,6 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
     map.setView([selectedStop.lat, selectedStop.lng], 16, { animate: true });
     map.invalidateSize();
   }, [selectedStop, map, focus]);
-
-  useEffect(() => {
-    const update = () => setBuses(getScheduledBuses());
-    update();
-    const interval = setInterval(update, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleSelectLine = (line: BusLine) => {
     const adding = !pickedLineIds.includes(line.id);

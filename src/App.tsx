@@ -19,6 +19,7 @@ import { useFavourites, useRecentStops } from './hooks/useStoredList';
 import { useTabRoute } from './hooks/useTabRoute';
 import { useServiceAlerts } from './hooks/useServiceAlerts';
 import { useTheme } from './hooks/useTheme';
+import { useClock } from './hooks/useClock';
 import { Lang, LangContext, isLang, translations } from './i18n';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
 import type { Tab } from './routes';
@@ -86,11 +87,7 @@ export default function App() {
   const t = translations(lang);
 
   // The "no service" banner comes from the actual timetables, not from assuming the network sleeps 22:00-06:00.
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
+  const now = useClock(60_000);
   const isOutOfService = !BUS_LINES.some((l) => isLineInService(l, now));
   const firstDepartureTomorrow = useMemo(() => BUS_LINES.map((l) => l.firstDeparture).sort()[0], []);
 

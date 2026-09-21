@@ -21,8 +21,14 @@ function Row({ icon: Icon, label, children }: { icon: LucideIcon; label: string;
   );
 }
 
+export interface SettingsProps {
+  theme: ThemeChoice;
+  setTheme: (choice: ThemeChoice) => void;
+  setLang: (lang: Lang) => void;
+}
+
 /** Dark, light or automatic, and the three languages — the same two controls in the menu and the desktop rail. */
-export function Settings({ theme, setTheme, setLang }: { theme: ThemeChoice; setTheme: (choice: ThemeChoice) => void; setLang: (lang: Lang) => void }) {
+export function Settings({ theme, setTheme, setLang }: SettingsProps) {
   const t = useT();
   const lang = useLang();
   const themes: { id: ThemeChoice; label: string }[] = [

@@ -627,6 +627,8 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── useTripCompanion.ts     a viaxe en curso, por riba das pestanas
 │   │   ├── useDialog.ts            Escape, foco atrapado e foco devolto
 │   │   ├── useIsDark.ts            se a paleta escura está activa agora mesmo
+│   │   ├── useClock.ts             o reloxo, relido cada N segundos: os minutos móvense, nada se descarga
+│   │   ├── useWalkPaths.ts         o camiño a pé real de cada tramo, calculado no dispositivo
 │   │   └── useLeafletMap.ts        un mapa de Leaflet: base, tema, redimensión e nome accesible
 │   ├── utils/
 │   │   ├── schedule.ts             calendario e cadro horario

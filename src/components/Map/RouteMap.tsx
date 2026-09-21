@@ -5,7 +5,7 @@ import { escapeHtml } from '../../utils/html';
 import { RoutePlanResult, TripSegment } from '../../types';
 import { LUGO_CENTER, stopById } from '../../data/transitData';
 import { useRouteGeometry } from '../../data/routeGeometry';
-import { WalkingPath, walkHopKey } from '../../services/walkingPath';
+import { WalkPaths, walkHopKey } from '../../services/walkingPath';
 import { useIsDark } from '../../hooks/useIsDark';
 import { useLeafletMap } from '../../hooks/useLeafletMap';
 import { mapColors, stopDotStyle, userDotStyle } from './palette';
@@ -18,8 +18,7 @@ interface Place {
 
 interface RouteMapProps {
   plan: RoutePlanResult | null;
-  /** Real pedestrian routes for the plan's walking hops, keyed by walkHopKey. */
-  walkPaths?: Record<string, WalkingPath | null>;
+  walkPaths?: WalkPaths;
   origin?: Place;
   destination?: Place;
   /** Index of the leg being made right now (trip companion): drawn in full and framed, the rest faint. */

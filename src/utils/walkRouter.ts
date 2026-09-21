@@ -282,22 +282,24 @@ export async function routeOnFoot(from: [number, number], to: [number, number]):
   // What a climb costs, in the direction walked: the build stores what each street
   // actually climbs each way along its own profile, not the difference of its ends.
   const climb = (edge: number, towardsB: boolean): number => (g.up && g.down ? (towardsB ? g.up[edge] : g.down[edge]) * SECONDS_PER_METRE_CLIMBED : 0);
-  // A share of the edge's climb for the part covered at each end; where the hill sits is not stored.
-  const partialClimb = (edge: number, fromMetres: number, toMetres: number): number => {
-    if (!g.up || !g.down) return 0;
-    const share = Math.abs(toMetres - fromMetres) / (metresOf(edge) || 1);
-    return (toMetres >= fromMetres ? g.up[edge] : g.down[edge]) * share * SECONDS_PER_METRE_CLIMBED;
+  // Part of an edge, from one point on it to another: its shape, its metres and its seconds,
+  // with a share of the edge's climb for the part covered (where the hill sits is not stored).
+  const along = (edge: number, fromMetres: number, toMetres: number) => {
+    const metres = Math.abs(toMetres - fromMetres);
+    const share = metres / (metresOf(edge) || 1);
+    const climbSeconds = g.up && g.down ? (toMetres >= fromMetres ? g.up[edge] : g.down[edge]) * share * SECONDS_PER_METRE_CLIMBED : 0;
+    return { path: slice(g, edge, fromMetres, toMetres), metres, seconds: metres * secondsPerMetre(edge) + climbSeconds };
   };
+  const answer = (path: [number, number][], metres: number, seconds: number): WalkRoute => ({
+    path: [from, ...path, to],
+    meters: Math.round(metres + offMetres),
+    minutes: Math.max(1, Math.round((seconds + offSeconds) / 60)),
+  });
 
   // Both ends on the same street: no junction is involved and A* has nothing to search.
   if (start.edge === finish.edge) {
-    const metres = Math.abs(finish.metresFromA - start.metresFromA);
-    const seconds = metres * secondsPerMetre(start.edge) + partialClimb(start.edge, start.metresFromA, finish.metresFromA) + offSeconds;
-    return {
-      path: [from, ...slice(g, start.edge, start.metresFromA, finish.metresFromA), to],
-      meters: Math.round(metres + offMetres),
-      minutes: Math.max(1, Math.round(seconds / 60)),
-    };
+    const only = along(start.edge, start.metresFromA, finish.metresFromA);
+    return answer(only.path, only.metres, only.seconds);
   }
 
   const cameFrom = new Map<number, { previous: number; edge: number }>();
@@ -310,7 +312,7 @@ export async function routeOnFoot(from: [number, number], to: [number, number]):
     [g.edgeA[start.edge], start.metresFromA],
     [g.edgeB[start.edge], metresOf(start.edge) - start.metresFromA],
   ] as const) {
-    const seconds = metres * secondsPerMetre(start.edge) + partialClimb(start.edge, start.metresFromA, junction === g.edgeA[start.edge] ? 0 : metresOf(start.edge));
+    const seconds = along(start.edge, start.metresFromA, junction === g.edgeA[start.edge] ? 0 : metresOf(start.edge)).seconds;
     if (!best.has(junction) || seconds < best.get(junction)!) {
       best.set(junction, seconds);
       queue.push(junction, seconds + heuristic(junction));
@@ -360,26 +362,16 @@ export async function routeOnFoot(from: [number, number], to: [number, number]):
   chain.reverse();
   const firstJunction = node;
 
-  const path: [number, number][] = [from];
-  let metres = 0;
-  let seconds = 0;
-  const toFirst = firstJunction === g.edgeA[start.edge] ? 0 : metresOf(start.edge);
-  path.push(...slice(g, start.edge, start.metresFromA, toFirst));
-  metres += Math.abs(toFirst - start.metresFromA);
-  seconds += Math.abs(toFirst - start.metresFromA) * secondsPerMetre(start.edge) + partialClimb(start.edge, start.metresFromA, toFirst);
-
+  const head = along(start.edge, start.metresFromA, firstJunction === g.edgeA[start.edge] ? 0 : metresOf(start.edge));
+  const tail = along(finish.edge, reached === endA ? 0 : metresOf(finish.edge), finish.metresFromA);
+  const path = [...head.path];
+  let metres = head.metres;
+  let seconds = head.seconds;
   for (const step of chain) {
     const forwards = g.edgeB[step.edge] === step.node;
     path.push(...slice(g, step.edge, forwards ? 0 : metresOf(step.edge), forwards ? metresOf(step.edge) : 0));
     metres += metresOf(step.edge);
     seconds += g.edgeSeconds[step.edge] + climb(step.edge, forwards);
   }
-
-  const fromLast = reached === endA ? 0 : metresOf(finish.edge);
-  path.push(...slice(g, finish.edge, fromLast, finish.metresFromA));
-  metres += Math.abs(finish.metresFromA - fromLast);
-  seconds += Math.abs(finish.metresFromA - fromLast) * secondsPerMetre(finish.edge) + partialClimb(finish.edge, fromLast, finish.metresFromA);
-  path.push(to);
-
-  return { path, meters: Math.round(metres + offMetres), minutes: Math.max(1, Math.round((seconds + offSeconds) / 60)) };
+  return answer([...path, ...tail.path], metres + tail.metres, seconds + tail.seconds);
 }

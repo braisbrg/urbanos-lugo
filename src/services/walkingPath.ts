@@ -7,7 +7,7 @@
 import { routeOnFoot, WalkRoute } from '../utils/walkRouter';
 
 type Point = { lat: number; lng: number };
-type Hop = [[number, number], [number, number]];
+export type Hop = [[number, number], [number, number]];
 
 /** The hops a plan walks: origin to first stop, between legs, last stop to destination. */
 export function walkHopsOf(plan: { segments: { type: string; fromStop?: Point; toStop?: Point }[] } | null, origin?: Point, destination?: Point): Hop[] {
@@ -25,6 +25,8 @@ export function walkHopsOf(plan: { segments: { type: string; fromStop?: Point; t
 }
 
 export type WalkingPath = WalkRoute;
+/** Real pedestrian routes for a plan's walking hops, keyed by walkHopKey; null where there is no pedestrian route. */
+export type WalkPaths = Record<string, WalkingPath | null>;
 
 /** Identifies a walked hop. The routing and the drawing must agree on it. */
 export const walkHopKey = (from: [number, number], to: [number, number]): string =>

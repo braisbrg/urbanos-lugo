@@ -5,15 +5,17 @@ import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { LUGO_CENTER } from '../data/transitData';
 import { planTrips } from '../utils/planner';
 import { resolveLocationQuery, QUICK_DESTINATIONS } from '../utils/places';
-import { fetchWalkingPath, walkHopKey, walkHopsOf } from '../services/walkingPath';
+import { walkHopKey, walkHopsOf, type Hop } from '../services/walkingPath';
 import { useRecentRoutes } from '../hooks/useStoredList';
+import { useWalkPaths } from '../hooks/useWalkPaths';
+import { useClock } from '../hooks/useClock';
 import { boardingIsNow, type TripPlace } from '../utils/tripProgress';
 import { SectionLabel } from './ui/SectionLabel';
 import { Segmented } from './ui/controls';
 import { PlaceField, suggestionsFor, type Suggestion } from './planner/PlaceField';
 import { TripOptions } from './planner/TripOptions';
 import { Itinerary } from './planner/Itinerary';
-import { correctionFor, formatKm, measuredWalkFor, withMeasuredWalk, type Endpoints, type WalkPaths } from './planner/walkCorrection';
+import { correctionFor, formatKm, measuredWalkFor, withMeasuredWalk, type Endpoints } from './planner/walkCorrection';
 // Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 
@@ -102,35 +104,15 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const stepsRef = useRef<HTMLDivElement>(null);
 
   /** A clock for the one thing here that changes on its own: whether the first bus is within ten minutes. */
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const tick = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(tick);
-  }, []);
+  const now = useClock(30_000);
 
-  /**
-   * The real pedestrian route for every walked hop of every option on offer, routed on the
-   * device (about six milliseconds a hop). Every option, not only the open one, so the four
-   * are compared like for like. Null means there is no pedestrian route at all.
-   */
-  const [walkPaths, setWalkPaths] = useState<WalkPaths>({});
+  // Every walked hop of every option on offer, not only the open one, so the four are compared like for like.
   const allWalkHops = useMemo(() => {
-    const seen = new Map<string, [number, number][]>();
+    const seen = new Map<string, Hop>();
     for (const option of shownOptions) for (const hop of walkHopsOf(option, endpoints.origin, endpoints.destination)) seen.set(walkHopKey(hop[0], hop[1]), hop);
     return [...seen.values()];
   }, [shownOptions, endpoints]);
-  useEffect(() => {
-    if (!allWalkHops.length) return;
-    const controller = new AbortController();
-    for (const [a, b] of allWalkHops) {
-      fetchWalkingPath(a, b, controller.signal)
-        .then((path) => {
-          if (!controller.signal.aborted) setWalkPaths((prev) => ({ ...prev, [walkHopKey(a, b)]: path }));
-        })
-        .catch(() => {}); // aborted: the estimate is already on screen
-    }
-    return () => controller.abort();
-  }, [allWalkHops]);
+  const walkPaths = useWalkPaths(allWalkHops);
 
   /**
    * The options worth offering. "Todo a pé" is built from the straight line and ranked

@@ -1,10 +1,11 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Compass, History, QrCode, Route, Star, type LucideIcon } from 'lucide-react';
 import { BusLine, BusStop } from '../types';
 import { lineById, stopById } from '../data/transitData';
 import { NEARBY_STOP_LIMIT_METRES, NearbyStop, getNearbyStops } from '../utils/places';
 import { getArrivalsForStop } from '../utils/arrivals';
 import { useT } from '../i18n';
+import { useClock } from '../hooks/useClock';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { LineBadge } from './ui/LineBadge';
 
@@ -59,12 +60,7 @@ function StopRow({ stop, onSelect, trailing }: { stop: BusStop; onSelect: (stop:
  */
 export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recentStopIds, onClearRecent, onSelectStop, onOpenQrScanner }: StopHomeProps) {
   const t = useT();
-  // Minutes drift against the wall clock, so the board is recomputed rather than fetched.
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setTick((n) => n + 1), 30_000);
-    return () => clearInterval(timer);
-  }, []);
+  useClock(30_000); // the boards below recompute on every render, so a tick is enough
 
   const [nearby, setNearby] = useState<NearbyStop[]>([]);
   const [locatedAt, setLocatedAt] = useState<[number, number] | null>(null);
@@ -114,7 +110,7 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
     });
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-3.5 pb-8 pt-4" data-tick={tick}>
+    <div className="mx-auto w-full max-w-3xl px-3.5 pb-8 pt-4">
       <h2 className="flex items-center gap-2 text-title font-semibold tracking-[-0.012em]">
         <Star className="h-5 w-5 shrink-0 text-warn-ink" strokeWidth={1.8} fill="currentColor" aria-hidden="true" />
         {t.stopHome.saved}

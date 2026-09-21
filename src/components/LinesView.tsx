@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowLeft, Bus, Calendar, ChevronRight, Clock, MapPin, Route, Star, TriangleAlert } from 'lucide-react';
 import { useLang, useT } from '../i18n';
-import { BusLine, BusStop, ScheduledBus } from '../types';
+import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode, stopById } from '../data/transitData';
 import { getScheduledBuses } from '../utils/vehicles';
 import { buildRuns, dayKind, formatMinutes, minutesNow, scheduledDuration } from '../utils/schedule';
 import { daysLabel, directionLabel, frequencyLabel } from '../utils/serviceLabels';
 import { MAX_QUERY_LENGTH, matchesQuery } from '../utils/searchUtils';
 import { IconButton, Segmented } from './ui/controls';
+import { useClock } from '../hooks/useClock';
 
 /** The categories the dataset actually uses, in the order the lines declare them. */
 const CATEGORIES = [...new Set(BUS_LINES.map((l) => l.category))];
@@ -46,9 +47,9 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
   const [searchQuery, setSearchQuery] = useState('');
   /** Below lg the two columns are one screen at a time: list, then the line. */
   const [showDetail, setShowDetail] = useState(false);
-  const [buses, setBuses] = useState<ScheduledBus[]>([]);
-  /** "Which run is on the road now" is a function of the time, so it is recomputed on a plain tick. */
-  const [tick, setTick] = useState(0);
+  /** "Which run is on the road now" is a function of the time, so it follows the clock. */
+  const now = useClock(TICK_MS);
+  const buses = useMemo(() => getScheduledBuses(now), [now]);
 
   const currentLine = selectedLine || BUS_LINES[0];
 
@@ -58,16 +59,6 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
     setDirectionIndex(0);
     setShowDetail(true);
   }, [lineRequest]);
-
-  useEffect(() => {
-    const update = () => {
-      setBuses(getScheduledBuses());
-      setTick((n) => n + 1);
-    };
-    update();
-    const timer = setInterval(update, TICK_MS);
-    return () => clearInterval(timer);
-  }, []);
 
   const query = searchQuery.trim();
   const visibleLines = BUS_LINES.filter(
@@ -88,7 +79,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
     // Nothing on the road: the next one out, or the last of the day once it is over.
     const next = runs.findIndex((r) => r.minutesByStopIndex[0] >= now);
     return next >= 0 ? next : Math.max(0, runs.length - 1);
-  }, [runs, tick]);
+  }, [runs, now]);
   const runIndex = Math.min(pickedRunIndex ?? currentRunIndex, Math.max(0, runs.length - 1));
   const shownRun = runs[runIndex];
   // A hand-picked run belongs to the line and direction it was picked in.

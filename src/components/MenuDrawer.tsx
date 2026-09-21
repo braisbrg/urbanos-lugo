@@ -1,27 +1,23 @@
 import { ChevronRight, X } from 'lucide-react';
 import { useDialog } from '../hooks/useDialog';
 import { tabLink } from '../hooks/useTabRoute';
-import type { ThemeChoice } from '../hooks/useTheme';
-import { useT, type Lang } from '../i18n';
+import { useT } from '../i18n';
 import { asideSections, type Tab } from './navSections';
 import { REPO_URL } from '../project';
-import { Settings } from './ui/Settings';
+import { Settings, type SettingsProps } from './ui/Settings';
 
-interface MenuDrawerProps {
+interface MenuDrawerProps extends SettingsProps {
   open: boolean;
   onClose: () => void;
   onOpenTab: (tab: Tab) => void;
   alertCount: number;
-  setLang: (lang: Lang) => void;
-  theme: ThemeChoice;
-  setTheme: (choice: ThemeChoice) => void;
 }
 
 /**
  * Everything consulted now and then, out of the way of everything consulted every time.
  * Favourites are deliberately NOT here: they are the home screen.
  */
-export function MenuDrawer({ open, onClose, onOpenTab, alertCount, setLang, theme, setTheme }: MenuDrawerProps) {
+export function MenuDrawer({ open, onClose, onOpenTab, alertCount, ...settings }: MenuDrawerProps) {
   const t = useT();
   const dialogRef = useDialog(open, onClose);
   if (!open) return null;
@@ -57,7 +53,7 @@ export function MenuDrawer({ open, onClose, onOpenTab, alertCount, setLang, them
             </a>
           ))}
           <div className="px-3 py-2">
-            <Settings theme={theme} setTheme={setTheme} setLang={setLang} />
+            <Settings {...settings} />
           </div>
         </div>
 
