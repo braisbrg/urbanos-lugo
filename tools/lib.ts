@@ -1,7 +1,6 @@
 /**
- * What every tool used to carry its own copy of: where the repository is, JSON in and
- * out, the two statistics the reports print, the one-line-per-kind failure collector.
- * Node only — nothing in src/ imports this.
+ * What every tool needs: where the repository is, JSON in and out, the statistics the
+ * reports print, the one-line-per-kind failure collector. Node only; nothing in src/ imports this.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

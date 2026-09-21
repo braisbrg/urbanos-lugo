@@ -133,9 +133,8 @@ export function rankLandmarks(q: string): { landmark: Landmark; score: number }[
 }
 
 /**
- * What somebody typed — a stop id or code, a street, a landmark, "my location" — as a
- * place, or null when nothing matches. Null on purpose: substituting an arbitrary stop
- * used to return a confident itinerary from a place nobody asked about.
+ * What somebody typed (a stop id or code, a street, a landmark, "my location") as a place,
+ * or null when nothing matches: an arbitrary stop instead would plan a confident itinerary from a place nobody asked about.
  */
 export function resolveLocationQuery(query: string, userGps?: [number, number], lang: Lang = 'gl'): LocationResolution | null {
   const q = query.trim();

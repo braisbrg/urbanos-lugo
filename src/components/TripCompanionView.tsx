@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef } from 'react';
 import { ArrowRight, Bus, Check, Footprints, MapPin } from 'lucide-react';
 import { Provenance } from './ui/Provenance';
 import { LineBadge } from './ui/LineBadge';

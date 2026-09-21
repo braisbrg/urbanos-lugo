@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useMapZoom } from '../../hooks/useLeafletMap';
 import L from 'leaflet';
 import { escapeHtml } from '../../utils/html';
 import { BusStop } from '../../types';
@@ -49,18 +50,9 @@ export function StopLayer({ map, stops, visibleLineIds, selectedStop, showStops,
   const selectedIdRef = useRef(selectedStop?.id);
   selectedIdRef.current = selectedStop?.id;
 
-  const [rung, setRung] = useState(() => rungFor(map?.getZoom() ?? 14));
+  const rung = rungFor(useMapZoom(map));
   /** Bumped when a stop selected at a thinning zoom has no dot yet. */
   const [thinnedIn, setThinnedIn] = useState(0);
-  useEffect(() => {
-    if (!map) return;
-    const sync = () => setRung(rungFor(map.getZoom()));
-    sync();
-    map.on('zoomend', sync);
-    return () => {
-      map.off('zoomend', sync);
-    };
-  }, [map]);
 
   useEffect(() => {
     if (!map) return;

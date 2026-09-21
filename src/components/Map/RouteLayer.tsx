@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useMapZoom } from '../../hooks/useLeafletMap';
 import L from 'leaflet';
 import { translations, useLang, type Lang } from '../../i18n';
 import { escapeHtml } from '../../utils/html';
@@ -188,17 +189,7 @@ interface Arrowed {
 
 export function RouteLayer({ map, lines, visibleLineIds, emphasisLineIds = [], showRoutes, onSelectLine, onOpenLine }: RouteLayerProps) {
   const lang = useLang();
-  // Fractional, since the basemap lets the map settle at any zoom; read at the end of each gesture.
-  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 14);
-  useEffect(() => {
-    if (!map) return;
-    const sync = () => setZoom(map.getZoom());
-    sync();
-    map.on('zoomend', sync);
-    return () => {
-      map.off('zoomend', sync);
-    };
-  }, [map]);
+  const zoom = useMapZoom(map);
   // Held in refs so a fresh arrow from the parent does not redraw the map on every tick.
   const onSelectLineRef = useRef(onSelectLine);
   onSelectLineRef.current = onSelectLine;

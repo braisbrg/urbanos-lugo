@@ -1,7 +1,6 @@
 /**
- * Great-circle distance, in one place: the same Haversine used to be written out six times.
- * Two functions because the copies differed in one respect — the polyline accumulators
- * need unrounded metres, everything in the app wants whole ones.
+ * Great-circle distance, in one place. Two functions because the polyline accumulators
+ * need unrounded metres and everything in the app wants whole ones.
  */
 
 const EARTH_RADIUS_M = 6371e3;

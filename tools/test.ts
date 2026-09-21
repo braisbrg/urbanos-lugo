@@ -7,7 +7,6 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
-import { scheduledDuration } from '../src/utils/schedule';
 import { operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
 import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
@@ -20,24 +19,7 @@ import { clockDriftFromTimetable } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import type { RoutePlanResult } from '../src/types';
-import {
-  tripProgress,
-  rememberPassed,
-  AT_STOP_RADIUS_M,
-  MISSED_AFTER_MIN,
-  BOARDING_SOON_MIN,
-  boardingIsNow,
-  startTrip,
-  advanceTrip,
-  tripPhase,
-  currentLeg,
-  legTimes,
-  shouldAskIfMissed,
-  confirmBoarded,
-  missedBus,
-  packTrip,
-  unpackTrip,
-} from '../src/utils/tripProgress';
+import { tripProgress, rememberPassed, AT_STOP_RADIUS_M, MISSED_AFTER_MIN, BOARDING_SOON_MIN, boardingIsNow, startTrip, advanceTrip, tripPhase, currentLeg, legTimes, shouldAskIfMissed, confirmBoarded, missedBus, packTrip, unpackTrip } from '../src/utils/tripProgress';
 import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
 import { poleCode, FARES } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
@@ -47,16 +29,7 @@ import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
 import { routeOnFoot } from '../src/utils/walkRouter';
 import { metresBetween } from '../src/utils/geo';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
-import {
-  buildRuns,
-  handoverMinutes,
-  isWithinServiceWindow,
-  lineRunsOn,
-  parseTimeToMinutes,
-  formatMinutes,
-  anchorIndex,
-  isLineInService,
-} from '../src/utils/schedule';
+import { buildRuns, handoverMinutes, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
 import { planTrips, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
 import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';

@@ -1,8 +1,6 @@
 /**
  * The shape of a walked leg and where a plan does its walking. The answering is
- * `src/utils/walkRouter.ts`, on the device: this used to be a request to OSM's public
- * foot router, which sent the reader's own coordinates off the phone, needed a connection
- * and trickled a four-option plan out at one leg a second.
+ * `src/utils/walkRouter.ts`, on the device: nothing leaves the phone and nothing waits.
  */
 import { routeOnFoot, WalkRoute } from '../utils/walkRouter';
 

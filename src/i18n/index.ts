@@ -3,7 +3,8 @@ import { gl } from './gl';
 import { es } from './es';
 import { en } from './en';
 
-export type Lang = 'gl' | 'es' | 'en';
+export const LANGS = ['gl', 'es', 'en'] as const;
+export type Lang = (typeof LANGS)[number];
 
 /**
  * The shape every language must have, taken from the Galician dictionary: `es` and `en`
@@ -12,8 +13,6 @@ export type Lang = 'gl' | 'es' | 'en';
 export type Dict = typeof gl;
 
 const DICTIONARIES: Record<Lang, Dict> = { gl, es, en };
-
-export const LANGS: Lang[] = ['gl', 'es', 'en'];
 
 /** Short code for the toggle. */
 export const LANG_CODE: Record<Lang, string> = { gl: 'GL', es: 'ES', en: 'EN' };
@@ -24,13 +23,8 @@ export const LANG_NAME: Record<Lang, string> = { gl: 'Galego', es: 'Español', e
 /** BCP 47 tag for Intl formatting, so an English reader does not get Galician month names. */
 export const LOCALE: Record<Lang, string> = { gl: 'gl-ES', es: 'es-ES', en: 'en-GB' };
 
-export function translations(lang: Lang): Dict {
-  return DICTIONARIES[lang] ?? gl;
-}
-
-export function isLang(value: unknown): value is Lang {
-  return value === 'gl' || value === 'es' || value === 'en';
-}
+export const translations = (lang: Lang): Dict => DICTIONARIES[lang] ?? gl;
+export const isLang = (value: unknown): value is Lang => LANGS.includes(value as Lang);
 
 /**
  * The interface language, for components. Set once at the top of the app; everything

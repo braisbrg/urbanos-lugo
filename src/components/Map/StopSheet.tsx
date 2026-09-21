@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../../types';
 import { lineById, poleCode } from '../../data/transitData';

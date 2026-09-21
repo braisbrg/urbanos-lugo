@@ -87,3 +87,18 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
 
   return map;
 }
+
+/** The map's zoom, read at the end of each gesture: fractional, since the basemap lets the map settle at any zoom. */
+export function useMapZoom(map: L.Map | null): number {
+  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 14);
+  useEffect(() => {
+    if (!map) return;
+    const sync = () => setZoom(map.getZoom());
+    sync();
+    map.on('zoomend', sync);
+    return () => {
+      map.off('zoomend', sync);
+    };
+  }, [map]);
+  return zoom;
+}
