@@ -188,6 +188,14 @@ async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
 
 /** Warnings rather than notes: something is being held up, cut or withdrawn. */
 const SERIOUS = /retenc|corte|peche|suprim|desv[ií]o|cancel/i;
+/**
+ * The bell's own "nothing to report" item. On 19 September 2026 the dropdown held
+ * "No existen avisos en este momento" and this app read it as one active incident:
+ * a card saying there were no notices, a badge on the navigation counting it, and the
+ * status `active_incidents` -- the one direction the notices must never be wrong in
+ * was joined by the other. The guard below caught the empty item, not the worded one.
+ */
+const QUIET = /^no(n)?\s+(existen?|ha[iy])\s+avisos\b/i;
 
 /** "Liña 1.2", "L5", "L-4.1" — whatever the notice happens to call them. */
 function linesNamedIn(text: string): string[] {
@@ -223,7 +231,7 @@ function extractNavNotices(html: string): ServiceAlert[] {
     const text = plainText(item);
     // The dropdown holds a bare "no notices" item on a quiet day in some templates, and
     // an empty <li> in others. Neither is an incident.
-    if (text.length < 6) continue;
+    if (text.length < 6 || QUIET.test(text)) continue;
 
     notices.push({
       id: `nav-notice-${notices.length + 1}`,

@@ -29,9 +29,9 @@ Antes de abrir o PR, as catro portas que pasa a integración continua:
 pnpm run lint && pnpm test && pnpm run check:deep && pnpm run build
 ```
 
-`check:deep` fai catro peticións a servidores alleos (buslugo.com); pásao unha vez ao
-final, non en cada iteración. As ferramentas de `tools/` que len de fóra —`data:fetch`,
-`reconcile`, `compare:operator` e as demais que o README marca— non van nunca nun bucle.
+As catro son locais e deterministas; pásaas cantas veces queiras. As ferramentas de
+`tools/` que len de fóra —`data:fetch`, `reconcile`, `compare:operator`, `check:parsers` e
+as demais que o README marca— pásanse a man, unha vez, e non van nunca nun bucle.
 
 ## O que pide un cambio
 

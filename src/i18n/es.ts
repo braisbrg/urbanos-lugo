@@ -135,6 +135,7 @@ export const es: Dict = {
     newsSubtitle:
       'Notas de prensa municipales de la última semana que anuncian un corte, un desvío o una restricción. No son avisos del servicio: pueden afectar a los buses, o no.',
     sourceOperator: 'Aviso del operador',
+    seenAt: (d: string) => `Leído el ${d}`,
     sourceConcello: 'Nota de prensa del Concello',
     readInFull: 'Leer la noticia completa',
     reviewedOn: (d: string) => `Revisado el ${d}`,
@@ -425,6 +426,7 @@ export const es: Dict = {
     runOf: (index: number, total: number) => `${index} de ${total} del día`,
     backToNow: 'ahora',
     noRunsToday: 'Esta línea no presta servicio hoy.',
+    holidayToday: 'Hoy es festivo: circula el horario de domingo.',
     estimatedHint: 'Hora estimada desde la salida de cabecera y el tiempo de recorrido medido.',
     busScheduledHere: 'Según el horario, el bus estaría llegando aquí',
     viewStop: 'Ver parada',
@@ -439,6 +441,7 @@ export const es: Dict = {
     clockAhead: (h: string) => `${h} por delante`,
     clockBehind: (h: string) => `${h} por detrás`,
     viewNext: 'Próximas',
+    atTimeSummary: 'Ver el paso a otra hora',
     atTimeLabel: 'Ver el paso a las',
     showingAt: (time: string) => `Paso previsto a las ${time}, no ahora mismo.`,
     backToNow: 'Volver a ahora',

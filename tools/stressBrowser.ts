@@ -3,7 +3,7 @@
  *
  *   pnpm build && PORT=3002 pnpm start     # in another terminal
  *   pnpm measure:browser                   # everything
- *   pnpm measure:browser start             # one round: start | map | typing | session
+ *   pnpm measure:browser start             # one round: start | second | map | typing | session
  *
  * The other stress tools call the app's functions under Node. Useful, and blind to the
  * half of the cost that only exists in a browser: the bundle being parsed, a map being
@@ -35,7 +35,9 @@ let failures = 0;
 const budget = (label: string, value: number, max: number, unit = 'ms'): void => {
   const over = value > max;
   if (over) failures++;
-  report(label, `${value.toFixed(0)} ${unit}`, over ? `<-- over ${max} ${unit}` : `(budget ${max} ${unit})`);
+  // A budget under 1 is a score, not a count of milliseconds, and wants its decimals.
+  const shown = max < 1 ? value.toFixed(3) : value.toFixed(0);
+  report(label, `${shown} ${unit}`.trim(), over ? `<-- over ${max} ${unit}`.trim() : `(budget ${max} ${unit})`.replace(/ \)$/, ')'));
 };
 
 /** A page throttled to the phone, with the probe already installed. */
@@ -141,11 +143,22 @@ async function coldStart(browser: Browser): Promise<void> {
   budget('largest contentful paint', lcp, 5000);
   budget('main thread blocked (tasks over 50 ms)', blockingMs(probe), 1500);
   report('longest single task', `${worst.toFixed(0)} ms`, `${probe.longtasks.length} long tasks`);
+  // Google's "good" threshold. The number that catches a board jumping when its times
+  // land, or a banner pushing the list down after the reader has started reading it.
+  budget('cumulative layout shift', Math.round(probe.cls * 1000) / 1000, 0.1, '');
+  for (const [when, score, what] of probe.shifts.slice(0, 5)) {
+    report('  shifted', `${score.toFixed(3)}`, `at ${when} ms: ${what}`);
+  }
 
+  // Budgets on the bytes, not just a printout: a dependency bump that adds 60 KB to the
+  // entry chunk would otherwise be a bigger number in a log nobody reads. Set from the
+  // measured 186 / 192 KB with a third of headroom, and the README's table quotes them.
   const bytes = (list: typeof requests) => list.reduce((t, r) => t + r.size, 0);
   const beforePaint = requests.filter((r) => at(r.end) <= fcp);
-  report('bytes over the wire, all of them', `${(bytes(requests) / 1024).toFixed(0)} KB`, `${requests.length} requests`);
-  report('bytes that arrived before first paint', `${(bytes(beforePaint) / 1024).toFixed(0)} KB`, `${beforePaint.length} requests`);
+  budget('bytes over the wire, all of them', Math.round(bytes(requests) / 1024), 260, 'KB');
+  report('  requests', `${requests.length}`, '');
+  budget('bytes that arrived before first paint', Math.round(bytes(beforePaint) / 1024), 250, 'KB');
+  report('  requests before paint', `${beforePaint.length}`, '');
 
   console.log('\n  the whole waterfall, in the order the browser asked');
   for (const r of [...requests].sort((a, b) => a.start - b.start)) {
@@ -201,6 +214,88 @@ async function coldStart(browser: Browser): Promise<void> {
 // --------------------------------------------------------------------------------------
 // Round 2: the map tab
 // --------------------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------------------
+// Round 1b: the second visit
+// --------------------------------------------------------------------------------------
+
+/**
+ * The visit that is not cold, which for an installed app is every visit but the first.
+ *
+ * The cold start measures the network. Once the service worker has the app, the network
+ * is out of the picture and two other things decide what the reader sees: how long the
+ * parse and the first render take on a throttled phone, and whether the page they get
+ * moves after it has painted -- a static shell replaced by the app, a board that lands
+ * after the frame, a font swapping in. None of that is visible in the cold numbers,
+ * where everything arrives so late that it all paints at once.
+ *
+ * Same throttles as the cold start, the cache on, the service worker left as the cold
+ * start registered it. Bytes that still cross the wire are the ones the precache does
+ * not cover, and there should be almost none.
+ */
+async function warmStart(browser: Browser): Promise<void> {
+  console.log(`\nsecond visit -- ${CPU_THROTTLE}x CPU, Slow 4G, service worker and cache from the first`);
+
+  // Let the first visit finish installing. The precache is a couple of megabytes and on
+  // Slow 4G it is still arriving when the cold start's six seconds are up, so this waits,
+  // unthrottled, until the worker is in charge and the cache has stopped growing --
+  // which is the state every later visit actually starts from.
+  const settle = await phonePage(browser, { cpu: 1, network: false });
+  await settle.send('Network.setCacheDisabled', { cacheDisabled: false });
+  await settle.goto(BASE);
+  const cached = await settle.evaluate<number>(`(async () => {
+    if (!('serviceWorker' in navigator)) return -1;
+    await navigator.serviceWorker.ready;
+    const count = async () => { let n = 0; for (const k of await caches.keys()) n += (await (await caches.open(k)).keys()).length; return n; };
+    let last = -1;
+    for (let i = 0; i < 60; i++) {
+      const n = await count();
+      if (n > 0 && n === last) return n;
+      last = n;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    return last;
+  })()`);
+  await settle.send('Target.closeTarget', {}).catch(() => undefined);
+  report('precached by the first visit', `${cached} files`, cached > 0 ? '' : '<-- no service worker cache to visit from');
+  if (cached <= 0) failures++;
+
+  const page = await phonePage(browser);
+  await page.send('Network.setCacheDisabled', { cacheDisabled: false });
+  const fromNetwork: { url: string; size: number }[] = [];
+  const served = new Map<string, string>();
+  page.on('Network.responseReceived', (p) => {
+    const r = p.response as { url: string; fromServiceWorker?: boolean; fromDiskCache?: boolean; fromPrefetchCache?: boolean };
+    served.set(p.requestId as string, r.fromServiceWorker ? 'sw' : r.fromDiskCache || r.fromPrefetchCache ? 'cache' : 'network');
+    if (!r.fromServiceWorker && !r.fromDiskCache && !r.fromPrefetchCache) fromNetwork.push({ url: r.url, size: 0 });
+  });
+  page.on('Network.loadingFinished', (p) => {
+    if (served.get(p.requestId as string) !== 'network') return;
+    const entry = fromNetwork[fromNetwork.length - 1];
+    if (entry) entry.size = (p.encodedDataLength as number) ?? 0;
+  });
+
+  await page.goto(BASE);
+  await sleep(6000);
+  const probe = await probeOf(page);
+
+  const fcp = probe.paint['first-contentful-paint'] ?? 0;
+  budget('first contentful paint', fcp, 2500);
+  budget('main thread blocked (tasks over 50 ms)', blockingMs(probe), 1500);
+  budget('cumulative layout shift', Math.round(probe.cls * 1000) / 1000, 0.1, '');
+  for (const [when, score, what] of probe.shifts.slice(0, 5)) {
+    report('  shifted', `${score.toFixed(3)}`, `at ${when} ms: ${what}`);
+  }
+  const kinds = [...served.values()];
+  report('responses from the service worker', `${kinds.filter((k) => k === 'sw').length}`, `of ${kinds.length}`);
+  // The notices endpoint is the one request that has to leave; anything else that still
+  // crosses the wire is a file the precache should have had.
+  const stray = fromNetwork.filter((r) => !/\/api\/alerts|\/alerts(\?|$)/.test(r.url));
+  budget('bytes over the wire, beyond the notices', Math.round(stray.reduce((t, r) => t + r.size, 0) / 1024), 4, 'KB');
+  for (const r of stray.slice(0, 6)) report('  from the network', `${(r.size / 1024).toFixed(1)} KB`, r.url.replace(BASE, ''));
+
+  await page.send('Target.closeTarget', {}).catch(() => undefined);
+}
 
 /** Click one of the bottom-nav destinations by its visible label. */
 const tapNav = (page: Session, label: string): Promise<boolean> =>
@@ -562,7 +657,7 @@ async function main(): Promise<void> {
   }
   console.log(`\nbrowser: ${executable}`);
 
-  const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, map: mapTab, typing, session: longSession };
+  const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, session: longSession };
   const asked = process.argv[2];
   const chosen = asked ? [asked] : Object.keys(rounds);
   for (const name of chosen) {

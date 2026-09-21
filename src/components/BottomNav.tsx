@@ -23,12 +23,26 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, tripActive = false, lang }) => {
   const t = translations(lang);
   const items = navSections(t);
+  // -1 on the two screens the bar does not list (notices, fares): the mark hides.
+  const current = items.findIndex((item) => item.id === activeTab);
 
   return (
     <nav
-      className="sticky bottom-0 z-[1200] flex border-t border-line bg-bg pb-1.5 lg:hidden"
+      className="relative sticky bottom-0 z-[1200] flex border-t border-line bg-bg pb-1.5 lg:hidden"
       aria-label={t.nav.main}
     >
+      {/* The mark slides from the tab you left to the one you chose (200 ms), which is the
+          whole of what a tab change looks like: the screens themselves do not move.
+          `aria-current` below is what says which tab is on; this is only the drawing. */}
+      <span
+        aria-hidden="true"
+        className="absolute -top-px left-0 h-0.5 bg-accent transition-transform duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+        style={{
+          width: `${100 / items.length}%`,
+          transform: `translateX(${Math.max(current, 0) * 100}%)`,
+          opacity: current < 0 ? 0 : 1,
+        }}
+      />
       {items.map(({ id, Icon, label }) => {
         const on = activeTab === id;
         return (
@@ -36,8 +50,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, t
             key={id}
             {...tabLink(id, setActiveTab)}
             aria-current={on ? 'page' : undefined}
-            className={`flex h-[60px] flex-1 flex-col items-center justify-center gap-1 border-t-2 transition-colors ${
-              on ? 'border-accent text-accent' : 'border-transparent text-ink-3'
+            className={`flex h-[60px] flex-1 flex-col items-center justify-center gap-1 transition-colors ${
+              on ? 'text-accent' : 'text-ink-3'
             }`}
           >
             <span className="relative">

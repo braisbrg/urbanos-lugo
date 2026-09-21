@@ -345,6 +345,7 @@ export default function App() {
         }}
         onOpenQrScanner={() => setIsQrModalOpen(true)}
         onOpenMenu={() => setIsMenuOpen(true)}
+        alertCount={alerts.announcedIncidents}
         lang={lang}
       />
 
@@ -359,7 +360,9 @@ export default function App() {
           The festival sentence stays. It is what keeps "no service" from being a lie on the
           night of San Froilán -- the operator runs extra buses and only ever announces them
           as a notice -- so it is shortened and pointed at the notices, never dropped. */}
-      {isOutOfService && !isNightBannerDismissed && (
+      {isOutOfService && (
+        <div className={`fold ${isNightBannerDismissed ? 'fold-closed' : ''}`}>
+        <div>
         <div className="flex items-center gap-1 border-b border-line bg-surface pl-3.5 pr-1">
           <button
             onClick={() => setActiveTab('info')}
@@ -386,10 +389,12 @@ export default function App() {
             <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
+        </div>
+        </div>
       )}
 
       {/* Main Content Area */}
-      <main id="contido" className="min-h-0 flex-1 overflow-y-auto">
+      <main id="contido" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         {/* One heading for the page, naming what is on screen.
             The desktop lays two panes side by side, so any per-pane <h1> gave the reader
             two of them on the stops tab and an H2 > H1 outline on lines. A single
@@ -420,7 +425,10 @@ export default function App() {
                 lang={lang}
               />
             </div>
-            <div className={`lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
+            {/* In from the right when it takes the list's place, like every push on a
+                phone; the way back is not animated, because going back wants to be quick.
+                From lg up the two panes never take turns, so there is nothing to push. */}
+            <div className={`anim-push-in lg:animate-none lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
               <StopArrivalsView
                 selectedStop={selectedStop}
                 onSelectLine={(line) => {

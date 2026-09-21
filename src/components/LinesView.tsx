@@ -14,9 +14,10 @@ import { Lang, translations } from '../i18n';
 import { BusLine, BusStop, ScheduledBus } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode } from '../data/transitData';
 import { getScheduledBuses } from '../utils/vehicles';
-import { buildRuns, dayKind, formatMinutes, minutesNow, scheduledDuration } from '../utils/schedule';
+import { buildRuns, dayKind, formatMinutes, isHoliday, minutesNow, scheduledDuration } from '../utils/schedule';
 import { daysLabel, directionLabel, frequencyLabel } from '../utils/serviceLabels';
 import { MAX_QUERY_LENGTH, matchesQuery } from '../utils/searchUtils';
+import { SaveStar } from './ui/SaveStar';
 
 /** The categories the dataset actually uses, in the order the lines declare them. */
 const CATEGORIES = [...new Set(BUS_LINES.map((l) => l.category))];
@@ -232,7 +233,13 @@ export const LinesView: React.FC<LinesViewProps> = ({
                             <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0 self-center" />
                           )}
                         </div>
-                        <div className="text-label text-ink-2 mt-0.5 flex min-w-0 items-center gap-2">
+                        {/* Wrapping, for the reader with the type at twice the size: the
+                            frequency and the running-bus badge are both shrink-0, and at
+                            200% they ran 42 px past the right edge of a 390 px phone --
+                            found by the audit's large-text pass, and the badge's own
+                            sr-only text, absolutely positioned out there, was what made
+                            the whole page scroll sideways. */}
+                        <div className="text-label text-ink-2 mt-0.5 flex min-w-0 flex-wrap items-center gap-2">
                           <span className="shrink-0">{frequencyLabel(line, lang)}</span>
                           <span className="shrink-0">&bull;</span>
                           <span className="truncate">{daysLabel(line, lang)}</span>
@@ -266,7 +273,7 @@ export const LinesView: React.FC<LinesViewProps> = ({
         </div>
 
         <div
-          className={`space-y-4 lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? '' : 'hidden'}`}
+          className={`anim-push-in space-y-4 lg:animate-none lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? '' : 'hidden'}`}
         >
           <button
             onClick={() => setShowDetail(false)}
@@ -311,23 +318,13 @@ export const LinesView: React.FC<LinesViewProps> = ({
 
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 {onToggleFavoriteLine && (
-                  <button
-                    onClick={() => onToggleFavoriteLine(currentLine.id)}
-                    aria-pressed={favoriteLineIds.includes(currentLine.id)}
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-control border ${favoriteLineIds.includes(currentLine.id) ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-bg text-ink-2'}`}
-                    title={
-                      favoriteLineIds.includes(currentLine.id)
-                        ? t.lines.unsaveLine
-                        : t.lines.saveLine
-                    }
-                  >
-                    <Star
-                      className="h-4.5 w-4.5"
-                      strokeWidth={1.8}
-                      fill={favoriteLineIds.includes(currentLine.id) ? 'currentColor' : 'none'}
-                      aria-hidden="true"
-                    />
-                  </button>
+                  <SaveStar
+                    key={currentLine.id}
+                    on={favoriteLineIds.includes(currentLine.id)}
+                    onToggle={() => onToggleFavoriteLine(currentLine.id)}
+                    label={favoriteLineIds.includes(currentLine.id) ? t.lines.unsaveLine : t.lines.saveLine}
+                    className="bg-bg"
+                  />
                 )}
                 <button
                   id="btn-view-line-map"
@@ -516,10 +513,18 @@ export const LinesView: React.FC<LinesViewProps> = ({
             ) : (
               <div className="p-2.5 rounded-control bg-surface border border-edge text-label font-semibold text-ink-2">
                 {t.lines.noRunsToday}
+                {/* A weekday-only line on a holiday Monday: without the reason, "does not
+                    run today" reads as a mistake on a day that looks like any Monday. */}
+                {isHoliday(new Date()) && <span className="block mt-1 font-normal">{t.lines.holidayToday}</span>}
               </div>
             )}
 
-            <div className="relative pl-6 space-y-1.5 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-surface">
+            {/* Keyed on the direction so the other way's stops fade in as a new list rather
+                than the rows changing names under the eye. */}
+            <div
+              key={directionIdx}
+              className="anim-fade relative pl-6 space-y-1.5 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-surface"
+            >
               {direction.stops.map((stopId, idx) => {
                 const stop = BUS_STOPS.find((s) => s.id === stopId);
                 if (!stop) return null;

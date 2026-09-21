@@ -21,7 +21,7 @@
  *
  * Run by hand, not a gate: it needs a built server, and the timings are this machine's.
  */
-import alertSnapshot from '../src/data/alerts.json';
+import alertSnapshot from '../public/alerts.json';
 import { translations } from '../src/i18n';
 import { findChromium, launch, sleep, type Browser, type Session } from './cdp';
 

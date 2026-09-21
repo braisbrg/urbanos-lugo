@@ -5,9 +5,21 @@ Monbus or the Concello de Lugo; it reads what the operator publishes. Where a ti
 matters, the operator's own page is the authority.
 
 The MIT licence in `LICENSE` covers the source code. The datasets are not the authors'
-to relicense, and each has its own provenance. They sit in two places: `src/data/` is
-what ships to the browser, and `data/` holds the snapshots the generator reads. The split
-is about what reaches the bundle, not about terms — everything below applies to both.
+to relicense, and each has its own provenance. They sit in three places: `src/data/` is
+what ships in the bundle, `public/alerts.json` is the one file that ships beside it (the
+service-notice snapshot, refreshed on every scheduled build and kept out of the bundle so
+that a refresh renames no chunk), and `data/` holds the snapshots the generator reads.
+The split is about what reaches the bundle, not about terms — everything below applies
+to all three.
+
+## Public holidays — Diario Oficial de Galicia
+
+`src/data/festivos.json` lists, per year, the days the operator runs its Sunday timetable
+on that are not Sundays: the regional calendar (a decree in the DOG each spring) and the
+two local holidays of Lugo (a resolution in the DOG each autumn). Each year carries the
+DOG entries it was read from. Legal texts are not subject to copyright in Spain (Ley de
+Propiedad Intelectual, art. 13). The file has to be extended by hand every year, and
+`tools/test.ts` fails once the current year is missing, which is the reminder.
 
 ## Timetables and stops — buslugo.com (AULUSA / Grupo Monbus)
 

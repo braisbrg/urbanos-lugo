@@ -13,6 +13,7 @@
  */
 import { BUS_STOPS } from '../src/data/transitData';
 import { planTrips } from '../src/utils/planner';
+import { dayKind, lineRunsOn } from '../src/utils/schedule';
 
 const violations: string[] = [];
 const seen = new Set<string>();
@@ -29,12 +30,21 @@ const toMinutes = (hhmm: string): number => {
 };
 
 const HOURS = [7, 9, 12, 15, 18, 21, 23];
+// A Wednesday with the full spread, and a Saturday and a Sunday with a third of it: the
+// weekend is where lines stop running, and a plan that rides one of them is wrong in a
+// way no weekday sweep can see.
+const DAYS: [Date, number][] = [
+  [new Date(2026, 7, 19), 90],
+  [new Date(2026, 7, 22), 30],
+  [new Date(2026, 7, 23), 30],
+];
 let planned = 0;
 let offered = 0;
-
-for (const hour of HOURS) {
-  const at = new Date(2026, 7, 19, hour, 20, 0);
-  for (let i = 0; i < 90; i++) {
+for (const [day, pairs] of DAYS) for (const hour of HOURS) {
+  const at = new Date(day);
+  at.setHours(hour, 20, 0, 0);
+  const kind = dayKind(at);
+  for (let i = 0; i < pairs; i++) {
     // A spread of pairs rather than neighbours: prime strides walk the whole list.
     const from = BUS_STOPS[(i * 53 + hour * 7) % BUS_STOPS.length];
     const to = BUS_STOPS[(i * 131 + hour * 11 + 17) % BUS_STOPS.length];
@@ -44,7 +54,7 @@ for (const hour of HOURS) {
     const plans = planTrips(from.name, to.name, { now: at });
     for (const plan of plans) {
       offered++;
-      const where = `${from.name} -> ${to.name} at ${hour}:20`;
+      const where = `${from.name} -> ${to.name} at ${hour}:20 (${kind})`;
 
       for (const field of ['departureTime', 'arrivalTime'] as const) {
         if (!/^\d{1,2}:\d{2}$/.test(plan[field])) {
@@ -89,6 +99,7 @@ for (const hour of HOURS) {
       if (!plan.segments.length) fail('a plan has no segments at all', where);
 
       let busLegs = 0;
+      let lastArrival: number | null = null;
       for (const seg of plan.segments) {
         if (!['walk', 'wait', 'bus'].includes(seg.type)) fail('a segment has an unknown type', `${where}: ${seg.type}`);
         if (seg.durationMinutes < 0) fail('a segment lasts a negative time', where);
@@ -109,6 +120,41 @@ for (const hour of HOURS) {
           if (seg.line && seg.toStop && !seg.toStop.lines.includes(seg.line.id)) {
             fail('a bus segment alights from a line that does not call at that stop',
               `${where}: ${seg.line.id} at ${seg.toStop.name}`);
+          }
+          // The direction the leg names has to visit the boarding stop before the
+          // alighting stop. A leg that rides the itinerary backwards has both stops on
+          // the line and reads perfectly well on screen; only the order gives it away.
+          const direction = seg.line?.directions.find((d) => d.id === seg.directionId);
+          if (seg.line && !direction) fail('a bus segment names a direction its line does not have', `${where}: ${seg.line.id}/${seg.directionId}`);
+          if (direction && seg.fromStop && seg.toStop) {
+            const fromIndex = direction.stops.indexOf(seg.fromStop.id);
+            const toIndex = direction.stops.indexOf(seg.toStop.id);
+            if (fromIndex === -1 || toIndex === -1) {
+              fail('a bus segment boards or alights at a stop its direction does not visit', `${where}: ${seg.line?.id}/${seg.directionId} ${seg.fromStop.name} -> ${seg.toStop.name}`);
+            } else if (fromIndex >= toIndex) {
+              fail('a bus segment rides its direction backwards', `${where}: ${seg.line?.id}/${seg.directionId} ${seg.fromStop.name} (${fromIndex}) -> ${seg.toStop.name} (${toIndex})`);
+            } else if (seg.stopsCount !== undefined && seg.stopsCount !== toIndex - fromIndex) {
+              fail('a bus segment counts a different number of stops than its direction has between them', `${where}: says ${seg.stopsCount}, direction has ${toIndex - fromIndex}`);
+            }
+          }
+          // A line that does not run today may still be offered -- the planner keeps
+          // tomorrow's first buses for a reader asking late -- but never as a live plan:
+          // it has to be marked inactive and say why.
+          if (seg.line && !lineRunsOn(seg.line, kind) && (plan.isServiceActive || !plan.serviceNotice)) {
+            fail('a plan rides a line that does not run today and does not say so', `${where}: ${seg.line.id}, active ${plan.isServiceActive}, notice "${plan.serviceNotice ?? ''}"`);
+          }
+          // Every boarding time says where it came from; an unlabelled time is a bug.
+          if (seg.precision !== 'published' && seg.precision !== 'estimated') fail('a bus segment has no provenance on its boarding time', `${where}: ${seg.line?.id} "${seg.precision}"`);
+          if (seg.arrivalPrecision !== 'published' && seg.arrivalPrecision !== 'estimated') fail('a bus segment has no provenance on its alighting time', `${where}: ${seg.line?.id} "${seg.arrivalPrecision}"`);
+          // And the legs chain: nobody boards the next bus before leaving the last one.
+          if (seg.departureTime && seg.arrivalTime) {
+            const dep = toMinutes(seg.departureTime);
+            const arr = toMinutes(seg.arrivalTime);
+            if (lastArrival !== null && ((dep - lastArrival + 24 * 60) % (24 * 60)) > 12 * 60) {
+              fail('a bus segment departs before the previous one arrived', `${where}: boards ${seg.departureTime}, previous leg arrived ${lastArrival}`);
+            }
+            if (((arr - dep + 24 * 60) % (24 * 60)) > 12 * 60) fail('a bus segment arrives before it departs', `${where}: ${seg.departureTime} -> ${seg.arrivalTime}`);
+            lastArrival = arr;
           }
         }
         if (seg.type === 'walk' && (seg.walkMeters ?? 0) < 0) fail('a walk segment is negative', where);

@@ -65,12 +65,12 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
       {/* For the finger, not the Tab key: it was the first thing focus landed on, a
           full-screen button nobody can see, and the X beside the title is the same action. */}
       <button
-        className="absolute inset-0 bg-scrim"
+        className="anim-fade-full absolute inset-0 bg-scrim"
         onClick={onClose}
         aria-label={t.menu.close}
         tabIndex={-1}
       />
-      <div className="absolute inset-y-0 right-0 flex w-[306px] max-w-[85vw] flex-col border-l border-line bg-bg">
+      <div className="anim-slide-in absolute inset-y-0 right-0 flex w-[306px] max-w-[85vw] flex-col border-l border-line bg-bg">
         <div className="flex items-center justify-between border-b border-line px-[18px] py-4">
           <span className="text-emph font-semibold">{t.nav.appName}</span>
           <button

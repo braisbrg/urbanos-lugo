@@ -106,7 +106,8 @@ const emitSpaFallback = {
     if (!existsSync(built)) return;
     copyFileSync(built, path.resolve(outDir, '404.html'));
     // Each copy with its own title, description and canonical: seven identical heads
-    // read to a search engine as one page listed seven times.
+    // read to a search engine as one page listed seven times. The stops copy is the
+    // exception on purpose -- its canonical is the root, which draws the same screen.
     const html = readFileSync(built, 'utf8');
     for (const route of SITE_PATHS) {
       if (!route) continue; // the root is index.html itself
@@ -265,7 +266,9 @@ export default defineConfig({
       workbox: {
         // The geometry chunk is ~490 KB; the default 2 MB cap would drop it silently.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // json is the notices snapshot, public/alerts.json: precached so the Avisos
+        // screen has a dated answer offline, and revisioned so a refresh moves only it.
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/\/api\//],
         runtimeCaching: [

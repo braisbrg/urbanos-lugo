@@ -165,6 +165,8 @@ export const gl = {
     newsSubtitle:
       'Notas de prensa municipais da última semana que anuncian un corte, un desvío ou unha restrición. Non son avisos do servizo: poden afectar aos buses, ou non.',
     sourceOperator: 'Aviso do operador',
+    /** The operator prints no date on its notices; the only instant we have is our read. */
+    seenAt: (d: string) => `Lido o ${d}`,
     sourceConcello: 'Nota de prensa do Concello',
     readInFull: 'Ler a nova completa',
     reviewedOn: (d: string) => `Revisado o ${d}`,
@@ -466,6 +468,8 @@ export const gl = {
     runOf: (index: number, total: number) => `${index} de ${total} do día`,
     backToNow: 'agora',
     noRunsToday: 'Esta liña non presta servizo hoxe.',
+    /** Appended when today is a public holiday: a weekday that runs the Sunday timetable. */
+    holidayToday: 'Hoxe é festivo: circula o horario de domingo.',
     estimatedHint: 'Hora estimada desde a saída de cabeceira e o tempo de percorrido medido.',
     busScheduledHere: 'Segundo o horario, o bus estaría chegando aquí',
     viewStop: 'Ver parada',
@@ -480,6 +484,7 @@ export const gl = {
     clockAhead: (h: string) => `${h} por diante`,
     clockBehind: (h: string) => `${h} por detrás`,
     viewNext: 'Próximas',
+    atTimeSummary: 'Ver o paso a outra hora',
     atTimeLabel: 'Ver o paso ás',
     showingAt: (time: string) => `Paso previsto ás ${time}, non agora mesmo.`,
     backToNow: 'Volver a agora',

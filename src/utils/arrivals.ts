@@ -9,7 +9,7 @@ import { BUS_STOPS, BUS_LINES } from '../data/transitData';
 import { daysLabel } from './serviceLabels';
 import { Lang, translations } from '../i18n';
 import { BusStop, BusLine, StopArrival } from '../types';
-import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, lineRunsOn, parseTimeToMinutes } from './schedule';
+import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, isHoliday, lineRunsOn, parseTimeToMinutes } from './schedule';
 import { findStop } from './places';
 
 /**
@@ -131,7 +131,11 @@ export function getArrivalsForStop(
         .slice(0, 3);
 
       upcoming.forEach(({ minutes, published }) => {
-        const late = Math.round(nowMinutes - minutes);
+        // Late is counted from the minute the board prints, not from the half-minute an
+        // interpolated time can really fall on. Rounded separately, a run at 08:16.5 was
+        // printed as 08:17 and marked one minute overdue at 08:17:00 -- late before the
+        // time on its own row. Found by the edge probe in tools/stressInvariants.ts.
+        const late = Math.floor(nowMinutes) - Math.round(minutes);
         arrivals.push({
           lineId: line.id,
           lineNumber: line.number,
@@ -286,13 +290,27 @@ export function getNextLineDeparture(
     };
   }
 
-  // The line has no run we can place at all: it does not serve this stop today.
-  const fallback = parseTimeToMinutes(line.firstDeparture) + dayOffset + MINUTES_PER_DAY;
+  // The line has no run we can place at all: it does not serve this stop today. The
+  // next departure is on the next day it does run, which is not always tomorrow -- a
+  // weekday-only line asked about on a Saturday used to be offered at "tomorrow 07:19",
+  // a Sunday, when it does not run either. Found by the weekend pass in
+  // tools/stressPlanner.ts. Seven days is the whole calendar; a line that runs on no day
+  // at all keeps the old answer rather than none.
+  let daysAhead = 1;
+  for (; daysAhead < 7; daysAhead++) {
+    const then = new Date(now);
+    then.setDate(then.getDate() + daysAhead);
+    if (lineRunsOn(line, dayKind(then))) break;
+  }
+  if (daysAhead === 7) daysAhead = 1;
+  const fallback = parseTimeToMinutes(line.firstDeparture) + dayOffset + daysAhead * MINUTES_PER_DAY;
   return {
     departureMinutes: Math.round(fallback),
     waitMinutes: Math.max(0, Math.round(fallback - targetMinutes)),
     isServiceActive: false,
-    serviceNotice: translations(lang).engine.notRunningToday(line.number, daysLabel(line, lang)),
+    serviceNotice:
+      translations(lang).engine.notRunningToday(line.number, daysLabel(line, lang)) +
+      (isHoliday(now) ? ` ${translations(lang).lines.holidayToday}` : ''),
     precision: published ? 'published' : 'estimated',
   };
 }

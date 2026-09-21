@@ -161,6 +161,34 @@ de afirmar. Cada decisión de abaixo se tomou contra unha cifra, non contra un g
   «feito»: feito é que a viaxe desapareza ao premer «Saír da viaxe», nunha barra fixa ao
   pé, non ao fondo dunha lista de 1.348 px.
 
+## O movemento — 20 de setembro de 2026
+
+Decidido sobre un catálogo con demo de cada peza e as súas versións, non sobre a
+descrición. Catro regras, e o que quedou fóra:
+
+- **Móvese a interface, nunca un número.** Un contador que roda, un pin que late ou unha
+  ruta con formigas din «en vivo», e esta app non sabe onde está o bus. A excepción é
+  a pantalla «Vou nesta», e só porque alí a posición vén do GPS: a conta ata *un* bus
+  roda ao cambiar e a marca da seguinte parada late. No taboleiro, con quince números
+  cambiando á vez, o mesmo lería como seguimento; un check impide que o roll chegue alí.
+- **Só `opacity` e `transform`, 120–240 ms, e só de entrada.** Os cajóns, a ficha do
+  mapa e o lector QR desmóntanse ao pechar; animar a saída obrigaría a mantelos montados,
+  e un peche instantáneo é un peche que non estorba. Pregar bloques (formulario da ruta,
+  «N opcións máis», o mapa do traxecto, o aviso nocturno) vai polo truco de
+  `grid-template-rows: 0fr → 1fr`, sen medir alturas; o elemento pregado ten que ser un
+  envoltorio sen recheo, ou queda un tallo dos seus 30 px de padding e bordo.
+- **Un control segmentado compartido** (`ui/Segmented.tsx`): o taboleiro e o modo de hora
+  do planificador debuxaban cada un o seu, con dous recheos distintos. O pulgar esvara;
+  o botón premido leva o seu propio recheo en repouso, porque a auditoría de contraste
+  le o fondo do botón e non o do irmán que ten debaixo, e con recheo transparente
+  devolvía 1,00:1.
+- **Todo apágase con `prefers-reduced-motion`**, coa regra global que xa existía;
+  `audit:browser` sostén que nada segue animándose.
+- **Fóra**: fundido global ao cambiar de tema, filas do taboleiro escalonadas (cada
+  escalón atrasa o número que se vén ler), pines que crecen (son canvas), View
+  Transitions entre pestanas (o indicador que esvara di o mesmo por nada), e calquera
+  cousa no mapa, que segue na lista de abaixo.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

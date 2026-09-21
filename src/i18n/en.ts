@@ -146,6 +146,7 @@ export const en: Dict = {
     newsSubtitle:
       'Municipal press releases from the last week announcing a closure, a diversion or a restriction. Not service notices: they may reach the buses, or they may not.',
     sourceOperator: 'Notice from the operator',
+    seenAt: (d: string) => `Read on ${d}`,
     sourceConcello: 'Press release from the council',
     readInFull: 'Read the whole thing',
     reviewedOn: (d: string) => `Reviewed on ${d}`,
@@ -436,6 +437,7 @@ export const en: Dict = {
     runOf: (index: number, total: number) => `${index} of ${total} today`,
     backToNow: 'now',
     noRunsToday: 'This line does not run today.',
+    holidayToday: 'Today is a public holiday: the Sunday timetable runs.',
     estimatedHint: 'Estimated from the departure at the terminus plus the measured driving time.',
     busScheduledHere: 'On the timetable, the bus would be reaching this stop now',
     viewStop: 'See stop',
@@ -450,6 +452,7 @@ export const en: Dict = {
     clockAhead: (h: string) => `${h} ahead of`,
     clockBehind: (h: string) => `${h} behind`,
     viewNext: 'Next',
+    atTimeSummary: 'Departures at another time',
     atTimeLabel: 'Show departures at',
     showingAt: (time: string) => `Departures due at ${time}, not right now.`,
     backToNow: 'Back to now',

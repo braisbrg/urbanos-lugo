@@ -199,6 +199,99 @@
   --text-hero--line-height: 0.92;
 }
 
+/* Motion, all of it. Opacity and transform only -- they compose on the GPU -- and nothing
+   longer than 240 ms. Each class is one gesture, named for what moved rather than for
+   where it is used, so a drawer, a sheet and a search box do not each keep their own
+   copy of "come in from the edge". Enter only: the overlays unmount on close, and a close
+   that is instant is a close that gets out of the way.
+
+   None of this animates a measurement. What moves is the interface -- a panel arriving, a
+   thumb sliding, a tick appearing -- never a number that would then read as live. The one
+   pulse, `.live-dot`, marks the GPS position on the ride, which is the one thing in this
+   app that is measured. `prefers-reduced-motion` at the foot of this file stops every one
+   of them. */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+@keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes fade { from { opacity: 0.25; } }
+@keyframes fade-full { from { opacity: 0; } }
+@keyframes slide-in { from { transform: translateX(100%); } }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes push-in { from { opacity: 0; transform: translateX(24px); } }
+@keyframes scale-in { from { opacity: 0; transform: scale(0.98); } }
+@keyframes pop { 40% { transform: scale(1.32); } }
+@keyframes ring { 20% { transform: rotate(14deg); } 40% { transform: rotate(-12deg); } 60% { transform: rotate(8deg); } 80% { transform: rotate(-4deg); } }
+@keyframes tick-in { from { opacity: 0; transform: scale(0.6); } }
+@keyframes badge-in { from { transform: scale(0); } 60% { transform: scale(1.18); } }
+@keyframes roll-in { from { opacity: 0; transform: translateY(70%); } }
+@keyframes seg-reveal { from, to { background-color: transparent; } }
+@keyframes attention { from { box-shadow: 0 0 0 0 color-mix(in oklch, var(--c-accent) 55%, transparent); } to { box-shadow: 0 0 0 14px transparent; } }
+@keyframes pulse-ring { from { box-shadow: 0 0 0 0 color-mix(in oklch, var(--c-accent) 45%, transparent); } to { box-shadow: 0 0 0 10px transparent; } }
+
+@layer components {
+  .anim-rise { animation: rise 200ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-drop { animation: drop 120ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-fade { animation: fade 160ms ease-out; }
+  .anim-fade-full { animation: fade-full 200ms ease-out; }
+  .anim-slide-in { animation: slide-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-sheet-up { animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .anim-push-in { animation: push-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-scale-in { animation: scale-in 160ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-pop { animation: pop 320ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-ring { animation: ring 520ms ease-in-out; transform-origin: 50% 15%; }
+  .anim-tick-in { animation: tick-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-badge-in { animation: badge-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-roll-in { animation: roll-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-attention { animation: attention 700ms ease-out 300ms; }
+  .live-dot { border-radius: 9999px; animation: pulse-ring 2s ease-out infinite; }
+
+  /* A block that opens and closes in place: the grid-row trick, which needs no measured
+     height. Closed, the content is also invisible to the Tab key and the screen reader
+     (`visibility`), which `overflow: hidden` alone would not do. From `lg` up the planner's
+     fold stays open -- both columns fit -- so the closed state is a phone thing.
+     The item under `.fold` must be a bare wrapper: a row can shrink no further than its
+     item's own padding and border, so a padded card as the item leaves a stub of itself. */
+  /* `min-width: 0` on the item is what keeps the block inside the phone: a grid item's
+     automatic minimum is its min-content, and the planner's card -- two fields, a rail of
+     chips -- measured 929 px of it, so the card ran 553 px past the right edge of a 390 px
+     screen while the page's own scrollWidth said nothing (the screens scroll inside
+     <main>). The explicit column is the second guard for the same thing. */
+  .fold { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr; transition: grid-template-rows 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .fold > * { overflow: hidden; min-height: 0; min-width: 0; transition: visibility 220ms; }
+  .fold-closed { grid-template-rows: 0fr; }
+  .fold-closed > * { visibility: hidden; }
+  /* The planner's form: clipped only while it moves, so the suggestion lists under its
+     fields can hang past the card's edge the rest of the time. */
+  .fold-clear:not(.fold-closed):not(.fold-moving) > * { overflow: visible; }
+  @media (min-width: 64rem) {
+    .fold-lg-open.fold-closed { grid-template-rows: 1fr; }
+    .fold-lg-open > * { overflow: visible; visibility: visible; }
+  }
+
+  /* One control for "which of these views": a thumb slides to the pressed option instead
+     of the fill jumping from one button to the next. The buttons carry `aria-pressed`;
+     the thumb is decoration. `--n` options, `--i` pressed. */
+  .seg { position: relative; display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); padding: 3px; border: 1px solid var(--c-border); border-radius: var(--radius-control); }
+  .seg-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n, 2)); border-radius: calc(var(--radius-control) - 3px); background: var(--c-ink); transform: translateX(calc(var(--i, 0) * 100%)); transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .seg-btn { position: relative; z-index: 1; height: 2.75rem; border-radius: calc(var(--radius-control) - 3px); font-size: var(--text-body); font-weight: 500; color: var(--c-ink-2); transition: color 160ms; }
+  /* The pressed button carries the fill itself, but only once the thumb has arrived:
+     for the 200 ms of the slide its own fill is held transparent and the thumb is what
+     shows. At rest the fill is the button's, so a contrast audit reading the button's
+     own background finds the ink it is really on rather than the page behind it. */
+  .seg-on { color: var(--c-bg); font-weight: 600; background: var(--c-ink); animation: seg-reveal 200ms; }
+  .seg-dense .seg-btn { font-size: var(--text-label); }
+
+  /* Native <details>: the chevron turns and the body fades in; where the browser can
+     interpolate `auto`, the height opens too. Where it cannot, the first two alone. */
+  .disclosure summary .disclosure-chevron { transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .disclosure[open] summary .disclosure-chevron { transform: rotate(180deg); }
+  .disclosure[open] > :not(summary) { animation: fade-full 180ms ease-out; }
+  @supports (interpolate-size: allow-keywords) {
+    .disclosure { interpolate-size: allow-keywords; }
+    .disclosure::details-content { block-size: 0; overflow: hidden; transition: block-size 220ms cubic-bezier(0.2, 0.7, 0.2, 1), content-visibility 220ms allow-discrete; }
+    .disclosure[open]::details-content { block-size: auto; }
+  }
+}
+
 @layer base {
   html {
     color-scheme: light;

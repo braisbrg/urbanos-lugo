@@ -187,7 +187,12 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
                         isWarning ? 'bg-warn text-warn-ink' : 'bg-surface text-accent'
                       }`}
                     >
-                      {formatInstant(alert.date, LOCALE[lang])}
+                      {/* The council's feed dates its items; the operator's bell does not,
+                          so its `date` is the moment this app read the page. Shown as
+                          that, not as a bare instant a reader would take for the notice's own. */}
+                      {alert.source === 'concello'
+                        ? formatInstant(alert.date, LOCALE[lang])
+                        : t.fares.seenAt(formatInstant(alert.date, LOCALE[lang]))}
                     </span>
                     <div className="flex flex-wrap items-center gap-1 justify-end max-w-[65%]">
                       {(() => {
@@ -284,7 +289,10 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ lang, alerts }) => {
                     )}
                   </span>
                   <span>&bull;</span>
-                  <span>{t.fares.source} <a href="https://buslugo.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent underline">buslugo.com</a></span>
+                  {/* The link is one line of text, so its box was 70x16: the audit's
+                      one target under 44 px, and a thumb's miss. Padding pulled back by
+                      the same margin gives it 44 px to tap without moving the line. */}
+                  <span>{t.fares.source} <a href="https://buslugo.com" target="_blank" rel="noopener noreferrer" className="inline-block py-3.5 -my-3.5 font-semibold text-accent underline">buslugo.com</a></span>
                 </div>
               </div>
             </div>

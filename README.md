@@ -148,7 +148,8 @@ se llo negas.
 
 ### Mapa da rede
 Leaflet cunha capa vectorial de MapLibre GL sobre teselas de OpenFreeMap; nun dispositivo
-sen WebGL2 cae ás teselas ráster de OpenStreetMap. O **estilo é do repositorio**, derivado
+sen WebGL2 —ou cando o navegador perde o contexto WebGL e non o devolve en cinco
+segundos— cae ás teselas ráster de OpenStreetMap. O **estilo é do repositorio**, derivado
 do publicado por OpenFreeMap e xerado por `tools/buildMapStyle.ts`: as teselas, os sprites
 e os glifos seguen sendo os seus, as cores son nosas. Están medidas contra o que se debuxa
 enriba — as 24 cores de liña quedan a 1,45 ou máis sobre calquera das tres capas de rúa
@@ -562,6 +563,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── components/
 │   │   ├── Map/
 │   │   │   ├── TransitMap.tsx      contedor do mapa e panel lateral
+│   │   │   ├── LineChips.tsx       a tira de fichas de liña sobre o mapa, no móbil
 │   │   │   ├── RouteLayer.tsx      polilinas de percorrido
 │   │   │   ├── RouteMap.tsx        mapa dun traxecto planificado
 │   │   │   ├── StopLayer.tsx       marcadores de parada
@@ -596,7 +598,6 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   │   ├── stops.json              XERADO — o que le a app
 │   │   ├── lines.json              XERADO — o que le a app
 │   │   ├── route-geometry.json     XERADO — trazados, baixo demanda
-│   │   ├── alerts.json             INSTANTÁNEA — avisos, refrescada por CI
 │   │   ├── walk-network.json       XERADO — 21.093 cruces, 29.489 arestas
 │   │   ├── map-style-light.json    XERADO — o estilo do mapa base, paleta clara
 │   │   ├── map-style-dark.json     XERADO — o mesmo, paleta escura
@@ -649,6 +650,8 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── types.ts
 │   ├── App.tsx
 │   └── main.tsx
+├── public/                         ficheiros que van tal cal á raíz do sitio
+│   └── alerts.json                 INSTANTÁNEA — avisos, refrescada por CI; fóra do paquete a propósito
 ├── data/                           SÓ entradas da build; a app non as importa
 │   ├── official-raw.json           INSTANTÁNEA — scraping de buslugo
 │   ├── osm-routes.json             INSTANTÁNEA — relacións de OSM (Overpass)
@@ -673,7 +676,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── reconcileSelfTest.ts        insire faltas para ver se reconcile as caza
 │   ├── checkOsmGeometry.ts         SEMANAL — o trazado segue sendo o de OSM?
 │   ├── checkFares.ts               SEMANAL — as tarifas seguen sendo esas?
-│   ├── checkParsersUnchanged.ts    o HTML de fóra segue tendo a forma esperada
+│   ├── checkParsersUnchanged.ts    o HTML de fóra segue tendo a forma esperada (semanal, 4 peticións)
 │   ├── osm.ts                      Overpass, coseduras e metros restrinxidos
 │   ├── hydrateGeometry.ts          pon a xeometría viaria nas liñas, como fai o navegador
 │   ├── buildMapStyle.ts            o estilo do mapa base, derivado do par de OpenFreeMap
@@ -688,7 +691,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 ├── .github/workflows/
 │   ├── deploy-pages.yml            publica en Pages: push, por calendario e a man
 │   ├── deploy-worker.yml           publica a API en Deno Deploy, se hai token
-│   ├── check-source.yml            luns: reconcile + xeometría + tarifas
+│   ├── check-source.yml            luns: reconcile + xeometría + tarifas + analizadores
 │   ├── measure.yml                 luns: measure:browser, audit:browser e stress:network, como artefacto
 │   └── ci.yml                      en cada push: lint, test, check:deep e build
 ├── worker/                         a API que Pages non pode servir (opcional)
@@ -993,7 +996,8 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 | Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
 
 Medido o 16 de setembro de 2026 (versión 1.1.2). O anaco de entrada medra co que leva
-dentro: MapLibre 6.9, a instantánea de avisos e as cabeceiras por pestana.
+dentro: MapLibre 6.9 e as cabeceiras por pestana. A instantánea de avisos xa non vai
+nel: é un ficheiro á parte, `alerts.json`, e o motivo está xusto debaixo.
 
 A tipografía non leva columnas: o `woff2` xa vén comprimido e volver comprimilo non aforra
 nada, así que a build nin o intenta. Son dous ficheiros e non oito —son fontes variables,
@@ -1012,10 +1016,16 @@ pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planif
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
 carga de 143 KB.
 
-E cando un despregue cambia os nomes deses ficheiros debaixo dunha páxina aberta —pasa
-varias veces ao día, pola instantánea de avisos—, a páxina que pide o mapa despois de
-publicado recarga unha soa vez en lugar de amosar «a vista non se puido debuxar»; o
-service worker actualízase só e xa non ten os nomes vellos.
+E cando un despregue cambia os nomes deses ficheiros debaixo dunha páxina aberta, a
+páxina que pide o mapa despois de publicado recarga unha soa vez en lugar de amosar «a
+vista non se puido debuxar»; o service worker actualízase só e xa non ten os nomes
+vellos. Pasaba varias veces ao día, pola instantánea de avisos: ía importada no anaco de
+entrada coa hora da lectura dentro, e Rollup nomea cada anaco polo seu contido e polo
+dos que importa, así que cada refresco renomeaba seis ficheiros —medio megabyte
+comprimido— sen que cambiase unha liña de código. Dende o 19 de setembro de 2026 a
+instantánea é un ficheiro á parte (`public/alerts.json`, 1,3 KB, na precaché do service
+worker): un refresco de avisos non renomea nada, medido construíndo dúas veces coa hora
+cambiada. Só un despregue de código cambia nomes agora.
 
 ### Rigor de tipos
 
@@ -1142,6 +1152,16 @@ base de 16), así que o axuste de tamaño de letra do sistema operativo funciona
 a aplicación en lugar de quedar conxelado en píxeles. `prefers-reduced-motion` desactiva
 transicións e animacións.
 
+**Movemento.** O que se move é a interface, nunca un número. Os paneis entran polo bordo
+ao que pertencen (o menú pola dereita, a ficha de parada e a barra da viaxe por abaixo),
+os despregables abren coa frecha xirando, o control Próximas/Por liña leva un pulgar que
+esvara, e a estrela, a campá e o tick confírmanse unha vez ao activalos. Todo en CSS,
+só `opacity` e `transform`, ningunha por riba de 240 ms, e só de entrada: pechar segue
+sendo instantáneo. Unha hora nunca se anima —un número que roda parece unha medición—;
+a única excepción é a pantalla «Vou nesta», onde a conta ata un só bus roda ao cambiar
+e a marca da seguinte parada late, porque aí a posición si vén do GPS. Con
+`prefers-reduced-motion` non queda nada en movemento, e `audit:browser` compróbao.
+
 **Estado anunciado.** Os conmutadores levan `aria-pressed` (vistas do taboleiro, capas
 do mapa, filtros de liña, modo de hora, opcións de traxecto, tema e idioma) e a
 navegación usa `aria-current="page"`.
@@ -1232,7 +1252,11 @@ listado que responde 404, e as aplicacións onde se pegan os enlaces de «copiar
 saltan a vista previa cando ven un 404 — tirando xusto as etiquetas `og:` que existen
 porque eses enlaces se comparten. Son seis copias de 4,6 KB, e desde o 15 de setembro de
 2026 cada unha leva o seu título, a súa descrición e a súa canónica (`src/seo.ts`): antes
-as sete levaban as da raíz e un buscador vía unha soa páxina sete veces. As pestanas son
+as sete levaban as da raíz e un buscador vía unha soa páxina sete veces. Cunha excepción
+desde o 21 de setembro: a raíz *é* a pestana de paradas, e `/paradas/` debuxa a mesma
+pantalla, así que Search Console marcouna como «duplicada, Google elixiu outra canónica»
+—a raíz— e tiña razón. `/paradas/` apunta agora á raíz como canónica e non vai no
+sitemap, que queda en seis entradas. As pestanas son
 ligazóns (`<a href>`) que un rastrexador pode seguir, o sitemap e «copiar ligazón» usan a
 barra final para non pasar polo 301 de Pages, e a `og:image` é o icono de 512 px. Os
 slugs saen de `src/routes.ts`, que é a única lista: dela len o enrutador, o sitemap e a
@@ -1387,7 +1411,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-150 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+157 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1506,22 +1530,38 @@ pnpm lint
 
 ```bash
 pnpm build && PORT=3002 pnpm start   # noutra terminal
-pnpm run measure:browser             # start | map | typing | session
+pnpm run measure:browser             # start | second | map | typing | session
 pnpm run audit:browser               # light | dark
 pnpm run stress:network              # a API morta, con erro, lenta; e sen rede
 ```
 
 O que `pnpm test` non pode ver: un Chromium real, dirixido por `tools/cdp.ts`, acelerado
 6× e con rede «Slow 4G», contra o sitio construído. `measure:browser` mide o que custa
-arrincar, abrir o mapa, catro pasos de zoom, teclear no buscador e doce voltas entre
-pestanas, e compara cada cifra co orzamento que ten escrito ao lado, co porqué.
+arrincar en frío e —o que é cada visita dunha app instalada— en quente, co *service
+worker* xa instalado (medido: 1.360 ms ata o primeiro pintado a 6× na rolda completa, 824 só, 8 de 8 respostas do
+*worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom, teclear no
+buscador e doce voltas entre pestanas. Cada cifra compárase co orzamento que ten escrito
+ao lado, co porqué, e dende o 19 de setembro de 2026 tamén os bytes (260 KB en total,
+250 antes do primeiro pintado: unha dependencia que engorde o anaco de entrada xa non é
+un número máis nun rexistro que ninguén le) e o desprazamento de deseño acumulado (CLS,
+0,1; medido 0,000 nas dúas visitas).
 `audit:browser` mide, en doce estados e nos dous temas, o contraste de cada texto (as
-cores en `oklch()` resólvense pintándoas nun lenzo, non cunha expresión regular), os
-textos por baixo de 12 px, os obxectivos por baixo de 44 px, e o que a consola rexistra
-en cada carga fresca; e despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta
-enteira ao menú sen saír del (10 controis de 10 visitados, para que a comprobación non
-poida aprobar por non moverse), e unha viaxe planificada deixa o foco na resposta. Os
-checks de `test.ts` sobre iso len o código; estes dous len o foco. `stress:network` xoga
+cores en `oklch()` resólvense pintándoas nun lenzo, non cunha expresión regular; a
+opacidade herdada desconta, e o texto tecleado e o *placeholder* dun campo mídense polo
+seu pseudoelemento, que antes non se medían), os textos por baixo de 12 px, os obxectivos
+por baixo de 44 px, o nome accesible de cada control (un botón só con icona e sen
+`aria-label` anúnciase como «botón»: 329 controis con nome, 0 sen el), as imaxes sen
+`alt`, o `lang` do documento, que haxa un só `<h1>`, e o desbordamento lateral —do
+documento e de `<main>`, que é onde as pantallas fan scroll: o formulario da ruta chegou a
+medir 553 px máis có teléfono sen que o `scrollWidth` da páxina dixese nada— do mesmo
+estado a 320 px de ancho e co texto ao 200%, que é o que fai o axuste «texto máis grande»
+dun móbil (atopou a fila de liñas saíndo 42 px pola dereita a 200%, e o culpable era un
+`sr-only` posicionado fóra da pantalla); e o que a consola rexistra en cada carga fresca.
+Despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta enteira ao menú sen saír del
+(10 controis de 10 visitados, para que a comprobación non poida aprobar por non moverse),
+Escape péchao e devolve o foco ao botón que o abriu, e unha viaxe planificada deixa o
+foco na resposta; e con `prefers-reduced-motion` emulado pregunta que segue animándose
+(nada). Os checks de `test.ts` sobre iso len o código; estes dous len o foco. `stress:network` xoga
 o outro lado de `stress:http`: non o servidor con carga, senón a pantalla cando a rede é
 o problema, que nunha parada é o normal. Catro formas, coa pila de rede do propio
 navegador: a API non contesta nunca, contesta 500, contesta seis segundos tarde, e non hai
@@ -1558,7 +1598,18 @@ de que alguén se lembre.
   mesmo nome lonxe— e a parada lévao escrito (`positionSource: "osm"`); os dous outros
   pares que o operador publica a menos de 30 m (Avda. Américas 36/51, Rúa Industria)
   quedan como están, e `pnpm data:build` di cales son. Un check garda que sexa unha soa.
-- **Festivos locais** non se distinguen dos domingos.
+- **Os festivos son domingos, e caducan cada ano.** Un festivo entre semana —o 12 de
+  outubro, o San Froilán— corre co cadro de domingos e festivos, que é o que o operador
+  imprime; ata o 21 de setembro de 2026 a app tratábao como laborable e ningunha varredura
+  pasaba por un. Os días están en `src/data/festivos.json`, por ano e coa súa fonte: o
+  decreto do calendario laboral galego e a resolución dos festivos locais, os dous no DOG
+  (para 2026, os doce autonómicos —co 19 de marzo e o 24 de xuño no lugar do 1 de novembro
+  e do 6 de decembro, que caen en domingo— e os dous de Lugo, Martes de Entroido e San
+  Froilán). Non hai regra que os calcule, porque as substitucións cambian cada ano, así
+  que un check de `pnpm test` falla o 1 de xaneiro se o ano novo non está no ficheiro:
+  é o recordatorio, e é ruidoso a propósito. A varredura de invariantes pasa por un
+  festivo en luns, e a pantalla di «hoxe é festivo» cando unha liña de laborables non
+  circula por iso.
 - **Tres sentidos debúxanse coa ruta dun coche**, non co itinerario levantado en OSM:
   a 3.2 nos dous sentidos e a 5.2 cara a Avda. Américas. A liña azul do mapa pode
   desviarse por onde o bus non pasa. As paradas e as horas seguen a ser as oficiais, e

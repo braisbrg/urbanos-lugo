@@ -15,6 +15,8 @@ interface TopBarProps {
   onOpenFavorites: () => void;
   savedCount: number;
   onOpenMenu: () => void;
+  /** Notices in force, on the button that hides them: the drawer's badge is behind it. */
+  alertCount: number;
   lang: Lang;
 }
 
@@ -83,6 +85,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenFavorites,
   savedCount,
   onOpenMenu,
+  alertCount,
   lang,
 }) => {
   const [query, setQuery] = useState('');
@@ -180,12 +183,23 @@ export const TopBar: React.FC<TopBarProps> = ({
             <QrCode className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
+        {/* The count of notices was only inside the drawer, so on a phone a retention
+            existed for whoever happened to open the menu. The rail shows it always; so
+            does this now. Same badge as the drawer row, so they read as one thing. */}
         <button
           onClick={onOpenMenu}
-          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-control border border-edge bg-surface text-ink-2 lg:hidden"
-          aria-label={t.menu.open}
+          className="relative flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-control border border-edge bg-surface text-ink-2 lg:hidden"
+          aria-label={alertCount > 0 ? `${t.menu.open}. ${t.menu.alerts} (${alertCount})` : t.menu.open}
         >
           <Menu className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+          {alertCount > 0 && (
+            <span
+              className="anim-badge-in tnum absolute -right-1.5 -top-1.5 min-w-5 rounded-control bg-warn px-1 text-center text-label font-bold leading-5 text-warn-ink"
+              aria-hidden="true"
+            >
+              {alertCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -205,7 +219,7 @@ export const TopBar: React.FC<TopBarProps> = ({
            this box for the first time, and on a 6x-throttled CPU the 15 px blur was 80 to
            100 ms of that one long task -- 302 ms as shipped, 208 with this shadow, 226 with
            none. The border does the separating; the shadow only has to lift the box. */
-        <div className="absolute inset-x-3.5 top-full z-[1300] mt-1 max-h-[60vh] overflow-y-auto rounded-card border border-edge bg-bg shadow-md">
+        <div className="anim-drop absolute inset-x-3.5 top-full z-[1300] mt-1 max-h-[60vh] overflow-y-auto rounded-card border border-edge bg-bg shadow-md">
           {settled && stops.length === 0 && lines.length === 0 && places.length === 0 && (
             <p className="px-4 py-4 text-body text-ink-3">{t.search.none}</p>
           )}
@@ -227,9 +241,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               <MapPin className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span title={stop.name} className="block truncate text-emph font-semibold">
-                  {stop.name}
-                </span>
+                {/* Whole, on two lines if it takes two: the rows were truncated, and on a
+                    phone three poles of one street differed only in the part cut off. */}
+                <span className="block text-emph font-semibold">{stop.name}</span>
                 <span className="block truncate text-label text-ink-3">
                   {stop.zone} · {t.common.lines(stop.lines.length)}
                 </span>
@@ -263,9 +277,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 {line.number}
               </span>
-              <span title={line.name} className="min-w-0 flex-1 truncate text-body font-medium">
-                {line.name}
-              </span>
+              <span className="min-w-0 flex-1 text-body font-medium">{line.name}</span>
             </button>
           ))}
 
@@ -286,9 +298,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               <Landmark className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span title={lm.name} className="block truncate text-emph font-semibold">
-                  {lm.name}
-                </span>
+                <span className="block text-emph font-semibold">{lm.name}</span>
                 <span className="block truncate text-label text-ink-3">
                   {t.search.nearestStop(stop.name, walkMeters)}
                 </span>

@@ -43,8 +43,11 @@ export function useDialog(open: boolean, onClose: () => void) {
         ) ?? []),
       ].filter((el) => el.tabIndex >= 0 && !el.matches(':disabled') && el.getClientRects().length > 0);
 
-    // The first thing inside that can take focus.
-    focusables()[0]?.focus();
+    // The first thing inside that can take focus. Without `preventScroll`, focusing a
+    // button in the map's stop sheet while the sheet is still sliding up from below the
+    // map's edge scrolled the map's own `overflow: hidden` box to reach it, and the map
+    // jumped up by the height of the sheet.
+    focusables()[0]?.focus({ preventScroll: true });
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

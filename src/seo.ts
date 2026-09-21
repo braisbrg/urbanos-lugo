@@ -82,14 +82,32 @@ export function routeUrl(site: string, route: string): string {
 }
 
 /**
+ * The one address a screen is indexed under.
+ *
+ * The root *is* the stops tab: `/` and `/paradas/` draw the same screen, and each page
+ * declared itself canonical with a title of its own. Search Console read that as it is
+ * -- "Duplicate, Google chose a different canonical than the user" for `/paradas/`,
+ * with the root as its choice -- and it was right. So the stops tab points at the root
+ * and stays out of the sitemap; the page still exists, still answers 200 and still
+ * carries its own title for the tab strip, it just no longer claims to be a second page.
+ */
+export function canonicalUrl(site: string, route: string): string {
+  return routeUrl(site, route === PATHS.stops ? '' : route);
+}
+
+/**
  * The sitemap.
  *
- * Seven entries: the root and the six tabs. Individual stops and lines are deliberately
- * absent — they have no URL of their own, and listing pages that render as an empty
- * shell to a crawler would be worse than listing nothing.
+ * Six entries: the root and the five tabs that are not the root by another name.
+ * Individual stops and lines are deliberately absent — they have no URL of their own, and
+ * listing pages that render as an empty shell to a crawler would be worse than listing
+ * nothing.
  */
 export function sitemapXml(site: string, paths: string[] = SITE_PATHS): string {
-  const urls = paths.map((p) => `  <url><loc>${routeUrl(site, p)}</loc></url>`).join('\n');
+  const urls = paths
+    .filter((p) => canonicalUrl(site, p) === routeUrl(site, p))
+    .map((p) => `  <url><loc>${routeUrl(site, p)}</loc></url>`)
+    .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
 
@@ -164,5 +182,5 @@ export function pageHtml(html: string, route: string, site: string | null): stri
     .replace(/(<meta property="og:description" content=")[^"]*/, `$1${head.description}`)
     // The static <h1> inside #root, for crawlers that do not run the app.
     .replace(/(<h1[^>]*>)[^<]*(<\/h1>)/, `$1${head.title}$2`);
-  return site ? out.replace(`<link rel="canonical" href="${site}" />`, `<link rel="canonical" href="${routeUrl(site, route)}" />`) : out;
+  return site ? out.replace(`<link rel="canonical" href="${site}" />`, `<link rel="canonical" href="${canonicalUrl(site, route)}" />`) : out;
 }

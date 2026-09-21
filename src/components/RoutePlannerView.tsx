@@ -22,6 +22,7 @@ import { getDistanceMeters } from '../utils/geo';
 import { fetchWalkingPath, walkHopKey, walkHopsOf, WalkingPath } from '../services/walkingPath';
 import { useRecentRoutes } from '../hooks/useRecentRoutes';
 import { boardingIsNow, type TripPlace } from '../utils/tripProgress';
+import { Segmented } from './ui/Segmented';
 import { Provenance } from './ui/Provenance';
 import { LineBadge } from './ui/LineBadge';
 import { SectionLabel } from './ui/SectionLabel';
@@ -323,7 +324,6 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   // Never fold away the row that is currently open: it would take the reader's own
   // choice off the screen and leave the detail below it unexplained.
   const optionsExpanded = showAllOptions || chosenOption >= VISIBLE_OPTIONS;
-  const visibleOptions = optionsExpanded ? offeredOptions : offeredOptions.slice(0, VISIBLE_OPTIONS);
 
   /** Real walking totals, once fetched: what the trip actually costs on foot. */
   const measuredWalk = React.useMemo(() => {
@@ -462,9 +462,23 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
    * the sentence saying there is nothing -- and scrolls into view on a phone.
    */
   const [{ formOpen, asked, answered }, ask] = useReducer(asking, { formOpen: true, asked: false, answered: 0 });
+  /**
+   * True while the form is folding or unfolding. The fold clips its content only then:
+   * at rest and open, the suggestion lists under the two fields have to be free to hang
+   * past the card's bottom edge, which a permanent `overflow: hidden` would cut.
+   */
+  const [folding, setFolding] = useState(false);
+  /** Counts the swaps so the two fields can fade in with their new text each time. */
+  const [swaps, setSwaps] = useState(0);
   const answerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (answered) answerRef.current?.focus();
+    if (!answered) return;
+    // Focus now, for the screen reader; scroll later, once the form has folded. The
+    // fold takes 220 ms, and a scroll aimed at the answer before it lands at where the
+    // answer was, under the still-open form: when the fold then took its 470 px away
+    // the page was left looking at the map. From lg up nothing folds and the answer is
+    // beside the form, so there is nothing to scroll to.
+    answerRef.current?.focus({ preventScroll: true });
   }, [answered]);
 
   // "Now" is the common case, but the question before an appointment is the other one.
@@ -511,7 +525,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     return { userLocation };
   };
 
-  const handleCalculate = (orig = originQuery, dest = destQuery, gps = userLocation) => {
+  const handleCalculate = (orig = originQuery, dest = destQuery, gps = userLocation, fold = true) => {
     if (!orig.trim() || !dest.trim()) return;
     const opts = { ...timeOptions(), userLocation: gps };
     askedRef.current = { orig, dest, gps, opts };
@@ -527,7 +541,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
     // "no route" sentence lives in the answer column, which is hidden while the form is
     // up, so the reader pressed the button and watched nothing happen. The row above the
     // answer reopens the fields in one tap.
-    ask('answer');
+    // Not on a swap: that is a change to the fields, made with the fields in view, and
+    // folding them away under the reader's finger hid the very button they pressed.
+    if (fold) {
+      setFolding(true);
+      ask('answer');
+    }
     if (plans.length) rememberRoute({ from: orig, to: dest });
     setEndpoints({
       origin: toPoint(resolveLocationQuery(orig, gps)),
@@ -551,10 +570,11 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
   }, [destinationRequest?.nonce]);
 
   const handleSwap = () => {
+    setSwaps((n) => n + 1);
     const temp = originQuery;
     setOriginQuery(destQuery);
     setDestQuery(temp);
-    handleCalculate(destQuery, temp);
+    handleCalculate(destQuery, temp, userLocation, false);
   };
 
   const handleUseGpsForOrigin = () => {
@@ -637,7 +657,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
       type="button"
       onClick={() => planResult && onStartTrip(planResult, endpoints.origin ?? null, endpoints.destination ?? null)}
       className={`flex w-full items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-on-accent ${
-        prominent ? 'h-14 text-emph' : 'h-12 text-body'
+        prominent ? 'anim-attention h-14 text-emph' : 'h-12 text-body'
       }`}
     >
       <Bus className={prominent ? 'h-5 w-5 shrink-0' : 'h-4.5 w-4.5 shrink-0'} strokeWidth={2} aria-hidden="true" />
@@ -665,7 +685,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
           {asked && (
             <button
               type="button"
-              onClick={() => ask('toggleForm')}
+              onClick={() => {
+                setFolding(true);
+                ask('toggleForm');
+              }}
               aria-expanded={formOpen}
               className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden"
             >
@@ -682,11 +705,23 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
             </button>
           )}
 
+          {/* Folds shut in 220 ms when the answer takes over on a phone, and opens the same
+              way from "Cambiar"; from lg up it never closes. The transition's own end is
+              what lifts the clipping -- a child's colour transition ending must not. */}
           <div
-            className={`bg-bg rounded-card p-3.5 sm:p-6 shadow-sm border border-edge ${
-              asked && !formOpen ? 'hidden lg:block' : ''
+            className={`fold fold-lg-open fold-clear ${asked && !formOpen ? 'fold-closed' : ''} ${
+              folding ? 'fold-moving' : ''
             }`}
+            onTransitionEnd={(e) => {
+              if (e.target !== e.currentTarget) return;
+              setFolding(false);
+              if (asked && !formOpen) answerRef.current?.scrollIntoView({ block: 'nearest' });
+            }}
           >
+          {/* A bare wrapper: the row can only shrink to its item's padding and border, so
+              the card itself as the item would leave a 30 px stub of it when folded. */}
+          <div>
+          <div className="bg-bg rounded-card p-3.5 sm:p-6 shadow-sm border border-edge">
             {/* You got here by pressing a tab called "Ruta", so a heading and a sentence
                 explaining the screen are furniture on the screen they explain. Measured on
                 a 375x812 the whole form needs 762 px and has 619 to live in, so the
@@ -714,6 +749,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     <span className="h-2 w-2 rounded-full bg-ink-2" />
                   </span>
                   <input
+                    key={`origin-${swaps}`}
                     id="input-origin-query"
                     maxLength={MAX_QUERY_LENGTH}
                     type="text"
@@ -727,7 +763,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       setOriginSuggestions(getSuggestions(originQuery));
                     }}
                     placeholder={t.planner.placeholderOrig}
-                    className="h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:rounded-t-xl"
+                    className="anim-fade h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:rounded-t-xl"
                   />
                   {/* The GPS is one way of filling this field, not a peer of "calculate",
                       so it sits in the field like the clear button rather than above it. */}
@@ -754,7 +790,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
                   {/* Origin Autocomplete Suggestions */}
                   {activeInput === 'origin' && originSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                    <div className="anim-drop absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
                       {originSuggestions.map((sug) => (
                         <button
                           key={sug.id || sug.name}
@@ -795,6 +831,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     <span className="h-2 w-2 rounded-full border-2 border-ink-2" />
                   </span>
                   <input
+                    key={`dest-${swaps}`}
                     id="input-dest-query"
                     maxLength={MAX_QUERY_LENGTH}
                     type="text"
@@ -808,7 +845,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       setDestSuggestions(getSuggestions(destQuery));
                     }}
                     placeholder={t.planner.placeholderDest}
-                    className="h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:rounded-b-xl"
+                    className="anim-fade h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent focus:rounded-b-xl"
                   />
                   {destQuery && (
                     <button
@@ -822,7 +859,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
 
                   {/* Dest Autocomplete Suggestions */}
                   {activeInput === 'dest' && destSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
+                    <div className="anim-drop absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
                       {destSuggestions.map((sug) => (
                         <button
                           key={sug.id || sug.name}
@@ -857,27 +894,23 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   aria-label={t.planner.swap}
                   title={t.planner.swap}
                 >
-                  {/* Above the disc the pseudo-element draws, not under it. */}
-                  <ArrowDownUp className="relative h-4 w-4" />
+                  {/* Above the disc the pseudo-element draws, not under it. A half turn per
+                      swap (260 ms), so the button shows what it just did to the fields. */}
+                  <ArrowDownUp
+                    className="relative h-4 w-4 transition-transform duration-[260ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+                    style={{ transform: `rotate(${swaps * 180}deg)` }}
+                  />
                 </button>
               </div>
 
               {/* When to travel */}
               <div className="mt-3">
-                <div className="grid grid-cols-3 gap-1 bg-surface p-1 rounded-md">
-                  {(['now', 'depart', 'arrive'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setTimeMode(mode)}
-                      aria-pressed={timeMode === mode}
-                      className={`h-11 rounded-control text-label font-semibold ${
-                        timeMode === mode ? 'bg-bg text-ink shadow-xs' : 'text-ink-2 hover:text-ink'
-                      }`}
-                    >
-                      {t.planner.timeModes[mode]}
-                    </button>
-                  ))}
-                </div>
+                <Segmented
+                  dense
+                  value={timeMode}
+                  onChange={setTimeMode}
+                  options={(['now', 'depart', 'arrive'] as const).map((mode) => ({ id: mode, label: t.planner.timeModes[mode] }))}
+                />
                 {timeMode !== 'now' && (
                   <label className="mt-2 flex items-center gap-2 text-label font-semibold text-ink-2">
                     <Clock className="w-3.5 h-3.5 text-accent shrink-0" />
@@ -992,6 +1025,8 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
               </div>
             </div>
           </div>
+          </div>
+          </div>
         </div>
 
         {/* Right Column: Route Result & Step by Step Itinerary */}
@@ -1005,7 +1040,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
         <div
           ref={answerRef}
           tabIndex={-1}
-          className={`space-y-4 lg:col-span-7 lg:block ${asked && !formOpen ? '' : 'hidden'}`}
+          className={`anim-rise space-y-4 lg:animate-none lg:col-span-7 lg:block ${asked && !formOpen ? '' : 'hidden'}`}
         >
           {planResult ? (
             /* One rhythm, declared once.
@@ -1042,7 +1077,12 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                   They sit on one baseline now: how long on the left, when on the right.
                   The two words stay for a screen reader, which gets "16:48 17:31" and no
                   arrow to read. */}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-3">
+              {/* Keyed on the count of answers: the figures rise in again for each new one,
+                  on a desktop too, where the column itself never leaves the screen. */}
+              <div
+                key={answered}
+                className="anim-rise flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-3"
+              >
                 <span className="flex items-baseline gap-2">
                   <span className="tnum text-num font-bold tracking-[-0.025em]">
                     {withMeasuredWalk(planResult, walkCorrection).durationMinutes}
@@ -1083,14 +1123,14 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     They are worth reading once, not on the way to the thing that was asked
                     for. The summary keeps the two figures people actually scan for, so
                     folded is still an answer rather than a locked drawer. */}
-                <details className="rounded-md border border-edge bg-surface/40">
+                <details className="disclosure rounded-md border border-edge bg-surface/40">
                   <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-label font-semibold text-ink-2">
                     {/* The label was the least informative word on the line, and adding the
                         footprint to say what the figures were pushed the row onto two
                         lines. What is left says it without it: a footprint, a walk, a fare.
                         The word stays for a screen reader, which has no icon to read. */}
                     <span className="sr-only">{t.planner.tripInfoTitle}</span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+                    <ChevronDown className="disclosure-chevron h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
                     {/* Spread, not flushed right. Both figures were pushed to the right
                         edge, which left the whole middle of a 44 px row empty and the
                         chevron stranded on its own at the far left. They are two separate
@@ -1207,7 +1247,8 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       comparable at a glance. The rows keep a 44 px target because they are
                       still buttons on a phone. */}
                   <div className="border-y border-line">
-                    {visibleOptions.map(({ option, idx }) => {
+                    {(() => {
+                    const optionRow = ({ option, idx }: (typeof offeredOptions)[number]) => {
                       const busLegs = option.segments.filter((seg) => seg.type === 'bus');
                       // Same correction the detail applies, so the row you open agrees
                       // with what opens, and the four are compared like for like.
@@ -1291,7 +1332,20 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           </span>
                         </button>
                       );
-                    })}
+                    };
+                    return (
+                      <>
+                        {offeredOptions.slice(0, VISIBLE_OPTIONS).map(optionRow)}
+                        {/* In the list all along, folded: "2 more" opens in 220 ms rather
+                            than appearing, and the rows underneath slide instead of jumping. */}
+                        {offeredOptions.length > VISIBLE_OPTIONS && (
+                          <div className={`fold ${optionsExpanded ? '' : 'fold-closed'}`}>
+                            <div>{offeredOptions.slice(VISIBLE_OPTIONS).map(optionRow)}</div>
+                          </div>
+                        )}
+                      </>
+                    );
+                    })()}
                     {/* The rest, on request. It sits inside the same bordered block and
                         below the last divider, so it reads as the end of the list rather
                         than as a separate control floating under it. */}
@@ -1306,7 +1360,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                           ? t.planner.fewerOptions
                           : t.planner.moreOptions(offeredOptions.length - VISIBLE_OPTIONS)}
                         <ChevronDown
-                          className={`h-3.5 w-3.5 shrink-0 ${optionsExpanded ? 'rotate-180' : ''}`}
+                          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${optionsExpanded ? 'rotate-180' : ''}`}
                           strokeWidth={2.5}
                           aria-hidden="true"
                         />
@@ -1336,7 +1390,10 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                     </button>
                   </span>
                 </div>
-                {showMap && (
+                {/* Folded, not unmounted: the renderer stays built and the block opens and
+                    closes in place. It is shown by default, so nothing loads that would
+                    not have loaded anyway. */}
+                <div className={`fold ${showMap ? '' : 'fold-closed'}`}>
                   <div className="relative">
                     <Suspense
                       fallback={<div className="w-full h-[240px] sm:h-[280px] rounded-card bg-surface animate-pulse" />}
@@ -1379,7 +1436,7 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                       </span>
                     </button>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Step by step.
@@ -1497,9 +1554,9 @@ export const RoutePlannerView: React.FC<RoutePlannerViewProps> = ({
                                 );
                               }
                               return (
-                                <details className="mt-1.5 border-l-2 border-line pl-3">
+                                <details className="disclosure mt-1.5 border-l-2 border-line pl-3">
                                   <summary className="flex h-11 cursor-pointer items-center gap-1.5 text-label text-ink-2">
-                                    <ChevronDown className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                                    <ChevronDown className="disclosure-chevron h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
                                     {t.planner.ride(count, seg.durationMinutes)}
                                   </summary>
                                   <ol className="pb-2 pl-[21px]" aria-label={t.planner.viaStops}>

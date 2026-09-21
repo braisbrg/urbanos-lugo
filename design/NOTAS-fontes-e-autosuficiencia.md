@@ -256,18 +256,87 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    —43 m, outra beirarrúa da 1.2/1.4 de volta— e `s1043` Barbaín (dir. centro) —15 m, outra
    beirarrúa da 11 a Bóveda de volta—. OSM tamén se equivoca; sen velas, non se move
    ningunha.
+   *Vistas o 21 de setembro de 2026, en Street View (imaxes de 2025), coas tres respostas
+   distintas que cabían:*
+   - *`s133` Rúa Industria (Aula 9): **ten razón OSM.** O poste —o tótem gris do
+     operador— está na beirarrúa norte, diante da cafetería Zertín (escola de cociña),
+     en 43,04574 −7,56535, xusto onde OSM o pon e 43 m ao leste do pin do operador,
+     onde non hai nada. Norte é a dereita da 1.2/1.4 de volta, que baixa cara ao oeste.
+     Movelo é un cambio de xeometría no xerador; o único precedente (Monte Segade) ten
+     unha regra propia e un check que garda que sexa un só. Vai co proxecto 4 ou como
+     segunda excepción: decisión do dono.*
+   - *`s1043` Barbaín (dir. centro): **ten razón o operador.** A marquesiña verde do
+     Concello («Zona Rural») está no lado leste do tronco sur do cruce, ao pé do sinal
+     «Bóveda», en 43,00732 −7,51735: o pin do operador. O poste de OSM, 15 m ao NNO na
+     bifurcación, non ten nada. Leste é a dereita da 11 de volta, que sobe cara ao norte.*
+   - *`s589` Czda. Gándaras (enfte. Residencia): **non se ve poste en ningún dos dous
+     sitios.** Onde OSM (43,03106 −7,54952, lado leste): sebe, muro de pedra, un poste
+     eléctrico sen placa e o sinal da Protectora de Animais; onde o operador (o cruce,
+     lado leste): o espello, dous sinais e a terraza da cafetería. A única
+     infraestrutura é a marquesiña do lado oeste, diante da Residencia, que é a outra
+     parada (`s595`, 4.2 de volta e 13). A do sentido Gándaras non ten sinal visible en
+     2025; queda onde está.*
 6. **A folla de controis do mapa**, a outra metade da débeda 7 (rolda 15 do rexistro). Non
    se fai en frío: sería un compoñente de vinte props coa mesma complexidade. Cando se abra
    `TransitMap` por outro motivo, o que paga é sacar só a lista de liñas (`pickedLineIds`,
    `linesExpanded`), que si é unha peza soa.
+   *Feita a metade que pagaba, o 21 de setembro de 2026: a tira de fichas de liña do
+   móbil é `Map/LineChips.tsx`, con seis props (idioma, as liñas, as listadas, as
+   escollidas, alternar, todas) e o seu propio estado de despregada, que se pecha só cando
+   cambian as liñas escollidas —tamén ao escoller desde a folla, como antes—. Con ela
+   fóronse `sharedNumbers` e `destinationOf`, que só ela usaba: 118 liñas menos en
+   `TransitMap` (1.063). O resto da folla queda onde está, polo motivo de arriba.
+   Comprobado no navegador a 375 px: despregar, escoller a 1.2, a tira prégase e a liña
+   queda marcada; `audit:browser` sen achados no estado `mapa`.*
 7. **«WebGL context lost»**, visto unha vez na consola de produción o 16 de setembro de
    2026, entre o ruído das extensións do navegador, sen que se anotase que pasou co mapa.
    Sen investigar. O que hai que comprobar, forzándoo (`WEBGL_lose_context` desde a
    consola): que o mapa volve pintar cando o contexto se restaura, e que se non se
    restaura cae ás teselas ráster en vez de quedar en branco.
+   *Feito (19 de setembro de 2026, rolda 19 do rexistro): forzado, o renderizador volve
+   pintar só cando o contexto se restaura; se non se restaura, quedaba en branco para
+   sempre. Agora, cinco segundos sen volver —contados só coa páxina visible— e a capa
+   cámbiase pola ráster no mesmo mapa; os mapas que nazan despois xa nacen ráster.*
 8. **Volver mirar os buscadores** nunhas semanas, cousa do dono: en Search Console, que
-   «Páxinas» amose as sete; en Bing Webmaster, que o escaneo do sitio xa non avise de
+   «Páxinas» amose as seis; en Bing Webmaster, que o escaneo do sitio xa non avise de
    «H1 tag missing» (arranxado o 16 de setembro cun `<h1>` estático en cada copia).
+   *A configuración está feita desde o 15 de setembro (verificación, sitemap enviado en
+   Google e importado en Bing); o que queda é só mirar. O 21 de setembro, desde fóra:
+   `site:braisbrg.github.io` sen resultados aínda en DuckDuckGo (índice de Bing); Google
+   non se deixa preguntar desde un guión. Se en dúas semanas Bing segue sen nada, «Submit
+   URLs» a man en Bing Webmaster ou IndexNow desde o despregue, que é unha petición máis
+   a un terceiro e decídea o dono.*
+   *O que si dixo Search Console, o 21 de setembro: «Duplicada: Google elixiu unha
+   canónica diferente» para `/paradas/`, coa raíz como a súa. Certo: a raíz é a pestana de
+   paradas e as dúas páxinas debuxan o mesmo. `/paradas/` leva agora a raíz como canónica e
+   o sitemap queda en seis URL. O «non se puido ler» do sitemap, con cinco días e o
+   ficheiro servido con 200, `application/xml` e XML válido (comprobado con `curl`), é o
+   que Search Console amosa nas propiedades novas ata que o procesa; non hai nada que
+   arranxar no ficheiro. Bing: «Discovered but not crawled» na raíz é o estado normal dun
+   sitio novo sen ligazóns de entrada; o que se pode facer é «Request indexing» nas seis
+   URL, unha vez. IndexNow é o protocolo para avisar a Bing en cada cambio de contido
+   desde o despregue; con seis URL fixas, o botón fai o mesmo.*
+9. **Os festivos.** `dayKind()` non os coñece: un festivo entre semana é «laborable» para
+   a app e «domingo e festivos» para o operador, así que ese día o taboleiro amosa un
+   cadro que non circula, etiquetado HORARIO OFICIAL. Visto o 19 de setembro de 2026 ao
+   revisar as varreduras: ningunha pasa por un festivo, e o README dicía «non se
+   distinguen dos domingos», que era o contrario do que fai o código (corrixido). O que
+   fai falta é dato con fonte, non código: `data/festivos.json` por ano —os nacionais e os
+   galegos do calendario laboral do DOG, os dous locais do Concello—, `dayKind` que
+   devolva `domingo` neses días, a varredura de invariantes cun festivo entre os seus
+   días, e un check que falle en xaneiro se o ano en curso non está no ficheiro, que é o
+   recordatorio honesto de que caduca. Decisión do dono: fonte e quen a mantén cada ano.
+   *Feito o 21 de setembro de 2026, coa fonte atopada: o Decreto 46/2025 (DOG do 20 de
+   xuño de 2025) dá os doce festivos galegos de 2026 —co 19 de marzo e o 24 de xuño no
+   lugar do 1 de novembro e do 6 de decembro, que caen en domingo, e sen o 17 de maio, que
+   tamén— e a Resolución do 21 de outubro de 2025 (DOG do 30 de outubro) os dous locais de
+   Lugo: 17 de febreiro, Martes de Entroido, e 5 de outubro, San Froilán. Catorce días en
+   `src/data/festivos.json`, coas dúas ligazóns; `dayKind` devolve `domingo` neses días,
+   as dúas pantallas que din «non circula hoxe» din tamén «hoxe é festivo», o recuo ao
+   seguinte día de servizo salta o festivo, a varredura de invariantes pasa polo 12 de
+   outubro, e o check falla o 1 de xaneiro de 2027 se ninguén engade o ano: quen o
+   mantén é quen o vexa fallar, cos dous DOG de cada ano (o decreto sae en xuño, os locais
+   en outubro).*
 
 ### Lista para o iPhone
 
@@ -305,6 +374,11 @@ Un fallo en calquera punto é un erro de verdade e vai ao rexistro con modelo e 
   récord de viaxeiros, unha declaración política e os cortes dunha carreira que seguirían
   en pantalla ata novembro. «Tráfico» a secas non vale como palabra —é o nome dun
   organismo tanto como unha condición da rúa—; as palabras do suceso si.
+- **A instantánea de avisos vive en `public/alerts.json`**, non no paquete (19 de setembro
+  de 2026, rolda 20). Importada, cada refresco horario renomeaba seis anacos —medio
+  megabyte comprimido— e era a orixe das recargas por «anaco desaparecido». Como ficheiro
+  á parte, un refresco move 1,3 KB. O mesmo día: o «No existen avisos en este momento» da
+  campá xa non conta como incidencia, e a data dun aviso do operador di que é a da lectura.
 - **Os minutos de `info.urbanoslugo.com`** amósanse só a quen chega escaneando o QR dese
   poste. É a páxina á que apunta a pegatina; en calquera outro sitio serían dúas listas de
   horas que se contradín sen que ninguén poida dicir cal manda.

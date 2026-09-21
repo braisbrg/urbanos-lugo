@@ -15,8 +15,38 @@
  */
 import { BusLine, BusStop } from '../types';
 import { normalizeText } from './searchUtils';
+import festivos from '../data/festivos.json';
 
 type DayKind = 'laborable' | 'sabado' | 'domingo';
+
+/**
+ * The days the operator runs the Sunday timetable on that are not Sundays.
+ *
+ * "Domingos e festivos" is how the operator prints it, and a public holiday on a Monday
+ * used to be a Monday to this app: the board showed the weekday grid, labelled HORARIO
+ * OFICIAL, for buses that were running the Sunday one. Nothing in the sweeps could see
+ * it, because no sweep passed through a holiday.
+ *
+ * Dates, not rules: which days are holidays is decided each year by decree (the
+ * Galician calendar, in the DOG) and by resolution (the two local ones per municipality),
+ * and the substitutions move -- in 2026 All Saints and Constitution Day fall on Sundays
+ * and become 19 March and 24 June. So src/data/festivos.json lists the days per year
+ * with the DOG entries they come from, and tools/test.ts refuses a year the file does not
+ * cover, which is the reminder that it expires.
+ */
+const HOLIDAYS = new Set(Object.values(festivos).flatMap((year) => year.days));
+
+/** `YYYY-MM-DD` in the device's own calendar, which is the one the reader lives in. */
+const isoDay = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+/** A public holiday in Lugo, on any day of the week. */
+export function isHoliday(date: Date): boolean {
+  return HOLIDAYS.has(isoDay(date));
+}
+
+/** The years festivos.json covers, for the check that keeps it current. */
+export const HOLIDAY_YEARS = Object.keys(festivos);
 
 export const MINUTES_PER_DAY = 1440;
 
@@ -40,7 +70,8 @@ export function minutesNow(date: Date = new Date()): number {
 
 export function dayKind(date: Date): DayKind {
   const d = date.getDay();
-  return d === 0 ? 'domingo' : d === 6 ? 'sabado' : 'laborable';
+  if (d === 0 || isHoliday(date)) return 'domingo';
+  return d === 6 ? 'sabado' : 'laborable';
 }
 
 /**

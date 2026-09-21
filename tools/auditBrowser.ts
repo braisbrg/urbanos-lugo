@@ -24,8 +24,23 @@ const BASE = process.env.BASE ?? 'http://localhost:3002';
 const VIEW = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
 const SCREENS = ['paradas', 'linhas', 'mapa', 'ruta', 'avisos', 'tarifas'];
 
+/**
+ * What a finding can be. The first three are the bar the header describes; the rest
+ * are the things a contrast-and-size probe never looks at and a person never notices
+ * until a screen reader or a narrow phone does.
+ *
+ *   name      a control with nothing to announce: a button with only an icon, a link
+ *             with only an image, a field with no label
+ *   alt       an <img> with no alt attribute at all (alt="" is decorative, and fine)
+ *   overflow  the page scrolls sideways, which on a phone is content off the edge
+ *   lang      the document says it is in one language while the app speaks another
+ *   headings  not exactly one <h1>, so the page has no single name for a screen reader
+ */
+type Kind = 'contrast' | 'size' | 'target' | 'name' | 'alt' | 'overflow' | 'lang' | 'headings';
+const KINDS: Kind[] = ['contrast', 'size', 'target', 'name', 'alt', 'overflow', 'lang', 'headings'];
+
 interface Finding {
-  kind: 'contrast' | 'size' | 'target';
+  kind: Kind;
   where: string;
   detail: string;
   value: number;
@@ -86,6 +101,47 @@ const PROBE = `(() => {
     return el.tagName.toLowerCase() + id + cls + (text ? ' "' + text + '"' : '');
   };
 
+  /**
+   * How much of an element the eye actually gets: its own opacity times every
+   * ancestor's. A muted caption at opacity .6 measured at full strength scored 5.5 and
+   * showed 3.6, and this probe called it fine. Disabled controls are left at 1, because
+   * an inactive control has no contrast requirement and its dimming is the point.
+   */
+  const opacityOf = (el) => {
+    let o = 1;
+    for (let node = el; node && node.nodeType === 1; node = node.parentElement) {
+      if (node.matches(':disabled') || node.getAttribute('aria-disabled') === 'true') return 1;
+      o *= parseFloat(getComputedStyle(node).opacity);
+    }
+    return o;
+  };
+
+  /**
+   * The name a screen reader would announce, close enough to the accname algorithm to
+   * catch the real cases: aria-labelledby, aria-label, a <label>, the text and alt text
+   * inside, title, and for a text field its placeholder as the last resort.
+   */
+  const nameOf = (el) => {
+    const ids = el.getAttribute('aria-labelledby');
+    if (ids) {
+      const t = ids.split(/\\s+/).map((id) => (document.getElementById(id) || {}).textContent || '').join(' ').trim();
+      if (t) return t;
+    }
+    const aria = (el.getAttribute('aria-label') || '').trim();
+    if (aria) return aria;
+    if (/^(input|select|textarea)$/i.test(el.tagName)) {
+      const byFor = el.id ? document.querySelector('label[for="' + CSS.escape(el.id) + '"]') : null;
+      const lbl = byFor || el.closest('label');
+      const t = lbl ? (lbl.textContent || '').trim() : '';
+      if (t) return t;
+      return (el.getAttribute('title') || el.getAttribute('placeholder') || '').trim();
+    }
+    const inner = [...el.querySelectorAll('img[alt], [aria-label]')]
+      .map((n) => (n.getAttribute('alt') || n.getAttribute('aria-label') || '').trim())
+      .join(' ');
+    return ((el.textContent || '') + ' ' + inner + ' ' + (el.getAttribute('title') || '')).trim();
+  };
+
   const seen = new Set();
   const findings = [];
   const push = (kind, el, detail, value, need) => {
@@ -94,12 +150,28 @@ const PROBE = `(() => {
     seen.add(key);
     findings.push({ kind, where: label(el), detail, value, need });
   };
+  /** Contrast of one colour over the backdrop of the element, dimmed by the opacity in force. */
+  const contrastOf = (el, colour, size, weight, what) => {
+    const bg = backdrop(el);
+    const raw = rgba(colour);
+    const o = opacityOf(el);
+    const fg = over([raw[0], raw[1], raw[2], raw[3] * o], bg);
+    const large = size >= 24 || (size >= 18.66 && weight >= 700);
+    const need = large ? 3 : 4.5;
+    const got = ratio(fg, bg);
+    const detail = what + colour + (o < 1 ? ' at opacity ' + o.toFixed(2) : '') + ' on rgb(' + bg.map(Math.round).join(',') + ')';
+    return { got, need, detail };
+  };
 
   // Proof the probe is looking: a clean report has to come with a count and the closest
   // thing to a failure it found, or it is indistinguishable from a probe that broke.
   let measured = 0;
+  let named = 0;
   let tightest = { ratio: Infinity, where: '', detail: '' };
   let smallest = Infinity;
+  // The audit sets the app to Galician before every load (see audit() below), so this is
+  // what <html lang> has to say once the app has taken over the document.
+  const EXPECT_LANG = 'gl';
 
   const onCanvas = (el) => !!el.closest('.leaflet-container');
   // Visually hidden until focused, so its 1x1 box is the point rather than a defect.
@@ -111,41 +183,81 @@ const PROBE = `(() => {
     const box = el.getBoundingClientRect();
     if (box.width === 0 || box.height === 0) continue;
 
+    const tag = el.tagName.toLowerCase();
+    const hiddenFromAt = !!el.closest('[aria-hidden="true"]');
+
     // Text: only the element that directly owns it, so a wrapper is not blamed twice.
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (own && !onCanvas(el)) {
+    // A field's text and its placeholder have no text node to own, so they were never
+    // measured: the search box, the two planner fields and their hint text all scored
+    // nothing. The placeholder is read through its pseudo-element.
+    const field = /^(input|textarea)$/.test(tag) && !/^(checkbox|radio|range|hidden|submit|button)$/.test(el.type || '');
+    const texts = [];
+    if (own && !onCanvas(el)) texts.push({ colour: style.color, what: '' });
+    if (field) {
+      if (el.value) texts.push({ colour: style.color, what: 'typed text ' });
+      if (el.getAttribute('placeholder')) {
+        texts.push({ colour: getComputedStyle(el, '::placeholder').color, what: 'placeholder ' });
+      }
+    }
+    for (const t of texts) {
       const size = parseFloat(style.fontSize);
       const weight = Number(style.fontWeight) || 400;
       if (size < 12) push('size', el, size.toFixed(1) + ' px', size, 12);
-
-      const bg = backdrop(el);
-      const fg = over(rgba(style.color), bg);
-      const large = size >= 24 || (size >= 18.66 && weight >= 700);
-      const need = large ? 3 : 4.5;
-      const got = ratio(fg, bg);
+      const { got, need, detail } = contrastOf(el, t.colour, size, weight, t.what);
       measured++;
       smallest = Math.min(smallest, size);
       // Held against the body-text bar for reporting, so a heading that only clears the
       // large-text bar still shows up as the tightest thing on the screen.
-      if (got < tightest.ratio) {
-        tightest = { ratio: got, where: label(el), detail: style.color + ' on rgb(' + bg.map(Math.round).join(',') + ')' };
-      }
-      if (got < need) {
-        push('contrast', el, style.color + ' on rgb(' + bg.map(Math.round).join(',') + ')', got, need);
-      }
+      if (got < tightest.ratio) tightest = { ratio: got, where: label(el), detail };
+      if (got < need) push('contrast', el, detail, got, need);
     }
 
-    // Touch targets.
+    // Touch targets. The roles are the ones this app hands out; a div React made
+    // clickable with no role is invisible here and to a screen reader alike, which is the
+    // same defect, and the name check below is where it would show.
+    const role = el.getAttribute('role') || '';
     const tappable =
-      /^(button|a|input|select|textarea|summary)$/.test(el.tagName.toLowerCase()) ||
-      el.getAttribute('role') === 'button' ||
+      /^(button|a|input|select|textarea|summary|label)$/.test(tag) ||
+      /^(button|link|tab|menuitem|option|checkbox|switch|radio)$/.test(role) ||
       el.hasAttribute('tabindex');
-    if (tappable && !onCanvas(el) && !offscreen(el) && el.getAttribute('tabindex') !== '-1') {
+    if (tappable && !onCanvas(el) && !offscreen(el) && el.getAttribute('tabindex') !== '-1' && !(tag === 'a' && !el.hasAttribute('href'))) {
       const side = Math.min(box.width, box.height);
       if (side < 44) push('target', el, Math.round(box.width) + 'x' + Math.round(box.height), side, 44);
     }
+
+    // What a screen reader would announce for a control. An icon-only button with no
+    // aria-label reads as "button", a link around an image as "link", a field with no
+    // label as "edit text" -- and each of those looks perfectly fine on screen.
+    const control =
+      /^(button|select|textarea)$/.test(tag) || (tag === 'a' && el.hasAttribute('href')) ||
+      (tag === 'input' && !/^(hidden)$/.test(el.type || '')) ||
+      /^(button|link|tab|menuitem|checkbox|switch|radio|textbox|searchbox|combobox)$/.test(role);
+    if (control && !hiddenFromAt && !onCanvas(el)) {
+      named++;
+      if (!nameOf(el)) push('name', el, 'no accessible name', 0, 1);
+    }
+    if (tag === 'img' && !hiddenFromAt && !el.hasAttribute('alt')) {
+      push('alt', el, (el.getAttribute('src') || '').split('/').pop() || 'img', 0, 1);
+    }
   }
-  return { findings, measured, tightest, smallest };
+
+  // The page as a whole, once per state.
+  const root = document.documentElement;
+  const over_ = root.scrollWidth - root.clientWidth;
+  if (over_ > 1) push('overflow', document.body, 'the page is ' + over_ + ' px wider than the viewport', root.scrollWidth, root.clientWidth);
+  // The screens scroll inside <main>, not the document, so a block wider than the phone
+  // never reaches the root's scrollWidth: the planner's form once ran 200 px past the
+  // right edge of a 375 px phone and this audit reported overflow 0.
+  const mainEl = document.querySelector('main');
+  const overMain = mainEl ? mainEl.scrollWidth - mainEl.clientWidth : 0;
+  if (overMain > 1) push('overflow', mainEl, 'the screen is ' + overMain + ' px wider than its scroller', mainEl.scrollWidth, mainEl.clientWidth);
+  const lang = (root.getAttribute('lang') || '').toLowerCase();
+  if (lang !== EXPECT_LANG) push('lang', root, '<html lang="' + lang + '">, the app speaks ' + EXPECT_LANG, 0, 1);
+  const h1s = document.querySelectorAll('h1').length;
+  if (h1s !== 1) push('headings', document.body, h1s + ' <h1> elements: ' + [...document.querySelectorAll('h1')].map((h) => '"' + (h.textContent || '').trim().slice(0, 30) + '"').join(', '), h1s, 1);
+
+  return { findings, measured, named, tightest, smallest };
 })()`;
 
 /**
@@ -227,6 +339,8 @@ const STATES: State[] = [
 interface Report {
   findings: Finding[];
   measured: number;
+  /** Controls whose accessible name was computed, so a clean 'name' column has a count behind it. */
+  named: number;
   tightest: { ratio: number; where: string; detail: string };
   smallest: number;
 }
@@ -268,7 +382,7 @@ async function audit(browser: Browser, theme: 'light' | 'dark') {
   for (const state of STATES) {
     console_ = [];
     await page.goto(`${BASE}/${state.screen}`);
-    await page.waitFor('document.querySelector("main, [role=main], body > div")');
+    await page.waitFor('document.querySelector("main, [role=main]")');
     await sleep(2200);
     let reached = 'ok';
     if (state.setup) {
@@ -277,9 +391,88 @@ async function audit(browser: Browser, theme: 'light' | 'dark') {
       await sleep(700);
     }
     const report = await page.evaluate<Report>(PROBE);
+
+    // The same state, squeezed and enlarged. 320 px is WCAG's reflow width and the
+    // narrowest phone still in use; a page that scrolls sideways there has content off
+    // the edge. Then the type at twice the size, which is what a phone's "larger text"
+    // setting does to every rem in the layout: the bottom bar has to keep its four
+    // destinations on screen, or the reader who needs big type loses the navigation.
+    await page.send('Emulation.setDeviceMetricsOverride', { ...VIEW, width: 320 });
+    await sleep(500);
+    const narrow = await page.evaluate<number>('document.documentElement.scrollWidth - document.documentElement.clientWidth');
+    await page.send('Emulation.setDeviceMetricsOverride', VIEW);
+    if (narrow > 1) report.findings.push({ kind: 'overflow', where: 'body', detail: `at 320 px the page is ${narrow} px wider than the viewport`, value: 320 + narrow, need: 320 });
+    const large = await page.evaluate<{ over: number; nav: number; off: number; culprit: string }>(`(async () => {
+      document.documentElement.style.fontSize = '200%';
+      await new Promise((r) => setTimeout(r, 400));
+      const root = document.documentElement;
+      const links = [...document.querySelectorAll('nav a[href]')].filter((a) => a.getBoundingClientRect().width > 0);
+      const off = links.filter((a) => { const b = a.getBoundingClientRect(); return b.left < -1 || b.right > innerWidth + 1 || b.bottom > innerHeight + 1; }).length;
+      // The widest thing sticking out that no ancestor clips or scrolls: that is what
+      // made the page scroll, and the name that goes in the report.
+      const clipped = (el) => { for (let n = el.parentElement; n; n = n.parentElement) { const o = getComputedStyle(n).overflowX; if (o === 'hidden' || o === 'auto' || o === 'scroll' || o === 'clip') return true; } return false; };
+      const describe = (el, b) => el.tagName.toLowerCase() + '.' + String(el.className).split(' ').slice(0, 3).join('.') + ' "' + (el.textContent || '').trim().slice(0, 30) + '" right edge at ' + Math.round(b.right) + ' px';
+      let culprit = '', right = root.clientWidth + 1;
+      for (const el of document.querySelectorAll('body *')) {
+        const b = el.getBoundingClientRect();
+        if (b.width === 0 || b.right <= right || clipped(el)) continue;
+        right = b.right;
+        culprit = describe(el, b);
+      }
+      // Nothing in flow explains it: an absolutely positioned box escapes a scroll
+      // container that is not itself positioned and widens the document from outside
+      // it. The first one found was a 1 px sr-only span, invisible and 42 px past the
+      // edge, which is not a thing anyone finds by looking.
+      if (!culprit) {
+        for (const el of document.querySelectorAll('body *')) {
+          const b = el.getBoundingClientRect();
+          if (b.width === 0 || b.right <= right || !/absolute|fixed/.test(getComputedStyle(el).position)) continue;
+          right = b.right;
+          culprit = describe(el, b) + ' (positioned, escapes its scroll container)';
+        }
+      }
+      const out = { over: root.scrollWidth - root.clientWidth, nav: links.length, off, culprit };
+      document.documentElement.style.fontSize = '';
+      return out;
+    })()`);
+    if (large.over > 1) report.findings.push({ kind: 'overflow', where: large.culprit || 'body', detail: `at 200% text the page is ${large.over} px wider than the viewport`, value: large.over, need: 0 });
+    if (large.off > 0) report.findings.push({ kind: 'overflow', where: 'nav', detail: `at 200% text ${large.off} of ${large.nav} navigation links sit off screen`, value: large.off, need: 0 });
+
     out.set(`${state.screen}/${state.name}`, { ...report, reached, console: [...new Set(console_)] });
   }
   return out;
+}
+
+/**
+ * Reduced motion, honoured rather than declared.
+ *
+ * index.css has the media query that stops every animation and transition, and a grep
+ * would find it. What a grep cannot see is a later rule with a longer duration and its
+ * own !important, or a library animating from JavaScript. So the preference is emulated
+ * and the page asked what is still moving: every running animation must be over in a
+ * millisecond, on the two screens that animate the most.
+ */
+async function motion(browser: Browser): Promise<string[]> {
+  const page = await browser.newPage();
+  await page.send('Emulation.setDeviceMetricsOverride', VIEW);
+  await page.onNewDocument(`try { localStorage.setItem('urbanos-lugo-lang', 'gl'); } catch (e) {}`);
+  await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const failures: string[] = [];
+  for (const screen of ['paradas', 'mapa']) {
+    await page.goto(`${BASE}/${screen}`);
+    await page.waitFor('document.querySelector("main")');
+    await sleep(2500);
+    const moving = await page.evaluate<string[]>(`(() => {
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) return ['the preference did not reach the page'];
+      return document.getAnimations()
+        .filter((a) => a.playState === 'running' && (a.effect.getTiming().duration || 0) > 1)
+        .map((a) => { const t = a.effect.target; return (t ? t.tagName.toLowerCase() + '.' + String(t.className).split(' ').slice(0, 2).join('.') : '?') + ' ' + (a.animationName || a.transitionProperty || a.constructor.name) + ' ' + a.effect.getTiming().duration + ' ms'; })
+        .slice(0, 6);
+    })()`);
+    for (const m of moving) failures.push(`${screen}: ${m}`);
+  }
+  await page.send('Target.closeTarget', {}).catch(() => undefined);
+  return failures;
 }
 
 /**
@@ -310,7 +503,10 @@ async function keyboard(browser: Browser): Promise<{ failures: string[]; visited
   await page.goto(`${BASE}/paradas`);
   await page.waitFor('document.querySelector("main")');
   await sleep(2200);
-  const opened = await page.evaluate<true | string>(`(async () => {${REACH} if (!hit('men|abrir')) return 'no menu button'; await pause(600); return true;})()`);
+  // Opened the way a keyboard opens it: focus on the button, then the activation. A
+  // script's click() leaves focus on <body>, so the hook remembers <body> as the opener
+  // and the Escape check below would fail for a reason no keyboard user ever meets.
+  const opened = await page.evaluate<true | string>(`(async () => {${REACH} const b = seeText('men|abrir'); if (!b) return 'no menu button'; b.focus(); b.click(); await pause(600); return true;})()`);
   if (opened !== true) failures.push(`menu: ${opened}`);
   else {
     const count = await page.evaluate<number>(
@@ -335,6 +531,21 @@ async function keyboard(browser: Browser): Promise<{ failures: string[]; visited
     // opens, so a Tab that moved nothing would also never leave the dialog.
     visited = `${stops.size} distinct controls of ${count} in the menu`;
     if (stops.size < Math.min(count, 3)) failures.push(`Tab visited ${stops.size} distinct controls of ${count}: the key is not moving focus, so this proved nothing`);
+
+    // And out again. Escape has to close the menu, and focus has to land back on the
+    // button that opened it -- a dialog that closes and drops focus on <body> sends a
+    // keyboard reader back to the top of the page to find their place.
+    const esc = { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 };
+    await page.send('Input.dispatchKeyEvent', { type: 'keyDown', ...esc });
+    await page.send('Input.dispatchKeyEvent', { type: 'keyUp', ...esc });
+    await sleep(500);
+    const after = await page.evaluate<string>(
+      `(() => { if (document.querySelector('[role=dialog]')) return 'the menu is still open';
+         const a = document.activeElement; if (!a || a === document.body) return 'focus fell to body';
+         const opener = /men|abrir/i.test((a.getAttribute('aria-label') || '') + ' ' + (a.textContent || ''));
+         return opener ? 'ok' : 'focus on ' + a.tagName.toLowerCase() + ' "' + ((a.getAttribute('aria-label') || a.textContent || '').trim().slice(0, 24)) + '"'; })()`,
+    );
+    if (after !== 'ok') failures.push(`after Escape: ${after}`);
   }
 
   await page.goto(`${BASE}/ruta`);
@@ -359,13 +570,19 @@ const themes: ('light' | 'dark')[] = only ? [only] : ['light', 'dark'];
 
 const exe = findChromium();
 if (!exe) throw new Error('no Chromium found');
+// Nothing listening is a run against Chrome's own error page, which has a <body > div>
+// and no text under 12 px: three minutes to a clean report about nothing.
+const alive = await fetch(BASE, { signal: AbortSignal.timeout(3000) }).then((r) => r.ok, () => false);
+if (!alive) throw new Error(`nothing is serving ${BASE}; run: pnpm build && PORT=3002 pnpm start`);
 const browser = await launch(exe, true);
 const results = new Map<string, Awaited<ReturnType<typeof audit>>>();
 let keyboardFailures: string[] = [];
 let keyboardVisited = '';
+let motionFailures: string[] = [];
 try {
   for (const theme of themes) results.set(theme, await audit(browser, theme));
   ({ failures: keyboardFailures, visited: keyboardVisited } = await keyboard(browser));
+  motionFailures = await motion(browser);
 } finally {
   browser.close();
 }
@@ -376,13 +593,13 @@ console.log('\n=== what was actually looked at ===');
 for (const key of keys) {
   const cells = themes.map((t) => {
     const r = results.get(t)!.get(key)!;
-    return `${t} ${String(r.measured).padStart(4)} texts, tightest ${r.tightest.ratio === Infinity ? '-' : r.tightest.ratio.toFixed(2)}` +
+    return `${t} ${String(r.measured).padStart(4)} texts, tightest ${r.tightest.ratio === Infinity ? '-' : r.tightest.ratio.toFixed(2)}, ${String(r.named).padStart(3)} named` +
       (r.reached === 'ok' ? '' : `  [NOT REACHED: ${r.reached}]`);
   });
   console.log(`  ${key.padEnd(22)} ${cells.join('   |   ')}`);
 }
 
-for (const kind of ['contrast', 'size', 'target'] as const) {
+for (const kind of KINDS) {
   const any = keys.some((k) => themes.some((t) => results.get(t)!.get(k)!.findings.some((f) => f.kind === kind)));
   console.log(`\n=== ${kind} ===${any ? '' : '  none'}`);
   for (const key of keys) {
@@ -413,17 +630,22 @@ for (const key of keys) {
 }
 if (!noisy) console.log('  clean: nothing logged above info level on any state, either theme');
 
-console.log('\n=== keyboard: Tab stays in the menu, a planned trip takes focus ===');
-if (!keyboardFailures.length) console.log(`  both hold (${keyboardVisited})`);
+console.log('\n=== keyboard: Tab stays in the menu, Escape closes it and hands focus back, a planned trip takes focus ===');
+if (!keyboardFailures.length) console.log(`  all three hold (${keyboardVisited})`);
 else console.log(`  (${keyboardVisited})`);
 for (const line of keyboardFailures) console.log(`  ${line}`);
+
+console.log('\n=== reduced motion: with the preference on, nothing keeps animating ===');
+if (!motionFailures.length) console.log('  holds on paradas and mapa');
+for (const line of motionFailures) console.log(`  ${line}`);
 
 console.log('\n=== totals ===');
 for (const theme of themes) {
   const all = [...results.get(theme)!.values()];
   const n = (k: string) => all.flatMap((r) => r.findings).filter((f) => f.kind === k).length;
   console.log(
-    `  ${theme.padEnd(6)} ${all.reduce((s, r) => s + r.measured, 0)} texts measured   ` +
-      `contrast ${n('contrast')}   under 12 px ${n('size')}   under 44 px ${n('target')}`,
+    `  ${theme.padEnd(6)} ${all.reduce((s, r) => s + r.measured, 0)} texts, ${all.reduce((s, r) => s + r.named, 0)} controls   ` +
+      `contrast ${n('contrast')}   under 12 px ${n('size')}   under 44 px ${n('target')}   ` +
+      `unnamed ${n('name')}   no alt ${n('alt')}   overflow ${n('overflow')}   lang ${n('lang')}   headings ${n('headings')}`,
   );
 }

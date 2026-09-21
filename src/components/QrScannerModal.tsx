@@ -146,9 +146,9 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose,
       role="dialog"
       aria-modal="true"
       aria-label={t.qr.title}
-      className="fixed inset-0 z-[2000] overflow-y-auto bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4"
+      className="anim-fade-full fixed inset-0 z-[2000] overflow-y-auto bg-scrim flex items-center justify-center p-4"
     >
-      <div className="bg-bg rounded-card max-w-lg w-full p-6 shadow-2xl border border-edge relative">
+      <div className="anim-scale-in bg-bg rounded-card max-w-lg w-full p-6 shadow-2xl border border-edge relative">
         <button
           onClick={() => {
             stopCamera();

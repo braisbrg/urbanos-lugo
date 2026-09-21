@@ -50,12 +50,12 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-ink/60 backdrop-blur-xs transition-opacity"
+        className="anim-fade-full absolute inset-0 bg-scrim"
         onClick={onClose}
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-bg shadow-2xl flex flex-col border-l border-edge">
+        <div className="anim-slide-in w-screen max-w-md bg-bg shadow-2xl flex flex-col border-l border-edge">
           {/* Header */}
           <div className="p-5 border-b border-edge bg-surface">
             <div className="flex items-center justify-between mb-4">

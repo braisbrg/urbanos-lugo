@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, Bell, Check, Clock, Map as MapIcon, Share2, Star } from 'lucide-react';
+import { ArrowLeft, Bell, Check, ChevronDown, Clock, Map as MapIcon, Share2 } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../types';
 // Leaflet only loads for readers who scroll down to ask where the pole is; the wrapper
 // is what makes that true, since `lazy()` alone fires as soon as the board renders.
@@ -13,6 +13,8 @@ import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';
 import { useOperatorTimes } from '../hooks/useOperatorTimes';
 import { Provenance } from './ui/Provenance';
 import { LineBadge } from './ui/LineBadge';
+import { Segmented } from './ui/Segmented';
+import { SaveStar } from './ui/SaveStar';
 import {
   watchForStop,
   ringAlarm,
@@ -116,6 +118,12 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
    */
   const [atTime, setAtTime] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  /**
+   * The stop at which the reader pressed the bell: its ring plays on activation only,
+   * never on opening a stop whose alarm is already armed. (The star does the same for
+   * itself, in `SaveStar`.)
+   */
+  const [bellPressedAt, setBellPressedAt] = useState<string | null>(null);
 
   /**
    * "Tell me before the bus gets here." One watch per line at this stop, checked on the
@@ -468,21 +476,13 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-1.5">
-          <button
-            onClick={() => onToggleFavorite(selectedStop.id)}
-            aria-pressed={isFavorite}
-            aria-label={isFavorite ? t.arrivals.unfav : t.arrivals.fav}
-            className={`flex h-11 w-11 items-center justify-center rounded-control border ${
-              isFavorite ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-surface text-ink-2'
-            }`}
-          >
-            <Star
-              className="h-4.5 w-4.5"
-              strokeWidth={1.8}
-              fill={isFavorite ? 'currentColor' : 'none'}
-              aria-hidden="true"
-            />
-          </button>
+          <SaveStar
+            key={selectedStop.id}
+            on={isFavorite}
+            onToggle={() => onToggleFavorite(selectedStop.id)}
+            label={isFavorite ? t.arrivals.unfav : t.arrivals.fav}
+            className="bg-surface"
+          />
           <button
             onClick={() => onViewOnMap(selectedStop)}
             aria-label={t.arrivals.map}
@@ -491,7 +491,10 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             <MapIcon className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
           <button
-            onClick={toggleAlarm}
+            onClick={() => {
+              setBellPressedAt(selectedStop.id);
+              toggleAlarm();
+            }}
             aria-pressed={alarmOn}
             aria-label={alarmOn ? t.arrivals.alarmOn : t.arrivals.alarmCta}
             title={t.arrivals.alarmHelp}
@@ -499,7 +502,11 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
               alarmOn ? 'border-warn bg-warn text-warn-ink' : 'border-edge bg-surface text-ink-2'
             }`}
           >
-            <Bell className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
+            <Bell
+              className={`h-4.5 w-4.5 ${alarmOn && bellPressedAt === selectedStop.id ? 'anim-ring' : ''}`}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
           </button>
           <button
             onClick={handleCopyShareLink}
@@ -507,7 +514,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
             className="flex h-11 w-11 items-center justify-center rounded-control border border-edge bg-surface text-ink-2"
           >
             {copiedLink ? (
-              <Check className="h-4.5 w-4.5 text-official" strokeWidth={2.4} aria-hidden="true" />
+              <Check className="anim-tick-in h-4.5 w-4.5 text-official" strokeWidth={2.4} aria-hidden="true" />
             ) : (
               <Share2 className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
             )}
@@ -522,60 +529,28 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
 
       {/* Two ways of reading the same board: by time when you will take whatever comes,
           by line when you are waiting for one in particular. */}
-      <div className="flex gap-1.5 border-b border-line py-3">
-        {(
-          [
-            ['next', t.arrivals.viewNext, t.arrivals.viewNextHint],
-            ['byLine', t.arrivals.viewByLine, t.arrivals.viewByLineHint],
-          ] as const
-        ).map(([id, label, hint]) => (
-          <button
-            key={id}
-            onClick={() => setView(id)}
-            aria-pressed={view === id}
-            title={hint}
-            className={`h-11 flex-1 rounded-control border text-body ${
-              view === id
-                ? 'border-ink bg-ink font-semibold text-bg'
-                : 'border-edge font-medium text-ink-2'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 border-b border-line py-3">
-        <label className="flex items-center gap-2 text-label font-semibold text-ink-2">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
-          <span className="shrink-0">{t.arrivals.atTimeLabel}</span>
-          <input
-            type="time"
-            value={atTime}
-            onChange={(e) => setAtTime(e.target.value)}
-            className="h-11 rounded-control border border-edge bg-bg px-2 font-mono text-body text-ink"
-          />
-        </label>
-        {atTime && (
-          <button
-            onClick={() => setAtTime('')}
-            className="h-11 rounded-control border border-edge px-3 text-label font-semibold text-ink-2"
-          >
-            {t.arrivals.backToNow}
-          </button>
-        )}
+      <div className="border-b border-line py-3">
+        <Segmented
+          value={view}
+          onChange={setView}
+          options={[
+            { id: 'next', label: t.arrivals.viewNext, hint: t.arrivals.viewNextHint },
+            { id: 'byLine', label: t.arrivals.viewByLine, hint: t.arrivals.viewByLineHint },
+          ]}
+        />
       </div>
 
       {/* Folded, and directly under the toggle rather than below the board: at a stop
           with fourteen lines the list runs past the fold, and something you have to
           scroll to find is something nobody finds. The count does the advertising. */}
       {nearbyLines.length > 0 && (
-        <details className="mt-3 rounded-control border border-edge bg-surface">
+        <details className="disclosure mt-3 rounded-control border border-edge bg-surface">
           <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
             {t.arrivals.nearbyLinesTitle}
             <span className="tnum rounded-control border border-edge px-1.5 py-0.5 text-ink-3">
               {nearbyLines.length}
             </span>
+            <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </summary>
           <div className="px-3 pb-3">
             <p className="text-label text-ink-3">{t.arrivals.nearbyLinesHint}</p>
@@ -604,15 +579,21 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           reader chose, and the countdown beside it counts from that hour, not from
           now — which would read as live if nothing said otherwise. */}
       {atTime && (
-        <p className="mt-3 rounded-control border border-edge bg-surface p-3 text-label font-semibold text-ink-2">
-          {t.arrivals.showingAt(atTime)}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-control border border-edge bg-surface py-1.5 pl-3 pr-1.5 text-label font-semibold text-ink-2">
+          <span>{t.arrivals.showingAt(atTime)}</span>
+          <button
+            onClick={() => setAtTime('')}
+            className="h-11 rounded-control border border-edge px-3 text-label font-semibold text-ink-2"
+          >
+            {t.arrivals.backToNow}
+          </button>
+        </div>
       )}
 
       {(alarmOn || alarmError) && (
         <div
           role={alarmFired ? 'alert' : undefined}
-          className="mt-3 rounded-control border border-edge bg-surface p-3 text-label"
+          className="anim-rise mt-3 rounded-control border border-edge bg-surface p-3 text-label"
         >
           {alarmError ? (
             alarmError
@@ -654,7 +635,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       {firedMessage && (
         <div
           role="alert"
-          className="mt-3 flex items-start justify-between gap-3 rounded-control bg-official p-3 text-label font-semibold text-on-official"
+          className="anim-rise mt-3 flex items-start justify-between gap-3 rounded-control bg-official p-3 text-label font-semibold text-on-official"
         >
           <span>{firedMessage}</span>
           <button
@@ -731,7 +712,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           )}
         </div>
       ) : view === 'next' ? (
-        <ul className="mt-1">
+        <ul className="anim-fade mt-1">
           {soon.map((a, idx) => (
             <li
               key={`${a.lineId}-${a.etaTime}-${idx}`}
@@ -756,7 +737,7 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
           ))}
         </ul>
       ) : (
-        <ul className="mt-3 flex flex-col gap-2.5">
+        <ul className="anim-fade mt-3 flex flex-col gap-2.5">
           {groups.map((g) => (
             <li
               key={g.key}
@@ -803,6 +784,27 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         <p className="mt-3 text-label text-ink-3">{t.arrivals.beyond(beyondCount)}</p>
       )}
 
+      {/* Under the answer, not over it. This is the night-before question, and as a row
+          above the list it pushed the first departure to the 479th pixel of an 812 px
+          phone. Folded like the other tools; the sentence over the list says when a
+          chosen hour is in force, and is where it is undone. */}
+      <details className="disclosure mt-3 rounded-control border border-edge bg-surface">
+        <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
+          <Clock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+          {t.arrivals.atTimeSummary}
+          <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+        </summary>
+        <label className="flex flex-wrap items-center gap-2 px-3 pb-3 text-label font-semibold text-ink-2">
+          <span className="shrink-0">{t.arrivals.atTimeLabel}</span>
+          <input
+            type="time"
+            value={atTime}
+            onChange={(e) => setAtTime(e.target.value)}
+            className="h-11 rounded-control border border-edge bg-bg px-2 font-mono text-body text-ink"
+          />
+        </label>
+      </details>
+
       {Object.keys(watches).length > 0 && (
         <p className="mt-3 rounded-control border border-edge bg-surface p-3 text-label leading-relaxed text-ink-2">
           {t.arrivals.watchForeground}
@@ -830,9 +832,10 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
         </div>
       </section>
 
-      <details className="mt-4 border-t border-line pt-3">
+      <details className="disclosure mt-4 border-t border-line pt-3">
         <summary className="flex min-h-11 cursor-pointer items-center text-label font-semibold text-ink-2">
           {t.arrivals.reportPosition}
+          <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
         </summary>
         <p className="text-label leading-relaxed text-ink-3">{t.arrivals.positionChecked}</p>
         <p className="mt-1.5 text-label leading-relaxed text-ink-3">{t.arrivals.reportNotCouncil}</p>
@@ -853,9 +856,10 @@ export const StopArrivalsView: React.FC<StopArrivalsViewProps> = ({
       )}
 
       {nonePublished ? (
-        <details className="mt-4 border-t border-line pt-3">
+        <details className="disclosure mt-4 border-t border-line pt-3">
           <summary className="flex h-11 cursor-pointer items-center text-label font-semibold text-ink-2">
             {t.arrivals.whyEstimatedTitle}
+            <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </summary>
           <p className="pb-1 text-label leading-relaxed text-ink-3">
             {t.arrivals.whyEstimated(timingPoints.published, timingPoints.total)}

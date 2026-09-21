@@ -71,3 +71,12 @@ jobs:
       - name: Re-read the fares and compare
         if: always()
         run: pnpm exec tsx tools/checkFares.ts
+
+      # Four requests. The pole page and the council's feed, read the way the server reads
+      # them, checked for the two things that drift without anyone changing a line here:
+      # that the capped read still returns the whole page, and that the parsers still find
+      # departures on the pole page in service hours. It was a gate on every push; a check
+      # that needs somebody else's server is a weekly check.
+      - name: Re-read the pole page and the feed through the parsers
+        if: always()
+        run: pnpm run check:parsers

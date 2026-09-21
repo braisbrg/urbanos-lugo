@@ -31,6 +31,7 @@ import { RouteLayer } from './RouteLayer';
 import { StopLayer } from './StopLayer';
 import { StopSheet } from './StopSheet';
 import { VehicleLayer } from './VehicleLayer';
+import { LineChips } from './LineChips';
 
 /** How far someone will walk to a different line. Also used by the nearby-lines panel. */
 const NEARBY_RADIUS_M = 750;
@@ -164,7 +165,6 @@ export const TransitMap: React.FC<TransitMapProps> = ({
    * needed. The full list with names still lives in the sheet; this is the quick way
    * to the one you can recognise by its badge.
    */
-  const [linesExpanded, setLinesExpanded] = useState(false);
   /** The stop whose board is open over the map. Null when nobody has tapped one. */
   const [tappedStop, setTappedStop] = useState<BusStop | null>(null);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
@@ -272,43 +272,6 @@ export const TransitMap: React.FC<TransitMapProps> = ({
   // The list has to agree with the banner above it. It used to offer all twenty-four
   // while the map drew four, which read as the filter having done nothing.
   const listedLines = scopeLineIds ? lines.filter((l) => scopeLineIds.includes(l.id)) : lines;
-
-  /**
-   * The numbers that more than one line answers to.
-   *
-   * Four of the twenty-four are numbered 11 — Pías, Igrexa de Bóveda, Calde and Santa
-   * Comba — and the operator paints all four the same brown. In the sidebar rows that
-   * is fine: the row carries the full name beside the badge. On a chip, which is the
-   * badge and nothing else, it came out as four identical brown 11s in a row, asking
-   * the reader to memorise that the third one is Calde.
-   *
-   * Derived rather than written down, so a branch added or dropped upstream keeps up.
-   */
-  const sharedNumbers = useMemo(() => {
-    const seen = new Set<string>();
-    const shared = new Set<string>();
-    for (const line of lines) (seen.has(line.number) ? shared : seen).add(line.number);
-    return shared;
-  }, [lines]);
-
-  /**
-   * The far end of a line's name — "Ramón Ferreiro (Feminino) - Calde (Hospital)" — cut
-   * down to the part that tells one branch from another.
-   *
-   * Two trims, both from what the chips actually rendered. Line 11's own name ends in its
-   * number, so beside a badge that already says 11 it came out as "11 Pías 11". And the
-   * parenthetical names the stop rather than the branch — it is "Calde (Hospital)" because
-   * that is which Calde, not because the branch is the hospital — so it was spending the
-   * chip's width on the one part nobody needs and pushing "Santa Comba (Calfensa)" into
-   * an ellipsis.
-   */
-  const destinationOf = (line: BusLine) => {
-    let end = line.name.split(' - ').pop()?.trim() ?? '';
-    const numberSuffix = ` ${line.number}`;
-    if (end.endsWith(numberSuffix)) end = end.slice(0, -numberSuffix.length).trim();
-    const paren = end.indexOf(' (');
-    return paren > 0 ? end.slice(0, paren) : end;
-  };
 
   const t = translations(lang);
 
@@ -565,9 +528,9 @@ export const TransitMap: React.FC<TransitMapProps> = ({
     // without this the first pick would frame the route and then draw nothing in it.
     setShowRoutes(true);
     // And asking to see it is asking for whatever is covering the map to get out of the
-    // way of it — the sheet, and the unfolded grid of chips.
+    // way of it — the sheet here, and the unfolded grid of chips, which folds itself
+    // whenever the picked lines change (LineChips).
     setSheetOpen(false);
-    setLinesExpanded(false);
 
     /*
      * Frame everything picked, not only the one just touched.
@@ -1045,86 +1008,16 @@ export const TransitMap: React.FC<TransitMapProps> = ({
               }}
             />
 
-            {/* The map is the whole screen on a phone now, and that put every control in
-                the column below it a full viewport out of reach. Two of them cannot wait
-                that long: which line you are looking at, and where you are standing. They
-                ride over the map below `lg` and hand back to the sidebar above it.
-
-                This corner is where the legend used to float, and the legend is not
-                coming back: it named stops, buses and trazados, which is exactly what the
-                three layer buttons in the sidebar already name, each with its own icon in
-                its own colour. A second copy of those three words, sitting on top of the
-                map and covering it, was the redundant one. */}
-            <div className="pointer-events-none absolute inset-x-0 top-0 z-[400] lg:hidden">
-              <div
-                className={`no-scrollbar flex gap-1.5 px-3 py-2.5 ${
-                  linesExpanded ? 'max-h-[45dvh] flex-wrap overflow-y-auto' : 'overflow-x-auto'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => handlePresetFilter('all')}
-                  aria-pressed={pickedLineIds.length === 0}
-                  className={`pointer-events-auto flex h-11 shrink-0 items-center rounded-full border px-4 text-label font-semibold shadow-sm backdrop-blur-xs ${
-                    pickedLineIds.length === 0
-                      ? 'border-accent bg-accent text-on-accent'
-                      : 'border-edge bg-bg/95 text-ink-2'
-                  }`}
-                >
-                  {t.map.allLines}
-                </button>
-
-                {/* Second, not last. At the end of a row that scrolls, the control for
-                    "stop making me scroll" is itself only reachable by scrolling. */}
-                <button
-                  type="button"
-                  onClick={() => setLinesExpanded((v) => !v)}
-                  aria-expanded={linesExpanded}
-                  aria-label={linesExpanded ? t.map.collapseLines : t.map.expandLines}
-                  title={linesExpanded ? t.map.collapseLines : t.map.expandLines}
-                  className="pointer-events-auto flex h-11 shrink-0 items-center gap-1 rounded-full border border-edge bg-bg/95 px-3.5 text-label font-bold text-ink-2 shadow-sm backdrop-blur-xs"
-                >
-                  <span className="tnum">{listedLines.length}</span>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
-                      linesExpanded ? 'rotate-180' : ''
-                    }`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                {/* The number is the chip. A line's colour is how it is drawn on the map
-                    and printed on the pole, so a coloured badge is the shortest thing that
-                    still says which line it is — and twenty-four of them scroll in a strip
-                    where twenty-four names would not fit at all. The name goes to the
-                    accessible name, since the badge alone reads as a bare number. */}
-                {listedLines.map((line) => {
-                  const isSelected = pickedLineIds.includes(line.id);
-                  // Only where the number cannot stand alone, so twenty of the chips stay
-                  // the width of their number and only the four 11s pay for the ambiguity.
-                  const branch = sharedNumbers.has(line.number) ? destinationOf(line) : '';
-                  return (
-                    <button
-                      key={line.id}
-                      type="button"
-                      onClick={() => handleSelectLine(line)}
-                      aria-pressed={isSelected}
-                      aria-label={line.name}
-                      title={line.name}
-                      className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-label font-black text-white shadow-sm ${
-                        isSelected ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''
-                      }`}
-                      style={{ backgroundColor: line.color }}
-                    >
-                      <span>{line.number}</span>
-                      {branch && (
-                        <span className="max-w-28 truncate font-semibold opacity-90">{branch}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Which line you are looking at, one thumb from the top of the map; the
+                strip owns itself, see LineChips. */}
+            <LineChips
+              lang={lang}
+              lines={lines}
+              listed={listedLines}
+              picked={pickedLineIds}
+              onToggle={handleSelectLine}
+              onAll={() => handlePresetFilter('all')}
+            />
 
             {/* Orientation is the one thing a map owes you before anything else, and on a
                 phone it is one thumb's reach from the bottom corner. Left, because the

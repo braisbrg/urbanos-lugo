@@ -391,6 +391,22 @@ export const PROBE_SOURCE = `
       for (const e of list.getEntries()) w.__probe.paint['lcp'] = Math.round(e.startTime);
     }).observe({ type: 'largest-contentful-paint', buffered: true });
   } catch {}
+  // Layout shift: content that moved after it was painted, summed the way Chrome scores
+  // it (shifts within 500 ms of an input do not count). A board that jumps when the
+  // times arrive, or a map whose controls settle late, shows up here and nowhere else.
+  w.__probe.cls = 0;
+  w.__probe.shifts = [];
+  try {
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) {
+        if (e.hadRecentInput) continue;
+        w.__probe.cls += e.value;
+        const src = (e.sources || [])[0];
+        const node = src && src.node;
+        w.__probe.shifts.push([Math.round(e.startTime), Math.round(e.value * 1000) / 1000, node ? node.tagName.toLowerCase() + '.' + String(node.className || '').split(' ').slice(0, 2).join('.') : '?']);
+      }
+    }).observe({ type: 'layout-shift', buffered: true });
+  } catch {}
   // Net listeners on window and document, and net intervals.
   //
   // Only those two targets. Counting every addEventListener made this cry wolf: twelve laps
@@ -479,6 +495,9 @@ export const PROBE_SOURCE = `
 export interface Probe {
   longtasks: [number, number][];
   paint: Record<string, number>;
+  /** Cumulative layout shift, and each shift as [when, score, what moved]. */
+  cls: number;
+  shifts: [number, number, string][];
   worstFrame: number;
   frames: number[];
   listeners: number;

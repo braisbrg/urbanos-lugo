@@ -132,7 +132,7 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
       >
         {/* The alert, in words, when it has rung. The same sentence the board uses. */}
         {phase === 'alighting' && segment?.toStop && (
-          <p role="alert" className="rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
+          <p role="alert" className="anim-rise rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
             {t.arrivals.alarmFired(segment.toStop.name)}
           </p>
         )}
@@ -167,9 +167,14 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
                   <span className="tnum text-emph font-semibold text-ink">
                     {times.none ? '—' : formatMinutes(times.departureMinutes)}
                   </span>
-                  {/* How long that is from now, so nobody subtracts against the clock. */}
+                  {/* How long that is from now, so nobody subtracts against the clock.
+                      Keyed on the minute: the new count rolls up into place when it changes.
+                      One bus, one number, labelled underneath -- on the board, where fifteen
+                      would roll at once, the same thing would read as live. */}
                   {!times.none && minutesToDeparture >= 0 && (
-                    <span className="tnum text-body text-ink-3">{t.companion.inMinutes(minutesToDeparture)}</span>
+                    <span key={minutesToDeparture} className="anim-roll-in tnum inline-block text-body text-ink-3">
+                      {t.companion.inMinutes(minutesToDeparture)}
+                    </span>
                   )}
                 </div>
                 {!times.none && (
@@ -192,7 +197,7 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
               </span>
               {minutesToAlighting !== null && (
                 <span className="flex items-baseline gap-2">
-                  <span className="tnum text-emph font-semibold text-ink">
+                  <span key={minutesToAlighting} className="anim-roll-in tnum inline-block text-emph font-semibold text-ink">
                     {minutesToAlighting >= 0
                       ? `~${minutesToAlighting} ${t.common.min}`
                       : t.common.overdue(-minutesToAlighting)}
@@ -217,7 +222,7 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
         {/* Asked, not guessed: the printed departure plus three minutes has gone by and the
             phone has not seen the bus move. Either answer is one tap. */}
         {asking && segment?.line && (
-          <div role="group" aria-live="polite" className="space-y-2 rounded-md border border-warn bg-warn/40 p-3">
+          <div role="group" aria-live="polite" className="anim-rise space-y-2 rounded-md border border-warn bg-warn/40 p-3">
             <p className="text-body font-semibold text-ink">
               {t.companion.caughtIt(segment.line.number, formatMinutes(times.departureMinutes))}
             </p>
@@ -316,11 +321,17 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
                   aria-current={isNext ? 'step' : undefined}
                   className={`flex min-h-11 items-center gap-3 px-3 py-2 ${passed ? 'text-ink-3' : 'text-ink'}`}
                 >
-                  <span className="flex w-4 shrink-0 justify-center" aria-hidden="true">
+                  {/* The arrow is where the GPS says you are, which is the one measured
+                      thing on this screen, so it is the one thing that pulses; the tick
+                      appears on the row just passed, and the arrow drops onto the next. */}
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center ${isNext ? 'live-dot' : ''}`}
+                    aria-hidden="true"
+                  >
                     {passed ? (
-                      <Check className="h-4 w-4 text-official" strokeWidth={2.6} />
+                      <Check className="anim-tick-in h-4 w-4 text-official" strokeWidth={2.6} />
                     ) : isNext ? (
-                      <ArrowRight className="h-4 w-4 text-accent" strokeWidth={2.6} />
+                      <ArrowRight className="anim-drop h-4 w-4 text-accent" strokeWidth={2.6} />
                     ) : (
                       <span className="h-1.5 w-1.5 rounded-full bg-ink-3" />
                     )}
@@ -343,7 +354,7 @@ export const TripCompanionView: React.FC<TripCompanionViewProps> = ({ companion,
           foot of the screen rather than left under seventeen stops of list, where on a
           375x812 it sat 1.348 px down, two screens below the fold. Quiet until the last
           bus is behind you; then it is the one thing left to press. */}
-      <div className="sticky bottom-0 z-10 -mx-3.5 border-t border-line bg-bg/95 px-3.5 py-3 backdrop-blur-sm lg:-mx-6 lg:px-6">
+      <div className="anim-sheet-up sticky bottom-0 z-10 -mx-3.5 border-t border-line bg-bg/95 px-3.5 py-3 backdrop-blur-sm lg:-mx-6 lg:px-6">
         <button
           type="button"
           onClick={companion.finish}

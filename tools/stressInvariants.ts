@@ -28,11 +28,13 @@ function fail(kind: string, detail: string) {
 const lineIds = new Set(BUS_LINES.map((l) => l.id));
 const lineNumbers = new Set(BUS_LINES.map((l) => l.number));
 
-// A Wednesday, a Saturday and a Sunday in the same week, so every service kind is covered.
+// A Wednesday, a Saturday and a Sunday in the same week, so every service kind is covered,
+// and a public holiday on a Monday, which runs as a Sunday and used to run as a Monday.
 const DAYS: [string, Date][] = [
   ['weekday', new Date(2026, 7, 19)],
   ['saturday', new Date(2026, 7, 22)],
   ['sunday', new Date(2026, 7, 23)],
+  ['holiday', new Date(2026, 9, 12)],
 ];
 
 let boards = 0;
@@ -89,6 +91,50 @@ for (const [dayName, day] of DAYS) {
 }
 
 console.log(`\n${boards.toLocaleString('en')} boards, ${rows.toLocaleString('en')} departures examined`);
+
+/*
+ * The edges of the window, at the exact minute.
+ *
+ * A ten-minute grid samples the overdue window statistically -- thousands of overdue rows
+ * at every offset from one to five -- and would catch a row that lingers past five. What
+ * it cannot catch is a departure dropped early: if the board let go at three minutes,
+ * every overdue value the grid ever saw would still be between one and five. So the
+ * contract is probed where it turns: a departure due at m is on the board at m with no
+ * overdue, still there at m+4 marked overdue, gone by m+7, and not yet there at m-122.
+ * Four rather than five and seven rather than six, because an interpolated time can sit
+ * half a minute either side of the whole minute the board prints.
+ */
+const same = (a: { lineId: string; destination: string; etaTime: string }, b: typeof a) =>
+  a.lineId === b.lineId && a.destination === b.destination && a.etaTime === b.etaTime;
+let probed = 0;
+for (const [dayName, day] of DAYS) {
+  for (const hour of [8, 13, 19]) {
+    const anchor = new Date(day);
+    anchor.setHours(hour, 0, 0, 0);
+    for (const stop of BUS_STOPS) {
+      for (const row of getArrivalsForStop(stop.id, anchor).arrivals.slice(0, 3)) {
+        if (row.overdueMinutes !== undefined || row.etaMinutes === 0) continue;
+        const due = new Date(anchor.getTime() + row.etaMinutes * 60_000);
+        const at = (offset: number) => getArrivalsForStop(stop.id, new Date(due.getTime() + offset * 60_000)).arrivals;
+        const where = `${stop.name} ${row.lineNumber} -> ${row.destination} due ${row.etaTime} (${dayName})`;
+        probed++;
+        const onTime = at(0).find((a) => same(a, row));
+        if (!onTime) fail('a departure is missing from the board at the minute it is due', where);
+        else if (onTime.etaMinutes !== 0 || onTime.overdueMinutes !== undefined) {
+          fail('a departure at its own minute is not shown as "now"', `${where}: eta ${onTime.etaMinutes}, overdue ${onTime.overdueMinutes}`);
+        }
+        const late = at(4).find((a) => same(a, row));
+        if (!late) fail('a departure four minutes overdue has already been dropped', where);
+        else if (late.overdueMinutes === undefined || late.overdueMinutes < 3 || late.overdueMinutes > 5) {
+          fail('a departure four minutes overdue is not marked as such', `${where}: overdue ${late.overdueMinutes}`);
+        }
+        if (at(7).some((a) => same(a, row))) fail('a departure seven minutes overdue is still on the board', where);
+        if (at(-122).some((a) => same(a, row))) fail('a departure is on the board before the two-hour horizon', where);
+      }
+    }
+  }
+}
+console.log(`${probed.toLocaleString('en')} departures probed at the edges of the window`);
 
 // And the line pages, which read the same timetable a different way.
 for (const line of BUS_LINES) {
