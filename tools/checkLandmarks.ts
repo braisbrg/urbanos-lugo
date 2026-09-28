@@ -91,9 +91,10 @@ const queryFor = (word: string) => `[out:json][timeout:60];
 );
 out center tags;`;
 
-async function candidatesFor(word: string): Promise<Hit[]> {
+async function candidatesFor(word: string): Promise<Hit[] | null> {
   const json = await overpass(queryFor(word));
-  return (json?.elements ?? []).flatMap((element: any): Hit[] => {
+  if (!json) return null;
+  return (json.elements ?? []).flatMap((element: any): Hit[] => {
     const lat = element.lat ?? element.center?.lat;
     const lng = element.lon ?? element.center?.lon;
     if (typeof lat !== 'number' || typeof lng !== 'number') return [];
@@ -116,11 +117,21 @@ async function main() {
   for (const word of wanted) {
     if (cache[word]) continue;
     process.stdout.write(`  ${word}… `);
-    cache[word] = await candidatesFor(word);
+    const hits = await candidatesFor(word);
+    // An unanswered question is not an empty answer: cached as one, it would report the
+    // landmark missing from OSM on every later run. Stop, and keep what did come back.
+    if (!hits) break;
+    cache[word] = hits;
     asked++;
-    console.log(`${cache[word].length}`);
+    console.log(`${hits.length}`);
   }
   writeJson(CACHE, cache, false);
+  const unasked = wanted.filter((word) => !cache[word]).length;
+  if (unasked) {
+    console.log(`\nOverpass would not answer; ${unasked} word(s) still to ask, the ${asked} answered are cached. Run it again later.`);
+    process.exitCode = 1;
+    return;
+  }
   console.log(`\n${asked} asked of Overpass, ${wanted.length - asked} read from ${CACHE}.`);
 
   // One call for every Wikidata id any candidate carries, before the loop below needs them.

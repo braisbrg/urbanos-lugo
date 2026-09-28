@@ -24,16 +24,18 @@ const check = (label: string, ok: boolean, detail = '') => {
   if (!ok) failures++;
 };
 
-async function bothWays(url: string): Promise<[string, string] | null> {
+/** Both reads, or the reason there are none: a 403 to a cloud runner recurs every week, a timeout is weather. */
+async function bothWays(url: string): Promise<[string, string] | string> {
   try {
     const a = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(20_000) });
-    if (!a.ok) return null;
+    if (!a.ok) return `HTTP ${a.status}`;
     const uncapped = await a.text();
     const b = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(20_000) });
-    if (!b.ok) return null;
+    if (!b.ok) return `HTTP ${b.status}`;
     return [uncapped, await readCapped(b)];
-  } catch {
-    return null;
+  } catch (err) {
+    const e = err as Error & { cause?: { code?: string } };
+    return e.cause?.code ?? e.name;
   }
 }
 
@@ -52,8 +54,8 @@ function inServiceHours(now = new Date()): boolean {
 async function main() {
   console.log('\nthe operator’s stop page');
   const operator = await bothWays(OPERATOR);
-  if (!operator) {
-    console.log('  the page could not be read; nothing compared, nothing claimed');
+  if (typeof operator === 'string') {
+    console.log(`  the page could not be read (${operator}); nothing compared, nothing claimed`);
   } else {
     const [uncapped, capped] = operator;
     check('the capped read returns the whole page', uncapped.length === capped.length,
@@ -75,8 +77,8 @@ async function main() {
 
   console.log('\nthe council’s traffic feed');
   const feed = await bothWays(FEED);
-  if (!feed) {
-    console.log('  the feed could not be read; nothing compared, nothing claimed');
+  if (typeof feed === 'string') {
+    console.log(`  the feed could not be read (${feed}); nothing compared, nothing claimed`);
   } else {
     const [uncapped, capped] = feed;
     check('the capped read returns the whole feed', uncapped.length === capped.length,

@@ -337,6 +337,18 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    outubro, e o check falla o 1 de xaneiro de 2027 se ninguén engade o ano: quen o
    mantén é quen o vexa fallar, cos dous DOG de cada ano (o decreto sae en xuño, os locais
    en outubro).*
+10. **O traballo dos luns e os servidores alleos que non responden.** O 28 de setembro de
+   2026 fallou: overpass-api.de non aceptaba conexións —dende o executor de GitHub pola
+   mañá e dende outra rede horas despois—, e o `fetch failed` saltaba por riba do
+   reintento, que só coñecía estados HTTP. *Arranxado o mesmo día en `develop`* (chega ao
+   traballo dos luns cando chegue a `main`): sen conexión é «non responde», e a
+   comprobación do trazado di «nada comprobado, nada afirmado» e sae con 0, como prometía
+   o seu comentario. Quedan dúas cousas para o rexistro do seguinte luns: se o trazado
+   volveu comprobarse, e por que o feed do Concello non se puido ler dende o executor. Esa
+   mañá foi a primeira vez que `check:parsers` correu en GitHub, e agora di o motivo: un
+   403 repetido sería un bloqueo aos enderezos de nube, e esa metade tería que correr a
+   man; un tempo esgotado, cousa dun día. Un espello de Overpass, só se a caída se repite,
+   e decídeo o dono: sería outro servidor alleo.
 
 ### Lista para o iPhone
 

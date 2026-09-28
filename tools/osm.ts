@@ -49,17 +49,21 @@ export function pathMeters(path: [number, number][]): number {
   return metres;
 }
 
-/** Overpass is a free shared service and answers 429/504 under load; give it a second go. */
+/**
+ * Overpass is a free shared service and answers 429/504 under load; give it a second go.
+ * A connection that never opens is the same "would not answer", not an exception: thrown,
+ * it went straight past the retry and failed the weekly check written to shrug this off.
+ */
 export async function overpass(query: string, attempts = 3): Promise<any | null> {
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: 'data=' + encodeURIComponent(query),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'UrbanosLugoOpenData/1.0' },
-    });
-    if (res.ok) return res.json();
+    }).catch((err: Error & { cause?: { code?: string } }) => `unreachable (${err.cause?.code ?? err.message})`);
+    if (typeof res !== 'string' && res.ok) return res.json();
     if (attempt === attempts) {
-      console.warn(`  ! Overpass answered ${res.status} after ${attempts} tries`);
+      console.warn(`  ! Overpass ${typeof res === 'string' ? res : `answered ${res.status}`} after ${attempts} tries`);
       return null;
     }
     await sleep(attempt * 20_000);

@@ -38,6 +38,7 @@ import { getArrivalsForStop, getNextLineDeparture, nextServiceAtStop, timingPoin
 import { getScheduledBuses } from '../src/utils/vehicles';
 import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
+import { overpass } from './osm';
 
 hydrateGeometry();
 
@@ -1684,6 +1685,23 @@ await okAsync('a walking route asks nobody for anything', async () => {
     assert(threw === 'AbortError', `an aborted hop settled as "${threw || 'a value'}" instead of throwing`);
   } finally {
     globalThis.fetch = realFetch;
+  }
+});
+
+await okAsync('an Overpass that cannot be reached is no answer, not a crash', async () => {
+  // The retry knew HTTP statuses only. A connection that never opened threw past it and
+  // failed the weekly geometry check, which is written to skip when Overpass is down.
+  const realFetch = globalThis.fetch;
+  const realWarn = console.warn;
+  const warned: string[] = [];
+  globalThis.fetch = (() => Promise.reject(new TypeError('fetch failed', { cause: { code: 'ETIMEDOUT' } }))) as typeof fetch;
+  console.warn = (line: string) => void warned.push(line);
+  try {
+    assert((await overpass('[out:json];', 1)) === null, 'a connection that never opened escaped overpass() instead of coming back as no answer');
+    assert(warned.some((line) => line.includes('ETIMEDOUT')), `the reason never reached the log: ${warned.join(' | ') || 'nothing warned'}`);
+  } finally {
+    globalThis.fetch = realFetch;
+    console.warn = realWarn;
   }
 });
 
