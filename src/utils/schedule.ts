@@ -91,12 +91,19 @@ export interface ScheduledRun {
 
 const runCache = new Map<string, ScheduledRun[]>();
 
-/** Every departure between `first` and `last` at the stated cadence, bounded to a day. */
-function expandHeadway(first: number, last: number, headwayMinutes: number): number[] {
+/**
+ * Every departure between `first` and `last` at the stated cadence, bounded to a day.
+ *
+ * The printed last departure is a bus whatever the arithmetic says: "every 30 min until
+ * 21:45" still leaves at 21:45. Every pattern in the dataset lands on it exactly today; one
+ * that did not would have lost its last bus -- the one people plan around -- without a word.
+ */
+export function expandHeadway(first: number, last: number, headwayMinutes: number): number[] {
   const end = last < first ? last + MINUTES_PER_DAY : last;
   const step = Math.max(5, headwayMinutes);
   const out: number[] = [];
   for (let t = first; t <= end && out.length < 288; t += step) out.push(t);
+  if (out.length < 288 && out[out.length - 1] !== end) out.push(end);
   return out;
 }
 

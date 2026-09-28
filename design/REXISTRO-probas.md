@@ -1758,3 +1758,109 @@ un panel que entra desde a dereita non poida facer scroll lateral nin 180 ms.
 O latexo do GPS (13) non se pode ver sen ir no bus: só aparece coa viaxe en marcha,
 cando o GPS viu pasar a segunda parada ou o lector dixo «si, vou nel». Comprobado que a
 clase anima (2 s, infinito) e que a fila da seguinte parada a leva.
+
+---
+
+## Rolda 23: revisión desde cero, a pantalla e o motor — 28 de setembro de 2026
+
+Unha semana despois da rolda 22 e do porte ao árbore simplificado: a app en marcha co panel
+do navegador á vista de verdade (`visibilityState` comprobado, porque a rolda 22 mediu
+estados finais co documento oculto), a 375×812 e 1280×800 e nos dous temas; e despois o
+motor, os servizos, os dous servidores e os *hooks*, lidos e medidos. Todo o que segue está
+medido salvo onde se di que só se leu.
+
+### Atopado e arranxado: horas que non dicían de onde saían
+
+**O planificador preguntaba á dirección, non á expedición.** `getNextLineDeparture`, que
+len o planificador e «Vou nesta», decidía `HORARIO OFICIAL` con `runs.some(...)`: o mesmo
+erro que o taboleiro corrixira cando 87 de 128 insignias oficiais eran falsas. Medido sobre
+todas as paradas e expedicións dun laborable: 485 de 16.468 saídas levaban oficial sen que
+a súa expedición imprimise a parada —as da cadencia da 2 entre elas—. Agora, 0.
+
+**Pasado o último bus, o día seguinte líase co cadro de hoxe.** A primeira saída de hoxe
+movíase a mañá: un venres ás 23:30, 664 das 1.136 saídas ofrecidas para o sábado eran
+falsas e 398 eran de liñas que o sábado nin circulan (a 1.1 ofrecía «06:58» un sábado).
+Agora sae do cadro do primeiro día en que a liña circula nesa parada, e a resposta di o
+día: «mañá 07:08 → ~07:30», «o martes». A comprobación atopou o festivo antes ca min: o luns
+5 de outubro é San Froilán, e unha liña de laborables volve o martes, non o luns.
+
+**A ficha de liña pintaba como impresas 1.077 das 1.585 «saídas desde cabeceira».** Dez
+liñas publican primeira, última e cadencia, e en 26 combinacións dirección/día a primeira
+parada non é punto horario (a hora vén calculada cara atrás desde o primeiro). A táboa, a
+cabeceira da expedición e as horas xa pasadas amosábanas sen `~`; o nome accesible de cada
+fila, tampouco. O punto de «bus aquí» latexaba sobre unha posición tirada do cadro, xusto
+o que DECIDIDO.md prohibe: xa non late.
+
+**O chip do paso a paso avalaba a chegada.** Un só chip por tramo, coa precisión da
+saída, ao pé, baixo «Baixa en 07:30»: en 966 de 6.469 tramos (todos os pares de destinos
+rápidos, un martes ás 09:00) a subida era impresa e a baixada non, e a resposta enriba
+dicía ~07:30. O chip vai baixo a hora que certifica e a baixada leva `~`.
+
+**O aviso «Sen servizo» contradicía os taboleiros.** Lía a primeira e a última saída de
+cabeceira de cada liña e imprimía a primeira `firstDeparture` de calquera día. Medido
+minuto a minuto: 34 minutos dun laborable e 25 de cada fin de semana con «sen servizo»
+mentres os últimos buses seguían en ruta, e de 07:00 a 07:09 dun sábado ou domingo sen
+aviso nin bus, porque os dous empezan ás 07:10. Agora sae das expedicións que len os
+taboleiros, a de onte incluída, e o primeiro bus é o do día en que circula: «~06:50» nun
+laborable, porque o 1.3 sae dunha parada que non é punto horario.
+
+**O taboleiro baleiro ofrecía buses que rematan alí.** Ás 03:00 cinco postes —HULA,
+Facultade Veterinaria, A Tolda, Czda. Gándaras, Calde— respondían cun bus que remata o
+percorrido nesa mesma parada («5ES ás 07:30, con destino HULA», en HULA). A frase leva
+agora o día e a `~`.
+
+**Unha cadencia podía perder o último bus.** `expandHeadway` paraba no último múltiplo:
+«cada 30 min ata as 21:45» remataba ás 21:30. Os 18 patróns do dataset caen hoxe exactos;
+a última saída impresa inclúese igual.
+
+### Atopado e arranxado: o resto
+
+**Sen permiso de localización, o planificador calculaba desde o centro de Lugo** co
+rótulo «📍 A miña localización». Medido no panel, co permiso denegado. E o testemuño
+interno `my_location` pintábase cru en tres sitios: a fila de enriba da resposta, as
+últimas rutas, e o destino despois de inverter. Agora dío («Non se puido acceder á túa
+localización») e non calcula; o testemuño amósase polo que significa; e unha ruta gardada
+desde o GPS volve pedir a posición, porque sen ela o testemuño non resolve nada.
+
+**Tres regresións do porte**, as tres medidas: a frecha de inverter xiraba en cada
+«Calcular» (o contador pasara a contar preguntas); despois do pregue a vista baixaba 76 px
+e escondía a fila que leva de volta aos campos —esta era miña, da rolda 22, ao desprazar
+cara á resposta—; e o control segmentado, agora tamén no sentido dunha liña, tiña altura
+fixa sen recheo, e «Sentido Rda. Muralla 56 (Sindicatos)» enchía a pastilla de bordo a
+bordo.
+
+**Os servidores.** Un enderezo mal formado (`/api/paradas/%E0%A4%A/agora`) daba 500 e unha
+traza no rexistro en express, e unha excepción sen capturar no *worker*: agora 400. A
+garda dos ficheiros precomprimidos comparaba `startsWith(distPath)` sen separador, e
+`dist-server/` tamén empeza por «dist»: non se podía explotar (alí non hai `.br` e
+`express.static` rexeita o `..`), pero a garda xa di o que quere dicir.
+
+**A pantalla acesa.** Se o interruptor se apagaba mentres o navegador respondía a
+`wakeLock.request`, o candado chegaba despois da limpeza e ninguén o soltaba. Só lido: non
+se reproduciu, porque precisa unha viaxe activa.
+
+**`pnpm run lint` fallaba en local** polos borradores `tools/_*.ts`, ignorados por git e
+rotos desde que `cdp.ts` deixou de exportar `sleep`. CI non os ve; o `tsconfig` exclúe
+agora o mesmo que exclúe `.gitignore`.
+
+### Medido e limpo
+
+`audit:browser` sobre a build: contraste 0 —tras un 4,30:1 da `~` nova, que levaba
+opacidade e xa non—, obxectivos 0, nomes 0, desbordamento 0 (agora tamén dentro de
+`<main>`), consola limpa, teclado e movemento reducido ben. `measure:browser`: primeira
+pintura aos 3.008 ms a 6× CPU e Slow 4G, 194 KB (orzamento 260), ningún orzamento superado.
+`check:deep`: 240.192 taboleiros e 38.329 viaxes, todo en pé. 168 comprobacións (158 + 10;
+unha endurecida: a do venres pedía «>= 1» e aceptaba o sábado, que era a resposta errada).
+
+### Mirado e deixado
+
+- Tocar unha parada no mapa non o recentra: o *pane* de Leaflet non se move. O «salto» era
+  o desprazamento que arranxou a rolda 22.
+- A «ocupación prevista» sae da hora do día e dío; está decidido no README.
+- As peticións a buslugo.com están limitadas a unha por minuto para todo o servidor, forzadas
+  ou non, e as simultáneas comparten unha; o QR só pregunta por paradas coñecidas.
+- Ningunha expedición cruza a medianoite (a máis cedo, 06:50): a lóxica de medianoite non a
+  exercita ningún dato.
+- Na ficha de liña a 375 px o chip da hora parte os nomes longos en tres liñas. Vén de
+  antes; queda para unha pasada de deseño.
+- `isLineInService` e `isWithinServiceWindow` quedan usadas só polo seu propio check.

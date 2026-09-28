@@ -7,6 +7,22 @@ import { BusDirection, BusLine } from '../types';
 import { Lang, translations } from '../i18n';
 import { median } from './schedule';
 
+/**
+ * When a departure is, said only when it is not today: "", "mañá", "o luns".
+ *
+ * A time alone reads as today. After the last bus the next one is tomorrow's -- or, on a
+ * Friday night for a weekday line, Monday's -- and "07:00" with nothing beside it was read
+ * as the next morning whichever it was.
+ */
+export function dayWord(lang: Lang, daysAhead: number, from: Date = new Date()): string {
+  if (daysAhead <= 0) return '';
+  const t = translations(lang).common;
+  if (daysAhead === 1) return t.tomorrow;
+  const day = new Date(from);
+  day.setDate(day.getDate() + daysAhead);
+  return t.onWeekday(t.weekdays[day.getDay()]);
+}
+
 export function directionLabel(direction: BusDirection, lang: Lang): string {
   return translations(lang).service.towards(direction.destination);
 }

@@ -23,7 +23,8 @@ import { useClock } from './hooks/useClock';
 import { Lang, LangContext, isLang, translations } from './i18n';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
 import type { Tab } from './routes';
-import { isLineInService } from './utils/schedule';
+import { networkAtRest } from './utils/arrivals';
+import { dayWord } from './utils/serviceLabels';
 import { findStop } from './utils/places';
 import { readString, writeString } from './utils/storage';
 import { BusStop, BusLine } from './types';
@@ -86,10 +87,10 @@ export default function App() {
   const [lang, setLang] = useState<Lang>(initialLang);
   const t = translations(lang);
 
-  // The "no service" banner comes from the actual timetables, not from assuming the network sleeps 22:00-06:00.
+  // The "no service" banner comes from the runs the boards read: no bus on the road, and the next one's day and time.
   const now = useClock(60_000);
-  const isOutOfService = !BUS_LINES.some((l) => isLineInService(l, now));
-  const firstDepartureTomorrow = useMemo(() => BUS_LINES.map((l) => l.firstDeparture).sort()[0], []);
+  const rest = useMemo(() => networkAtRest(now), [now]);
+  const isOutOfService = rest.atRest;
 
   /** The operator's notices, fetched once here for everybody who shows them. */
   const alerts = useServiceAlerts();
@@ -183,7 +184,7 @@ export default function App() {
               <button onClick={() => setActiveTab('info')} className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left">
                 <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold">{t.nightBanner.closed(firstDepartureTomorrow)}</span>
+                  <span className="block truncate text-body font-semibold">{t.nightBanner.closed(rest.firstBus, dayWord(lang, rest.daysAhead, now))}</span>
                   <span className="block truncate text-label text-ink-3">{t.nightBanner.festivals} ›</span>
                 </span>
                 <span className="sr-only">{t.nightBanner.seeNotices}</span>

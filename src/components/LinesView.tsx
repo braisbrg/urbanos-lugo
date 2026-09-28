@@ -4,7 +4,7 @@ import { useLang, useT } from '../i18n';
 import { BusLine, BusStop } from '../types';
 import { BUS_LINES, BUS_STOPS, poleCode, stopById } from '../data/transitData';
 import { getScheduledBuses } from '../utils/vehicles';
-import { buildRuns, dayKind, formatMinutes, isHoliday, minutesNow, scheduledDuration } from '../utils/schedule';
+import { buildRuns, dayKind, formatMinutes, isHoliday, minutesNow, scheduledDuration, type ScheduledRun } from '../utils/schedule';
 import { daysLabel, directionLabel, frequencyLabel } from '../utils/serviceLabels';
 import { MAX_QUERY_LENGTH, matchesQuery } from '../utils/searchUtils';
 import { SaveStar, Segmented } from './ui/controls';
@@ -86,7 +86,14 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
   useEffect(() => setPickedRunIndex(null), [currentLine.id, direction.id]);
 
   const busesOnLine = buses.filter((b) => b.lineId === currentLine.id && (b.direction === direction.id || currentLine.directions.length === 1));
-  const departures = runs.map((r) => formatMinutes(r.minutesByStopIndex[0]));
+  /**
+   * Whether a run's time at a stop is the operator's own or worked out. The board has always
+   * said so on every row; this screen said it only for times still to come, so 1,077 of the
+   * 1,585 departures of a day type -- the 10 lines that print a first, a last and a frequency,
+   * and the directions whose first stop is not a timing point -- were drawn as if printed.
+   */
+  const derived = (run: ScheduledRun | undefined, stopIndex: number) => !!run && !run.publishedStopIndices.includes(stopIndex);
+  const departures = runs.map((r) => ({ time: formatMinutes(r.minutesByStopIndex[0]), derived: derived(r, 0) }));
   const isSaved = favoriteLineIds.includes(currentLine.id);
   const duration = scheduledDuration(currentLine, directionIdx, BUS_STOPS);
 
@@ -257,17 +264,20 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
               {t.lines.scheduleTable} &mdash; {direction.origin.slice(0, 28)} ({departures.length})
             </h3>
             <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-              {departures.map((time, idx) => (
+              {departures.map(({ time, derived: guessed }, idx) => (
                 <button
                   key={idx}
                   onClick={() => setPickedRunIndex(idx)}
                   title={t.lines.viewRunAt(time)}
+                  aria-label={guessed ? `${t.lines.viewRunAt(time)}, ${t.lines.estimatedSr}` : t.lines.viewRunAt(time)}
                   className={`tnum flex h-11 items-center justify-center rounded-[7px] border px-2.5 text-label font-semibold ${idx === runIndex ? 'border-ink bg-ink text-bg' : 'border-edge text-ink-2'}`}
                 >
+                  {guessed && <span>~</span>}
                   {time}
                 </button>
               ))}
             </div>
+            {departures.some((d) => d.derived) && <p className="mt-2 text-label leading-relaxed text-ink-3">{t.lines.derivedDepartures}</p>}
           </div>
 
           <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
@@ -299,6 +309,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                 <div className="text-center leading-tight">
                   <div className="text-label font-bold text-accent uppercase tracking-widest">{t.lines.showingRun}</div>
                   <div className="text-body font-black text-accent font-mono">
+                    {derived(shownRun, 0) && '~'}
                     {formatMinutes(shownRun.minutesByStopIndex[0])}
                     <span className="text-accent font-bold text-label ml-1.5" title={t.lines.estimatedHint}>
                       &rarr; ~{formatMinutes(shownRun.minutesByStopIndex[shownRun.minutesByStopIndex.length - 1])}
@@ -347,12 +358,12 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                         onSelectStop(stop);
                       }
                     }}
-                    aria-label={`${stop.name}. ${passingMinutes === undefined ? t.lines.noService : formatMinutes(passingMinutes)}`}
+                    aria-label={`${stop.name}. ${passingMinutes === undefined ? t.lines.noService : formatMinutes(passingMinutes)}${passingMinutes !== undefined && derived(shownRun, idx) ? `, ${t.lines.estimatedSr}` : ''}`}
                     className="relative group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control"
                   >
                     <div
                       className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center transition-transform group-hover:scale-125 ${
-                        busHere ? 'bg-estimated ring-2 ring-estimated animate-pulse' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'
+                        busHere ? 'bg-estimated ring-2 ring-estimated' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'
                       }`}
                     />
                     <div className={`px-3 py-2 rounded-control border transition-all flex items-center justify-between gap-2.5 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}>
@@ -388,13 +399,17 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                               <span className="text-ink-3 font-semibold">{t.lines.noService}</span>
                             ) : relativeMinutes !== null && relativeMinutes < 0 ? (
                               <span className="text-ink-3">
+                                {derived(shownRun, idx) && '~'}
                                 {formatMinutes(passingMinutes)} &middot; {t.lines.passed}
                               </span>
                             ) : relativeMinutes === 0 ? (
-                              <span className="text-official font-extrabold">{t.lines.nowAt}</span>
+                              <span className="text-official font-extrabold">
+                                {derived(shownRun, idx) && <span className="text-ink-3">~</span>}
+                                {t.lines.nowAt}
+                              </span>
                             ) : (
                               <span>
-                                {!shownRun?.publishedStopIndices.includes(idx) && (
+                                {derived(shownRun, idx) && (
                                   <span className="text-ink-3" title={t.lines.estimatedHint}>
                                     ~
                                   </span>

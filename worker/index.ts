@@ -74,7 +74,14 @@ export async function handle(request: Request): Promise<Response> {
 
   const stopMatch = url.pathname.match(/^\/api\/paradas\/([^/]+)\/agora$/);
   if (stopMatch) {
-    const { status, body } = await operatorTimesResponse(decodeURIComponent(stopMatch[1]));
+    // A malformed escape throws, and an uncaught throw here is a 500 from the runtime: say 400, as the express route does.
+    let code: string;
+    try {
+      code = decodeURIComponent(stopMatch[1]);
+    } catch {
+      return respond({ error: 'Bad request' }, 400, 0);
+    }
+    const { status, body } = await operatorTimesResponse(code);
     return respond(body, status, status === 200 ? EDGE_SECONDS.operator : 0);
   }
 

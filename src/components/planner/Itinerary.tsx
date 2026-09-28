@@ -16,12 +16,15 @@ const CARD = { bus: 'border-edge bg-surface/30', wait: 'border-warn bg-warn/40',
 const ICON = { bus: Bus, wait: Clock, walk: Footprints };
 
 /** The stop you get on or off at: the label and the time on one line, the name whole on the next, never truncated. */
-function StopRow({ label, time, stop, onSelect }: { label: string; time?: string; stop?: BusStop; onSelect: (stop: BusStop) => void }) {
+function StopRow({ label, time, estimated = false, stop, onSelect }: { label: string; time?: string; estimated?: boolean; stop?: BusStop; onSelect: (stop: BusStop) => void }) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-label text-ink-3">{label}</span>
-        <span className="tnum shrink-0 text-body font-semibold">{time}</span>
+        <span className="tnum shrink-0 text-body font-semibold">
+          {estimated && <span className="text-ink-3">~</span>}
+          {time}
+        </span>
       </div>
       <button onClick={() => stop && onSelect(stop)} title={stop?.name} className="flex min-h-11 w-full items-center text-left text-body font-semibold underline underline-offset-2">
         {stop?.name}
@@ -54,6 +57,9 @@ function BusStep({ seg, onSelectStop, onSelectLine }: { seg: TripSegment & { lin
       </div>
       <div className="mt-3">
         <StopRow label={t.planner.board} time={seg.departureTime} stop={seg.fromStop} onSelect={onSelectStop} />
+        {/* Under the time it vouches for. At the foot of the leg it sat under the alighting time,
+            and in 966 of 6,469 legs that time is one the timetable does not print. */}
+        <Provenance precision={seg.precision ?? 'estimated'} />
       </div>
       {/* Collapsed by default: the question is normally "how long", and one tap answers "is my stop on this?". */}
       {between.length === 0 ? (
@@ -73,10 +79,7 @@ function BusStep({ seg, onSelectStop, onSelectLine }: { seg: TripSegment & { lin
           </ol>
         </details>
       )}
-      <StopRow label={t.planner.alight} time={seg.arrivalTime} stop={seg.toStop} onSelect={onSelectStop} />
-      <div className="mt-2.5">
-        <Provenance precision={seg.precision ?? 'estimated'} />
-      </div>
+      <StopRow label={t.planner.alight} time={seg.arrivalTime} estimated={seg.arrivalPrecision !== 'published'} stop={seg.toStop} onSelect={onSelectStop} />
     </div>
   );
 }

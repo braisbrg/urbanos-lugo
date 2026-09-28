@@ -8,7 +8,7 @@ import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
 import { operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
-import { daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
+import { dayWord, daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
 import { createHash } from 'node:crypto';
@@ -29,12 +29,12 @@ import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
 import { routeOnFoot } from '../src/utils/walkRouter';
 import { metresBetween } from '../src/utils/geo';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
-import { HOLIDAY_YEARS, buildRuns, dayKind, handoverMinutes, isHoliday, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
+import { HOLIDAY_YEARS, buildRuns, dayKind, expandHeadway, handoverMinutes, isHoliday, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
 import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
 import festivos from '../src/data/festivos.json';
 import { planTrips, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
-import { getArrivalsForStop, getNextLineDeparture, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
+import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
 import { getScheduledBuses } from '../src/utils/vehicles';
 import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
@@ -1606,7 +1606,8 @@ console.log('\nuntested corners');
 
 ok('a service window that crosses midnight is not read as finished', () => {
   // A night line running 22:30 to 06:30 has a window ending before it starts, and the naive
-  // comparison called it closed all day, which is what the "no service" banner reads.
+  // comparison called it closed all day. (The "no service" banner no longer reads this: it
+  // reads the runs, yesterday's included -- see networkAtRest.)
   const night = { firstDeparture: '22:30', lastDeparture: '06:30', services: [{ days: ['laborable'] }] } as any;
   const tuesday = (h: number, m: number) => new Date(2026, 7, 18, h, m);
 
@@ -2484,9 +2485,10 @@ ok('a line that does not run today is next offered on a day it does run', () => 
   assert(!answer.isServiceActive, `the ${line.id} on a Saturday is marked active`);
   const daysAhead = Math.floor(answer.departureMinutes / (24 * 60));
   assert(daysAhead === 2, `the ${line.id} asked on a Saturday is offered ${daysAhead} day(s) ahead, expected 2 (Monday)`);
-  // And on a Friday evening, after its last run, tomorrow is Saturday: two days as well.
+  // And on a Friday evening, after its last run, the next one is Monday's: three days ahead.
+  // This asked for ">= 1" and so accepted Saturday, which is what the engine answered.
   const late = getNextLineDeparture('gl', line, direction.id, direction.stops[0], 23 * 60, new Date(2026, 7, 21, 23, 0, 0));
-  assert(Math.floor(late.departureMinutes / (24 * 60)) >= 1, `the ${line.id} on a Friday night is offered today`);
+  assert(Math.floor(late.departureMinutes / (24 * 60)) === 3 && late.daysAhead === 3, `the ${line.id} on a Friday night is offered ${Math.floor(late.departureMinutes / (24 * 60))} day(s) ahead, expected 3 (Monday)`);
 });
 
 ok('a public holiday runs the Sunday timetable, and the file that says which days expires loudly', () => {
@@ -3726,6 +3728,172 @@ ok('motion moves the interface, never a number; and the two things the first rou
   assert(/anim-roll-in/.test(read('src/components/TripCompanionView.tsx')), 'the ride no longer rolls its one count');
   assert(!/anim-roll-in/.test(read('src/components/StopArrivalsView.tsx')), 'the arrivals board rolls its minutes: it reads as live');
   assert(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation-duration: 0\.01ms !important/.test(css), 'reduced motion no longer stops the animations');
+});
+
+ok('the planner calls a departure official only when its own run prints that stop', () => {
+  // The board had been fixed for exactly this; getNextLineDeparture, which the planner and
+  // the ride ask, still asked the whole direction. On a weekday 485 of 16,468 departures --
+  // the headway-filled runs of the 2 among them -- came back HORARIO OFICIAL.
+  const monday = new Date(2026, 8, 28, 6, 0, 0);
+  for (const line of BUS_LINES) {
+    line.directions.forEach((direction, d) => {
+      const runs = buildRuns(line, d, BUS_STOPS, dayKind(monday));
+      direction.stops.forEach((stopId, i) => {
+        if (i === direction.stops.length - 1) return;
+        for (const run of runs) {
+          const dep = getNextLineDeparture('gl', line, direction.id, stopId, Math.round(run.minutesByStopIndex[i]), monday);
+          if (dep.precision !== 'published') continue;
+          const leaving = runs.filter((r) => Math.round(r.minutesByStopIndex[i]) === dep.departureMinutes);
+          assert(leaving.some((r) => r.publishedStopIndices.includes(i)), `${line.number}/${direction.id} ${stopId} at ${formatMinutes(dep.departureMinutes)} is labelled official and no run printing that stop leaves then`);
+        }
+      });
+    });
+  }
+});
+
+ok('past the last bus, the next one comes from the timetable of the day it runs, and says which day', () => {
+  // Rolling over moved today's first run to tomorrow: on a Friday night 664 of the 1,136
+  // departures offered for Saturday were wrong, 398 of them on lines that do not run on
+  // Saturdays at all.
+  const friday = new Date(2026, 9, 2, 23, 30, 0);
+  assert(friday.getDay() === 5, 'the probe date is not a Friday');
+  const onDay = (ahead: number) => {
+    const day = new Date(friday);
+    day.setDate(day.getDate() + ahead);
+    return dayKind(day);
+  };
+  for (const line of BUS_LINES) {
+    line.directions.forEach((direction, d) => {
+      direction.stops.forEach((stopId, i) => {
+        if (i === direction.stops.length - 1) return;
+        const dep = getNextLineDeparture('gl', line, direction.id, stopId, 23 * 60 + 30, friday);
+        if (dep.isServiceActive) return;
+        const firstAt = (ahead: number) =>
+          lineRunsOn(line, onDay(ahead)) ? buildRuns(line, d, BUS_STOPS, onDay(ahead)).map((r) => r.minutesByStopIndex[i]).filter((m) => m !== undefined).sort((a, b) => a - b)[0] : undefined;
+        for (let ahead = 1; ahead < dep.daysAhead; ahead++) assert(firstAt(ahead) === undefined, `${line.number}/${direction.id} ${stopId} skips ${ahead} day(s) ahead, when it does run`);
+        const first = firstAt(dep.daysAhead);
+        assert(first !== undefined, `${line.number} is offered ${dep.daysAhead} day(s) ahead, a day it does not run at ${stopId}`);
+        assert(formatMinutes(first!) === formatMinutes(dep.departureMinutes), `${line.number}/${direction.id} ${stopId}: offered ${formatMinutes(dep.departureMinutes)}, that day's first is ${formatMinutes(first!)}`);
+        assert(Math.floor(dep.departureMinutes / (24 * 60)) === dep.daysAhead, 'the day it names and the minute it returns disagree');
+      });
+    });
+  }
+  // The notice names the day: "07:00" alone was read as the next morning whichever it was.
+  // That Monday is San Froilán, Lugo's own holiday, so a weekday-only line is next on Tuesday.
+  const weekdayOnly = BUS_LINES.find((l) => l.services.every((p) => p.days.length === 1 && p.days[0] === 'laborable'))!;
+  const dir = weekdayOnly.directions[0];
+  const tuesday = getNextLineDeparture('gl', weekdayOnly, dir.id, dir.stops[0], 23 * 60 + 30, friday);
+  assert(tuesday.daysAhead === 4 && dayWord('gl', 4, friday) === 'o martes' && (tuesday.serviceNotice ?? '').includes('o martes'), `the notice for Tuesday's bus does not say Tuesday: "${tuesday.serviceNotice}"`);
+  assert(dayWord('gl', 3, friday) === 'o luns' && dayWord('es', 1, friday) === 'mañana' && dayWord('en', 0, friday) === '', 'the day words are wrong');
+});
+
+ok('an empty board names a bus that can be boarded there, on the day it runs', () => {
+  // At 03:00 five poles -- HULA, Facultade Veterinaria, A Tolda, Czda. Gándaras, Calde --
+  // answered with a bus that ends its run at that very pole: "5ES at 07:30 to HULA", at HULA.
+  const night = new Date(2026, 8, 29, 3, 0, 0);
+  for (const stop of BUS_STOPS) {
+    const next = nextServiceAtStop(stop.id, night);
+    if (!next) continue;
+    const line = BUS_LINES.find((l) => l.id === next.lineId)!;
+    const boardable = line.directions.some((direction) => {
+      const i = direction.stops.indexOf(stop.id);
+      return i !== -1 && i < direction.stops.length - 1 && direction.destination === next.destination;
+    });
+    assert(boardable, `${stop.name}: "${next.lineNumber} ${next.time} to ${next.destination}" ends its run here`);
+    assert(next.daysAhead === 0, `${stop.name}: at 03:00 the next bus is put ${next.daysAhead} day(s) ahead`);
+  }
+  const busiest = [...BUS_STOPS].sort((a, b) => b.lines.length - a.lines.length)[0];
+  const late = nextServiceAtStop(busiest.id, new Date(2026, 8, 28, 23, 30));
+  assert(late && late.daysAhead === 1, 'after the last bus the next one is not put on tomorrow');
+  // And the sentence's time says where it came from, like every other time in the app.
+  assert(/nextServiceAt\([^)]*nextService\.precision === 'estimated' \? '~'/.test(read('src/components/StopArrivalsView.tsx')), "the empty board's next time is drawn without its tilde again");
+});
+
+ok('a headway line keeps its printed last departure', () => {
+  // "Every 30 min until 21:45" leaves at 21:45. The expansion stopped at 21:30, which would
+  // drop the last bus of the day; every pattern in the dataset happens to land on it today.
+  const every30 = expandHeadway(7 * 60 + 30, 21 * 60 + 45, 30);
+  assert(every30[every30.length - 1] === 21 * 60 + 45, `the last departure is ${formatMinutes(every30[every30.length - 1])}, not 21:45`);
+  const exact = expandHeadway(7 * 60 + 30, 22 * 60, 30);
+  assert(exact.length === new Set(exact).size && exact[exact.length - 1] === 22 * 60, 'an exact span gains a duplicate last departure');
+});
+
+ok('the line screen marks a derived time as the board does, and nothing on it pulses', () => {
+  // 1,077 of the 1,585 departures of a day type -- ten lines print a first, a last and a
+  // frequency, and 26 direction-days start at a stop that is not a timing point -- were drawn
+  // in "Saídas desde cabeceira" as printed times, and a time already passed lost its tilde.
+  // The "bus here" dot pulsed over a position worked out from the timetable.
+  const lines = read('src/components/LinesView.tsx');
+  assert(/derived: derived\(r, 0\)/.test(lines), 'the departures table no longer asks whether each departure is printed');
+  assert(/\{derived\(shownRun, idx\) && '~'\}\s*\{formatMinutes\(passingMinutes\)\} &middot; \{t\.lines\.passed\}/.test(lines), 'a time already passed is drawn as printed again');
+  assert(/\{derived\(shownRun, 0\) && '~'\}/.test(lines), 'the run header draws a derived departure as printed');
+  assert(!/animate-pulse/.test(lines), 'something on the line screen pulses again');
+});
+
+ok('the planner turns the swap arrow on a swap only, and keeps the asked row in view', () => {
+  // The port counted every question: "Calcular" turned the arrow beside a desktop form that
+  // never folds. And scrolling to the answer after the fold hid the row above it -- 76 px,
+  // the way back to the fields.
+  const planner = read('src/components/RoutePlannerView.tsx');
+  const calculate = planner.slice(planner.indexOf('const calculate ='), planner.indexOf('const swap ='));
+  assert(calculate.length > 0 && !/setSwaps/.test(calculate), 'every question turns the swap arrow again');
+  assert(/const swap = \(\) => \{\s*setSwaps/.test(planner), 'a swap no longer turns the arrow');
+  assert(/askedRowRef\.current\?\.scrollIntoView/.test(planner) && !/answerRef\.current\?\.scrollIntoView/.test(planner), 'the answer scrolls the asked row out of view again');
+  // Two-line labels need room: a fixed 44 px and no padding filled the pill edge to edge.
+  assert(/\.seg-btn \{[^}]*min-height: 2\.75rem;[^}]*padding:/.test(read('src/index.css')), 'the segmented buttons are a fixed height with no padding again');
+});
+
+ok('the night banner is up exactly while no bus is on the road, and names the next one', () => {
+  // It read each line's first and last departure from the terminus and the earliest
+  // firstDeparture of any line on any day: "no service" for 34 minutes of a weekday while the
+  // last buses were still running and on the boards, and "first bus at 07:00" on weekend
+  // mornings that begin at 07:10.
+  const at = (y: number, mo: number, d: number, h: number, mi: number) => new Date(y, mo, d, h, mi);
+  const lastOnRoad = networkAtRest(at(2026, 8, 28, 22, 50));
+  assert(!lastOnRoad.atRest, 'at 22:50 on a Monday the banner says no service while the last buses run');
+  const night = networkAtRest(at(2026, 8, 28, 23, 30));
+  assert(night.atRest && night.daysAhead === 1 && night.firstBus.replace('~', '') === '06:50', `after the last bus on a Monday the next is not Tuesday's first: ${JSON.stringify(night)}`);
+  assert(night.firstBus.startsWith('~'), "Tuesday's first run starts at a stop that is not a timing point, and its time is not marked as worked out");
+  const saturdayDawn = networkAtRest(at(2026, 9, 3, 7, 5));
+  assert(saturdayDawn.atRest && saturdayDawn.daysAhead === 0 && saturdayDawn.firstBus.replace('~', '') === '07:10', `at 07:05 on a Saturday nothing runs until 07:10: ${JSON.stringify(saturdayDawn)}`);
+  const sanFroilanEve = networkAtRest(at(2026, 9, 4, 23, 30));
+  assert(sanFroilanEve.firstBus.replace('~', '') === '07:10', `the night before San Froilán the first bus is the Sunday timetable's: ${sanFroilanEve.firstBus}`);
+  assert(translations('es').nightBanner.closed('07:10', dayWord('es', 1)) === 'Sin servicio · primer bus mañana a las 07:10', 'the banner sentence does not read');
+});
+
+ok('a malformed address is the caller’s mistake on both servers, and the build keeps to its own folder', () => {
+  // `/api/paradas/%E0%A4%A/agora` was a 500 and a stack trace in the log on express, and an
+  // uncaught URIError on the worker. And the precompressed-file guard compared without a
+  // separator, so a path into dist-server, which also begins "dist", passed it.
+  const server = read('server.ts');
+  assert(/err\.status >= 400 && err\.status < 500 \? err\.status : 500/.test(server), 'the express error handler answers a 4xx as a 500 again');
+  assert(/target\.startsWith\(distPath \+ path\.sep\)/.test(server), 'the precompressed-file guard lets a sibling of dist/ through again');
+  const worker = read('worker/index.ts');
+  assert(/try \{\s*code = decodeURIComponent\(stopMatch\[1\]\);\s*\} catch/.test(worker), 'the worker decodes the stop code unguarded again');
+});
+
+ok('the planner never plans from somewhere the phone did not say, and never shows its GPS token', () => {
+  // With the location refused it planned from Lugo's centre under "📍 Mi ubicación" -- what
+  // the stops screen refuses to do. And the token itself, my_location, was printed in the
+  // row above the answer, in the recent trips and in the destination field after a swap.
+  const planner = read('src/components/RoutePlannerView.tsx');
+  assert(!/LUGO_CENTER/.test(planner), 'the planner falls back to Lugo’s centre for a refused location again');
+  assert(/\{gpsRefused && \(/.test(planner) && /t\.map\.locationDenied/.test(planner), 'a refused location is no longer said');
+  assert(/\{placeLabel\(originQuery\)\} → \{placeLabel\(destQuery\)\}/.test(planner), 'the row above the answer prints the GPS token again');
+  assert(/\{placeLabel\(route\.from\)\}/.test(planner) && /\{placeLabel\(route\.to\)\}/.test(planner), 'the recent trips print the GPS token again');
+  assert(/display=\{destQuery === 'my_location' \? placeLabel\(destQuery\)/.test(planner), 'a swapped GPS origin shows as "my_location" in the destination again');
+});
+
+ok('the itinerary vouches for the boarding time only, and marks a worked-out arrival', () => {
+  // One chip per leg, at its foot, with the departure's precision: under "Baja en 07:30" it
+  // read HORARIO OFICIAL for an arrival the timetable does not print -- 966 of 6,469 legs
+  // over the quick destinations on a weekday morning -- while the answer above said ~07:30.
+  const itinerary = read('src/components/planner/Itinerary.tsx');
+  const board = itinerary.indexOf('label={t.planner.board}');
+  const chip = itinerary.indexOf('<Provenance precision={seg.precision');
+  const alight = itinerary.indexOf('label={t.planner.alight}');
+  assert(board > 0 && chip > board && alight > chip, 'the provenance chip no longer sits under the boarding time');
+  assert(/label=\{t\.planner\.alight\}[^>]*estimated=\{seg\.arrivalPrecision !== 'published'\}/.test(itinerary), 'the alighting time no longer says when it is worked out');
 });
 
 // Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which

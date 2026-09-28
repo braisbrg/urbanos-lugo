@@ -98,7 +98,11 @@ export function useTripCompanion(lang: Lang): TripCompanion {
     const hold = async () => {
       if (gone || document.visibilityState !== 'visible') return;
       try {
-        sentinel = await navigator.wakeLock.request('screen');
+        const lock = await navigator.wakeLock.request('screen');
+        // Switched off, or the trip ended, while the browser was answering: the cleanup has
+        // already run and would never release this one, so the screen stayed on.
+        if (gone) void lock.release();
+        else sentinel = lock;
       } catch {
         sentinel = null; // low battery mode, or a browser that says no
       }

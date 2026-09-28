@@ -5,6 +5,7 @@ import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { lineById, poleCode } from '../data/transitData';
 import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../utils/arrivals';
 import { getNearbyLines, getNearbyStops } from '../utils/places';
+import { dayWord } from '../utils/serviceLabels';
 import { LOCALE, useLang, useT } from '../i18n';
 import { newIssueUrl } from '../project';
 import { clockDriftFromTimetable, deviceTimeZone } from '../utils/clock';
@@ -416,7 +417,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         <div className="mt-6 rounded-card border border-dashed border-edge px-5 py-10 text-center">
           <Clock className="mx-auto mb-3 h-7 w-7 text-ink-3" strokeWidth={1.6} aria-hidden="true" />
           <p className="text-body text-ink-2">{atTime ? t.arrivals.noneAtTime(atTime) : t.arrivals.noArrivals}</p>
-          {nextService && <p className="mt-2 text-body font-semibold">{t.arrivals.nextServiceAt(nextService.lineNumber, nextService.time, nextService.destination)}</p>}
+          {nextService && <p className="mt-2 text-body font-semibold">{t.arrivals.nextServiceAt(nextService.lineNumber, `${nextService.precision === 'estimated' ? '~' : ''}${nextService.time}`, nextService.destination, dayWord(lang, nextService.daysAhead))}</p>}
         </div>
       ) : view === 'next' ? (
         <ul className="anim-fade mt-1">

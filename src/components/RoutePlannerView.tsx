@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo, useReducer, useRef, lazy, Suspense } from
 import { Navigation, MapPin, ArrowDownUp, Clock, Bus, Footprints, AlertCircle, ArrowRight, ChevronDown } from 'lucide-react';
 import { useLang, useT } from '../i18n';
 import { BusStop, BusLine, RoutePlanResult } from '../types';
-import { LUGO_CENTER } from '../data/transitData';
 import { planTrips } from '../utils/planner';
 import { resolveLocationQuery, QUICK_DESTINATIONS } from '../utils/places';
+import { dayWord } from '../utils/serviceLabels';
 import { walkHopKey, walkHopsOf, type Hop } from '../services/walkingPath';
 import { useRecentRoutes } from '../hooks/useStoredList';
 import { useWalkPaths } from '../hooks/useWalkPaths';
@@ -59,6 +59,8 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const [destQuery, setDestQuery] = useState(DEFAULT_DEST);
   const [userLocation, setUserLocation] = useState<[number, number] | undefined>(undefined);
   const [isLocating, setIsLocating] = useState(false);
+  /** The phone would not say where it is: told, rather than planned from somewhere else. */
+  const [gpsRefused, setGpsRefused] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [activeInput, setActiveInput] = useState<'origin' | 'dest' | null>(null);
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now');
@@ -96,15 +98,25 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const shownOptions = useMemo(() => planOptions.slice(0, MAX_OPTIONS), [planOptions]);
 
   // Focus lands on the answer column after every question: the button folds away with the form.
-  // Without preventScroll the page dropped onto the map the instant the fold started; the
-  // fold's own end scrolls the answer into view instead.
+  // Without preventScroll the page dropped onto the map the instant the fold started. The
+  // view goes to the row that says what was asked instead: it sits above the fold, so it
+  // does not move while the form closes under it, and the answer rises in right below.
+  // Scrolling to the answer after the fold hid that row -- 76 px, the way back to the
+  // fields. From lg up the row is not rendered, and scrolling to it does nothing.
   const answerRef = useRef<HTMLDivElement>(null);
+  const askedRowRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (answered) answerRef.current?.focus({ preventScroll: true });
+    if (!answered) return;
+    answerRef.current?.focus({ preventScroll: true });
+    askedRowRef.current?.scrollIntoView({ block: 'start' });
   }, [answered]);
   /** The form is mid-fold: clipping stays on until the transition ends, not a child's. */
   const [folding, setFolding] = useState(false);
-  /** Counts every question, and turns the swap arrow with it; the fields are keyed on it so they fade in with their new text. */
+  /**
+   * Counts the swaps: the arrow turns half a turn for each and the two fields, keyed on it,
+   * fade in with their new text. Swaps only -- counted on every question, the arrow turned
+   * on "Calcular" as if the ends had been exchanged, beside a desktop form that never folds.
+   */
   const [swaps, setSwaps] = useState(0);
   /** Where the button on the map jumps to. */
   const stepsRef = useRef<HTMLDivElement>(null);
@@ -178,6 +190,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const [questions, setQuestions] = useState(0);
   const calculate = (orig = originQuery, dest = destQuery, gps = userLocation, fold = true) => {
     if (!orig.trim() || !dest.trim()) return;
+    setGpsRefused(false);
     const opts = { ...timeOptions(), userLocation: gps };
     askedRef.current = { orig, dest, opts };
     replannedRef.current = false;
@@ -189,7 +202,6 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
       setFolding(true);
       ask('answer');
     }
-    setSwaps((n) => n + 1);
     if (plans.length) rememberRoute({ from: orig.trim(), to: dest.trim() });
     setEndpoints({ origin: toPoint(resolveLocationQuery(orig, gps)), destination: toPoint(resolveLocationQuery(dest, gps)) });
     setActiveInput(null);
@@ -204,22 +216,44 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
 
   // Inverting must not fold the form under the finger that pressed it.
   const swap = () => {
+    setSwaps((n) => n + 1);
     setOriginQuery(destQuery);
     setDestQuery(originQuery);
     calculate(destQuery, originQuery, userLocation, false);
   };
 
-  const useGps = () => {
-    setIsLocating(true);
-    const from = (coords: [number, number]) => {
-      setUserLocation(coords);
-      setOriginQuery('my_location');
+  /**
+   * The phone's position, then a plan from it. Refused or missing, the reader is told and
+   * nothing is planned: it fell back to Lugo's centre and planned from there under the label
+   * "📍 Mi ubicación" -- the one thing the stops screen refuses to do with a location.
+   */
+  const withGps = (plan: (coords: [number, number]) => void) => {
+    const refused = () => {
       setIsLocating(false);
-      calculate('my_location', destQuery, coords);
+      setGpsRefused(true);
     };
-    if (!navigator.geolocation) return from(LUGO_CENTER);
-    navigator.geolocation.getCurrentPosition((pos) => from([pos.coords.latitude, pos.coords.longitude]), () => from(LUGO_CENTER), { timeout: 6000 });
+    if (!navigator.geolocation) return refused();
+    setGpsRefused(false);
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setUserLocation(coords);
+        setIsLocating(false);
+        plan(coords);
+      },
+      refused,
+      { timeout: 6000 },
+    );
   };
+  const useGps = () =>
+    withGps((coords) => {
+      setOriginQuery('my_location');
+      calculate('my_location', destQuery, coords);
+    });
+
+  /** The GPS origin is a token, not a name: shown as what it means wherever a place is shown. */
+  const placeLabel = (query: string) => (query === 'my_location' ? `📍 ${t.map.myLocation}` : query);
 
   const pick = (role: 'origin' | 'dest') => (name: string) => {
     setActiveInput(null);
@@ -270,17 +304,18 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
           {/* What you asked for, in one line, and the way in and out of the fields. */}
           {asked && (
             <button
+              ref={askedRowRef}
               type="button"
               onClick={() => {
                 setFolding(true);
                 ask('toggleForm');
               }}
               aria-expanded={formOpen}
-              className="flex min-h-11 w-full items-center gap-2 px-1 text-left lg:hidden"
+              className="flex min-h-11 w-full scroll-mt-[1rem] items-center gap-2 px-1 text-left lg:hidden"
             >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-              <span title={`${originQuery} → ${destQuery}`} className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
-                {originQuery} → {destQuery}
+              <span title={`${placeLabel(originQuery)} → ${placeLabel(destQuery)}`} className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
+                {placeLabel(originQuery)} → {placeLabel(destQuery)}
               </span>
               <span className="shrink-0 text-label font-semibold text-accent underline">{formOpen ? t.planner.backToAnswer : t.planner.editTrip}</span>
             </button>
@@ -289,9 +324,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
           <div
             className={`fold fold-lg-open fold-clear ${folded ? 'fold-closed' : ''} ${folding ? 'fold-moving' : ''}`}
             onTransitionEnd={(e) => {
-              if (e.target !== e.currentTarget) return;
-              setFolding(false);
-              if (folded) answerRef.current?.scrollIntoView({ block: 'nearest' });
+              if (e.target === e.currentTarget) setFolding(false);
             }}
           >
             {/* A bare wrapper: the row can only shrink to its item's padding and border, so the card itself as the item left a 30 px stub when folded. */}
@@ -304,10 +337,10 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   key={`origin-${swaps}`}
                   id="input-origin-query"
                   {...fieldFor('origin', originQuery)}
-                  display={originQuery === 'my_location' ? `📍 ${t.map.myLocation}` : undefined}
+                  display={originQuery === 'my_location' ? placeLabel(originQuery) : undefined}
                   placeholder={t.planner.placeholderOrig}
                   label={t.planner.origin}
-                  trailing={{ kind: 'gps', locating: isLocating, onClick: useGps }}
+                  trailing={{ kind: 'gps', locating: isLocating, onClick: () => useGps() }}
                 />
                 {/* How many rows opened, for the ear; one line for both fields so the count is announced when it changes. */}
                 <span role="status" className="sr-only">
@@ -318,6 +351,8 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   key={`dest-${swaps}`}
                   id="input-dest-query"
                   {...fieldFor('dest', destQuery)}
+                  // A swap carries the GPS origin over here, and it read "my_location".
+                  display={destQuery === 'my_location' ? placeLabel(destQuery) : undefined}
                   placeholder={t.planner.placeholderDest}
                   label={t.planner.destination}
                   trailing={destQuery ? { kind: 'clear', onClick: () => setDestQuery('') } : null}
@@ -334,6 +369,12 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   <ArrowDownUp className="relative h-4 w-4 transition-transform duration-[260ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]" style={{ transform: `rotate(${swaps * 180}deg)` }} />
                 </button>
               </div>
+
+              {gpsRefused && (
+                <p role="alert" className="mt-2 text-label font-semibold text-warn-ink">
+                  {t.map.locationDenied}
+                </p>
+              )}
 
               <div className="mt-3">
                 <Segmented dense options={(['now', 'depart', 'arrive'] as const).map((mode) => ({ id: mode, label: t.planner.timeModes[mode] }))} value={timeMode} onChange={setTimeMode} />
@@ -370,17 +411,20 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                         onClick={() => {
                           setOriginQuery(route.from);
                           setDestQuery(route.to);
-                          calculate(route.from, route.to);
+                          // From where you were is asked again from where you are: no position is
+                          // kept, and without one the token resolves to nothing -- "no route".
+                          if (route.from === 'my_location' || route.to === 'my_location') withGps((coords) => calculate(route.from, route.to, coords));
+                          else calculate(route.from, route.to);
                         }}
                         className={`flex min-h-11 w-full items-center gap-2 py-1.5 text-left ${idx > 0 ? 'border-t border-t-line' : ''}`}
                       >
                         <Navigation className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
                         <span className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
-                          {route.from}
+                          {placeLabel(route.from)}
                           <span className="px-1 text-ink-3" aria-hidden="true">
                             →
                           </span>
-                          {route.to}
+                          {placeLabel(route.to)}
                         </span>
                       </button>
                     ))}
@@ -437,6 +481,8 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 </span>
                 <span className="flex items-baseline gap-2">
                   <span className="sr-only">{t.planner.departureLabel}</span>
+                  {/* Past the last bus the answer is another day's: said beside the clock, where the eye goes. */}
+                  {!!planResult.daysAhead && <span className="text-body font-semibold text-estimated">{dayWord(lang, planResult.daysAhead)}</span>}
                   <span className="tnum text-emph font-semibold">{shown.departure}</span>
                   <ArrowRight className="h-4 w-4 shrink-0 self-center text-ink-3" strokeWidth={2} aria-hidden="true" />
                   <span className="sr-only">{t.planner.arrivalLabel}</span>

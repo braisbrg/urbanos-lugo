@@ -129,9 +129,10 @@ async function startServer() {
       const accepted = String(req.headers['accept-encoding'] ?? '');
       for (const [token, suffix] of ENCODINGS) {
         if (!accepted.includes(token)) continue;
-        // A request is not allowed to name a file outside the build.
+        // A request is not allowed to name a file outside the build -- with the separator:
+        // `startsWith(distPath)` alone let /../dist-server/ through, a sibling that also begins "dist".
         const target = path.join(distPath, req.path + suffix);
-        if (!target.startsWith(distPath) || !existsSync(target)) continue;
+        if (!target.startsWith(distPath + path.sep) || !existsSync(target)) continue;
         const type = TYPES[path.extname(req.path).toLowerCase()];
         if (type) res.setHeader('Content-Type', type);
         res.setHeader('Content-Encoding', token);
@@ -149,9 +150,12 @@ async function startServer() {
 
   // Anything that still throws returns JSON, not Express's HTML stack trace page. The URL
   // goes as an argument, never into the format string: `/%s` would swallow the error.
-  app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('request failed:', req.method, req.originalUrl, err);
-    if (!res.headersSent) res.status(500).json({ error: 'Internal error' });
+  // A malformed URL (`%E0%A4%A`) is the caller's mistake and Express marks it 400: it was
+  // answered 500 and logged with a stack trace as if this server had failed.
+  app.use((err: Error & { status?: number }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const status = err.status && err.status >= 400 && err.status < 500 ? err.status : 500;
+    if (status === 500) console.error('request failed:', req.method, req.originalUrl, err);
+    if (!res.headersSent) res.status(status).json({ error: status === 500 ? 'Internal error' : 'Bad request' });
   });
 
   // Fails on a busy port rather than quietly moving to the next one; PORT exists for choosing another.

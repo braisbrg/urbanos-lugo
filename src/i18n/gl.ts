@@ -470,6 +470,8 @@ export const gl = {
     /** Appended when today is a public holiday: a weekday that runs the Sunday timetable. */
     holidayToday: 'Hoxe é festivo: circula o horario de domingo.',
     estimatedHint: 'Hora estimada desde a saída de cabeceira e o tempo de percorrido medido.',
+    derivedDepartures: '~ Saída que o operador non imprime: sae da frecuencia que publica ou do tempo ata o primeiro punto con horario.',
+    estimatedSr: 'hora estimada',
     busScheduledHere: 'Segundo o horario, o bus estaría chegando aquí',
     viewStop: 'Ver parada',
   },
@@ -492,8 +494,8 @@ export const gl = {
     viewNextHint: 'Todas as liñas, en orde de chegada',
     viewByLineHint: 'Cada liña coas súas próximas saídas',
     noArrivals: 'Non hai saídas programadas neste intre para esta parada.',
-    nextServiceAt: (line: string, time: string, to: string) =>
-      `A seguinte é a liña ${line} ás ${time}, con destino ${to}.`,
+    nextServiceAt: (line: string, time: string, to: string, day = '') =>
+      `A seguinte é a liña ${line}${day ? ` ${day}` : ''} ás ${time}, con destino ${to}.`,
     publishedHint: 'Hora publicada polo operador para esta parada.',
     estimatedHint:
       'Estimación a partir da saída de cabeceira e do tempo de percorrido medido. Chega uns minutos antes.',
@@ -545,7 +547,7 @@ export const gl = {
   },
 
   nightBanner: {
-    closed: (firstDeparture: string) => `Sen servizo · primeiro bus ás ${firstDeparture}`,
+    closed: (firstDeparture: string, day = '') => `Sen servizo · primeiro bus ${day ? `${day} ` : ''}ás ${firstDeparture}`,
     festivals: 'En festas pode haber reforzos, sen horario fixo',
     seeNotices: 'Ver avisos',
     dismiss: 'Ocultar aviso',
@@ -554,8 +556,8 @@ export const gl = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `A liña ${line} non presta servizo hoxe (${days}).`,
-    serviceOverToday: (last: string, first: string) =>
-      `Servizo finalizado por hoxe (última saída ás ${last}). Primeira saída ás ${first}.`,
+    serviceOverToday: (last: string, first: string, day: string) =>
+      `Servizo finalizado por hoxe (última saída ás ${last}). Primeira saída ${day} ás ${first}.`,
     // Cada paso xa leva a súa cabeceira: "12:18 → 12:22" e "4 min". Cando o texto
     // repetía as dúas cifras, a mesma hora e os mesmos minutos aparecían tres veces
     // nunha fila de 173 px. Aquí queda só o que a cabeceira non pode dicir.
@@ -581,6 +583,10 @@ export const gl = {
 
   common: {
     min: 'min',
+    tomorrow: 'mañá',
+    // getDay() order, Sunday first.
+    weekdays: ['domingo', 'luns', 'martes', 'mércores', 'xoves', 'venres', 'sábado'],
+    onWeekday: (day: string) => `o ${day}`,
     arrivingNow: 'Chegando',
     overdue: (minutes: number) => `hai ${minutes} min`,
     overdueNote:

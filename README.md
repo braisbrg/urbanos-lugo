@@ -222,6 +222,17 @@ Tres modos: **agora**, **saír ás** e **chegar antes das**. O terceiro devolve 
 máis tardía que aínda chega a tempo, que é a pregunta real antes dunha cita no HULA ou
 dunha clase no Campus.
 
+**Pasado o último bus, a resposta é doutro día, e dío.** A opción sae do cadro do día en
+que a liña volve circular —sábado, domingo ou festivo teñen o seu— e leva o día diante da
+hora: «mañá 07:08 → ~07:30», ou «o martes» se no medio hai un fin de semana ou un festivo
+como o San Froilán. Antes movía a primeira saída de hoxe ao día seguinte: un venres ás
+23:30, 664 das 1.136 saídas ofrecidas para o sábado eran falsas, e 398 delas de liñas que
+o sábado nin circulan.
+
+**«Usar a miña localización» sen permiso dío e non calcula.** Calculaba desde o centro de
+Lugo co rótulo «📍 A miña localización», que é xusto o que a pantalla de paradas se nega a
+facer cunha posición que o móbil non deu.
+
 Non devolve unha soa resposta: amosa as **opcións distintas** de facer o traxecto,
 agrupadas por combinación de liñas e ordenadas por tempo total. Ensínanse as catro
 mellores.
@@ -820,9 +831,31 @@ que a app trata como oficial.
 `pnpm test` inclúe comprobacións que fallan se algunha hora volve presentarse sen dicir de
 onde vén, e se algunha parada reclama unha hora oficial que o cadro non imprime.
 
+A regra ten que chegar a todas as pantallas, e a revisión do 28 de setembro de 2026 atopou
+catro onde non chegaba:
+
+- **O planificador e «Vou nesta»** preguntaban aínda á dirección enteira se imprimía a
+  parada, o erro que o taboleiro xa corrixira: 485 das 16.468 saídas dun laborable levaban
+  `HORARIO OFICIAL` sen que a súa expedición a imprimise.
+- **A ficha de liña** pintaba como impresas 1.077 das 1.585 «saídas desde cabeceira» dun
+  tipo de día —as das dez liñas que publican primeira, última e cadencia, e as das
+  direccións cuxa primeira parada non é punto horario—, e as horas xa pasadas perdían o
+  `~`. Hoxe a táboa marca `~08:00` e di por que. O punto de «bus aquí» deixou de latexar:
+  é unha posición tirada do cadro.
+- **O paso a paso** levaba un só chip por tramo, ao pé, baixo a hora de baixada: en 966
+  de 6.469 tramos avalaba como oficial unha chegada que o cadro non imprime. Vai baixo a
+  hora de subida, que é a que certifica, e a de baixada leva `~` cando é calculada.
+- **O aviso «Sen servizo»** lía a primeira e a última saída de cabeceira de cada liña:
+  dicía «sen servizo» os 25 minutos de cada noite en que os últimos buses aínda circulan
+  (34 nun laborable, co 1.3 da mañá) e «primeiro bus ás 07:00» as fins de semana, que
+  empezan ás 07:10. Agora sae das mesmas expedicións que len os taboleiros, e o primeiro
+  bus é o do día en que circula, con `~` se a súa primeira parada non é punto horario.
+
 Cando non hai saídas no horizonte —ás 03:00, ou un domingo cedo— o taboleiro xa non queda
-só cun «non hai saídas programadas»: di cal é a seguinte, a que hora e con que destino,
-aínda que sexa mañá pola mañá. Quen está na parada precisa saber se agardar ou marchar.
+só cun «non hai saídas programadas»: di cal é a seguinte, a que hora, con que destino e que
+día —«a liña 6 mañá ás 07:35»—, coa súa `~` se é calculada. Quen está na parada precisa
+saber se agardar ou marchar. Nunca propón un bus que remata o percorrido nesa mesma parada:
+ás 03:00 cinco postes, HULA entre eles, ofrecían o 5ES «con destino HULA».
 
 ---
 
@@ -1423,7 +1456,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-158 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+168 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

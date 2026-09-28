@@ -126,6 +126,7 @@ interface Itinerary {
   totalWaitMinutes: number;
   isServiceActive: boolean;
   serviceNotice?: string;
+  daysAhead: number;
 }
 
 const walkSegment = (start: number, walk: { meters: number; minutes: number }, instruction: string): TripSegment => ({
@@ -186,7 +187,7 @@ function buildLeg(lang: Lang, candidateLineIds: string[], fromStop: BusStop, toS
     instruction: t.board(line.number, directionLabel(direction, lang), formatMinutes(boardTime), toStop.name, ride.stopsCount, (ride.meters / 1000).toFixed(1), formatMinutes(arriveTime)),
   });
 
-  return { arrivalMinutes: arriveTime, arrivalPrecision, segments, totalWaitMinutes: waitMinutes, isServiceActive: departure.isServiceActive, serviceNotice: departure.serviceNotice };
+  return { arrivalMinutes: arriveTime, arrivalPrecision, segments, totalWaitMinutes: waitMinutes, isServiceActive: departure.isServiceActive, serviceNotice: departure.serviceNotice, daysAhead: departure.daysAhead };
 }
 
 /** Every stop reachable from `stopId` without changing bus (`forward`), or every stop that reaches it. */
@@ -242,6 +243,8 @@ function buildTransfer(lang: Lang, startStop: BusStop, endStop: BusStop, hubIn: 
     totalWaitMinutes: first.totalWaitMinutes + second.totalWaitMinutes,
     isServiceActive: first.isServiceActive && second.isServiceActive,
     serviceNotice: first.serviceNotice || second.serviceNotice,
+    // The trip starts on the first leg's day; a change that waits overnight was refused above.
+    daysAhead: first.daysAhead,
   };
 }
 
@@ -479,6 +482,7 @@ function planBetweenStops(lang: Lang, fromRes: LocationResolution, toRes: Locati
       totalWaitMinutes: option.totalWaitMinutes - slack,
       isServiceActive: option.isServiceActive,
       serviceNotice: option.serviceNotice,
+      daysAhead: option.daysAhead,
       walkToStartMeters: from.walkMeters,
       walkFromEndMeters: to.walkMeters,
       segments,

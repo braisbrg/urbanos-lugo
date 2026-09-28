@@ -438,6 +438,8 @@ export const en: Dict = {
     noRunsToday: 'This line does not run today.',
     holidayToday: 'Today is a public holiday: the Sunday timetable runs.',
     estimatedHint: 'Estimated from the departure at the terminus plus the measured driving time.',
+    derivedDepartures: '~ Not printed by the operator: worked out from its stated frequency or from the running time to the first timed stop.',
+    estimatedSr: 'estimated time',
     busScheduledHere: 'On the timetable, the bus would be reaching this stop now',
     viewStop: 'See stop',
   },
@@ -460,8 +462,8 @@ export const en: Dict = {
     viewNextHint: 'Every line, in order of arrival',
     viewByLineHint: 'Each line with its next departures',
     noArrivals: 'No departures are scheduled from this stop right now.',
-    nextServiceAt: (line: string, time: string, to: string) =>
-      `The next one is line ${line} at ${time}, towards ${to}.`,
+    nextServiceAt: (line: string, time: string, to: string, day = '') =>
+      `The next one is line ${line}${day ? ` ${day}` : ''} at ${time}, towards ${to}.`,
     publishedHint: 'A time the operator publishes for this stop.',
     estimatedHint:
       'Worked out from the departure at the terminus plus the measured driving time. The bus reaches this stop a few minutes earlier.',
@@ -513,7 +515,7 @@ export const en: Dict = {
   },
 
   nightBanner: {
-    closed: (firstDeparture: string) => `No service · first bus at ${firstDeparture}`,
+    closed: (firstDeparture: string, day = '') => `No service · first bus ${day ? `${day} ` : ''}at ${firstDeparture}`,
     festivals: 'Extra buses on festival nights, no fixed timetable',
     seeNotices: 'See notices',
     dismiss: 'Hide notice',
@@ -522,8 +524,8 @@ export const en: Dict = {
   engine: {
     notRunningToday: (line: string, days: string) =>
       `Line ${line} does not run today (${days}).`,
-    serviceOverToday: (last: string, first: string) =>
-      `Service is over for today (last departure at ${last}). First departure at ${first}.`,
+    serviceOverToday: (last: string, first: string, day: string) =>
+      `Service is over for today (last departure at ${last}). First departure ${day} at ${first}.`,
     transferAt: (stop: string, line: string) =>
       `Change at "${stop}" to Line ${line}. Free within 75 minutes with the Tarxeta Cidadá.`,
     waitAt: (stop: string, line: string, to: string) => `At "${stop}". Line ${line} towards ${to}.`,
@@ -544,6 +546,9 @@ export const en: Dict = {
 
   common: {
     min: 'min',
+    tomorrow: 'tomorrow',
+    weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    onWeekday: (day: string) => `on ${day}`,
     arrivingNow: 'Arriving',
     overdue: (minutes: number) => `${minutes} min ago`,
     overdueNote:

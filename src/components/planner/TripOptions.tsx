@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react';
 import { ChevronDown, Footprints } from 'lucide-react';
-import { useT } from '../../i18n';
+import { useLang, useT } from '../../i18n';
 import type { RoutePlanResult } from '../../types';
 import { LONG_WAIT_MIN } from '../../utils/planner';
+import { dayWord } from '../../utils/serviceLabels';
 import { LineBadge } from '../ui/LineBadge';
 import { withMeasuredWalk, type WalkCorrection } from './walkCorrection';
 
@@ -26,6 +27,7 @@ interface TripOptionsProps {
  */
 export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey }: TripOptionsProps) {
   const t = useT();
+  const lang = useLang();
   const [showAll, setShowAll] = useState(false);
   const [shownFor, setShownFor] = useState(resetKey);
   if (shownFor !== resetKey) {
@@ -68,6 +70,8 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
         </span>
         <span className="min-w-0">
           <span className="tnum block font-mono text-label font-semibold text-ink">
+            {/* Not today: the day goes before the clock, or "07:00" reads as this morning's. */}
+            {!!option.daysAhead && <span className="mr-1.5 font-sans text-estimated">{dayWord(lang, option.daysAhead)}</span>}
             {shown.departure} → ~{shown.arrival}
           </span>
           {notes.length > 0 && <span className="block text-label text-ink-3">{notes.join(' · ')}</span>}

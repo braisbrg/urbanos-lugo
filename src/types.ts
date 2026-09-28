@@ -165,5 +165,7 @@ export interface RoutePlanResult {
   slackMinutes: number;
   isServiceActive: boolean;
   serviceNotice?: string;
+  /** The day the first bus leaves on, from today: absent or 0 today, 1 tomorrow. */
+  daysAhead?: number;
   segments: TripSegment[];
 }

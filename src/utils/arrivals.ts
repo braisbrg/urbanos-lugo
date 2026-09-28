@@ -3,10 +3,10 @@
  * line, read from the published timetable and never measured. Pure functions, no React.
  */
 import { BUS_STOPS, BUS_LINES, lineById, stopName } from '../data/transitData';
-import { daysLabel } from './serviceLabels';
+import { dayWord, daysLabel } from './serviceLabels';
 import { Lang, translations } from '../i18n';
 import { BusStop, BusLine, Precision, StopArrival } from '../types';
-import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, isHoliday, lineRunsOn, minutesNow, parseTimeToMinutes } from './schedule';
+import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, isHoliday, lineRunsOn, minutesNow, parseTimeToMinutes, type ScheduledRun } from './schedule';
 import { findStop } from './places';
 
 /** Expected crowding from the time of day alone: a prior, labelled as such wherever shown. */
@@ -101,11 +101,52 @@ export function getArrivalsForStop(stopIdOrCode: string, now: Date = new Date())
   return { stop, arrivals };
 }
 
+/**
+ * Whether any bus is on the road, and when the next one sets off: what the night banner says.
+ *
+ * It asked each line whether the clock sat between its first and last departure from the
+ * terminus, and printed the earliest `firstDeparture` of any line on any day. So it said "no
+ * service" for the 25 minutes the last buses are still on the road after that -- 34 on a
+ * weekday, the boards meanwhile showing them -- and "first bus at 07:00" on weekend mornings,
+ * which begin at 07:10. Read from the same runs the boards read, on the day each belongs to.
+ */
+export function networkAtRest(now: Date = new Date()): { atRest: boolean; firstBus: string; daysAhead: number } {
+  const nowMinutes = minutesNow(now);
+  const runsOn = (days: number): ScheduledRun[] => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + days);
+    const kind = dayKind(date);
+    return BUS_LINES.filter((line) => lineRunsOn(line, kind)).flatMap((line) => line.directions.flatMap((_, d) => buildRuns(line, d, BUS_STOPS, kind)));
+  };
+  const today = runsOn(0);
+  // Yesterday's too, shifted back a day: a night run is still on the road after midnight.
+  const onRoad = (runs: ScheduledRun[], shift: number) =>
+    runs.some((r) => r.minutesByStopIndex[0] + shift <= nowMinutes && nowMinutes <= r.minutesByStopIndex[r.minutesByStopIndex.length - 1] + shift);
+  const atRest = !onRoad(today, 0) && !onRoad(runsOn(-1), -MINUTES_PER_DAY);
+
+  const earliest = (runs: ScheduledRun[]) => runs.reduce<ScheduledRun | undefined>((best, r) => (!best || r.minutesByStopIndex[0] < best.minutesByStopIndex[0] ? r : best), undefined);
+  let first = earliest(today.filter((r) => r.minutesByStopIndex[0] > nowMinutes));
+  let daysAhead = 0;
+  for (let ahead = 1; !first && ahead <= 7; ahead++) {
+    first = earliest(runsOn(ahead));
+    daysAhead = ahead;
+  }
+  if (!first) return { atRest, firstBus: '', daysAhead: 0 };
+  // The first stop of the first run is not always a timing point; then its time is ours, and says so.
+  const time = formatMinutes(first.minutesByStopIndex[0]);
+  return { atRest, firstBus: first.publishedStopIndices.includes(0) ? time : `~${time}`, daysAhead };
+}
+
 export interface NextService {
+  lineId: string;
   lineNumber: string;
   destination: string;
   time: string;
   minutesAway: number;
+  /** 0 today, 1 tomorrow, and so on: said beside the time whenever it is not today. */
+  daysAhead: number;
+  /** Whether that run prints this stop: the sentence carries the tilde like every other time. */
+  precision: Precision;
 }
 
 /**
@@ -130,13 +171,23 @@ export function nextServiceAtStop(stopIdOrCode: string, now: Date = new Date()):
       if (!line || !lineRunsOn(line, kind)) continue;
       line.directions.forEach((direction, dirIndex) => {
         const stopIndex = direction.stops.indexOf(stop.id);
-        if (stopIndex === -1) return;
+        // The board leaves out the bus that ends its run here, and so does this: at 03:00 the
+        // HULA pole offered "5ES at 07:30 to HULA" -- a bus nobody can board there.
+        if (stopIndex === -1 || stopIndex === direction.stops.length - 1) return;
         for (const run of buildRuns(line, dirIndex, BUS_STOPS, kind)) {
           const minutes = run.minutesByStopIndex[stopIndex];
           if (minutes === undefined) continue;
           const away = minutes + offset - nowMinutes;
           if (away > 0 && (!best || away < best.minutesAway)) {
-            best = { lineNumber: line.number, destination: direction.destination, time: formatMinutes(minutes % MINUTES_PER_DAY), minutesAway: Math.round(away) };
+            best = {
+              lineId: line.id,
+              lineNumber: line.number,
+              destination: direction.destination,
+              time: formatMinutes(minutes % MINUTES_PER_DAY),
+              minutesAway: Math.round(away),
+              daysAhead: Math.floor((minutes + offset) / MINUTES_PER_DAY),
+              precision: run.publishedStopIndices.includes(stopIndex) ? 'published' : 'estimated',
+            };
           }
         }
       });
@@ -154,6 +205,8 @@ export interface LineDeparture {
   /** When that same run reaches `toStopId`, and whether the operator prints it. */
   arrivalMinutes?: number;
   arrivalPrecision?: Precision;
+  /** Which day the departure is on, counted from `now`'s date: 0 today, 1 tomorrow. */
+  daysAhead: number;
 }
 
 /**
@@ -176,55 +229,69 @@ export function getNextLineDeparture(
   const toIndex = toStopId ? direction.stops.indexOf(toStopId) : -1;
   const t = translations(lang).engine;
 
-  const runs = lineRunsOn(line, dayKind(now)) ? buildRuns(line, dirIndex, BUS_STOPS, dayKind(now)) : [];
-  const candidates = runs.filter((r) => r.minutesByStopIndex[stopIndex] !== undefined).sort((a, b) => a.minutesByStopIndex[stopIndex] - b.minutesByStopIndex[stopIndex]);
+  /** The runs passing this stop on the day `days` after `now`, earliest first; [] if the line is off. */
+  const runsOnDay = (days: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + days);
+    const kind = dayKind(date);
+    if (!lineRunsOn(line, kind)) return [];
+    return buildRuns(line, dirIndex, BUS_STOPS, kind)
+      .filter((r) => r.minutesByStopIndex[stopIndex] !== undefined)
+      .sort((a, b) => a.minutesByStopIndex[stopIndex] - b.minutesByStopIndex[stopIndex]);
+  };
 
-  // The caller may already be asking about tomorrow (a transfer whose first leg rolled
-  // over): ask the timetable about the time of day, then put the answer back on the date.
-  const dayOffset = Math.floor(targetMinutes / MINUTES_PER_DAY) * MINUTES_PER_DAY;
-  const targetToday = targetMinutes - dayOffset;
-
-  let run = candidates.find((r) => r.minutesByStopIndex[stopIndex] >= targetToday);
-  let offset = dayOffset;
-  if (!run && candidates.length) {
-    run = candidates[0]; // nothing left today: the first run of the next service day
-    offset += MINUTES_PER_DAY;
+  // The caller may already be asking about a later day (a transfer whose first leg rolled
+  // over): ask that day's timetable about the time of day, then put the answer back on the date.
+  const askedDay = Math.floor(targetMinutes / MINUTES_PER_DAY);
+  const askedRuns = runsOnDay(askedDay);
+  let run = askedRuns.find((r) => r.minutesByStopIndex[stopIndex] >= targetMinutes - askedDay * MINUTES_PER_DAY);
+  let day = askedDay;
+  // Nothing left: the first run of the next day the line runs, read from THAT day's
+  // timetable. It used to be today's first run moved to tomorrow, so on a Friday night
+  // 664 of 1,136 departures offered for Saturday were wrong and 398 were on lines that do
+  // not run on Saturdays at all.
+  for (let ahead = 1; !run && ahead <= 7; ahead++) {
+    const next = runsOnDay(askedDay + ahead);
+    if (next.length) {
+      run = next[0];
+      day = askedDay + ahead;
+    }
   }
 
-  const precision: Precision = runs.some((r) => r.publishedStopIndices.includes(stopIndex)) ? 'published' : 'estimated';
-
   if (run) {
+    const offset = day * MINUTES_PER_DAY;
     const departureMinutes = run.minutesByStopIndex[stopIndex] + offset;
-    const rolled = offset > 0;
+    const rolled = day > askedDay;
+    const lastAsked = askedRuns[askedRuns.length - 1]?.minutesByStopIndex[stopIndex];
+    const when = dayWord(lang, day, now);
     return {
       departureMinutes: Math.round(departureMinutes),
       waitMinutes: Math.max(0, Math.round(departureMinutes - targetMinutes)),
       isServiceActive: !rolled,
-      serviceNotice: rolled ? t.serviceOverToday(line.lastDeparture, line.firstDeparture) : undefined,
-      precision,
+      serviceNotice: !rolled
+        ? undefined
+        : lastAsked !== undefined
+          ? t.serviceOverToday(formatMinutes(lastAsked), formatMinutes(run.minutesByStopIndex[stopIndex]), when)
+          : t.notRunningToday(line.number, daysLabel(line, lang)) + (isHoliday(now) ? ` ${translations(lang).lines.holidayToday}` : ''),
+      // Per run, as on the board: a headway-filled departure has no printed time of its own.
+      // Asked of the direction, 485 of 16,468 planner departures were labelled official.
+      precision: run.publishedStopIndices.includes(stopIndex) ? 'published' : 'estimated',
       // Read off the very run being boarded, so the arrival honours every printed timing point.
       arrivalMinutes: toIndex > stopIndex ? Math.round(run.minutesByStopIndex[toIndex] + offset) : undefined,
       arrivalPrecision: run.publishedStopIndices.includes(toIndex) ? 'published' : 'estimated',
+      daysAhead: day,
     };
   }
 
-  // No run at all: the line does not serve this stop today.
-  // The next departure is on the next day the line runs, which is not always tomorrow: a
-  // weekday-only line asked about on a Saturday was offered at "tomorrow 07:19", a Sunday.
-  // A line that runs on no day at all keeps tomorrow rather than nothing.
-  let daysAhead = 1;
-  for (; daysAhead < 7; daysAhead++) {
-    const then = new Date(now);
-    then.setDate(then.getDate() + daysAhead);
-    if (lineRunsOn(line, dayKind(then))) break;
-  }
-  if (daysAhead === 7) daysAhead = 1;
-  const fallback = parseTimeToMinutes(line.firstDeparture) + dayOffset + daysAhead * MINUTES_PER_DAY;
+  // No run in a week: the line does not serve this stop at all. Tomorrow at its first
+  // departure, marked as not running, rather than nothing.
+  const fallback = parseTimeToMinutes(line.firstDeparture) + (askedDay + 1) * MINUTES_PER_DAY;
   return {
     departureMinutes: Math.round(fallback),
     waitMinutes: Math.max(0, Math.round(fallback - targetMinutes)),
     isServiceActive: false,
     serviceNotice: t.notRunningToday(line.number, daysLabel(line, lang)) + (isHoliday(now) ? ` ${translations(lang).lines.holidayToday}` : ''),
-    precision,
+    precision: 'estimated',
+    daysAhead: askedDay + 1,
   };
 }
