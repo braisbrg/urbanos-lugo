@@ -11,7 +11,7 @@ name: Checks
 # `lint` and `test` and stops there.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   # And on a branch that is not main, so work in progress is checked before it becomes a
   # pull request at all.
   push:

@@ -5,6 +5,11 @@ version: 2
 updates:
   - package-ecosystem: npm # covers pnpm; the lockfile is pnpm-lock.yaml
     directory: /
+    # Against develop, where work lands: a bump merged into main would leave main with a
+    # commit develop lacks, and the next `git push origin develop:main` would be refused.
+    # GitHub applies this to version updates only; a security-fix PR still opens against
+    # main and is retargeted by hand (`gh pr edit <n> --base develop`).
+    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -19,6 +24,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
     # The workflow uses major-version tags (actions/checkout@v4 and friends). Pinning
