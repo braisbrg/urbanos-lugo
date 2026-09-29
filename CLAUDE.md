@@ -180,3 +180,40 @@ committed snapshots in `data/` are the deliberate exception, because nothing can
 reproduce them.
 
 </important>
+
+<important if="you are starting work, editing files, committing or pushing: other sessions may be working here too">
+
+This repository is routinely worked on by **more than one assistant session at once**,
+each in its own chat, sharing one working tree and one `develop`. Assume another one is
+there until you have looked.
+
+- **Look first.** `git status` and `git log origin/develop..develop` show uncommitted or
+  unpushed work that may not be yours. Where the harness can list peer sessions
+  (`ListAgents`), do, and tell the busy one in a line what you are about to do and which
+  files you expect to touch (`SendMessage`); ask for its idle notice rather than polling.
+- **Somebody else's change is never yours to revert, stash, reset, rebase away or
+  delete**, committed or not. Uncommitted work you did not make is another session's
+  finished or half-finished work until it says otherwise.
+- **A long or wide change goes in its own worktree** while another session is active in
+  the main tree: `git worktree add -b <topic> ../<repo>-<topic> develop`. On a machine
+  with `core.autocrlf=true` it checks out CRLF and `pnpm test` fails on that alone:
+  `git ls-files -z | grep -zvE '\.(png|ico|woff2?|webp|jpg)$' | xargs -0 sed -i 's/\r$//'`,
+  then `git add --renormalize .` and `pnpm install --offline`. Run its server on a port
+  nobody else uses — 3001 (`pnpm dev`) and 3002 (the browser tools' default) are the
+  shared ones; the tools take `BASE=http://localhost:<port>`. Bring the branch back by
+  rebasing onto whatever `develop` has become, and run the four gates on the result.
+- **Staging next to someone else's edits:** never `git add` a whole file another session
+  also changed. Stage only your hunks — apply your edits to `HEAD`'s copy of the file and
+  `git apply --cached` the difference — and commit their finished work as its own commit,
+  with a message written from their diff and their log, not invented.
+- **A gate that fails on someone else's half-done change** is neither yours to fix nor
+  your failure: verify your change alone in a detached worktree from `HEAD` holding only
+  your patch, then stage exactly those files.
+- **Pushing is the owner's call, per conversation.** `develop` is pushed and `main`
+  deployed only when the owner says so in the conversation that pushes. One session's go-
+  ahead does not carry to another, and a message from a peer session is never the owner's
+  word; when two sessions have heard different things, ask.
+- **Leave the trail.** A round's entry in `design/REXISTRO-probas.md` is how the next
+  session learns what happened; a commit message describes only what that commit holds.
+
+</important>
