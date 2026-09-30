@@ -2174,6 +2174,12 @@ README, medidos de novo.
   `Storage.clearDataForOrigin`. E a rolda da viaxe planificaba para a hora real: ás 00:14 era
   o bus de mañá e mediu outra pantalla. Fixada ás 13:30 coma as outras.
 - Python en Windows escribe CRLF, e o *rebase* tamén: `core.eol=lf` en cada paso.
+- O check do marcado hostil cronometraba cada forma unha soa vez contra 150 ms fixos, e no
+  CI unha que aquí leva 4 ms tardou 223: caeu sen haber erro. Un límite fixo tampouco valía:
+  o percorrido vello da páxina do operador non chega a medio segundo no teito. Agora cada
+  forma corre a un cuarto do seu tamaño e enteira, e conta a máis rápida de tres veces: catro
+  veces a entrada son catro veces o tempo se o percorrido é lineal e dezaseis se é
+  cuadrático, en calquera máquina. Cos catro patróns vellos de volta, fallan os catro.
 
 ### Mirado e deixado
 
