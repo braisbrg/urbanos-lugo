@@ -4,7 +4,7 @@
  * under Node and under Deno.
  */
 import { readCapped } from './readCapped';
-import { plainText } from '../utils/html';
+import { asciiLower, plainText } from '../utils/html';
 import { ServiceAlert } from '../types';
 import { REPO_URL } from '../project';
 
@@ -71,7 +71,8 @@ function decodedText(raw: string): string {
  * Each `<open ... </close>` block, walked with indexOf. A lazy `/<tag[\s\S]*?<\/tag>/`
  * restarts from every opening tag and scans to the end when the closing one never comes,
  * which is quadratic: 13.2 s for a megabyte of unclosed `<item>`s, and a truncated page is
- * enough to cause it. `lower` is the same string lower-cased, so scanning twice does not lower-case twice.
+ * enough to cause it. `lower` is the same string through asciiLower, whose indices are the
+ * original's, so scanning twice does not lower-case twice.
  */
 function* blocks(text: string, lower: string, open: string, close: string): Generator<string> {
   for (let from = 0; ; ) {
@@ -86,19 +87,34 @@ function* blocks(text: string, lower: string, open: string, close: string): Gene
 
 const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 3)}...` : text);
 
+/**
+ * One field of a feed item, CDATA wrapper off, walked with indexOf: the lazy pattern it
+ * replaces scanned to the end of the item from every `<title>` that never closed, 11 s for
+ * one item at the 512 KB readCapped allows. The first opening and the first closing after
+ * it, as the pattern read them.
+ */
+function feedField(block: string, lower: string, name: string): string {
+  const open = lower.indexOf(`<${name}>`);
+  if (open === -1) return '';
+  const start = open + name.length + 2;
+  const end = lower.indexOf(`</${name}>`, start);
+  if (end === -1) return '';
+  const cdata = lower.startsWith('<![cdata[', start) ? 9 : 0;
+  const inner = block.slice(start + cdata, end);
+  return decodedText(inner.endsWith(']]>') ? inner.slice(0, -3) : inner);
+}
+
 export function extractConcelloNotices(xml: string): ServiceAlert[] {
-  const field = (block: string, name: string): string => {
-    const m = new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`, 'i').exec(block);
-    return m ? decodedText(m[1]) : '';
-  };
   const notices: ServiceAlert[] = [];
-  for (const block of blocks(xml, xml.toLowerCase(), '<item>', '</item>')) {
-    const title = field(block, 'title');
+  for (const block of blocks(xml, asciiLower(xml), '<item>', '</item>')) {
+    const lower = asciiLower(block);
+    const field = (name: string) => feedField(block, lower, name.toLowerCase());
+    const title = field('title');
     if (!title || !ABOUT_GETTING_AROUND.test(title)) continue;
     // Their pubDate is RFC 822 and occasionally missing a timezone; unparseable or old is dropped rather than shown.
-    const published = new Date(field(block, 'pubDate'));
+    const published = new Date(field('pubDate'));
     if (Number.isNaN(published.getTime()) || Date.now() - published.getTime() > CONCELLO_MAX_AGE_MS) continue;
-    const body = field(block, 'description');
+    const body = field('description');
     notices.push({
       id: `concello-${notices.length + 1}`,
       title: clip(title, 110),
@@ -108,7 +124,7 @@ export function extractConcelloNotices(xml: string): ServiceAlert[] {
       description: body.length > CONCELLO_EXCERPT ? `${body.slice(0, CONCELLO_EXCERPT - 1)}…` : body,
       active: true,
       source: 'concello',
-      link: field(block, 'link') || undefined,
+      link: field('link') || undefined,
     });
   }
   return notices;
@@ -145,19 +161,39 @@ const noticeFrom = (id: string, text: string, title: string): ServiceAlert => ({
   active: true,
 });
 
+/** The bell's own "nothing to report" item: read as one active incident on 19 September 2026, it put a badge on the navigation for a card saying there were no notices. */
+const QUIET = /^no(n)?\s+(existen?|ha[iy])\s+avisos\b/i;
+
+/**
+ * What the `<ul class="... msg_list ...">` holds, walked tag by tag with indexOf. The
+ * pattern it replaces, `/<ul[^>]*class="[^"]*msg_list[^"]*"[^>]*>([\s\S]*?)<\/ul>/i`, ran
+ * `[^>]*` to the end of the page from every `<ul` whose tag never closed: 50 s of a
+ * stopped server for the 512 KB readCapped allows, against a page that merely broke off.
+ */
+function bellList(html: string, lower: string): string | null {
+  for (let from = 0; ; ) {
+    const open = lower.indexOf('<ul', from);
+    if (open === -1) return null;
+    const tagEnd = lower.indexOf('>', open);
+    if (tagEnd === -1) return null;
+    if (/class="[^"]*msg_list[^"]*"/.test(lower.slice(open, tagEnd))) {
+      const close = lower.indexOf('</ul>', tagEnd);
+      return close === -1 ? null : html.slice(tagEnd + 1, close);
+    }
+    from = tagEnd + 1;
+  }
+}
+
 /**
  * The notices in buslugo.com's own navigation bar: a bell with a `msg_list` dropdown, one
  * list item per notice. Nothing in that markup says "alert" to a general scraper, which is
  * how the app once said "running normally" on a day their header read "Retenciones".
  */
-/** The bell's own "nothing to report" item: read as one active incident on 19 September 2026, it put a badge on the navigation for a card saying there were no notices. */
-const QUIET = /^no(n)?\s+(existen?|ha[iy])\s+avisos\b/i;
-
-function extractNavNotices(html: string): ServiceAlert[] {
-  const list = html.match(/<ul[^>]*class="[^"]*msg_list[^"]*"[^>]*>([\s\S]*?)<\/ul>/i);
-  if (!list) return [];
+function extractNavNotices(html: string, lower: string): ServiceAlert[] {
+  const list = bellList(html, lower);
+  if (list === null) return [];
   const notices: ServiceAlert[] = [];
-  for (const item of blocks(list[1], list[1].toLowerCase(), '<li', '</li>')) {
+  for (const item of blocks(list, asciiLower(list), '<li', '</li>')) {
     const text = plainText(item);
     // A bare "no notices" item, or an empty <li>, is not an incident.
     if (text.length < 6 || QUIET.test(text)) continue;
@@ -168,8 +204,9 @@ function extractNavNotices(html: string): ServiceAlert[] {
 
 /** Every notice on the operator's page: the navigation bell, plus any article that reads like one. */
 export function extractAlertsFromHtml(html: string): ServiceAlert[] {
-  const alerts = extractNavNotices(html);
-  [...blocks(html, html.toLowerCase(), '<article', '</article>')].forEach((block, i) => {
+  const lower = asciiLower(html);
+  const alerts = extractNavNotices(html, lower);
+  [...blocks(html, lower, '<article', '</article>')].forEach((block, i) => {
     const cleanText = plainText(block);
     if (!/desv[ií]o|corte|obras|reforzo|aviso|modificaci[oó]n|parada/i.test(cleanText) || cleanText.length <= 20) return;
     const titleMatch = block.match(/<h[234][^>]*>(.*?)<\/h[234]>/i);

@@ -11,7 +11,7 @@
 import { REPO_URL } from '../project';
 import { poleCode } from '../data/transitData';
 import { findStop } from '../utils/places';
-import { plainText } from '../utils/html';
+import { asciiLower, plainText } from '../utils/html';
 import { readCapped } from './readCapped';
 
 const ENDPOINT = 'https://info.urbanoslugo.com/qr-demo-paradas';
@@ -34,23 +34,54 @@ export interface OperatorTimes {
   fetchedAt: string;
 }
 
+const BLOCK_OPEN = '<div class="sae-content-info">';
+
+/**
+ * Each departure block: from its opening to the first `</div>` followed, past any
+ * whitespace, by a second one. Walked with indexOf, because the lazy pattern it replaces
+ * backtracked from every opening that never closed -- half a second at the 512 KB
+ * readCapped allows, which was reckoned as "once per stop every 20 s" while a server reads
+ * every coded pole in the network and the Deno worker runs the same code.
+ */
+function* departureBlocks(html: string): Generator<string> {
+  for (let from = 0; ; ) {
+    const start = html.indexOf(BLOCK_OPEN, from);
+    if (start === -1) return;
+    let end = -1;
+    for (let at = html.indexOf('</div>', start); at !== -1 && end === -1; at = html.indexOf('</div>', at + 6)) {
+      let next = at + 6;
+      while (next < html.length && /\s/.test(html[next])) next++;
+      if (html.startsWith('</div>', next)) end = next + 6;
+    }
+    // No pair anywhere after this opening means none after any later one either.
+    if (end === -1) return;
+    yield html.slice(start, end);
+    from = end;
+  }
+}
+
+/** The text of the first `<p>` after `class="cls"`, found the same way. */
+function classedText(block: string, lower: string, cls: string): string {
+  const at = lower.indexOf(`class="${cls}"`);
+  const open = at === -1 ? -1 : lower.indexOf('<p>', at);
+  const close = open === -1 ? -1 : lower.indexOf('</p>', open + 3);
+  return close === -1 ? '' : plainText(block.slice(open + 3, close), '');
+}
+
 /**
  * Their page is HTML for a phone, honestly marked up: one `sae-content-info` block per
- * departure, each field in its own classed div. Quadratic on markup whose blocks never
- * close, bounded by readCapped's 512 KB to about 400 ms once per 20 s per stop.
+ * departure, each field in its own classed div.
  */
 export function parseOperatorTimes(html: string): OperatorDeparture[] {
-  const text = (block: string, cls: string): string => {
-    const m = new RegExp(`class="${cls}"[\\s\\S]*?<p>([\\s\\S]*?)</p>`, 'i').exec(block);
-    return m ? plainText(m[1], '') : '';
-  };
   const departures: OperatorDeparture[] = [];
-  for (const block of html.match(/<div class="sae-content-info">[\s\S]*?<\/div>\s*<\/div>/g) ?? []) {
-    const minutes = /^(\d+)/.exec(text(block, 'sae-content-info-time'));
+  for (const block of departureBlocks(html)) {
+    const lower = asciiLower(block);
+    const text = (cls: string) => classedText(block, lower, cls);
+    const minutes = /^(\d+)/.exec(text('sae-content-info-time'));
     if (!minutes) continue;
     departures.push({
-      line: text(block, 'sae-content-info-line').replace(/^L(?=[\d])/i, '').trim(),
-      towards: text(block, 'sae-content-info-itinerary'),
+      line: text('sae-content-info-line').replace(/^L(?=[\d])/i, '').trim(),
+      towards: text('sae-content-info-itinerary'),
       minutes: Number(minutes[1]),
     });
   }

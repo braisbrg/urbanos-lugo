@@ -2746,6 +2746,32 @@ ok('a hidden HTML comment does not come out as visible text', () => {
   assert.strictEqual(plainText('Rda. Muralla 56 (Sindicatos)'), 'Rda. Muralla 56 (Sindicatos)');
 });
 
+ok('hostile markup at the read cap parses in milliseconds, not minutes', () => {
+  // Four lazy patterns were left when the other scans went linear: the bell's <ul>, a feed
+  // field, the <script>/<style> pre-pass, and the operator's blocks, kept quadratic on a
+  // reckoning of one stop every 20 s while a server reads 271. Measured at the 512 KB
+  // readCapped allows: 49.7 s, 11.3 s, 7.4 s and half a second of a server doing nothing
+  // else. The sizes below keep a failure to a few seconds rather than the full minute.
+  const cases: [string, number, (kb: number) => unknown][] = [
+    ['a <ul whose tag never ends', 128, (kb) => extractAlertsFromHtml('<ul '.repeat((kb * 1024) / 4))],
+    ['an item of unclosed <title>s', 256, (kb) => extractConcelloNotices(`<item>${'<title>'.repeat((kb * 1024) / 7)}</item>`)],
+    ['unclosed <script openings', 256, (kb) => plainText('<script '.repeat((kb * 1024) / 8))],
+    ['unclosed departure blocks', MAX_BODY_BYTES / 1024, (kb) => parseOperatorTimes('<div class="sae-content-info">'.repeat((kb * 1024) / 30))],
+  ];
+  for (const [label, kb, run] of cases) {
+    const started = performance.now();
+    run(kb);
+    const spent = performance.now() - started;
+    assert(spent < 150, `${label}: ${spent.toFixed(0)} ms for ${kb} KB, which is the quadratic scan back`);
+  }
+
+  // The walkers search a lower-cased copy and slice the original, so the copy must keep
+  // every index: "İ" lower-cases to two code units, and eight of them before an article
+  // put "> " at the head of its card.
+  const [notice] = extractAlertsFromHtml(`<p>${'İ'.repeat(8)}</p><article><h2>Desvío da liña 5</h2><p>Aviso: desvío por obras</p></article>`);
+  assert(notice?.description.startsWith('Desvío da liña 5'), `after eight "İ" the article read "${notice?.description}"`);
+});
+
 ok('"stops near me" answers nothing when you are not near any', () => {
   // getNearbyStops ranks every stop, which the planner wants; read as an answer to a person
   // it is nonsense from Madrid, where the first result is 423 km away.

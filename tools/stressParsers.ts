@@ -3,14 +3,15 @@
  *
  *   pnpm exec tsx tools/stressParsers.ts
  *
- * Both find their fields with lazy `[\s\S]*?` runs, and a lazy run that never finds its
- * closing tag backtracks from every start position, which is quadratic. Neither is
- * reachable from a browser: the threat is buslugo.com or concellodelugo.gal having a bad
- * day, or answering with a megabyte of angle brackets. This says whether that is a slow
- * response or a server that stops.
+ * They found their fields with lazy `[\s\S]*?` runs, and a lazy run that never finds its
+ * closing tag backtracks from every start position, which is quadratic; they now walk with
+ * indexOf. None of this is reachable from a browser: the threat is buslugo.com or
+ * concellodelugo.gal having a bad day, or answering with half a megabyte of angle
+ * brackets. This says whether that is a slow response or a server that stops.
  */
-import { extractConcelloNotices } from '../src/services/alertSyncService';
+import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { parseOperatorTimes } from '../src/services/operatorTimes';
+import { plainText } from '../src/utils/html';
 
 const time = (label: string, run: () => unknown): void => {
   const started = process.hrtime.bigint();
@@ -26,6 +27,8 @@ const time = (label: string, run: () => unknown): void => {
 };
 
 const KB = [64, 256, 1024];
+/** Up to the ceiling readCapped puts on a body: the largest page these can ever be handed. */
+const CAP = [64, 256, 512];
 
 console.log('\noperatorTimes.parseOperatorTimes');
 const goodBlock =
@@ -53,6 +56,17 @@ for (const n of [10, 100, 1000]) time(`${n} well-formed items`, () => extractCon
 // Entity-encoded markup is decoded before tags are stripped: the worst case for that pass.
 for (const kb of KB) time(`${kb} KB of entity-encoded markup in one item`, () => extractConcelloNotices(feed(item('&lt;p&gt;'.repeat((kb * 1024) / 8)))));
 for (const kb of KB) time(`${kb} KB of unclosed items`, () => extractConcelloNotices(`<rss><channel>${'<item><title>x</title>'.repeat((kb * 1024) / 22)}`));
+// One item whose field never closes, and one whose encoded body is all openings of a script.
+for (const kb of CAP) time(`${kb} KB item of unclosed <title>s`, () => extractConcelloNotices(`<item>${'<title>'.repeat((kb * 1024) / 7)}</item>`));
+for (const kb of CAP) {
+  const body = '&lt;script '.repeat((kb * 1024) / 11);
+  time(`${kb} KB item body of encoded <script openings`, () => extractConcelloNotices(`<item><title>Corte</title><pubDate>${new Date().toUTCString()}</pubDate><description>${body}</description></item>`));
+}
+
+console.log('\nthe operator home page, and the tag stripper under everything');
+for (const kb of CAP) time(`${kb} KB of <ul with no end to the tag`, () => extractAlertsFromHtml('<ul '.repeat((kb * 1024) / 4)));
+for (const kb of CAP) time(`${kb} KB article of unclosed <script openings`, () => extractAlertsFromHtml(`<article>aviso de desvío ${'<script '.repeat((kb * 1024) / 8)}</article>`));
+for (const kb of CAP) time(`${kb} KB of unclosed <style openings, stripped`, () => plainText('<style '.repeat((kb * 1024) / 7)));
 
 console.log('\nthe operator home page scans: the pattern that was, and the walk that is');
 // The home-page scans are not exported, so the two shapes are measured side by side: the
