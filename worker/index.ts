@@ -41,8 +41,11 @@ export async function handle(request: Request): Promise<Response> {
   if (request.method !== 'GET') return json({ error: 'Only GET' }, 405, 0);
 
   // `caches.open(name)` is the web standard; the allowed origin goes in the key because it goes in the response.
+  // The query string does not: `?x=1`, `?x=2`, ... were each a fresh entry that missed the
+  // edge cache, one stored copy per made-up parameter. `refresh` is the only one read here.
   const cache = await caches.open('urbanos-lugo-api');
-  const cacheKey = new Request(`${url.origin}${url.pathname}${url.search}${url.search ? '&' : '?'}__origin=${encodeURIComponent(ALLOWED_ORIGIN)}`);
+  const refresh = url.searchParams.get('refresh') === 'true' ? 'refresh=true&' : '';
+  const cacheKey = new Request(`${url.origin}${url.pathname}?${refresh}__origin=${encodeURIComponent(ALLOWED_ORIGIN)}`);
 
   // `cache.match` does not read `cache-control` — a half-hour answer was served for three
   // days — so both freshness and the allow-origin are checked on the way out.

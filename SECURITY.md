@@ -16,12 +16,15 @@ theme, in that browser's own `localStorage`, which never leaves the device.
 
 So the interesting surface is small:
 
-- **The Express server** in `server.ts`, if you self-host it. It serves the timetable
-  from memory and reads three outside sources on the browser's behalf, because CORS stops
-  the browser doing it: buslugo.com, three of the council's RSS feeds, and the operator's
-  own stop page behind the QR stickers. Every one of those reads is capped at 512 KB and
-  timed out. Anything that gets the server to read a file, run a command, hammer an
-  outside host, or spend a long time on one request is worth a report.
+- **The Express server** in `server.ts`, if you self-host it, and **the Deno worker** in
+  `worker/index.ts`, which answers the same two endpoints for the static site when one is
+  configured. Both read outside sources on the browser's behalf, because CORS stops the
+  browser doing it: buslugo.com, the council's traffic feed, and the operator's own stop
+  page behind the QR stickers. Every one of those reads is capped at 512 KB and timed out;
+  buslugo.com and the feed are read at most once a minute, and the stop page at most 120
+  times a minute, per server process or worker instance, however many people ask. Anything
+  that gets either of them to read a file, run a command, hammer an outside host, or spend
+  a long time on one request is worth a report.
 - **The Content Security Policy** in `src/security/csp.ts`. If you can execute script in
   a published build, that is a finding regardless of how it got there.
 - **The build and its dependencies.** A postinstall script that runs when it should not,

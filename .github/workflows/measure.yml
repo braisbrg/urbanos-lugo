@@ -14,7 +14,7 @@ name: Measure in a browser
 # lines that carry a budget.
 #
 # Network: the built server answers /api/alerts by reading buslugo.com and the Concello's
-# three feeds once, then from memory for half an hour -- the same handful of requests
+# traffic feed once, then from memory for half an hour -- the same handful of requests
 # check-source.yml makes, once a week, and nothing in a loop. The map round also fetches
 # OpenFreeMap tiles as any visit does.
 on:

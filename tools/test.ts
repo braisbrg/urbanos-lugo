@@ -7,7 +7,7 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
-import { operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
+import { MAX_OPERATOR_REQUESTS_PER_MINUTE, operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
 import { dayWord, daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
@@ -2880,6 +2880,124 @@ await okAsync('the two servers answer the pole question the same way, and only f
     assert((up.body as { departures: unknown[] }).departures.length === 1, 'the 200 answer lost its departures');
   } finally {
     globalThis.fetch = realFetch;
+  }
+});
+
+await okAsync('one server asks the operator’s site a bounded number of times a minute, however it is asked', async () => {
+  // The cache holds one stop for twenty seconds and nothing held the whole: one client
+  // walking the coded poles once a second made 813 requests a minute to their site, and
+  // while it answered errors, which are not cached, ten a second here were ten a second there.
+  const realFetch = globalThis.fetch;
+  const realNow = Date.now;
+  let clock = realNow() + 30 * 86_400_000; // clear of every window the checks above opened
+  let sent = 0;
+  let failing = false;
+  Date.now = () => clock;
+  globalThis.fetch = (async () => {
+    sent++;
+    return failing ? new Response('down', { status: 503 }) : new Response('<div class="sae-content-info"><div class="sae-content-info-time"><p>4</p></div></div></div>', { status: 200 });
+  }) as typeof fetch;
+  try {
+    const coded = BUS_STOPS.filter((s) => poleCode(s));
+    for (let second = 0; second < 60; second++, clock += 1000) for (const stop of coded) await operatorTimesResponse(stop.id);
+    assert(sent <= MAX_OPERATOR_REQUESTS_PER_MINUTE, `every coded pole once a second for a minute sent ${sent} requests to the operator`);
+    assert(sent >= Math.min(coded.length, MAX_OPERATOR_REQUESTS_PER_MINUTE), `the ceiling left only ${sent} requests for a minute of real questions`);
+
+    sent = 0;
+    failing = true;
+    for (let tenth = 0; tenth < 600; tenth++, clock += 100) await operatorTimesResponse(coded[0].id);
+    assert(sent <= MAX_OPERATOR_REQUESTS_PER_MINUTE, `one pole asked ten times a second of a failing site sent ${sent} requests in a minute`);
+    // The ceiling is a minute's, not for ever: the next minute asks again.
+    clock += 60_000;
+    const before = sent;
+    await operatorTimesResponse(coded[0].id);
+    assert(sent === before + 1, 'the next minute did not ask the operator again');
+  } finally {
+    Date.now = realNow;
+    globalThis.fetch = realFetch;
+  }
+});
+
+await okAsync('the worker answers only for the origin it was given, and keeps one copy per question', async () => {
+  // What the worker does and nothing held. With no ALLOWED_ORIGIN it answers with no
+  // allow-origin and stores nothing, since a browser throws that answer away. The origin is in
+  // the cache key: changed, it served the old origin's copies for half an hour. A copy past
+  // its age is not served, because cache.match ignores cache-control and a half-hour answer
+  // went out for three days. And a made-up query string was one more stored copy each time.
+  const g = globalThis as unknown as { Deno?: unknown; caches?: unknown };
+  const [realDeno, realCaches, realFetch] = [g.Deno, g.caches, globalThis.fetch];
+  const stored = new Map<string, Response>();
+  // Read through a call, or TypeScript narrows the size to 0 after the first assert.
+  const copies = () => stored.size;
+  const env: Record<string, string> = {};
+  g.Deno = { env: { get: (key: string) => env[key] } };
+  g.caches = {
+    open: async () => ({
+      match: async (r: Request) => stored.get(r.url)?.clone(),
+      put: async (r: Request, res: Response) => void stored.set(r.url, res),
+      delete: async (r: Request) => stored.delete(r.url),
+    }),
+  };
+  globalThis.fetch = (async () => new Response('<div class="sae-content-info"><div class="sae-content-info-time"><p>4</p></div></div></div>', { status: 200 })) as typeof fetch;
+  // The worker reads its origin once, when loaded, so each setting is its own copy of the module.
+  const load = async (tag: string): Promise<(r: Request) => Promise<Response>> => (await import(`../worker/index.ts?${tag}`)).handle;
+  try {
+    const pole = BUS_STOPS.filter((s) => poleCode(s))[3];
+    const ask = (handle: (r: Request) => Promise<Response>, query = '') => handle(new Request(`https://api.example/api/paradas/${pole.id}/agora${query}`));
+
+    const closed = await ask(await load('no-origin'));
+    assert(closed.status === 200 && closed.headers.get('access-control-allow-origin') === '', 'with no ALLOWED_ORIGIN the worker named an origin');
+    assert(closed.headers.get('cache-control') === 'no-store' && copies() === 0, 'an answer no browser will accept was kept at the edge');
+
+    env.ALLOWED_ORIGIN = 'https://owner.github.io';
+    const open = await load('with-origin');
+    const first = await ask(open);
+    assert(first.headers.get('access-control-allow-origin') === 'https://owner.github.io', 'the allowed origin is not the one configured');
+    assert([...stored.keys()].every((key) => key.includes(encodeURIComponent('https://owner.github.io'))), 'the edge copy is not keyed by the origin it names');
+    for (const junk of ['?x=1', '?x=2', '?utm=a&b=c', '?']) await ask(open, junk);
+    assert(copies() === 1, `a made-up query string got its own edge copy: ${copies()} stored for one question`);
+
+    // A copy past its twenty seconds is answered afresh, whatever the store still holds.
+    const [key, copy] = [...stored][0];
+    const stale = new Headers(copy.headers);
+    stale.set('x-stored-at', String(Date.now() - 25_000));
+    stored.set(key, new Response(await copy.clone().text(), { status: 200, headers: stale }));
+    const again = await ask(open);
+    assert(Number(again.headers.get('x-stored-at')) > Date.now() - 5_000, 'a copy past its age was served from the edge store');
+  } finally {
+    g.Deno = realDeno;
+    g.caches = realCaches;
+    globalThis.fetch = realFetch;
+  }
+});
+
+ok('every request to somebody else’s server has a deadline, and the server keeps its headers', () => {
+  // Protections the simplification kept and nothing checked. Without a deadline one stalled
+  // upstream holds a request, and in the browser a 30 s poll stacked requests behind a stall.
+  const calls: string[] = [];
+  for (const file of sourcesUnder('src/services', 'src/hooks')) {
+    const text = readFileSync(file, 'utf8');
+    for (let at = text.indexOf('fetch('); at !== -1; at = text.indexOf('fetch(', at + 6)) {
+      const call = text.slice(at, text.indexOf(';', at));
+      // The notices snapshot is a file beside the page, not somebody else's server.
+      if (/alerts\.json/.test(call)) continue;
+      calls.push(relative(file));
+      assert(/signal: AbortSignal\.timeout\??\.?\(\d/.test(call), `${relative(file)}: a fetch with no deadline: ${call.slice(0, 90)}`);
+    }
+  }
+  assert(calls.length >= 5, `found ${calls.length} outside requests, which means this is not reading what it thinks`);
+
+  const server = read('server.ts');
+  for (const header of [
+    "res.setHeader('Content-Security-Policy', CSP_HEADER)",
+    "res.setHeader('X-Content-Type-Options', 'nosniff')",
+    "res.setHeader('X-Frame-Options', 'DENY')",
+    "res.setHeader('Referrer-Policy', 'no-referrer')",
+    "res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(self), screen-wake-lock=(self), microphone=()')",
+    "res.setHeader('Cache-Control', 'no-store')",
+    "express.json({ limit: '32kb' })",
+  ]) {
+    assert(server.includes(header), `server.ts no longer has ${header}`);
   }
 });
 

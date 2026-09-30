@@ -164,9 +164,9 @@ are not the same claim:
 
 - The operator's own service notices, scraped from <https://buslugo.com>, under the same
   terms as the timetables above.
-- Three RSS feeds published by the **Concello de Lugo** about works and traffic. They are
-  municipal press releases, not incidents on the network, so they never count towards the
-  navigation badge.
+- The traffic feed (RSS) of the **Concello de Lugo**, read for closures and diversions
+  from the last week. These are municipal press releases, not incidents on the network, so
+  they never count towards the navigation badge.
 
 Both are read **from the server**, never from the browser: neither sends CORS headers.
 Each read is capped at 512 KB and given a deadline. On the static build there is no server
@@ -178,8 +178,10 @@ taken.
 Every pole's QR opens `info.urbanoslugo.com/qr-demo-paradas/<code>`, the operator's own
 page for that stop. Somebody who arrives in this app by scanning that sticker — and only
 them — is shown what that page says, in a block of its own, attributed to the operator and
-never called live. It is read server-side, cached for twenty seconds, and asked for at
-most once a minute however many people are looking. What those minutes are is not
+never called live. It is read server-side and cached for twenty seconds, so one pole's
+page is asked for at most three times a minute however many people are looking at it, and
+one server or worker instance asks for at most 120 pages a minute in all, whichever poles
+they are. What those minutes are is not
 confirmed anywhere in writing, which is why they are quoted rather than merged with ours.
 
 ## What this project does NOT have

@@ -1349,9 +1349,14 @@ abonda cun servizo pequeno que responda `/api/…`.
 `worker/index.ts` é ese servizo. Non reimplementa nada: chama ás mesmas funcións de
 `src/services/`, que só usan `fetch`, `Response`, `ReadableStream` e `TextDecoder`. Diante
 delas pon a Cache API —trinta minutos para os avisos, un se a lectura fallou, vinte segundos
-para unha parada— que
-é o que de verdade mantén preto de unha por xanela as peticións que saen cara a servizos
-alleos, porque a caché en memoria dos módulos vive por illa e non limita nada por si soa.
+para unha parada—, que é a que mantén preto de unha por xanela as preguntas que chegan ao
+código, porque a caché en memoria dos módulos vive por illa. O teito que non depende de
+cantas illas haxa pono o propio código, en cada unha: buslugo.com e o feed do Concello como
+moito unha vez por minuto, e a páxina do operador detrás do QR como moito 120 veces por
+minuto en total, pregunte quen pregunte e pola parada que sexa. Antes non había ese
+segundo teito: un só cliente percorrendo os postes con código facía 813 peticións por
+minuto a `info.urbanoslugo.com`, e cunha resposta de erro, que non se garda, cada
+pregunta aquí era unha alí.
 
 **Vai en Deno Deploy**, e despregao `.github/workflows/deploy-worker.yml` cando cambia algo
 do que está feito. Non hai CLI que instalar nin sesión que iniciar nunha máquina: fai falta
@@ -1476,7 +1481,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-177 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+180 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

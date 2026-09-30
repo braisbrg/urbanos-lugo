@@ -92,12 +92,37 @@ const cache = new Map<string, OperatorTimes>();
 /** Concurrent misses wait for the same read: fifty at once on a cold cache were fifty outbound requests and fifty 502s. */
 const inFlight = new Map<string, Promise<OperatorTimes | null>>();
 
+/**
+ * The most requests this process -- or this worker isolate -- sends the operator's stop
+ * page in a minute, whoever is asking and for whichever stops. The cache holds one stop for
+ * twenty seconds and nothing held the network: one client walking the coded poles made
+ * 813 requests a minute to their site, and while their page answered errors, which are
+ * not cached, every request here was one there. A hundred and twenty is forty stops being
+ * watched at once at full freshness; past it the answer is the 502 the app already reads
+ * as "show our own estimates".
+ */
+export const MAX_OPERATOR_REQUESTS_PER_MINUTE = 120;
+let budgetWindowStart = 0;
+let budgetSpent = 0;
+
+function mayAskOperator(now: number): boolean {
+  // A clock set back would otherwise hold the window shut until it caught up again.
+  if (now - budgetWindowStart >= 60_000 || now < budgetWindowStart) {
+    budgetWindowStart = now;
+    budgetSpent = 0;
+  }
+  if (budgetSpent >= MAX_OPERATOR_REQUESTS_PER_MINUTE) return false;
+  budgetSpent++;
+  return true;
+}
+
 /** Null rather than an empty list when the page cannot be read: "no departures" and "we could not ask" are different things. */
 export async function operatorTimesForStop(code: string): Promise<OperatorTimes | null> {
   const cached = cache.get(code);
   if (cached && Date.now() - new Date(cached.fetchedAt).getTime() < CACHE_TTL_MS) return cached;
   const already = inFlight.get(code);
   if (already) return already;
+  if (!mayAskOperator(Date.now())) return null;
 
   const read = (async (): Promise<OperatorTimes | null> => {
     try {
