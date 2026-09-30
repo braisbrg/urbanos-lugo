@@ -30,7 +30,7 @@ nothing merges without them. A change is not done until all four are green:
 
 ```
 pnpm run lint          # tsc --noEmit
-pnpm test              # tools/test.ts — prints "N checks passed" (176 as of this writing)
+pnpm test              # tools/test.ts — prints "N checks passed" (188 as of this writing)
 pnpm run check:deep    # invariant + planner sweeps over the whole dataset, ~20s
 pnpm run build         # vite build + esbuild of the server bundle
 ```
