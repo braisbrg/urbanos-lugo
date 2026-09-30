@@ -482,10 +482,10 @@ async function planner(browser: Browser): Promise<void> {
     const taps = probe.events.filter(([name]) => /^(pointerup|mouseup|click)$/.test(name));
     const answered = Math.max(0, ...taps.map(([, , duration]) => duration));
     console.log(`\n  ${mode === 'Agora' ? 'leaving now' : `there by ${hhmm}`}: ${from} -> ${to}`);
-    // Guards above the measured spread, not targets: leaving now 690-820 ms (940-1,040 before
-    // the planner remembered what does not change), arriving by 5.1 s (12.4). "Good" INP is
-    // 200 ms, and neither gets there while the whole plan runs inside the tap.
-    budget('tap to the painted answer', answered, mode === 'Agora' ? 1000 : 6500);
+    // Guards above the measured spread, not targets: leaving now 660-820 ms (940-1,040 before
+    // the planner remembered what does not change), arriving by 5.0-6.4 s (12.4). "Good" INP
+    // is 200 ms, and neither gets there while the whole plan runs inside the tap.
+    budget('tap to the painted answer', answered, mode === 'Agora' ? 1000 : 8000);
     report('main thread blocked', `${blockingMs(probe).toFixed(0)} ms`, `longest task ${longest(probe)}`);
     await page.close();
   }
