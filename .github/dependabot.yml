@@ -27,8 +27,9 @@ updates:
     target-branch: develop
     schedule:
       interval: weekly
-    # The workflow uses major-version tags (actions/checkout@v4 and friends). Pinning
-    # every action to a commit SHA is stricter and is the right move if this ever uses
-    # an action outside actions/* and pnpm/*; until then this is what keeps the tags
-    # honest and surfaces an advisory as a pull request.
+    # Every action is pinned to a commit SHA, with its version in a comment beside it. A
+    # tag can be moved to other code after it was reviewed, and denoland/setup-deno -- the
+    # outside action this note once said would be the time to pin -- was not even a tag
+    # but a branch. Dependabot understands the pin and the comment, and moves both
+    # together in the pull request it opens.
     open-pull-requests-limit: 3

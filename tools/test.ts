@@ -2109,6 +2109,39 @@ ok('the install-script setting uses the name the pinned pnpm reads', () => {
   }
 });
 
+ok('what the workflows run is pinned, and none of them hands out more than it uses', () => {
+  // Nineteen actions were pinned by tag, and a tag can be moved to other code after it was
+  // reviewed; denoland/setup-deno@v2 was not even a tag but a branch. The job that holds the
+  // deploy token also fetched `jsr:@deno/deploy` and Deno `v2.x`, whatever was newest that
+  // minute, and ran them with -A. And it asked for an id-token nothing ever used.
+  const dir = join(root, '.github', 'workflows');
+  const files = readdirSync(dir).filter((f) => /\.ya?ml$/.test(f));
+  assert(files.length >= 5, `found ${files.length} workflows, which means this is not reading what it thinks`);
+  for (const file of files) {
+    const text = readFileSync(join(dir, file), 'utf8');
+    for (const [, spec] of text.matchAll(/^\s*(?:-\s*)?uses:\s*(\S+)(.*)$/gm)) {
+      assert(/^[\w.-]+\/[\w.-]+(\/[\w./-]+)?@[0-9a-f]{40}$/.test(spec), `${file}: ${spec} is not pinned to a commit`);
+    }
+    for (const line of text.split('\n').filter((l) => /^\s*(?:-\s*)?uses:/.test(l))) {
+      assert(/@[0-9a-f]{40} # v\d+(\.\d+)*$/.test(line.trim()), `${file}: "${line.trim()}" has no version beside its pin, so nobody can tell what it is`);
+    }
+    const commands = text.replace(/^\s*#.*$/gm, '');
+    for (const [spec] of commands.matchAll(/\b(?:jsr|npm):@?[\w./-]+(?:@[\w.^~-]+)?/g)) {
+      assert(/@\d+\.\d+\.\d+$/.test(spec), `${file}: ${spec} is fetched at run time without an exact version`);
+    }
+    for (const [, version] of text.matchAll(/deno-version:\s*(\S+)/g)) {
+      assert(/^v?\d+\.\d+\.\d+$/.test(version), `${file}: deno-version ${version} is whatever is newest on the day`);
+    }
+    // Without this the token stays in .git/config for every later step, where an install
+    // script could read it. Every checkout, not only the ones that deploy.
+    const checkouts = text.split(/\n(?=\s*- )/).filter((step) => /uses:\s*actions\/checkout@/.test(step));
+    for (const step of checkouts) assert(/persist-credentials:\s*false/.test(step), `${file}: a checkout keeps its credentials in .git/config`);
+    // A token-minting permission belongs to the job that deploys with it, never to the whole workflow.
+    const topLevel = commands.split(/^jobs:/m)[0];
+    assert(!/id-token:\s*write/.test(topLevel), `${file}: id-token: write is granted to every job in the workflow`);
+  }
+});
+
 ok('the policy is not sent in development, where it serves a blank page', () => {
   // The CSP from the dev server blocked Vite's inline preamble and HMR socket: `pnpm dev`
   // rendered nothing. The header still goes out for `pnpm start`.

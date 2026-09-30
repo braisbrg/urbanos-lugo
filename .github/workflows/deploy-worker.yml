@@ -21,10 +21,13 @@ on:
       - '.github/workflows/deploy-worker.yml'
   workflow_dispatch:
 
+# Read the tree, and nothing more. There was an `id-token: write` here, "exchanged for a
+# short-lived credential at deploy time", and nothing ever asked for one: the deploy
+# authenticates with the DENO_DEPLOY_TOKEN secret, and @deno/deploy has no GitHub OIDC code
+# at all (read in 0.0.9904; its only OIDC is for AWS cloud connections). A token nobody
+# uses is a token a compromised step could mint.
 permissions:
   contents: read
-  # Exchanged for a short-lived credential at deploy time; nothing long-lived is stored.
-  id-token: write
 
 concurrency:
   group: deploy-worker
@@ -39,15 +42,15 @@ jobs:
       # skip the deploy on a repository that had configured one.
       HAS_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN != '' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - run: pnpm install --frozen-lockfile
 
@@ -62,9 +65,12 @@ jobs:
       # server.ts; this adds no dependency.
       - run: pnpm run worker:build
 
-      - uses: denoland/setup-deno@v2
+      # An exact version, like the deploy tool below: this step runs with the deploy token in
+      # its environment, and `v2.x` was whatever release was newest that minute. Moving it is
+      # a one-line change made on purpose.
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: v2.x
+          deno-version: v2.9.7
 
       # `deno deploy`, not deployctl. Deploy Classic — the dash.deno.com generation this
       # workflow was first written against — was shut down on 20 July 2026, and deployctl
@@ -128,7 +134,10 @@ jobs:
           cp worker/dist/worker.js "$STAGE/worker.js"
           cd "$RUNNER_TEMP"
 
-          DEPLOY="deno run -A --node-modules-dir=auto jsr:@deno/deploy"
+          # A pinned version: this runs with -A and the deploy token, and a bare
+          # `jsr:@deno/deploy` was whatever the registry held that minute. The same version
+          # appears in the two steps below; move all three together.
+          DEPLOY="deno run -A --node-modules-dir=auto jsr:@deno/deploy@0.0.9904"
 
           # Create the app if it is not there, with a build configuration that suits what
           # this actually uploads: one already-bundled file.
@@ -160,7 +169,7 @@ jobs:
           # the app, which meant deleting the app took it with it and the next deploy came
           # back silently broken. Deriving it from the repository owner also keeps it
           # correct in a fork, where a hardcoded braisbrg would not be.
-          ORIGIN="https://${{ github.repository_owner }}.github.io"
+          ORIGIN="https://${GITHUB_REPOSITORY_OWNER}.github.io"
           $DEPLOY env add ALLOWED_ORIGIN "$ORIGIN" \
               --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api \
             || $DEPLOY env update-value ALLOWED_ORIGIN "$ORIGIN" \
@@ -188,7 +197,7 @@ jobs:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
           DENO_DEPLOY_ORG: ${{ vars.DENO_DEPLOY_ORG }}
         run: |
-          deno run -A --node-modules-dir=auto jsr:@deno/deploy apps get \
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy@0.0.9904 apps get \
             --org "$DENO_DEPLOY_ORG" --app urbanos-lugo-api || true
 
       # A NOT_FOUND on the organisation says what was not found and nothing about what
@@ -202,9 +211,9 @@ jobs:
           # slug when --org was wrong: the dashboard header says "brais", the API wants
           # "braisbrg", and nothing else in the failure said so.
           echo "--- organisations this token can see ---"
-          deno run -A --node-modules-dir=auto jsr:@deno/deploy orgs list || true
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy@0.0.9904 orgs list || true
           echo "--- who the token belongs to ---"
-          deno run -A --node-modules-dir=auto jsr:@deno/deploy whoami || true
+          deno run -A --node-modules-dir=auto jsr:@deno/deploy@0.0.9904 whoami || true
 
       - name: Say why nothing was deployed
         if: env.HAS_TOKEN != 'true'

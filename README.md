@@ -1124,7 +1124,10 @@ sitio onde buscalo se algún día se replica.
 
 **Integración continua.** Permisos mínimos por traballo (o de construír só le a árbore;
 só o de despregar escribe en Pages) e `persist-credentials: false` no checkout, para que
-o token non quede en `.git/config` durante o resto do traballo.
+o token non quede en `.git/config` durante o resto do traballo. Cada acción vai fixada ao
+seu commit, coa versión ao lado, e o traballo que ten o token de Deno Deploy corre unha
+versión exacta de Deno e de `@deno/deploy`: unha etiqueta pódese mover a outro código
+despois de revisada, e `setup-deno@v2` nin sequera era unha etiqueta, senón unha póla.
 
 **Scripts de instalación.** Ningunha dependencia executa un `postinstall` —que é onde
 correría primeiro unha comprometida—, e `pnpm-workspace.yaml` declárao explícitamente en
@@ -1483,7 +1486,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-182 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+183 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

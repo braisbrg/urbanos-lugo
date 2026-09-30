@@ -53,7 +53,10 @@ So the interesting surface is small:
 
 ## Supply chain
 
-Dependencies and GitHub Actions are updated weekly by Dependabot. `package.json` names
-the only dependency allowed to run an install script; every other one is blocked. CI
-installs with `--frozen-lockfile` and runs the type check and the test suite before it
-will build anything.
+Dependencies and GitHub Actions are updated weekly by Dependabot. No dependency runs an
+install script: `pnpm-workspace.yaml` rules on the one that has one (esbuild, refused),
+and a new one stops the install until somebody decides. CI installs with
+`--frozen-lockfile` and runs the type check and the test suite before it will build
+anything. Every action is pinned to a commit, with its version beside it, and the one job
+that holds a deploy token runs an exact Deno and an exact `@deno/deploy`; `pnpm test`
+fails if any of that comes loose.

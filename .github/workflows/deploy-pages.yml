@@ -28,17 +28,17 @@ jobs:
     steps:
       # Without this the token stays in .git/config for every later step, where a
       # compromised dependency's install script could read it. Nothing here pushes.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
       # No version here on purpose: the action reads `packageManager` from
       # package.json, so a laptop and this workflow can never drift apart.
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       # A postinstall is where a compromised dependency runs first. Nothing here runs one:
       # pnpm-workspace.yaml decides that in `allowBuilds`, and this step stops outright if
@@ -86,7 +86,7 @@ jobs:
       # Stops GitHub Pages from running Jekyll over the output.
       - run: touch dist/.nojekyll
 
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist
 
@@ -101,4 +101,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
