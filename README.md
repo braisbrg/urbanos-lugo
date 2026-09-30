@@ -1489,7 +1489,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-186 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+187 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1608,14 +1608,17 @@ pnpm lint
 
 ```bash
 pnpm build && PORT=3002 pnpm start   # noutra terminal
-pnpm run measure:browser             # start | second | map | typing | planner | session | ride
+pnpm run measure:browser             # start | board | second | map | typing | planner | session | ride
 pnpm run audit:browser               # light | dark
 pnpm run stress:network              # a API morta, con erro, lenta; e sen rede
 ```
 
 O que `pnpm test` non pode ver: un Chromium real, dirixido por `tools/cdp.ts`, acelerado
 6× e con rede «Slow 4G», contra o sitio construído. `measure:browser` mide o que custa
-arrincar en frío e —o que é cada visita dunha app instalada— en quente, co *service
+arrincar en frío; abrir en frío a ligazón do QR dun poste ata a primeira saída na pantalla,
+co reloxo da páxina nun mércores ás 13:30 (medido: primeiro pintado 2,7 s e primeira saída
+2,9 s; eran 2,9 e 3,0 antes de que a comprobación do fuso horario deixase de cargar a base
+de datos de fusos nun teléfono que xa está no de Lugo); e —o que é cada visita dunha app instalada— en quente, co *service
 worker* xa instalado (medido: 1.360 ms ata o primeiro pintado a 6× na rolda completa, 824 só, 8 de 8 respostas do
 *worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom, teclear no
 buscador e doce voltas entre pestanas; planificar, dende o toque en «Calcular ruta» ata a

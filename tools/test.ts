@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { REPO_URL } from '../src/project';
 import { ROOT_HEAD, SITE_PATHS, canonicalUrl, pageHead, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
-import { clockDriftFromTimetable } from '../src/utils/clock';
+import { clockDriftFromTimetable, lugoOffsetByRule } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
 import type { RoutePlanResult } from '../src/types';
@@ -2224,6 +2224,30 @@ ok('a device on the wrong timezone is told, and one on the right one is not', ()
   } finally {
     process.env.TZ = original;
   }
+});
+
+ok('the shortcut past the time-zone database agrees with it at every change of the clocks', () => {
+  // A phone in Lugo is answered by Lugo's rule without building an Intl formatter, which
+  // loads the time-zone database: 150 ms at 6x CPU in the first render of every board. The
+  // rule has to be the database's, hour by hour either side of each change, or the board
+  // stays silent about a clock that is out.
+  const madrid = (at: Date) => {
+    const name = new Intl.DateTimeFormat('en', { timeZone: 'Europe/Madrid', timeZoneName: 'longOffset' }).formatToParts(at).find((p) => p.type === 'timeZoneName')?.value ?? '';
+    const m = /GMT([+-])(\d{2}):(\d{2})/.exec(name);
+    return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0;
+  };
+  let compared = 0;
+  for (let year = 2026; year <= 2032; year++) {
+    for (let month = 0; month < 12; month++) {
+      // Every hour of the last week of each month: both changes fall in one, and the rest is the plain case.
+      for (let hour = 0; hour < 7 * 24; hour++) {
+        const at = new Date(Date.UTC(year, month + 1, 1) - (hour + 1) * 3_600_000);
+        assert.strictEqual(lugoOffsetByRule(at), madrid(at), `the rule says UTC+${lugoOffsetByRule(at) / 60} at ${at.toISOString()}, the database UTC+${madrid(at) / 60}`);
+        compared++;
+      }
+    }
+  }
+  assert(compared > 10_000, `compared ${compared} instants, which is too few to have crossed every change`);
 });
 
 ok('a code that names no stop resolves to nothing, not to somebody else', () => {

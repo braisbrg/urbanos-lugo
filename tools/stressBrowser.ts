@@ -3,7 +3,7 @@
  *
  *   pnpm build && PORT=3002 pnpm start     # in another terminal
  *   pnpm measure:browser                   # everything
- *   pnpm measure:browser start             # one round: start | second | map | typing | planner | session | ride
+ *   pnpm measure:browser start             # one round: start | board | second | map | typing | planner | session | ride
  *
  * A real Chromium throttled to a cheap handset on bad coverage, reporting what the main
  * thread was doing. The numbers are machine-relative; the comparison is not, so every
@@ -419,6 +419,39 @@ async function typing(browser: Browser): Promise<void> {
   await page.close();
 }
 
+/**
+ * A Wednesday lunchtime, as measure:engine plans at: what a plan or a board costs depends on
+ * how many buses are left in the day, so the page's clock is pinned there and runs on from it.
+ */
+const PINNED_CLOCK = `(() => { const Real = Date; const offset = ${new Date(2026, 8, 30, 13, 30).getTime()} - Real.now(); class Pinned extends Real { constructor(...a) { if (a.length) super(...a); else super(Real.now() + offset); } static now() { return Real.now() + offset; } } window.Date = Pinned; })();`;
+
+/**
+ * Somebody scans the sticker on a pole: from the tap on the link to the first departure on
+ * screen, cold, on the throttled phone and the slow network. That is the moment the app is
+ * for, and the cold start above measures the home screen instead.
+ */
+async function board(browser: Browser): Promise<void> {
+  console.log(`
+a pole's QR link, cold -- ${CPU_THROTTLE}x CPU, Slow 4G, a Wednesday at 13:30`);
+  const FIRST_ROW = `(() => { const w = window; w.__firstRow = 0; new MutationObserver((_, watch) => { if (!document.querySelector('main ul > li.border-b')) return; watch.disconnect(); requestAnimationFrame(() => { w.__firstRow = Math.round(performance.now()); }); }).observe(document, { childList: true, subtree: true }); })();`;
+  const page = await throttled(browser, {}, PINNED_CLOCK, FIRST_ROW);
+  await page
+    .evaluate<boolean>(`navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.unregister()))).then(() => caches.keys()).then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(() => true)`)
+    .catch(() => false);
+  await page.goto(`${BASE}/paradas/?parada=uilP`);
+  await sleep(8000);
+  const probe = await probeOf(page);
+  const firstRow = await page.evaluate<number>('window.__firstRow');
+  budget('first contentful paint', probe.paint['first-contentful-paint'] ?? 0, 4000);
+  if (!firstRow) {
+    failures++;
+    report('first departure on screen', 'never', '<-- no departure row within 8 s');
+  } else budget('first departure on screen', firstRow, 4500);
+  report('main thread blocked', `${blockingMs(probe).toFixed(0)} ms`, `longest task ${longest(probe)}`);
+  layoutShift(probe);
+  await page.close();
+}
+
 /** A real press of the mouse on an element's middle: a script's click() is untrusted, and Event Timing ignores it. */
 async function tap(page: Session, selector: string, text?: string): Promise<boolean> {
   const at = await page.call<{ x: number; y: number } | null>(
@@ -453,10 +486,6 @@ async function planner(browser: Browser): Promise<void> {
   const byLat = [...BUS_STOPS].sort((a, b) => a.lat - b.lat);
   const from = named('As Pedreiras') ?? byLat[0].name;
   const to = named('Ramón Ferreiro 19') ?? byLat[byLat.length - 1].name;
-  // A Wednesday lunchtime, as measure:engine plans at: what a plan costs depends on how many
-  // buses are left in the day, so the page's clock is pinned there and runs on from it.
-  const pinned = new Date(2026, 8, 30, 13, 30);
-  const PINNED_CLOCK = `(() => { const Real = Date; const offset = ${pinned.getTime()} - Real.now(); class Pinned extends Real { constructor(...a) { if (a.length) super(...a); else super(Real.now() + offset); } static now() { return Real.now() + offset; } } window.Date = Pinned; })();`;
   const hhmm = '17:00';
 
   for (const mode of ['Agora', 'Chegar antes'] as const) {
@@ -668,7 +697,7 @@ async function ride(browser: Browser): Promise<void> {
   }
 }
 
-const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, planner, session: longSession, ride };
+const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, board, second: warmStart, map: mapTab, typing, planner, session: longSession, ride };
 const chosen = process.argv[2] ? [process.argv[2]] : Object.keys(rounds);
 const unknown = chosen.find((name) => !rounds[name]);
 if (unknown) {
