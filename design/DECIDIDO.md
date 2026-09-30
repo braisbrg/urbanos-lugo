@@ -200,6 +200,17 @@ descrición. Catro regras, e o que quedou fóra:
 - **A conta di de onde sae**: «buses en ruta segundo o horario», non «en servizo».
 - Non se garda a elección entre visitas: cada vez que se abre a app empezan apagados.
 
+## A lista de liñas — 1 de outubro de 2026
+
+- **O tinte forte queda** (o 40 % e o bordo á cor da liña de `.tint-strong`). Quen xa sabe
+  a cor da súa liña vai directo a ela coa vista, e iso faino a fila enteira, non un cadrado.
+- Probáronse, renderizadas na app en claro e escuro, dúas listas máis calmas: un índice con
+  filetes e a cor só no cadrado do número, co destino, «desde» e a orixe; e o mesmo co
+  trazo orixe–destino da ficha da liña. Gañan en calma e perden esa busca pola cor, e o
+  trazo non engadía abondo ao índice.
+- Antes descartárase un tinte pálido cunha franxa de cor de 4 px á esquerda: é o patrón de
+  tarxeta que delata unha interface xerada.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).
