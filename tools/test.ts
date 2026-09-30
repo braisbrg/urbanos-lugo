@@ -24,6 +24,7 @@ import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
 import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
+import { readJson, readString, writeJson, writeString } from '../src/utils/storage';
 import { PATHS } from '../src/routes';
 import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
 import { routeOnFoot } from '../src/utils/walkRouter';
@@ -1977,6 +1978,56 @@ ok('the content security policy still refuses what it was written to refuse', ()
   ];
   for (const origin of allowed) {
     assert(expected.includes(origin), `${origin} is allowed by the policy but nothing uses it`);
+  }
+});
+
+ok('the service worker may fetch every host it caches for', () => {
+  // Sent as a header, the policy is the service worker's too, and the worker re-fetches what
+  // it caches with fetch(), which answers to connect-src. The raster tiles were allowed as
+  // images and not as connections: on a self-hosted server, once the worker took over, every
+  // raster tile was refused and a map that had fallen back to raster was an empty grey box.
+  const connect = CSP_HEADER.match(/connect-src ([^;]+)/)?.[1].split(/\s+/) ?? [];
+  const patterns = [...read('vite.config.ts').matchAll(/urlPattern: \/\^https:\\\/\\\/\(([^)]+)\)/g)].map((m) => m[1]);
+  assert(patterns.length > 0, 'found no cross-origin runtime cache in vite.config.ts, so this is reading the wrong thing');
+  for (const host of patterns.flatMap((p) => p.split('|')).map((h) => h.replace(/\\\./g, '.'))) {
+    assert(connect.includes(`https://${host}`), `the service worker caches ${host} but connect-src does not let it fetch there`);
+  }
+});
+
+ok('a browser that refuses site data still gets the app', () => {
+  // With site data blocked, reading window.localStorage throws SecurityError. The helpers
+  // took the store as a default parameter, which is evaluated before the try, so the first
+  // read -- the language, in App's first render -- threw and the page stayed blank.
+  const g = globalThis as unknown as Record<string, unknown>;
+  const saved = ['localStorage', 'sessionStorage'].map((name) => [name, Object.getOwnPropertyDescriptor(g, name)] as const);
+  for (const [name] of saved) {
+    Object.defineProperty(g, name, { configurable: true, get: () => { throw new Error(`SecurityError: Failed to read the '${name}' property`); } });
+  }
+  const survives = <T>(what: string, run: () => T): T => {
+    try {
+      return run();
+    } catch (error) {
+      throw new assert.AssertionError({ message: `${what} threw with site data refused, which blanks the page: ${(error as Error).message}` });
+    }
+  };
+  try {
+    assert.strictEqual(survives('reading the language', () => readString('urbanos-lugo-lang')), null);
+    assert.strictEqual(survives('reading the trip', () => readString('urbanos-lugo-trip', 'session')), null);
+    assert.deepStrictEqual(survives('reading the favourites', () => readJson('urbanos_lugo_fav_stops', [])), []);
+    survives('saving the theme', () => writeString('urbanos-lugo-theme', 'light'));
+    survives('saving a route', () => writeJson('urbanos-lugo-recent-routes', [{ from: 'a', to: 'b' }]));
+    survives('clearing the trip', () => writeString('urbanos-lugo-trip', null, 'session'));
+  } finally {
+    for (const [name, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(g, name, descriptor);
+      else delete g[name];
+    }
+  }
+  // Nothing else in the app reaches for the stores unguarded: the pre-paint script and the
+  // one-reload guard in main.tsx sit inside their own try, and everything else goes through here.
+  for (const file of sourcesUnder('src').filter((f) => !/[\\/]utils[\\/]storage\.ts$|[\\/]security[\\/]themeInit\.ts$|[\\/]main\.tsx$/.test(f))) {
+    const code = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert(!/\b(localStorage|sessionStorage)\b/.test(code), `${relative(file)} reaches for web storage outside the guarded helpers`);
   }
 });
 

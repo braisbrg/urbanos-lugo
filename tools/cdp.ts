@@ -9,7 +9,7 @@
  * stressBrowser.ts, auditBrowser.ts and stressNetwork.ts.
  */
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { sleep } from './lib';
@@ -237,8 +237,14 @@ export const ONLINE = { ...OFFLINE, offline: false };
  * Port 0 plus the DevToolsActivePort file, not a fixed port: two runs on one machine must
  * not fight, and a stale Chromium from a killed run must not be mistaken for this one.
  */
-export async function launch(executable: string, headless = true): Promise<Browser> {
+export async function launch(executable: string, headless = true, prefs?: object): Promise<Browser> {
   const profile = mkdtempSync(path.join(tmpdir(), 'urbanos-cdp-'));
+  // A setting a reader can turn on, written where the browser reads it at start: content
+  // settings have no CDP switch, and faking one in the page is not the same thing.
+  if (prefs) {
+    mkdirSync(path.join(profile, 'Default'));
+    writeFileSync(path.join(profile, 'Default', 'Preferences'), JSON.stringify(prefs));
+  }
   // Headless has no GPU and the map needs WebGL2: SwiftShader is the software path, which
   // also makes every canvas a CPU cost. CDP_GPU=1 opens a window on the real GPU instead.
   const gpu = Boolean(process.env.CDP_GPU);

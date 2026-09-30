@@ -14,7 +14,7 @@
  * over rgb() silently scores 1.00 everywhere. Run by hand or by the weekly measure
  * workflow, not a gate: the bar is this project's own.
  */
-import { BASE, PHONE, phonePage, withBrowser, type Browser, type Session } from './cdp';
+import { BASE, findChromium, launch, PHONE, phonePage, withBrowser, type Browser, type Session } from './cdp';
 import { sleep } from './lib';
 
 const SCREENS = ['paradas', 'linhas', 'mapa', 'ruta', 'avisos', 'tarifas'];
@@ -584,6 +584,36 @@ async function keyboard(browser: Browser): Promise<{ failures: string[]; visited
   return { failures, visited };
 }
 
+/**
+ * The app with site data refused -- Chrome's "don't allow sites to save data", which some
+ * readers turn on and some webviews ship with. Reading `window.localStorage` then throws,
+ * and one read left outside a try blanked the whole page. A browser of its own, because the
+ * setting is read when the profile opens; a getter faked in the page is not the same thing.
+ */
+async function siteDataRefused(): Promise<string[]> {
+  const executable = findChromium();
+  if (!executable) return ['no Chromium to launch with the setting'];
+  const browser = await launch(executable, true, { profile: { default_content_setting_values: { cookies: 2 } } });
+  const failures: string[] = [];
+  try {
+    const page = await browser.newPage();
+    await page.send('Emulation.setDeviceMetricsOverride', PHONE);
+    const errors = page.uncaught();
+    await page.goto(`${BASE}/`);
+    await sleep(2500);
+    const state = await page.evaluate<{ refused: boolean; nav: number }>(
+      `(() => { let refused = false; try { window.localStorage; } catch (e) { refused = true; } return { refused, nav: document.querySelectorAll('nav a, nav button').length }; })()`,
+    );
+    if (!state.refused) failures.push('the setting never reached the page: localStorage was readable, so this proved nothing');
+    if (state.nav === 0) failures.push('nothing rendered: the page has no navigation');
+    // The same setting refuses the service worker's registration, and the browser says so; that is its answer, not a fault.
+    for (const line of errors.filter((e) => !/ServiceWorker/.test(e))) failures.push(`uncaught: ${line}`);
+  } finally {
+    browser.close();
+  }
+  return failures;
+}
+
 const only = process.argv[2] === 'light' || process.argv[2] === 'dark' ? process.argv[2] : undefined;
 const themes: ('light' | 'dark')[] = only ? [only] : ['light', 'dark'];
 
@@ -592,6 +622,7 @@ await withBrowser(async (browser) => {
   for (const theme of themes) results.set(theme, await audit(browser, theme));
   const { failures: keyboardFailures, visited: keyboardVisited } = await keyboard(browser);
   const motionFailures = await motion(browser);
+  const refusedFailures = await siteDataRefused();
 
   const keys = [...results.get(themes[0])!.keys()];
 
@@ -644,6 +675,10 @@ await withBrowser(async (browser) => {
   console.log('\n=== reduced motion: with the preference on, nothing keeps animating ===');
   if (!motionFailures.length) console.log('  holds on paradas and mapa');
   for (const line of motionFailures) console.log(`  ${line}`);
+
+  console.log('\n=== site data refused: the app still draws, and nothing throws ===');
+  if (!refusedFailures.length) console.log('  holds: storage refused, the page rendered, no uncaught exception');
+  for (const line of refusedFailures) console.log(`  ${line}`);
 
   console.log('\n=== totals ===');
   for (const theme of themes) {

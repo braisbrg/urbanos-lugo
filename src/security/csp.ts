@@ -46,7 +46,10 @@ const DIRECTIVES = [
   "font-src 'self'",
   // blob: because the renderer decodes sprites and glyphs into object URLs before drawing.
   "img-src 'self' data: blob: https://tiles.openfreemap.org https://tile.openstreetmap.org",
-  `connect-src 'self' https://tiles.openfreemap.org${apiOrigin}`,
+  // The raster host too: sent as a header, this policy is also the service worker's, and a
+  // worker's fetch answers to connect-src. Without it the worker re-fetched every raster
+  // tile, was refused, and a self-hosted map that fell back to raster drew nothing.
+  `connect-src 'self' https://tiles.openfreemap.org https://tile.openstreetmap.org${apiOrigin}`,
   'upgrade-insecure-requests',
 ];
 

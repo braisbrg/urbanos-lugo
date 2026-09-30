@@ -1100,7 +1100,9 @@ e mais as actions, e CodeQL o código en cada push a `main`.
 renderizador do mapa e sérvese desde esta orixe, non hai wasm, e o escáner QR usa o
 `BarcodeDetector` do navegador en vez dunha librería. As únicas orixes remotas
 permitidas son as que a app usa de verdade — OpenFreeMap polas teselas vectoriais,
-tile.openstreetmap.org polo respaldo ráster. O enrutador peonil de OSM estivo aquí ata
+tile.openstreetmap.org polo respaldo ráster, as dúas tamén en `connect-src`: servida como
+cabeceira, a política é tamén a do service worker, que volve pedir con `fetch` as teselas
+que garda, e sen iso un mapa ráster autoaloxado quedaba en gris. O enrutador peonil de OSM estivo aquí ata
 que a rede peonil pasou a ir dentro do paquete: unha orixe menos. `font-src` é
 `'self'` a secas: a tipografía viña de Google e agora sérvese desde aquí, así que abrir un
 horario de bus xa non llo conta a Google. buslugo.com tampouco está: só o servidor o
@@ -1481,7 +1483,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-180 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+182 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
