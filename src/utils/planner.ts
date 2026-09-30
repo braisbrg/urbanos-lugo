@@ -61,6 +61,24 @@ const ARRIVE_BY_STEP_MIN = 5;
  */
 const isNotWorthBoarding = (stopsCount: number) => stopsCount <= 1;
 
+/**
+ * Where a stop falls in a direction, as `indexOf` answers it (the first time, on a line that
+ * passes a pole twice), without walking the list: the planner asks it for every line at every
+ * pair of stops it tries, thousands of times a plan.
+ */
+const stopIndexes = new WeakMap<BusDirection, Map<string, number>>();
+function indexIn(direction: BusDirection, stopId: string): number {
+  let index = stopIndexes.get(direction);
+  if (!index) {
+    index = new Map();
+    direction.stops.forEach((id, i) => {
+      if (!index!.has(id)) index!.set(id, i);
+    });
+    stopIndexes.set(direction, index);
+  }
+  return index.get(stopId) ?? -1;
+}
+
 /** Real in-vehicle time and distance between two stops of one direction, from the measured road legs. */
 function rideBetween(direction: BusDirection, fromIndex: number, toIndex: number): { minutes: number; meters: number; stopsCount: number } {
   let seconds = 0;
@@ -88,8 +106,8 @@ function pickBestBoarding(lang: Lang, candidateLineIds: string[], fromStopId: st
     const line = lineById(lineId);
     if (!line) continue;
     for (const direction of line.directions) {
-      const from = direction.stops.indexOf(fromStopId);
-      const to = direction.stops.indexOf(toStopId);
+      const from = indexIn(direction, fromStopId);
+      const to = indexIn(direction, toStopId);
       if (from === -1 || to === -1 || to <= from) continue;
       const departure = getNextLineDeparture(lang, line, direction.id, fromStopId, readyAt, now, toStopId);
       const arrival = departure.arrivalMinutes ?? departure.departureMinutes + rideBetween(direction, from, to).minutes;
@@ -149,7 +167,7 @@ function buildLeg(lang: Lang, candidateLineIds: string[], fromStop: BusStop, toS
   const option = pickBestBoarding(lang, candidateLineIds, fromStop.id, toStop.id, readyAt, now);
   if (!option) return null;
   const { line, direction, departure } = option;
-  const ride = rideBetween(direction, direction.stops.indexOf(fromStop.id), direction.stops.indexOf(toStop.id));
+  const ride = rideBetween(direction, indexIn(direction, fromStop.id), indexIn(direction, toStop.id));
   if (isNotWorthBoarding(ride.stopsCount)) return null;
 
   const t = translations(lang).engine;
@@ -190,17 +208,57 @@ function buildLeg(lang: Lang, candidateLineIds: string[], fromStop: BusStop, toS
   return { arrivalMinutes: arriveTime, arrivalPrecision, segments, totalWaitMinutes: waitMinutes, isServiceActive: departure.isServiceActive, serviceNotice: departure.serviceNotice, daysAhead: departure.daysAhead };
 }
 
-/** Every stop reachable from `stopId` without changing bus (`forward`), or every stop that reaches it. */
-function reachable(stopId: string, lines: string[], forward: boolean): Set<string> {
+/*
+ * What a stop reaches, and what stands a short walk from it, depends on the network alone,
+ * so each is worked out once per stop rather than once per pair of stops a plan tries -- a
+ * hundred pairs a plan, and "arrive by" asks the same hundred at thirty-seven times. Keyed
+ * by stop; the dataset has 417, so these cannot grow past it. Read-only for callers.
+ */
+const reachableCache = new Map<string, Set<string>>();
+const nearbyCache = new Map<string, [BusStop, number][]>();
+
+/** Every stop reachable from `stop` without changing bus (`forward`), or every stop that reaches it. */
+function reachable(stop: BusStop, forward: boolean): Set<string> {
+  const key = `${stop.id}|${forward}`;
+  const known = reachableCache.get(key);
+  if (known) return known;
   const out = new Set<string>();
-  for (const lineId of lines) {
+  for (const lineId of stop.lines) {
     for (const direction of lineById(lineId)?.directions ?? []) {
-      const at = direction.stops.indexOf(stopId);
+      const at = indexIn(direction, stop.id);
       if (at === -1) continue;
       const [from, to] = forward ? [at + 1, direction.stops.length] : [0, at];
       for (let i = from; i < to; i++) out.add(direction.stops[i]);
     }
   }
+  reachableCache.set(key, out);
+  return out;
+}
+
+const onwardCache = new Map<string, BusStop[]>();
+
+/** The stops a ride from `stop` can reach without changing, in dataset order. */
+function onwardStops(stop: BusStop): BusStop[] {
+  let onward = onwardCache.get(stop.id);
+  if (!onward) {
+    const forward = reachable(stop, true);
+    onward = BUS_STOPS.filter((s) => forward.has(s.id));
+    onwardCache.set(stop.id, onward);
+  }
+  return onward;
+}
+
+/** The other poles within a transfer's walk of `stop`, in dataset order, with the metres. */
+function polesWithinWalk(stop: BusStop): [BusStop, number][] {
+  const known = nearbyCache.get(stop.id);
+  if (known) return known;
+  const out: [BusStop, number][] = [];
+  for (const other of BUS_STOPS) {
+    if (other.id === stop.id) continue;
+    const metres = getDistanceMeters(stop.lat, stop.lng, other.lat, other.lng);
+    if (metres <= MAX_TRANSFER_WALK_M) out.push([other, metres]);
+  }
+  nearbyCache.set(stop.id, out);
   return out;
 }
 
@@ -250,10 +308,8 @@ function buildTransfer(lang: Lang, startStop: BusStop, endStop: BusStop, hubIn: 
 
 /** Interchanges that genuinely connect these two stops: reachable onward from the origin AND able to reach the destination. */
 function connectingHubs(startStop: BusStop, endStop: BusStop): [BusStop, BusStop][] {
-  const forward = reachable(startStop.id, startStop.lines, true);
-  const backward = reachable(endStop.id, endStop.lines, false);
-  const arrivals = BUS_STOPS.filter((s) => forward.has(s.id) && s.id !== endStop.id);
-  const departures = BUS_STOPS.filter((s) => backward.has(s.id) && s.id !== startStop.id);
+  const backward = reachable(endStop, false);
+  const arrivals = onwardStops(startStop).filter((s) => s.id !== endStop.id);
 
   // The same pole first: no walk, no risk, and it is most of the network.
   const same = arrivals
@@ -262,14 +318,13 @@ function connectingHubs(startStop: BusStop, endStop: BusStop): [BusStop, BusStop
     .slice(0, MAX_SAME_POLE_HUBS)
     .map((s): [BusStop, BusStop] => [s, s]);
 
-  // Then pairs a short walk apart.
+  // Then pairs a short walk apart: each arrival's own neighbours, not every departure in
+  // the network measured against it, which was a fifth of a plan's time in haversines.
   const pairs: { pair: [BusStop, BusStop]; walk: number }[] = [];
   for (const a of arrivals) {
     if (backward.has(a.id)) continue;
-    for (const b of departures) {
-      if (a.id === b.id) continue;
-      const metres = getDistanceMeters(a.lat, a.lng, b.lat, b.lng);
-      if (metres <= MAX_TRANSFER_WALK_M) pairs.push({ pair: [a, b], walk: metres });
+    for (const [b, metres] of polesWithinWalk(a)) {
+      if (b.id !== startStop.id && backward.has(b.id)) pairs.push({ pair: [a, b], walk: metres });
     }
   }
   pairs.sort((x, y) => x.walk - y.walk);
@@ -296,25 +351,48 @@ export interface PlanOptions {
 /** Every distinct way of making the trip, quickest first. */
 export function planTrips(fromQuery: string, toQuery: string, options: PlanOptions = {}): RoutePlanResult[] {
   const { userLocation, now = new Date(), lang = 'gl', measuredWalkToStop } = options;
-  if (options.arriveBy !== undefined) return planArrivingBy(fromQuery, toQuery, options.arriveBy, options);
+  const question = ask(lang, fromQuery, toQuery, userLocation, measuredWalkToStop);
+  // One of the two places is not in the dataset: no itinerary beats one from somewhere else.
+  if (!question) return [];
+  if (options.arriveBy !== undefined) return planArrivingBy(lang, question, options.arriveBy, now);
   const at = new Date(now);
   if (options.departAt !== undefined) at.setHours(Math.floor(options.departAt / 60), Math.round(options.departAt % 60), 0, 0);
-  return planDeparting(lang, fromQuery, toQuery, userLocation, at, measuredWalkToStop);
+  return planDeparting(lang, question, at);
+}
+
+/** A question with its two places found and its boarding stops chosen: none of that depends on the clock. */
+interface Question {
+  fromRes: LocationResolution;
+  toRes: LocationResolution;
+  starts: BoardingCandidate[];
+  ends: BoardingCandidate[];
+}
+
+function ask(lang: Lang, fromQuery: string, toQuery: string, userLocation: [number, number] | undefined, measuredWalkToStop?: PlanOptions['measuredWalkToStop']): Question | null {
+  const fromRes = resolveLocationQuery(fromQuery, userLocation, lang);
+  const toRes = resolveLocationQuery(toQuery, userLocation, lang);
+  if (!fromRes || !toRes) return null;
+  // Never walk further to reach the bus than to reach the destination: the walk-only option's length.
+  const wholeWalk = estimateWalk(getDistanceMeters(fromRes.lat, fromRes.lng, toRes.lat, toRes.lng)).minutes;
+  return { fromRes, toRes, starts: boardingCandidates(fromRes, wholeWalk, measuredWalkToStop), ends: boardingCandidates(toRes, wholeWalk) };
 }
 
 const journeyKey = (plan: RoutePlanResult, by: (seg: TripSegment) => string | undefined) =>
   plan.segments.filter((seg) => seg.type === 'bus').map(by).join('>');
 
-/** Walk departure times backwards from the deadline; each probe is a normal forward plan. */
-function planArrivingBy(fromQuery: string, toQuery: string, arriveBy: number, options: PlanOptions): RoutePlanResult[] {
-  const now = options.now ?? new Date();
+/**
+ * Walk departure times backwards from the deadline; each probe is a normal forward plan of
+ * the same question, found and chosen once rather than once a probe: thirty-seven probes
+ * were thirty-seven searches of the place names and seventy-four rankings of every pole.
+ */
+function planArrivingBy(lang: Lang, question: Question, arriveBy: number, now: Date): RoutePlanResult[] {
   const earliest = Math.max(now.getHours() * 60 + now.getMinutes(), arriveBy - ARRIVE_BY_LOOKBACK_MIN);
   // The latest departure per journey that still arrives in time.
   const byJourney = new Map<string, RoutePlanResult>();
   for (let depart = earliest; depart <= arriveBy; depart += ARRIVE_BY_STEP_MIN) {
     const at = new Date(now);
     at.setHours(Math.floor(depart / 60), depart % 60, 0, 0);
-    for (const plan of planDeparting(options.lang ?? 'gl', fromQuery, toQuery, options.userLocation, at, options.measuredWalkToStop)) {
+    for (const plan of planDeparting(lang, question, at)) {
       if (!plan.isServiceActive || parseTimeToMinutes(plan.arrivalTime) > arriveBy) continue;
       byJourney.set(journeyKey(plan, (seg) => `${seg.line?.id}/${seg.directionId}`), plan);
     }
@@ -322,16 +400,8 @@ function planArrivingBy(fromQuery: string, toQuery: string, arriveBy: number, op
   return [...byJourney.values()].sort((a, b) => parseTimeToMinutes(b.departureTime) - parseTimeToMinutes(a.departureTime));
 }
 
-function planDeparting(lang: Lang, fromQuery: string, toQuery: string, userLocation: [number, number] | undefined, now: Date, measuredWalkToStop?: PlanOptions['measuredWalkToStop']): RoutePlanResult[] {
-  const fromRes = resolveLocationQuery(fromQuery, userLocation, lang);
-  const toRes = resolveLocationQuery(toQuery, userLocation, lang);
-  // One of the two places is not in the dataset: no itinerary beats one from somewhere else.
-  if (!fromRes || !toRes) return [];
-
+function planDeparting(lang: Lang, { fromRes, toRes, starts, ends }: Question, now: Date): RoutePlanResult[] {
   const onFoot = walkingOnlyPlan(lang, fromRes, toRes, now);
-  const starts = boardingCandidates(fromRes, onFoot.durationMinutes, measuredWalkToStop);
-  const ends = boardingCandidates(toRes, onFoot.durationMinutes);
-
   const all: RoutePlanResult[] = [onFoot];
   for (const from of starts) for (const to of ends) if (from.stop.id !== to.stop.id) all.push(...planBetweenStops(lang, fromRes, toRes, from, to, now));
 

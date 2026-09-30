@@ -2,10 +2,12 @@ import type { NextFunction, Request, Response } from 'express';
 
 /**
  * A ceiling on how fast one address can ask. What it protects is the process: a loop
- * over `/api/plan` costs real CPU each time (tools/stressEngine.ts: median 25 ms, p95
- * 67 ms, worst 82 ms over 72 pairs), so at the worst case the plan cap is 2.5 seconds of
- * CPU a minute per address. In memory and per process on purpose: a restart forgets, and
- * two instances behind a load balancer allow twice this, both fine for one small server.
+ * over `/api/plan` costs real CPU each time (tools/stressEngine.ts: median 7 ms, p95 19 ms,
+ * worst 38 ms over 72 pairs; 25, 67 and 82 when this cap was set), so at the worst case the
+ * plan cap is about 1.1 seconds of CPU a minute per address. The endpoint plans leaving now
+ * only: "arrive by", thirty-seven plans in one, is not reachable through it. In memory and
+ * per process on purpose: a restart forgets, and two instances behind a load balancer allow
+ * twice this, both fine for one small server.
  */
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 120;

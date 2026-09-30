@@ -5,7 +5,7 @@
 import { BUS_STOPS, BUS_LINES, lineById, stopName } from '../data/transitData';
 import { dayWord, daysLabel } from './serviceLabels';
 import { Lang, translations } from '../i18n';
-import { BusStop, BusLine, Precision, StopArrival } from '../types';
+import { BusStop, BusLine, DayKind, Precision, StopArrival } from '../types';
 import { MINUTES_PER_DAY, anchorIndex, buildRuns, dayKind, formatMinutes, isHoliday, lineRunsOn, minutesNow, parseTimeToMinutes, type ScheduledRun } from './schedule';
 import { findStop } from './places';
 
@@ -209,35 +209,58 @@ export interface LineDeparture {
   daysAhead: number;
 }
 
+const runsByStop = new Map<string, ScheduledRun[]>();
+
 /**
- * The next bus of this line leaving `stopId` at or after `targetMinutes`, from the
- * published timetable. Also the trip companion's answer to a missed bus: the same question
- * asked again at the pole.
+ * The runs of one direction that pass one of its stops on one kind of day, earliest there
+ * first. The timetable does not change under a session, so this is sorted once: the
+ * planner asks it thousands of times a plan, and filtering and sorting on every question
+ * was a tenth of a plan's time. Read-only for callers.
  */
-export function getNextLineDeparture(
-  lang: Lang,
-  line: BusLine,
-  directionId: string,
-  stopId: string,
-  targetMinutes: number,
-  now: Date = new Date(),
-  toStopId?: string,
-): LineDeparture {
-  const dirIndex = Math.max(0, line.directions.findIndex((d) => d.id === directionId));
-  const direction = line.directions[dirIndex];
-  const stopIndex = Math.max(0, direction.stops.indexOf(stopId));
-  const toIndex = toStopId ? direction.stops.indexOf(toStopId) : -1;
-  const t = translations(lang).engine;
+function runsPassing(line: BusLine, dirIndex: number, kind: DayKind, stopIndex: number): ScheduledRun[] {
+  const key = `${line.id}|${dirIndex}|${kind}|${stopIndex}`;
+  let runs = runsByStop.get(key);
+  if (!runs) {
+    runs = buildRuns(line, dirIndex, BUS_STOPS, kind)
+      .filter((r) => r.minutesByStopIndex[stopIndex] !== undefined)
+      .sort((a, b) => a.minutesByStopIndex[stopIndex] - b.minutesByStopIndex[stopIndex]);
+    runsByStop.set(key, runs);
+  }
+  return runs;
+}
+
+interface NextRun {
+  run: ScheduledRun | undefined;
+  /** Days after `now` the run is on. */
+  day: number;
+  /** The last run past the stop on the day asked, for "the last one was at ...". */
+  lastAsked: number | undefined;
+}
+
+/*
+ * Which run a question lands on, remembered while `now` stays the same instant. A plan asks
+ * the same line, direction, stop and minute again and again with only the alighting stop
+ * changing, which does not change the bus: 3,686 questions in one plan, 1,098 of them
+ * distinct. One instant's answers at a time, so this never outgrows a single plan.
+ */
+let nextRunAt = Number.NaN;
+const nextRuns = new Map<string, NextRun>();
+
+function nextRun(line: BusLine, dirIndex: number, stopIndex: number, targetMinutes: number, now: Date): NextRun {
+  if (now.getTime() !== nextRunAt) {
+    nextRuns.clear();
+    nextRunAt = now.getTime();
+  }
+  const key = `${line.id}|${dirIndex}|${stopIndex}|${targetMinutes}`;
+  const known = nextRuns.get(key);
+  if (known) return known;
 
   /** The runs passing this stop on the day `days` after `now`, earliest first; [] if the line is off. */
   const runsOnDay = (days: number) => {
     const date = new Date(now);
     date.setDate(date.getDate() + days);
     const kind = dayKind(date);
-    if (!lineRunsOn(line, kind)) return [];
-    return buildRuns(line, dirIndex, BUS_STOPS, kind)
-      .filter((r) => r.minutesByStopIndex[stopIndex] !== undefined)
-      .sort((a, b) => a.minutesByStopIndex[stopIndex] - b.minutesByStopIndex[stopIndex]);
+    return lineRunsOn(line, kind) ? runsPassing(line, dirIndex, kind, stopIndex) : [];
   };
 
   // The caller may already be asking about a later day (a transfer whose first leg rolled
@@ -257,12 +280,37 @@ export function getNextLineDeparture(
       day = askedDay + ahead;
     }
   }
+  const found = { run, day, lastAsked: askedRuns[askedRuns.length - 1]?.minutesByStopIndex[stopIndex] };
+  nextRuns.set(key, found);
+  return found;
+}
+
+/**
+ * The next bus of this line leaving `stopId` at or after `targetMinutes`, from the
+ * published timetable. Also the trip companion's answer to a missed bus: the same question
+ * asked again at the pole.
+ */
+export function getNextLineDeparture(
+  lang: Lang,
+  line: BusLine,
+  directionId: string,
+  stopId: string,
+  targetMinutes: number,
+  now: Date = new Date(),
+  toStopId?: string,
+): LineDeparture {
+  const dirIndex = Math.max(0, line.directions.findIndex((d) => d.id === directionId));
+  const direction = line.directions[dirIndex];
+  const stopIndex = Math.max(0, direction.stops.indexOf(stopId));
+  const toIndex = toStopId ? direction.stops.indexOf(toStopId) : -1;
+  const t = translations(lang).engine;
+  const askedDay = Math.floor(targetMinutes / MINUTES_PER_DAY);
+  const { run, day, lastAsked } = nextRun(line, dirIndex, stopIndex, targetMinutes, now);
 
   if (run) {
     const offset = day * MINUTES_PER_DAY;
     const departureMinutes = run.minutesByStopIndex[stopIndex] + offset;
     const rolled = day > askedDay;
-    const lastAsked = askedRuns[askedRuns.length - 1]?.minutesByStopIndex[stopIndex];
     const when = dayWord(lang, day, now);
     return {
       departureMinutes: Math.round(departureMinutes),

@@ -3,7 +3,7 @@
  *
  *   pnpm build && PORT=3002 pnpm start     # in another terminal
  *   pnpm measure:browser                   # everything
- *   pnpm measure:browser start             # one round: start | second | map | typing | session | ride
+ *   pnpm measure:browser start             # one round: start | second | map | typing | planner | session | ride
  *
  * A real Chromium throttled to a cheap handset on bad coverage, reporting what the main
  * thread was doing. The numbers are machine-relative; the comparison is not, so every
@@ -419,6 +419,78 @@ async function typing(browser: Browser): Promise<void> {
   await page.close();
 }
 
+/** A real press of the mouse on an element's middle: a script's click() is untrusted, and Event Timing ignores it. */
+async function tap(page: Session, selector: string, text?: string): Promise<boolean> {
+  const at = await page.call<{ x: number; y: number } | null>(
+    `(selector, text) => { const el = [...document.querySelectorAll(selector)].find((e) => !text || e.textContent.trim() === text); if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }`,
+    selector,
+    text ?? '',
+  );
+  if (!at) return false;
+  for (const type of ['mousePressed', 'mouseReleased']) await page.send('Input.dispatchMouseEvent', { type, x: at.x, y: at.y, button: 'left', clickCount: 1 });
+  return true;
+}
+
+/** Type into a React-controlled field the way its own setter does, and tell React. */
+const fill = (page: Session, index: number, value: string) =>
+  page.call<boolean>(
+    `(index, value) => { const input = document.querySelectorAll('main input[type=text], main input:not([type])')[index]; if (!input) return false; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })); return true; }`,
+    index,
+    value,
+  );
+
+/**
+ * Planning a trip, from the tap on "Calcular ruta" to the frame that shows the answer: the
+ * whole plan runs in that tap, on the main thread. Two questions across the network, one
+ * leaving now and one that has to be there by a time three and a half hours ahead, which
+ * walks back from the deadline a plan at a time.
+ */
+async function planner(browser: Browser): Promise<void> {
+  console.log(`\nplanning a trip -- ${CPU_THROTTLE}x CPU, a Wednesday at 13:30, from the tap to the painted answer`);
+  // The costliest of measure:engine's pairs for both modes; the network's two ends if they are gone.
+  const { BUS_STOPS } = await import('../src/data/transitData');
+  const named = (name: string) => BUS_STOPS.find((s) => s.name === name)?.name;
+  const byLat = [...BUS_STOPS].sort((a, b) => a.lat - b.lat);
+  const from = named('As Pedreiras') ?? byLat[0].name;
+  const to = named('Ramón Ferreiro 19') ?? byLat[byLat.length - 1].name;
+  // A Wednesday lunchtime, as measure:engine plans at: what a plan costs depends on how many
+  // buses are left in the day, so the page's clock is pinned there and runs on from it.
+  const pinned = new Date(2026, 8, 30, 13, 30);
+  const PINNED_CLOCK = `(() => { const Real = Date; const offset = ${pinned.getTime()} - Real.now(); class Pinned extends Real { constructor(...a) { if (a.length) super(...a); else super(Real.now() + offset); } static now() { return Real.now() + offset; } } window.Date = Pinned; })();`;
+  const hhmm = '17:00';
+
+  for (const mode of ['Agora', 'Chegar antes'] as const) {
+    const page = await throttled(browser, { network: false }, PINNED_CLOCK);
+    await page.goto(`${BASE}/ruta/`);
+    await page.waitFor(`document.querySelector('main input')`);
+    await sleep(SETTLE_MS);
+    if (!((await fill(page, 0, from)) && (await fill(page, 1, to)))) {
+      console.log('  could not find the two fields; nothing measured.');
+      await page.close();
+      return;
+    }
+    if (mode === 'Chegar antes') {
+      await tap(page, 'main button', mode);
+      await sleep(400);
+      await page.call(`(value) => { const input = document.querySelector('main input[type=time]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })); }`, hhmm);
+    }
+    await sleep(600);
+    await reset(page);
+    if (!(await tap(page, 'main button', 'Calcular ruta'))) console.log('  no "Calcular ruta" button found');
+    await sleep(Math.max(3000, 12 * CPU_THROTTLE * 100));
+    const probe = await probeOf(page);
+    const taps = probe.events.filter(([name]) => /^(pointerup|mouseup|click)$/.test(name));
+    const answered = Math.max(0, ...taps.map(([, , duration]) => duration));
+    console.log(`\n  ${mode === 'Agora' ? 'leaving now' : `there by ${hhmm}`}: ${from} -> ${to}`);
+    // Guards above the measured spread, not targets: leaving now 690-820 ms (940-1,040 before
+    // the planner remembered what does not change), arriving by 5.1 s (12.4). "Good" INP is
+    // 200 ms, and neither gets there while the whole plan runs inside the tap.
+    budget('tap to the painted answer', answered, mode === 'Agora' ? 1000 : 6500);
+    report('main thread blocked', `${blockingMs(probe).toFixed(0)} ms`, `longest task ${longest(probe)}`);
+    await page.close();
+  }
+}
+
 /**
  * How much faster than real time the session runs. What makes a long session is the tick
  * count, not the wall clock, so intervals of five seconds or more are divided down; the
@@ -596,7 +668,7 @@ async function ride(browser: Browser): Promise<void> {
   }
 }
 
-const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, session: longSession, ride };
+const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, planner, session: longSession, ride };
 const chosen = process.argv[2] ? [process.argv[2]] : Object.keys(rounds);
 const unknown = chosen.find((name) => !rounds[name]);
 if (unknown) {

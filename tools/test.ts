@@ -4004,6 +4004,27 @@ ok('a ride costs the phone what it shows, not a repaint every frame', () => {
   assert(/<InteractiveMap [^>]*visible=\{activeTab === 'map'\}/.test(read('src/App.tsx')), 'the map is no longer told when it is hidden');
 });
 
+await okAsync('what the planner remembers never changes what it answers', async () => {
+  // The planner keeps what depends on the network alone per stop, and which bus a question
+  // lands on while `now` is one instant: "arrive by" went from 1.6 s to 0.6 s on this machine
+  // and a tap from 12.4 s to 5.1 s on the throttled phone. A remembered answer handed to the
+  // wrong question is a plan that reads perfectly, passes every invariant, and is worse: one
+  // key missing its direction of travel changed 168 of 187 answers and no other check failed.
+  // So each answer is compared with a copy of the planner that has remembered nothing, asked
+  // first, against this one after the reverse questions and other instants filled it.
+  const copy = 'fresh'; // a query string makes it another module, with nothing remembered
+  const fresh = ((await import(`../src/utils/planner.ts?${copy}`)) as { planTrips: typeof planTrips }).planTrips;
+  const at = new Date(2026, 8, 30, 8, 0);
+  const pairs = [0, 1, 2, 3, 4, 5].map((i) => [BUS_STOPS[(i * 53) % BUS_STOPS.length].name, BUS_STOPS[(i * 97 + 29) % BUS_STOPS.length].name]);
+  const ask = (plan: typeof planTrips, [from, to]: string[]) => JSON.stringify([plan(from, to, { now: at }), plan(from, to, { now: at, arriveBy: 9 * 60 + 30 })]);
+  const clean = pairs.map((pair) => ask(fresh, pair));
+  for (const [from, to] of pairs) {
+    planTrips(to, from, { now: at });
+    planTrips(to, from, { now: new Date(2026, 9, 4, 18, 0), lang: 'en' });
+  }
+  pairs.forEach((pair, i) => assert(ask(planTrips, pair) === clean[i], `${pair[0]} -> ${pair[1]} is answered differently once other questions have been asked`));
+});
+
 ok('the planner calls a departure official only when its own run prints that stop', () => {
   // The board had been fixed for exactly this; getNextLineDeparture, which the planner and
   // the ride ask, still asked the whole direction. On a weekday 485 of 16,468 departures --

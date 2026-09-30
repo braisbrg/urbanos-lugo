@@ -1489,7 +1489,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-185 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+186 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1608,7 +1608,7 @@ pnpm lint
 
 ```bash
 pnpm build && PORT=3002 pnpm start   # noutra terminal
-pnpm run measure:browser             # start | second | map | typing | session | ride
+pnpm run measure:browser             # start | second | map | typing | planner | session | ride
 pnpm run audit:browser               # light | dark
 pnpm run stress:network              # a API morta, con erro, lenta; e sen rede
 ```
@@ -1618,7 +1618,11 @@ O que `pnpm test` non pode ver: un Chromium real, dirixido por `tools/cdp.ts`, a
 arrincar en frío e —o que é cada visita dunha app instalada— en quente, co *service
 worker* xa instalado (medido: 1.360 ms ata o primeiro pintado a 6× na rolda completa, 824 só, 8 de 8 respostas do
 *worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom, teclear no
-buscador e doce voltas entre pestanas; e un minuto de «Vou nesta» cun fix de GPS por
+buscador e doce voltas entre pestanas; planificar, dende o toque en «Calcular ruta» ata a
+resposta pintada, co reloxo da páxina fixado nun mércores ás 13:30 (medido co par máis
+caro: 0,7–0,8 s saíndo agora e 5,1 s chegando antes das 17:00, que eran 1,0 e 12,4 s; o
+«bo» de INP son 0,2 s e ningún dos dous chega mentres o plan enteiro corre dentro do
+toque); e un minuto de «Vou nesta» cun fix de GPS por
 segundo, contado polo propio navegador (medido: 1,8 s de fío principal por minuto a 6×;
 eran 45 s mentres o latexo da seguinte parada foi unha sombra, que se repinta en cada
 cadro, e non un disco que medra e se esvae, que o compositor move só). Cada cifra compárase co orzamento que ten escrito

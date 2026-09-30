@@ -53,6 +53,19 @@ for (let i = 0; i < 60; i++) {
 // 24 ms is the figure the rate limiter's comment is built on.
 report('planTrips', plans, 24);
 
+// "Be there before": the planner walks the departure back from the deadline five minutes at
+// a time, a whole plan per step. Nothing measured it, and it is the one the reader waits on
+// longest: a tap on a phone, the main thread held for the whole walk.
+console.log('\nthe planner, arriving by a deadline three and a half hours ahead');
+const deadline = AT.getHours() * 60 + AT.getMinutes() + 210;
+const arriving: number[] = [];
+for (let i = 0; i < 24; i++) {
+  const from = BUS_STOPS[(i * 37) % BUS_STOPS.length];
+  const to = BUS_STOPS[(i * 91 + 13) % BUS_STOPS.length];
+  if (from.id !== to.id) arriving.push(timed(() => planTrips(from.name, to.name, { now: AT, arriveBy: deadline })));
+}
+report('planTrips, arriveBy', arriving, 400);
+
 console.log('\nsearch, with the input a form would actually allow');
 const hostile: [string, string][] = [
   ['a single letter', 'a'],
