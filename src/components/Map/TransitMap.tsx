@@ -52,9 +52,11 @@ interface TransitMapProps {
   onSelectLine: (line: BusLine) => void;
   /** Leave the map for a line's own page. Selecting a line only filters the map. */
   onOpenLine: (line: BusLine) => void;
+  /** False while another tab is on screen: the map stays mounted, and its clock stops. */
+  visible?: boolean;
 }
 
-export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelectStop, onSelectLine, onOpenLine }: TransitMapProps) {
+export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelectStop, onSelectLine, onOpenLine, visible = true }: TransitMapProps) {
   const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const colors = mapColors(useIsDark());
@@ -73,7 +75,7 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
   // are where the timetable puts them, and a moving bus on a map reads as a tracked one
   // whatever a popup says. Whoever turns them on gets the sentence on the map with them.
   const [layers, setLayers] = useState<Record<Layer, boolean>>({ stops: true, buses: false, routes: true });
-  const now = useClock(3000);
+  const now = useClock(visible ? 3000 : null);
   const buses = useMemo(() => getScheduledBuses(now), [now]);
   const [nearbyLines, setNearbyLines] = useState<NearbyLine[]>([]);
   /** The stop whose neighbourhood is on show — the one whose sheet asked, not whichever screen selected one. */

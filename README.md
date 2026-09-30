@@ -1489,7 +1489,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-184 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+185 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1608,7 +1608,7 @@ pnpm lint
 
 ```bash
 pnpm build && PORT=3002 pnpm start   # noutra terminal
-pnpm run measure:browser             # start | second | map | typing | session
+pnpm run measure:browser             # start | second | map | typing | session | ride
 pnpm run audit:browser               # light | dark
 pnpm run stress:network              # a API morta, con erro, lenta; e sen rede
 ```
@@ -1618,7 +1618,10 @@ O que `pnpm test` non pode ver: un Chromium real, dirixido por `tools/cdp.ts`, a
 arrincar en frío e —o que é cada visita dunha app instalada— en quente, co *service
 worker* xa instalado (medido: 1.360 ms ata o primeiro pintado a 6× na rolda completa, 824 só, 8 de 8 respostas do
 *worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom, teclear no
-buscador e doce voltas entre pestanas. Cada cifra compárase co orzamento que ten escrito
+buscador e doce voltas entre pestanas; e un minuto de «Vou nesta» cun fix de GPS por
+segundo, contado polo propio navegador (medido: 1,8 s de fío principal por minuto a 6×;
+eran 45 s mentres o latexo da seguinte parada foi unha sombra, que se repinta en cada
+cadro, e non un disco que medra e se esvae, que o compositor move só). Cada cifra compárase co orzamento que ten escrito
 ao lado, co porqué, e dende o 19 de setembro de 2026 tamén os bytes (260 KB en total,
 250 antes do primeiro pintado: unha dependencia que engorde o anaco de entrada xa non é
 un número máis nun rexistro que ninguén le) e o desprazamento de deseño acumulado (CLS,

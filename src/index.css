@@ -225,7 +225,11 @@
 @keyframes roll-in { from { opacity: 0; transform: translateY(70%); } }
 @keyframes seg-reveal { from, to { background-color: transparent; } }
 @keyframes attention { from { box-shadow: 0 0 0 0 color-mix(in oklch, var(--c-accent) 55%, transparent); } to { box-shadow: 0 0 0 14px transparent; } }
-@keyframes pulse-ring { from { box-shadow: 0 0 0 0 color-mix(in oklch, var(--c-accent) 45%, transparent); } to { box-shadow: 0 0 0 10px transparent; } }
+/* The one animation that never ends, so the one that must stay off the main thread: it was
+   a box-shadow, which repaints every frame, and on a ride -- screen held awake, an hour on
+   end -- it was 39 of every 60 seconds of main-thread work at 6x CPU. The same ring as a
+   disc behind the dot, grown and faded, which the compositor runs by itself. */
+@keyframes pulse-ring { from { opacity: 0.45; transform: scale(1); } to { opacity: 0; transform: scale(2.25); } }
 
 @layer components {
   .anim-rise { animation: rise 200ms cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -242,7 +246,9 @@
   .anim-badge-in { animation: badge-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1); }
   .anim-roll-in { animation: roll-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1); }
   .anim-attention { animation: attention 700ms ease-out 300ms; }
-  .live-dot { border-radius: 9999px; animation: pulse-ring 2s ease-out infinite; }
+  /* `isolation` keeps the disc behind the arrow but in front of the list's own background. */
+  .live-dot { position: relative; isolation: isolate; border-radius: 9999px; }
+  .live-dot::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--c-accent); animation: pulse-ring 2s ease-out infinite; }
 
   /* A block that opens and closes in place: the grid-row trick, which needs no measured
      height. Closed, the content is also invisible to the Tab key and the screen reader

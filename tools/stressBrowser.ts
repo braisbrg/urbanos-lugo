@@ -3,7 +3,7 @@
  *
  *   pnpm build && PORT=3002 pnpm start     # in another terminal
  *   pnpm measure:browser                   # everything
- *   pnpm measure:browser start             # one round: start | second | map | typing | session
+ *   pnpm measure:browser start             # one round: start | second | map | typing | session | ride
  *
  * A real Chromium throttled to a cheap handset on bad coverage, reporting what the main
  * thread was doing. The numbers are machine-relative; the comparison is not, so every
@@ -235,9 +235,9 @@ async function warmStart(browser: Browser): Promise<void> {
   await page.close();
 }
 
-/** Click one of the bottom-nav destinations by its visible label. */
+/** Click one of the bottom-nav destinations by its visible label; a trip in progress adds screen-reader text after "Ruta". */
 const tapNav = (page: Session, label: string): Promise<boolean> =>
-  page.call<boolean>(`(label) => { const b = [...document.querySelectorAll('nav a, nav button')].find((e) => e.textContent.trim() === label); if (!b) return false; b.click(); return true; }`, label);
+  page.call<boolean>(`(label) => { const b = [...document.querySelectorAll('nav a, nav button')].find((e) => e.textContent.trim().startsWith(label)); if (!b) return false; b.click(); return true; }`, label);
 
 const MAP_READY = `document.querySelector('.leaflet-container canvas, .leaflet-container img.leaflet-tile')`;
 
@@ -490,7 +490,113 @@ async function longSession(browser: Browser): Promise<void> {
   await page.close();
 }
 
-const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, session: longSession };
+/**
+ * What "Vou nesta" costs a phone for a minute of the ride: the screen is held awake and the
+ * GPS gives a fix a second, so every tick and every loop left running is battery. Counted by
+ * the browser (`Performance.getMetrics`), not by the probe above, which keeps a
+ * requestAnimationFrame loop of its own going -- the very kind of thing being looked for.
+ *
+ * Twice: straight onto the ride, and after a look at the map, which stays mounted behind
+ * `hidden` once opened, so whatever it keeps doing is paid for the whole journey.
+ */
+const RIDE_COUNTERS = `
+(() => {
+  const w = window;
+  w.__ride = { commits: 0, frames: 0, timers: 0 };
+  const raf = w.requestAnimationFrame.bind(w);
+  w.requestAnimationFrame = (cb) => raf((t) => { w.__ride.frames++; cb(t); });
+  const setI = w.setInterval.bind(w);
+  w.setInterval = (fn, ...rest) => setI((...a) => { w.__ride.timers++; return typeof fn === 'function' ? fn(...a) : undefined; }, ...rest);
+  const setT = w.setTimeout.bind(w);
+  w.setTimeout = (fn, ...rest) => setT((...a) => { w.__ride.timers++; return typeof fn === 'function' ? fn(...a) : undefined; }, ...rest);
+  if (!w.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+    w.__REACT_DEVTOOLS_GLOBAL_HOOK__ = { renderers: new Map(), supportsFiber: true, checkDCE() {}, inject() { return 1; },
+      onCommitFiberRoot() { w.__ride.commits++; }, onCommitFiberUnmount() {}, onPostCommitFiberRoot() {} };
+  }
+})();
+`;
+
+/** A trip planned by the app's own engine, stored the way the page stores it, and the street it rides along. */
+async function plannedRide(): Promise<{ packed: string; path: [number, number][] } | null> {
+  const [{ BUS_STOPS, lineById }, { planTrips }, { packTrip, startTrip }] = await Promise.all([
+    import('../src/data/transitData'),
+    import('../src/utils/planner'),
+    import('../src/utils/tripProgress'),
+  ]);
+  const byName = (name: string) => BUS_STOPS.find((s) => s.name.startsWith(name));
+  const [from, to] = [byName('Rda. Muralla 56'), byName('HULA')];
+  if (!from || !to) return null;
+  const plan = planTrips(from.name, to.name, { now: new Date() }).find((p) => p.segments.some((s) => s.type === 'bus'));
+  const leg = plan?.segments.find((s) => s.type === 'bus');
+  const direction = leg?.line && lineById(leg.line.id)?.directions.find((d) => d.id === leg.directionId);
+  if (!plan || !leg?.fromStop || !leg.toStop || !direction) return null;
+  const ids = direction.stops.slice(direction.stops.indexOf(leg.fromStop.id), direction.stops.indexOf(leg.toStop.id) + 1);
+  const poles = ids.map((id) => BUS_STOPS.find((s) => s.id === id)).filter((s) => s !== undefined);
+  // Ten fixes between consecutive poles: a bus a little quicker than a real one, so a minute passes stops.
+  const path: [number, number][] = [];
+  for (let i = 0; i + 1 < poles.length; i++) {
+    for (let k = 0; k < 10; k++) path.push([poles[i].lat + ((poles[i + 1].lat - poles[i].lat) * k) / 10, poles[i].lng + ((poles[i + 1].lng - poles[i].lng) * k) / 10]);
+  }
+  const place = (s: { name: string; lat: number; lng: number }) => ({ name: s.name, lat: s.lat, lng: s.lng });
+  return { packed: packTrip(startTrip(plan, place(from), place(to))), path };
+}
+
+async function ride(browser: Browser): Promise<void> {
+  const seconds = Number(process.env.RIDE_SECONDS ?? 60);
+  console.log(`\na ride in "Vou nesta" -- ${CPU_THROTTLE}x CPU, a GPS fix a second, ${seconds} s measured`);
+  const trip = await plannedRide();
+  if (!trip) return console.log('  could not plan the ride this round takes; nothing measured.');
+  const seed = `(() => { try { if (!sessionStorage.getItem('urbanos-lugo-trip')) sessionStorage.setItem('urbanos-lugo-trip', ${JSON.stringify(trip.packed)}); } catch (e) {} })();`;
+  await browser.grant(new URL(BASE).origin, ['geolocation']);
+
+  for (const lookedAtMap of [false, true]) {
+    const page = await phonePage(browser, RIDE_COUNTERS, seed);
+    await page.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
+    const fix = (i: number) => {
+      const [latitude, longitude] = trip.path[i % trip.path.length];
+      return page.send('Emulation.setGeolocationOverride', { latitude, longitude, accuracy: 10 });
+    };
+    await fix(0);
+    await page.goto(`${BASE}${lookedAtMap ? '/mapa/' : '/ruta/'}`);
+    await page.waitFor(`document.querySelector('nav')`, 30_000);
+    if (lookedAtMap) {
+      await page.waitFor(MAP_READY, 60_000);
+      await sleep(2000);
+      await tapNav(page, 'Ruta');
+    }
+    await sleep(4000);
+
+    const metrics = async () => Object.fromEntries((await page.send<{ metrics: { name: string; value: number }[] }>('Performance.getMetrics')).metrics.map((m) => [m.name, m.value]));
+    const counters = () => page.evaluate<{ commits: number; frames: number; timers: number }>('({ ...window.__ride })');
+    const heapBefore = await page.heapBytes();
+    const [m0, c0] = [await metrics(), await counters()];
+    for (let i = 1; i <= seconds; i++) {
+      await fix(i);
+      await sleep(1000);
+    }
+    const [m1, c1] = [await metrics(), await counters()];
+    const heapAfter = await page.heapBytes();
+    const looping = await page.evaluate<string[]>(
+      `document.getAnimations().filter((a) => a.playState === 'running' && a.effect.getTiming().iterations === Infinity).map((a) => { const t = a.effect.target; return (t ? t.tagName.toLowerCase() + '.' + String(t.className).split(' ').slice(0, 2).join('.') : '?') + ' ' + (a.animationName || a.constructor.name); })`,
+    );
+    const onScreen = await page.evaluate<string>(`(document.querySelector('main h2, main h1') || {}).textContent || ''`);
+
+    const perMinute = (a: number, b: number) => ((b - a) * 60) / seconds;
+    console.log(`\n  ${lookedAtMap ? 'after a look at the map' : 'straight onto the ride'}  (on screen: ${onScreen.trim().slice(0, 30)})`);
+    // Measured 1.8-2.0 s a minute at 6x; it was 42-45 s while the one looping animation was a box-shadow.
+    budget('main thread busy per minute of ride', perMinute(m0.TaskDuration, m1.TaskDuration) * 1000, 5000);
+    report('  of which script', `${(perMinute(m0.ScriptDuration, m1.ScriptDuration) * 1000).toFixed(0)} ms`);
+    report('  of which style and layout', `${(perMinute(m0.RecalcStyleDuration + m0.LayoutDuration, m1.RecalcStyleDuration + m1.LayoutDuration) * 1000).toFixed(0)} ms`);
+    report('React commits', `${perMinute(c0.commits, c1.commits).toFixed(0)}`, 'a minute');
+    report('animation frames the app asked for', `${perMinute(c0.frames, c1.frames).toFixed(0)}`, 'a minute');
+    report('timer callbacks', `${perMinute(c0.timers, c1.timers).toFixed(0)}`, 'a minute');
+    report('animations looping for ever', `${looping.length}`, looping.slice(0, 3).join('; '));
+    budget('heap held after the ride', (heapAfter - heapBefore) / 1048576, 3, 'MB');
+    await page.close();
+  }
+}
+
+const rounds: Record<string, (b: Browser) => Promise<void>> = { start: coldStart, second: warmStart, map: mapTab, typing, session: longSession, ride };
 const chosen = process.argv[2] ? [process.argv[2]] : Object.keys(rounds);
 const unknown = chosen.find((name) => !rounds[name]);
 if (unknown) {

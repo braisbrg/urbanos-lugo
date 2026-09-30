@@ -227,6 +227,8 @@ export interface Browser {
    * to an "offline" test.
    */
   offline(on: boolean): Promise<void>;
+  /** Answer a permission prompt before it is asked, as a reader who allowed it once would. */
+  grant(origin: string, permissions: string[]): Promise<void>;
   close(): void;
 }
 
@@ -298,6 +300,9 @@ export async function launch(executable: string, headless = true, prefs?: object
     async offline(on) {
       unplugged = on;
       for (const sessionId of workers) await plug(sessionId, on);
+    },
+    async grant(origin, permissions) {
+      await conn.send('Browser.grantPermissions', { origin, permissions });
     },
     async newPage() {
       const { targetId } = (await conn.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };

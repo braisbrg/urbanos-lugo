@@ -3986,6 +3986,24 @@ ok('motion moves the interface, never a number; and the two things the first rou
   assert(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation-duration: 0\.01ms !important/.test(css), 'reduced motion no longer stops the animations');
 });
 
+ok('a ride costs the phone what it shows, not a repaint every frame', () => {
+  // measure:browser, a minute of "Vou nesta" at 6x CPU: 45 s of main-thread work, 39 of them
+  // repainting the one looping animation, a box-shadow the compositor cannot run. And the
+  // map, mounted behind `hidden` once opened, kept its three-second clock going under the ride.
+  const css = read('src/index.css');
+  const keyframes = new Map([...css.matchAll(/@keyframes ([\w-]+) \{([^\n]*)\}\s*$/gm)].map((m) => [m[1], m[2]]));
+  const looping = [...css.matchAll(/animation: ([\w-]+) [^;]*\binfinite\b/g)].map((m) => m[1]);
+  assert(looping.length > 0, 'found no looping animation in index.css, so this is reading the wrong thing');
+  for (const name of looping) {
+    const body = keyframes.get(name);
+    assert(body, `the looping animation ${name} has no one-line @keyframes to read`);
+    const properties = [...body!.matchAll(/([\w-]+)\s*:/g)].map((m) => m[1]);
+    assert(properties.every((p) => p === 'opacity' || p === 'transform'), `${name} loops for ever and animates ${properties.join(', ')}: that repaints every frame on the main thread`);
+  }
+  assert(/useClock\(visible \? \d+ : null\)/.test(read('src/components/Map/TransitMap.tsx')), 'the map keeps its clock running while another tab is on screen');
+  assert(/<InteractiveMap [^>]*visible=\{activeTab === 'map'\}/.test(read('src/App.tsx')), 'the map is no longer told when it is hidden');
+});
+
 ok('the planner calls a departure official only when its own run prints that stop', () => {
   // The board had been fixed for exactly this; getNextLineDeparture, which the planner and
   // the ride ask, still asked the whole direction. On a weekday 485 of 16,468 departures --
