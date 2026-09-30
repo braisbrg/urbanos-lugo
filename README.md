@@ -1025,7 +1025,9 @@ O escaneo de QR usa `BarcodeDetector`, nativo do navegador: sen dependencia exte
 A aplicación é unha PWA instalable. Todo o que calcula —horarios, chegadas, rutas—
 execútase en local sobre datos empaquetados, así que unha vez instalada segue a
 funcionar sen cobertura, que é xusto o que pasa nunha marquesiña. As teselas do mapa
-cachéanse segundo se van vendo e os avisos oficiais usan rede-primeiro con recurso á
+cachéanse segundo se van vendo —as ráster tamén pedidas con CORS, porque unha resposta
+opaca cóntalle ao Chrome megabytes de espazo sexa do tamaño que sexa: seis teselas eran
+38 MB e agora son o que pesan— e os avisos oficiais usan rede-primeiro con recurso á
 última resposta gardada.
 
 ### Tamaño de descarga
@@ -1489,7 +1491,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-187 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+188 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

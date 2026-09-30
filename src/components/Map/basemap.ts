@@ -56,7 +56,11 @@ export type BasemapLayer = L.Layer & { setBasemapTheme(isDark: boolean): void };
 
 export function createBasemap(isDark: boolean): BasemapLayer {
   if (!hasWebGL2()) {
-    const raster = L.tileLayer(OSM_FALLBACK_TILES, { attribution: OSM_ATTRIBUTION, maxZoom: 19 }) as L.TileLayer & { setBasemapTheme(isDark: boolean): void };
+    // Asked for with CORS, which OSM's tile servers answer (Access-Control-Allow-Origin: *):
+    // without it every tile is an opaque response, which Chrome charges against the site's
+    // storage at several megabytes each -- six tiles cost 38 MB of quota where ten vector
+    // tiles cost 3 -- and the service worker keeps up to 600 of them.
+    const raster = L.tileLayer(OSM_FALLBACK_TILES, { attribution: OSM_ATTRIBUTION, maxZoom: 19, crossOrigin: true }) as L.TileLayer & { setBasemapTheme(isDark: boolean): void };
     raster.setBasemapTheme = () => {}; // one style to fall back to, nothing to switch
     // The "Leaflet" prefix goes on this path too, or a map born raster prints the two-line credit.
     const baseOnAdd = raster.onAdd.bind(raster);

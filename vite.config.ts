@@ -205,7 +205,9 @@ export default defineConfig({
             options: {
               cacheName: 'map-tiles',
               expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
+              // 200 only. An opaque response (status 0) is charged at megabytes of quota
+              // whatever its size, and both hosts answer with CORS, so there is none to keep.
+              cacheableResponse: { statuses: [200] },
             },
           },
           {

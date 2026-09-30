@@ -1994,6 +1994,18 @@ ok('the service worker may fetch every host it caches for', () => {
   }
 });
 
+ok('a cached map tile costs the phone its own size, not megabytes', () => {
+  // Chrome charges an opaque response against the site's storage at megabytes whatever its
+  // size. The raster tiles were fetched without CORS, so each was opaque, and the tile cache
+  // kept responses with status 0: six raster tiles cost 38 MB of quota where ten vector tiles
+  // cost 3, with room for 600. OSM's tile servers answer CORS, so the tiles ask for it and
+  // nothing opaque is kept.
+  assert(/L\.tileLayer\(OSM_FALLBACK_TILES, \{[^}]*crossOrigin: true/.test(read('src/components/Map/basemap.ts')), 'the raster tiles are fetched without CORS again, so each is an opaque response');
+  const config = read('vite.config.ts');
+  const tiles = config.slice(config.indexOf("cacheName: 'map-tiles'"), config.indexOf('}', config.indexOf('cacheableResponse', config.indexOf("cacheName: 'map-tiles'"))) + 1);
+  assert(/cacheableResponse: \{ statuses: \[200\] \}/.test(tiles), `the tile cache keeps opaque responses again: ${tiles.slice(tiles.indexOf('cacheableResponse')).split('\n')[0]}`);
+});
+
 ok('a browser that refuses site data still gets the app', () => {
   // With site data blocked, reading window.localStorage throws SecurityError. The helpers
   // took the store as a default parameter, which is evaluated before the try, so the first
