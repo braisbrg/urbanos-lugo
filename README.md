@@ -1637,7 +1637,10 @@ Despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta enteira ao menú s
 (10 controis de 10 visitados, para que a comprobación non poida aprobar por non moverse),
 Escape péchao e devolve o foco ao botón que o abriu, e unha viaxe planificada deixa o
 foco na resposta; e con `prefers-reduced-motion` emulado pregunta que segue animándose
-(nada). Os checks de `test.ts` sobre iso len o código; estes dous len o foco. `stress:network` xoga
+(nada). Os checks de `test.ts` sobre iso len o código; estes dous len o foco. Ao remate
+abre un Chromium co axuste «non permitir que os sitios garden datos», que fai que ler
+`localStorage` lance un erro, e mira que a app se debuxe igual: con ese axuste a páxina
+quedaba en branco, porque unha lectura se facía fóra do seu `try`. `stress:network` xoga
 o outro lado de `stress:http`: non o servidor con carga, senón a pantalla cando a rede é
 o problema, que nunha parada é o normal. Catro formas, coa pila de rede do propio
 navegador: a API non contesta nunca, contesta 500, contesta seis segundos tarde, e non hai
