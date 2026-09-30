@@ -85,6 +85,14 @@ const bundledJsonParseMs = (page: Session): Promise<number> =>
     return total;
   })()`);
 
+/**
+ * The site's service worker and caches, cleared the way the browser clears them. Asked from
+ * inside the page before it navigates -- about:blank, which sees no registrations of the site
+ * -- it cleared nothing, and the QR round run after the cold start was served from the
+ * precache: first paint 852 ms for a load that takes 2.7 s cold.
+ */
+const forgetSite = (page: Session) => page.send('Storage.clearDataForOrigin', { origin: new URL(BASE).origin, storageTypes: 'service_workers,cache_storage' });
+
 /** Every response the browser asked for, and whether it happened before the first paint. */
 async function coldStart(browser: Browser): Promise<void> {
   console.log(`\ncold start -- ${CPU_THROTTLE}x CPU, Slow 4G, no cache, 390x844`);
@@ -100,11 +108,9 @@ async function coldStart(browser: Browser): Promise<void> {
     if (open) requests.push({ ...open, size: (p.encodedDataLength as number) ?? 0, end: (p.timestamp as number) * 1000 });
   });
 
-  // The service worker precaches the whole app on the first visit, which would make the
-  // second run of this a cache and not a cold start.
-  await page
-    .evaluate<boolean>(`navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.unregister()))).then(() => caches.keys()).then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(() => true)`)
-    .catch(() => false);
+  // The service worker precaches the whole app on the first visit, which would make any
+  // later round a cache and not a cold start.
+  await forgetSite(page);
 
   await page.goto(BASE);
   await sleep(6000); // the service worker registers on load; lazy chunks follow
@@ -431,13 +437,10 @@ const PINNED_CLOCK = `(() => { const Real = Date; const offset = ${new Date(2026
  * for, and the cold start above measures the home screen instead.
  */
 async function board(browser: Browser): Promise<void> {
-  console.log(`
-a pole's QR link, cold -- ${CPU_THROTTLE}x CPU, Slow 4G, a Wednesday at 13:30`);
+  console.log(`\na pole's QR link, cold -- ${CPU_THROTTLE}x CPU, Slow 4G, a Wednesday at 13:30`);
   const FIRST_ROW = `(() => { const w = window; w.__firstRow = 0; new MutationObserver((_, watch) => { if (!document.querySelector('main ul > li.border-b')) return; watch.disconnect(); requestAnimationFrame(() => { w.__firstRow = Math.round(performance.now()); }); }).observe(document, { childList: true, subtree: true }); })();`;
   const page = await throttled(browser, {}, PINNED_CLOCK, FIRST_ROW);
-  await page
-    .evaluate<boolean>(`navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.unregister()))).then(() => caches.keys()).then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(() => true)`)
-    .catch(() => false);
+  await forgetSite(page);
   await page.goto(`${BASE}/paradas/?parada=uilP`);
   await sleep(8000);
   const probe = await probeOf(page);
