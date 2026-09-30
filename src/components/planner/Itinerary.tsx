@@ -19,7 +19,7 @@ const ICON = { bus: Bus, wait: Clock, walk: Footprints };
 function StopRow({ label, time, estimated = false, stop, onSelect }: { label: string; time?: string; estimated?: boolean; stop?: BusStop; onSelect: (stop: BusStop) => void }) {
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <span className="text-label text-ink-3">{label}</span>
         <span className="tnum shrink-0 text-body font-semibold">
           {estimated && <span className="text-ink-3">~</span>}
@@ -43,17 +43,18 @@ function BusStep({ seg, onSelectStop, onSelectLine }: { seg: TripSegment & { lin
   const count = seg.stopsCount ?? between.length + 1;
   return (
     <div>
-      <div className="flex items-center gap-2.5">
+      {/* The duration goes under the destination when both do not fit: at 200% text it was 39 px off the screen. */}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <LineBadge number={seg.line.number} color={seg.line.color} title={seg.line.name} onClick={() => onSelectLine(seg.line)} />
         {/* Where this bus is going, not what the line is called: the name is its two termini and did not fit. */}
-        <span className="min-w-0 flex-1 truncate text-body font-semibold" title={seg.line.name}>
+        <span className="min-w-[min(6rem,100%)] flex-1 break-words text-body font-semibold" title={seg.line.name}>
           <span className="sr-only">{t.service.towards('')}</span>
           <span aria-hidden="true" className="text-ink-3">
             →{' '}
           </span>
           {direction?.destination ?? seg.line.name}
         </span>
-        <span className="tnum shrink-0 text-emph font-bold">{seg.durationMinutes} min</span>
+        <span className="tnum ml-auto shrink-0 text-emph font-bold">{seg.durationMinutes} min</span>
       </div>
       <div className="mt-3">
         <StopRow label={t.planner.board} time={seg.departureTime} stop={seg.fromStop} onSelect={onSelectStop} />
@@ -66,13 +67,13 @@ function BusStep({ seg, onSelectStop, onSelectLine }: { seg: TripSegment & { lin
         <p className="mt-1.5 border-l-2 border-line py-1.5 pl-3 text-label text-ink-3">{t.planner.ride(count, seg.durationMinutes)}</p>
       ) : (
         <details className="disclosure mt-1.5 border-l-2 border-line pl-3">
-          <summary className="flex h-11 cursor-pointer items-center gap-1.5 text-label text-ink-2">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-1.5 text-label text-ink-2">
             <ChevronDown className="disclosure-chevron h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.planner.ride(count, seg.durationMinutes)}
           </summary>
           <ol className="pb-2 pl-[21px]" aria-label={t.planner.viaStops}>
             {between.map((id) => (
-              <li key={id} title={stopName(id)} className="truncate py-1 text-label text-ink-3">
+              <li key={id} className="break-words py-1 text-label text-ink-3">
                 {stopName(id)}
               </li>
             ))}
@@ -97,7 +98,7 @@ function PlainStep({ seg }: { seg: TripSegment }) {
           <Icon className={`w-3.5 h-3.5 ${wait ? 'text-estimated' : 'text-ink-2'}`} />
           {wait ? t.planner.scheduledWait : seg.walkMeters ? t.planner.walkMetres(seg.walkMeters) : t.planner.walkConnection}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {seg.departureTime && seg.arrivalTime && (
             <span className={`px-2 py-0.5 rounded font-mono font-bold text-label ${wait ? 'bg-warn text-warn-ink border border-warn' : 'bg-surface text-ink'}`}>
               {seg.departureTime} &rarr; {seg.arrivalTime}
@@ -122,7 +123,7 @@ export function Itinerary({ segments, onSelectStop, onSelectLine }: ItineraryPro
             <div className={`absolute -left-6 top-1.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center ${NODE[seg.type]}`}>
               <Icon className="w-3 h-3" />
             </div>
-            <div className={`p-4 rounded-card border transition-all ${CARD[seg.type]}`}>
+            <div className={`py-4 px-cap-4 rounded-card border transition-all ${CARD[seg.type]}`}>
               {seg.type === 'bus' && seg.line ? <BusStep seg={seg as TripSegment & { line: BusLine }} onSelectStop={onSelectStop} onSelectLine={onSelectLine} /> : <PlainStep seg={seg} />}
             </div>
           </div>

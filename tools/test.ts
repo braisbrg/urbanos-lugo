@@ -21,7 +21,7 @@ import { LANGS, translations } from '../src/i18n';
 import type { RoutePlanResult } from '../src/types';
 import { tripProgress, rememberPassed, AT_STOP_RADIUS_M, MISSED_AFTER_MIN, BOARDING_SOON_MIN, boardingIsNow, startTrip, advanceTrip, tripPhase, currentLeg, legTimes, shouldAskIfMissed, confirmBoarded, missedBus, packTrip, unpackTrip } from '../src/utils/tripProgress';
 import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
-import { poleCode, FARES } from '../src/data/transitData';
+import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
 import { PATHS } from '../src/routes';
@@ -3894,6 +3894,87 @@ ok('the itinerary vouches for the boarding time only, and marks a worked-out arr
   const alight = itinerary.indexOf('label={t.planner.alight}');
   assert(board > 0 && chip > board && alight > chip, 'the provenance chip no longer sits under the boarding time');
   assert(/label=\{t\.planner\.alight\}[^>]*estimated=\{seg\.arrivalPrecision !== 'published'\}/.test(itinerary), 'the alighting time no longer says when it is worked out');
+});
+
+ok('the favourites show a stop’s lines by their number, each once', () => {
+  // The badges printed the line's id: on 96 of the 417 stops one read "11-Igrexa de Bóveda",
+  // "11-Calde" or "11-Santa Comba" where the bus says "11", and on three the 11 came twice.
+  const both = BUS_STOPS.find((s) => s.lines.includes('11') && s.lines.some((id) => id.startsWith('11-')));
+  assert(both, 'no stop is served by the 11 and one of its variants any more; the check needs another case');
+  const numbers = linesByNumber(both.lines).map((l) => l.number);
+  assert(numbers.length === new Set(numbers).size && numbers.includes('11'), `${both.name}: ${numbers.join(' ')}`);
+  for (const stop of BUS_STOPS) {
+    const distinct = new Set(stop.lines.map((id) => BUS_LINES.find((l) => l.id === id)?.number));
+    assert(linesByNumber(stop.lines).length === distinct.size, `${stop.name}: the badges do not match its lines' numbers`);
+  }
+  const favs = read('src/components/FavoritesDrawer.tsx');
+  assert(/linesByNumber\(stop\.lines\)/.test(favs) && !/number=\{l\}/.test(favs), 'the favourites badges print the line id again');
+});
+
+ok('a saved row’s bin is a named 44 px button, and its arrow is not a second, nameless one', () => {
+  // The bin was 28 px with only a title, a finger's width from the arrow; the arrow was a
+  // button with no name, repeating what the row itself does, read out as just "button".
+  const favs = read('src/components/FavoritesDrawer.tsx');
+  assert(/onClick=\{onRemove\} aria-label=\{removeLabel\}[^>]*h-11 w-11/.test(favs), 'the bin is small or nameless again');
+  assert(/onClick=\{onOpen\} tabIndex=\{-1\} aria-hidden="true"/.test(favs), 'the arrow is a second, nameless stop for the keyboard again');
+});
+
+ok('the line screen: today’s hours from today’s runs, every departure, no box scrolling inside the page', () => {
+  // "Horario de servizo" printed the line's first and last departure of any day, 07:15 - 22:00
+  // for the 7 on a Tuesday, whose first bus is 07:30. The list and the departures scrolled in
+  // boxes of their own inside the page, 520 px and two rows; the table's title was cut at 28
+  // characters; and an invisible hover hint pushed every stop row 7 px past its column.
+  const lines = read('src/components/LinesView.tsx');
+  assert(/label=\{t\.lines\.serviceHoursToday\}>\s*\{runs\.length \?/.test(lines), 'the hours are not today’s runs again');
+  assert(!/max-h-\[520px\]|max-h-24/.test(lines), 'a box scrolls inside the page again');
+  assert(!/\.slice\(0, 28\)/.test(lines), 'the departures title is cut again');
+  assert(!/t\.lines\.viewStop/.test(lines), 'the invisible hover hint is back');
+});
+
+ok('with the text at 200 % the side paddings stop growing and the bar keeps its buttons', () => {
+  // In rem, the page's, the panel's and the card's side padding doubled with the type: on a
+  // 375 px phone they kept 172 px and left a line's name 51 px, "R…". The bar's buttons were
+  // rem inside a 46 px bar and pushed the QR button half out of it; the favourites panel was
+  // 80 px wider than the screen and hid its own close button.
+  const css = read('src/index.css');
+  assert(/@utility px-cap-\* \{\s*padding-inline: min\(calc\(var\(--spacing\) \* --value\(number\)\), calc\(1\.25vw \* --value\(number\)\)\);/.test(css), 'the capped side padding is gone');
+  for (const file of [...sourcesUnder('src/components'), join(root, 'src/App.tsx')]) {
+    for (const [cls] of readFileSync(file, 'utf8').matchAll(/className="[^"]*\bmx-auto\b[^"]*"/g)) {
+      assert(!/[\s"]px-(3\.5|4)(?=[\s"])/.test(cls), `${relative(file)}: a page gutter grows with the type again: ${cls}`);
+    }
+  }
+  const bar = read('src/components/TopBar.tsx');
+  assert((bar.match(/h-\[44px\] w-\[44px\]/g) ?? []).length === 3 && !/h-11 w-11/.test(bar), 'the bar’s buttons are rem inside a px bar again');
+  const favs = read('src/components/FavoritesDrawer.tsx');
+  assert(/pl-\[min\(2\.5rem,12\.5vw\)\]/.test(favs) && /w-screen min-w-0 max-w-md/.test(favs), 'the favourites panel can be wider than the screen again');
+});
+
+ok('where a name shares its row, it keeps a floor and the rest goes under it', () => {
+  // Squeezed beside a badge and a time, a name at 200 % text had nothing left: the board's
+  // destination went one letter a line, a line's name was "R…", a search result's spilled up
+  // to 130 px out of its box, and in the route options "Co paseo medido xa non chegas a este
+  // bus" was printed over the minutes -- and took four lines on a 320 px phone at 100 % too.
+  const board = read('src/components/StopArrivalsView.tsx');
+  assert((board.match(/min-w-\[6rem\] flex-1/g) ?? []).length === 2 && (board.match(/ml-auto flex shrink-0 items-end gap-1\.5/g) ?? []).length === 2, 'a board row squeezes its destination again');
+  const lines = read('src/components/LinesView.tsx');
+  assert(/<span className="line-clamp-3 break-words">\{parts\[parts\.length - 1\]\}<\/span>/.test(lines) && /min-w-\[6rem\] flex-1/.test(lines), 'a line card cuts its name to a letter again');
+  assert(/ml-auto shrink-0 rounded bg-surface px-2 py-1/.test(read('src/components/TopBar.tsx')), 'a search result squeezes its name beside the pole code again');
+  const options = read('src/components/planner/TripOptions.tsx');
+  assert(/@container border-y/.test(options) && /@min-\[18rem\]:grid-cols-\[auto_1fr_auto\]/.test(options) && /col-span-2 row-start-2/.test(options), 'the route options squeeze their clocks between the lines and the minutes again');
+  assert(!/truncate/.test(options), 'a route option cuts its sentence again');
+  assert(/tnum ml-auto shrink-0 text-emph font-bold/.test(read('src/components/planner/Itinerary.tsx')), 'a leg pushes its minutes off the screen again');
+  assert(!/truncate/.test(read('src/components/Map/MapControls.tsx')), 'a list on the map cuts a name again');
+  assert(/\.seg-btn \{ overflow-wrap: anywhere; \}/.test(read('src/index.css')), 'a word wider than its option spills into the next again');
+});
+
+ok('an empty saved stop names its next bus, with its day and its tilde, and the banner keeps its time', () => {
+  // A saved stop with no bus left today was a name and nothing else, where the board of the
+  // same stop names the next one. And the night banner cut its own time: with the day word in
+  // the sentence, "primeiro bus mañá ás ~06:50" ended "~0…".
+  const home = read('src/components/StopHome.tsx');
+  assert(/next: arrivals\.length \? null : nextServiceAtStop\(stop\.id\)/.test(home) && /t\.stopHome\.nextLater/.test(home), 'an empty saved stop no longer names its next bus');
+  assert(/next\.daysAhead > 0 && [^\n]*dayWord\(lang, next\.daysAhead\)/.test(home) && /next\.precision === 'estimated' && <span className="text-ink-3">~<\/span>/.test(home), 'the next bus on an empty saved stop loses its day or its tilde');
+  assert(/<span className="block text-body font-semibold">\{t\.nightBanner\.closed\(/.test(read('src/App.tsx')), 'the night banner cuts its sentence again');
 });
 
 // Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which

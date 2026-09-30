@@ -26,7 +26,7 @@ export function MenuDrawer({ open, onClose, onOpenTab, alertCount, ...settings }
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t.menu.open} className="fixed inset-0 z-[1500]">
       {/* For the finger, not the Tab key: the X beside the title is the same action. */}
       <button className="anim-fade-full absolute inset-0 bg-scrim" onClick={onClose} aria-label={t.menu.close} tabIndex={-1} />
-      <div className="anim-slide-in absolute inset-y-0 right-0 flex w-[306px] max-w-[85vw] flex-col border-l border-line bg-bg">
+      <div className="@container anim-slide-in absolute inset-y-0 right-0 flex w-[306px] max-w-[85vw] flex-col border-l border-line bg-bg">
         <div className="flex items-center justify-between border-b border-line px-[18px] py-4">
           <span className="text-emph font-semibold">{t.nav.appName}</span>
           <button onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-control text-ink-2" aria-label={t.menu.close}>
@@ -44,12 +44,14 @@ export function MenuDrawer({ open, onClose, onOpenTab, alertCount, ...settings }
                 onClose();
               })}
               aria-label={badge > 0 ? `${label} (${badge})` : undefined}
-              className="flex h-14 items-center gap-4 rounded-card px-3 text-left"
+              className="flex min-h-14 items-center gap-4 rounded-card px-cap-3 py-2 text-left"
             >
               <Icon className={`h-5 w-5 shrink-0 ${id === 'info' ? 'text-estimated' : 'text-ink-2'}`} strokeWidth={2} aria-hidden="true" />
-              <span className="flex-1 text-emph font-semibold">{label}</span>
+              <span className="min-w-0 flex-1 break-words text-emph font-semibold">{label}</span>
               {badge > 0 && <span className="tnum shrink-0 rounded-control bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">{badge}</span>}
-              <ChevronRight className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+              {/* Decoration, the whole row is the link: it goes where the drawer is narrow for its
+                  text, and the first link's words had broken mid-word, "servi-zo". */}
+              <ChevronRight className="hidden h-4.5 w-4.5 shrink-0 text-ink-3 @min-[15rem]:block" strokeWidth={2} aria-hidden="true" />
             </a>
           ))}
           <div className="px-3 py-2">

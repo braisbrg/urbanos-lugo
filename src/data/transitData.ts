@@ -22,6 +22,19 @@ const LINE_BY_ID = new Map(BUS_LINES.map((l) => [l.id, l]));
 
 export const stopById = (id: string): BusStop | undefined => STOP_BY_ID.get(id);
 export const lineById = (id: string): BusLine | undefined => LINE_BY_ID.get(id);
+/**
+ * Lines as the bus shows them: by number, each number once, in the order given. The 11 and
+ * its three variants are four ids and one "11"; a badge that printed the id showed
+ * "11-Igrexa de Bóveda".
+ */
+export function linesByNumber(lineIds: readonly string[]): BusLine[] {
+  const byNumber = new Map<string, BusLine>();
+  for (const id of lineIds) {
+    const line = LINE_BY_ID.get(id);
+    if (line && !byNumber.has(line.number)) byNumber.set(line.number, line);
+  }
+  return [...byNumber.values()];
+}
 /** The name behind a stop id, or the id itself when the dataset does not know it. */
 export const stopName = (id: string): string => STOP_BY_ID.get(id)?.name ?? id;
 

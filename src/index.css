@@ -274,14 +274,26 @@
   .seg-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n, 2)); border-radius: calc(var(--radius-control) - 3px); background: var(--c-ink); transform: translateX(calc(var(--i, 0) * 100%)); transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1); }
   /* A floor, not a height, and room at the sides: a line's two directions are named by
      their last stop, and "Sentido Rda. Muralla 56 (Sindicatos)" takes two lines in half
-     a phone. With a fixed 44 px and no padding the two lines filled the pill edge to edge. */
-  .seg-btn { position: relative; z-index: 1; min-height: 2.75rem; padding: 0.25rem 0.625rem; line-height: 1.25; border-radius: calc(var(--radius-control) - 3px); font-size: var(--text-body); font-weight: 500; color: var(--c-ink-2); transition: color 160ms; }
+     a phone. With a fixed 44 px and no padding the two lines filled the pill edge to edge.
+     The side room stops growing with the type where the screen has none to give, like
+     px-cap below: at 200 % it was 20 px a side and "Paradas" broke as "Para-das". */
+  .seg-btn { position: relative; z-index: 1; min-height: 2.75rem; padding: 0.25rem min(0.625rem, 3.125vw); line-height: 1.25; border-radius: calc(var(--radius-control) - 3px); font-size: var(--text-body); font-weight: 500; color: var(--c-ink-2); transition: color 160ms; }
   /* The pressed button carries the fill itself, but only once the thumb has arrived:
      for the 200 ms of the slide its own fill is held transparent and the thumb is what
      shows. At rest the fill is the button's, so a contrast audit reading the button's
      own background finds the ink it is really on rather than the page behind it. */
   .seg-on { color: var(--c-bg); font-weight: 600; background: var(--c-ink); animation: seg-reveal 200ms; }
   .seg-dense .seg-btn { font-size: var(--text-label); }
+  /* A word wider than its option breaks rather than spilling into the next one: at 200 %
+     text "Chegar antes" ran 14 px past its third of the track. */
+  .seg-btn { overflow-wrap: anywhere; }
+  /* One option a row on a phone: the two directions of a line are named after their far
+     stop, "Sentido Rúa Montevideo 7 (Sanatorio NSOG)", and side by side each took three
+     lines at the default size and broke words at 200 %. */
+  @media (width < 40rem) {
+    .seg-stack { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
+    .seg-stack .seg-thumb { right: 3px; bottom: auto; width: auto; height: calc((100% - 6px) / var(--n, 2)); transform: translateY(calc(var(--i, 0) * 100%)); }
+  }
 
   /* Native <details>: the chevron turns and the body fades in; where the browser can
      interpolate `auto`, the height opens too. Where it cannot, the first two alone. */
@@ -293,6 +305,14 @@
     .disclosure::details-content { block-size: 0; overflow: hidden; transition: block-size 220ms cubic-bezier(0.2, 0.7, 0.2, 1), content-visibility 220ms allow-discrete; }
     .disclosure[open]::details-content { block-size: auto; }
   }
+}
+
+/* Side padding that grows with the type only while the screen has room: never past what the
+   same step measures on a 320 px phone at the default size (1.25vw a step there). In plain
+   rem, with the type at 200 % on a 375 px phone, the page, the panel and the card between
+   them kept 172 px of the width and left a line's name 51 px: "R…". */
+@utility px-cap-* {
+  padding-inline: min(calc(var(--spacing) * --value(number)), calc(1.25vw * --value(number)));
 }
 
 @layer base {

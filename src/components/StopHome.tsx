@@ -3,8 +3,9 @@ import { Compass, History, QrCode, Route, Star, type LucideIcon } from 'lucide-r
 import { BusLine, BusStop } from '../types';
 import { lineById, stopById } from '../data/transitData';
 import { NEARBY_STOP_LIMIT_METRES, NearbyStop, getNearbyStops } from '../utils/places';
-import { getArrivalsForStop } from '../utils/arrivals';
-import { useT } from '../i18n';
+import { getArrivalsForStop, nextServiceAtStop } from '../utils/arrivals';
+import { dayWord } from '../utils/serviceLabels';
+import { useLang, useT } from '../i18n';
 import { useClock } from '../hooks/useClock';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { LineBadge } from './ui/LineBadge';
@@ -37,12 +38,10 @@ function StopRow({ stop, onSelect, trailing }: { stop: BusStop; onSelect: (stop:
   const t = useT();
   return (
     <li>
-      <button onClick={() => onSelect(stop)} className="flex w-full items-center gap-3 rounded-control border border-edge px-3.5 py-3 text-left">
+      <button onClick={() => onSelect(stop)} className="flex w-full items-center gap-3 rounded-control border border-edge px-cap-3.5 py-3 text-left">
         <span className="min-w-0 flex-1">
-          <span title={stop.name} className="block truncate text-body font-semibold">
-            {stop.name}
-          </span>
-          <span className="block truncate text-label text-ink-3">
+          <span className="block break-words text-body font-semibold">{stop.name}</span>
+          <span className="block text-label text-ink-3">
             {trailing ? '' : `${stop.zone} · `}
             {t.common.lines(stop.lines.length)}
           </span>
@@ -60,6 +59,7 @@ function StopRow({ stop, onSelect, trailing }: { stop: BusStop; onSelect: (stop:
  */
 export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recentStopIds, onClearRecent, onSelectStop, onOpenQrScanner }: StopHomeProps) {
   const t = useT();
+  const lang = useLang();
   useClock(30_000); // the boards below recompute on every render, so a tick is enough
 
   const [nearby, setNearby] = useState<NearbyStop[]>([]);
@@ -92,7 +92,11 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
   const saved = favoriteStopIds
     .map(stopById)
     .filter((s): s is BusStop => !!s)
-    .map((stop) => ({ stop, arrivals: getArrivalsForStop(stop.id).arrivals.slice(0, PER_STOP) }));
+    .map((stop) => {
+      const arrivals = getArrivalsForStop(stop.id).arrivals.slice(0, PER_STOP);
+      // Nothing within the hour: when the next one is, as the board says, rather than only that there is none.
+      return { stop, arrivals, next: arrivals.length ? null : nextServiceAtStop(stop.id) };
+    });
   const recent = recentStopIds.filter((id) => !favoriteStopIds.includes(id)).map(stopById).filter((s): s is BusStop => !!s);
 
   // A saved line crossed with the stops the reader keeps: on its own it was a shortcut to a page one tap away.
@@ -110,14 +114,14 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
     });
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-3.5 pb-8 pt-4">
+    <div className="mx-auto w-full max-w-3xl px-cap-3.5 pb-8 pt-4">
       <h2 className="flex items-center gap-2 text-title font-semibold tracking-[-0.012em]">
         <Star className="h-5 w-5 shrink-0 text-warn-ink" strokeWidth={1.8} fill="currentColor" aria-hidden="true" />
         {t.stopHome.saved}
       </h2>
 
       {saved.length === 0 ? (
-        <div className="mt-4 rounded-card border border-dashed border-edge p-5">
+        <div className="mt-4 rounded-card border border-dashed border-edge py-5 px-cap-5">
           <p className="text-body font-semibold">{t.stopHome.emptyTitle}</p>
           <p className="mt-1.5 text-body leading-relaxed text-ink-2">{t.stopHome.emptyBody}</p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -133,17 +137,28 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
         </div>
       ) : (
         <ul className="mt-3 flex flex-col gap-2">
-          {saved.map(({ stop, arrivals }) => (
+          {saved.map(({ stop, arrivals, next }) => (
             <li key={stop.id}>
-              <button onClick={() => onSelectStop(stop)} className="w-full rounded-card border border-edge bg-surface p-3.5 text-left">
-                <span className="flex items-baseline justify-between gap-2">
-                  <span title={stop.name} className="truncate text-emph font-semibold">
-                    {stop.name}
-                  </span>
-                  <span className="tnum shrink-0 text-label text-ink-3">{stop.zone}</span>
-                </span>
+              <button onClick={() => onSelectStop(stop)} className="w-full rounded-card border border-edge bg-surface py-3.5 px-cap-3.5 text-left">
+                {/* The name whole, on as many lines as it takes: it is what the reader matches
+                    against the pole. The zone shared its line and cut it -- "Rda. Muralla 56 (Si…"
+                    on a phone, "Rda. Muralla …" at 320 px, and nothing at all at 200% text. */}
+                <span className="block text-emph font-semibold">{stop.name}</span>
+                <span className="block text-label text-ink-3">{stop.zone}</span>
                 {arrivals.length === 0 ? (
-                  <span className="mt-2 block text-label text-ink-3">{t.stopHome.none}</span>
+                  next ? (
+                    <span className="mt-2.5 flex flex-wrap items-center gap-1.5 text-body">
+                      <span className="text-label text-ink-3">{t.stopHome.nextLater}</span>
+                      <LineBadge number={next.lineNumber} color={lineById(next.lineId)?.color ?? ''} size="sm" className="h-[26px] min-w-[26px] rounded-[5px]" />
+                      <span className="tnum font-semibold">
+                        {next.daysAhead > 0 && <span className="mr-1 font-sans text-estimated">{dayWord(lang, next.daysAhead)}</span>}
+                        {next.precision === 'estimated' && <span className="text-ink-3">~</span>}
+                        {next.time}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="mt-2 block text-label text-ink-3">{t.stopHome.none}</span>
+                  )
                 ) : (
                   <span className="mt-2.5 flex flex-wrap items-center gap-2">
                     {arrivals.map((a, i) => (
@@ -178,18 +193,16 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
           <ul className="mt-2 flex flex-col gap-1.5">
             {savedLines.map(({ line, stop, next }) => (
               <li key={line.id}>
-                <button onClick={() => onSelectLine(line)} style={{ '--line': line.color } as CSSProperties} className="tint tint-edge tint-strong flex w-full items-center gap-3 rounded-control border px-2.5 py-2 text-left">
+                {/* The name in two lines at most, and the minutes under it when the three do not fit:
+                    at 200% text the name was an ellipsis with 26 px of words in front of it. */}
+                <button onClick={() => onSelectLine(line)} style={{ '--line': line.color } as CSSProperties} className="tint tint-edge tint-strong flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-control border px-cap-2.5 py-2 text-left">
                   <LineBadge number={line.number} color={line.color} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-semibold" title={line.name}>
-                      {line.name}
-                    </span>
-                    <span className="block truncate text-label text-ink-2" title={stop ? t.stopHome.savedLinesAt(stop.name) : undefined}>
-                      {stop ? t.stopHome.savedLinesAt(stop.name) : t.stopHome.savedLinesNoStop}
-                    </span>
+                  <span className="min-w-[min(6rem,100%)] flex-1">
+                    <span className="line-clamp-2 break-words text-body font-semibold">{line.name}</span>
+                    <span className="block text-label text-ink-2">{stop ? t.stopHome.savedLinesAt(stop.name) : t.stopHome.savedLinesNoStop}</span>
                   </span>
                   {next && (
-                    <span className="tnum shrink-0 text-right">
+                    <span className="tnum ml-auto shrink-0 text-right">
                       <span className="block text-emph font-bold">
                         {next.precision === 'published' ? '' : '~'}
                         {next.etaMinutes}

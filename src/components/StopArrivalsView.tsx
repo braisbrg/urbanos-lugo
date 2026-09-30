@@ -258,16 +258,22 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         onClick={() => toggleWatch(a.lineId)}
         title={t.arrivals.watchHint(WATCH_LEAD_MINUTES)}
         aria-pressed={watches[a.lineId] !== undefined}
-        className={`flex h-11 items-center gap-1.5 rounded-control border px-3 text-label font-semibold ${watches[a.lineId] !== undefined ? 'border-warn bg-warn text-warn-ink' : 'border-edge text-ink-2'}`}
+        aria-label={watches[a.lineId] !== undefined ? t.arrivals.watchOn : t.arrivals.watchCta(WATCH_LEAD_MINUTES)}
+        className={`flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-control border px-3 text-label font-semibold ${watches[a.lineId] !== undefined ? 'border-warn bg-warn text-warn-ink' : 'border-edge text-ink-2'}`}
       >
         <Bell className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-        {watches[a.lineId] !== undefined ? t.arrivals.watchOn : t.arrivals.watchCta(WATCH_LEAD_MINUTES)}
+        {/* The words from sm up. On a 375 px phone the official chip and the full label were
+            363 px in a 323 px row, so the button fell to a third line on every official row
+            and on no estimated one; at 320 px on all of them. */}
+        <span className="hidden sm:inline" aria-hidden="true">
+          {watches[a.lineId] !== undefined ? t.arrivals.watchOn : t.arrivals.watchCta(WATCH_LEAD_MINUTES)}
+        </span>
       </button>
     ) : null;
   const minUnit = (a: StopArrival) => a.etaMinutes > 0 && <span className="shrink-0 self-end pb-1 text-label text-ink-2">{t.common.min}</span>;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-3.5 pb-8 pt-4">
+    <div className="mx-auto w-full max-w-3xl px-cap-3.5 pb-8 pt-4">
       <button onClick={onBack} className="-ml-1 mb-1 flex h-11 items-center gap-1.5 pr-3 text-body font-medium text-ink-2 lg:hidden">
         <ArrowLeft className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
         {t.arrivals.back}
@@ -335,7 +341,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
                 <li key={line.id} style={tint(line.color)} className="tint tint-edge flex items-center gap-3 rounded-control border px-2.5 py-2">
                   {lineButton(line.id, line.number, line.color)}
                   <span className="min-w-0 flex-1">
-                    <span title={nearestStop.name} className="block truncate text-body font-semibold">
+                    <span className="block break-words text-body font-semibold">
                       {nearestStop.name}
                     </span>
                     <span className="block text-label text-ink-2">~{Math.round(walkMeters)} m</span>
@@ -396,7 +402,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
 
       {/* What the operator says, only for somebody who arrived by scanning the pole: for them it is the thing they were reaching for, not a second opinion. A label and a number: their `towards` is a route description six words long. */}
       {operatorTimes && operatorTimes.departures.length > 0 && (
-        <section className="mt-4 rounded-card border border-edge bg-surface/60 p-3.5">
+        <section className="mt-4 rounded-card border border-edge bg-surface/60 py-3.5 px-cap-3.5">
           <h3 className="text-label font-bold uppercase tracking-wider text-ink-2">{t.arrivals.operatorSaysTitle}</h3>
           <ul className="mt-2 space-y-1.5">
             {operatorTimes.departures.map((departure, i) => (
@@ -414,7 +420,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
 
       {/* Not a live region: the minute tick moved every row's count at once and announced fifteen bare numbers. */}
       {arrivals.length === 0 ? (
-        <div className="mt-6 rounded-card border border-dashed border-edge px-5 py-10 text-center">
+        <div className="mt-6 rounded-card border border-dashed border-edge px-cap-5 py-10 text-center">
           <Clock className="mx-auto mb-3 h-7 w-7 text-ink-3" strokeWidth={1.6} aria-hidden="true" />
           <p className="text-body text-ink-2">{atTime ? t.arrivals.noneAtTime(atTime) : t.arrivals.noArrivals}</p>
           {nextService && <p className="mt-2 text-body font-semibold">{t.arrivals.nextServiceAt(nextService.lineNumber, `${nextService.precision === 'estimated' ? '~' : ''}${nextService.time}`, nextService.destination, dayWord(lang, nextService.daysAhead))}</p>}
@@ -423,13 +429,17 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         <ul className="anim-fade mt-1">
           {soon.map((a, idx) => (
             <li key={`${a.lineId}-${a.etaTime}-${idx}`} className="border-b border-line px-3 py-3.5">
-              <div className="flex items-center gap-3">
+              {/* The destination keeps a floor of 6rem and the minutes wrap under it when both do
+                  not fit: with the type at 200% the name was squeezed to one letter a line. */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 {lineButton(a.lineId, a.lineNumber, a.lineColor)}
-                <span title={a.destination} className="min-w-0 flex-1 truncate text-emph font-semibold">
+                <span className="min-w-[6rem] flex-1 break-words text-emph font-semibold">
                   {a.destination}
                 </span>
-                <Minutes arrival={a} />
-                {minUnit(a)}
+                <span className="ml-auto flex shrink-0 items-end gap-1.5">
+                  <Minutes arrival={a} />
+                  {minUnit(a)}
+                </span>
               </div>
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 {provenance(a)}
@@ -443,16 +453,18 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         <ul className="anim-fade mt-3 flex flex-col gap-2.5">
           {groups.map((g) => (
             <li key={g.key} className="tint tint-edge overflow-hidden rounded-card border" style={tint(g.lineColor)}>
-              <div className="flex items-center gap-3 p-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 p-3">
                 {lineButton(g.lineId, g.lineNumber, g.lineColor)}
-                <span className="min-w-0 flex-1">
-                  <span title={g.destination} className="block truncate text-emph font-semibold">
+                <span className="min-w-[6rem] flex-1">
+                  <span className="block break-words text-emph font-semibold">
                     {g.destination}
                   </span>
                   {g.headwayMinutes !== null && <span className="mt-0.5 block text-label text-ink-3">{t.arrivals.every(g.headwayMinutes)}</span>}
                 </span>
-                <Minutes arrival={g.departures[0]} />
-                {minUnit(g.departures[0])}
+                <span className="ml-auto flex shrink-0 items-end gap-1.5">
+                  <Minutes arrival={g.departures[0]} />
+                  {minUnit(g.departures[0])}
+                </span>
               </div>
               {/* The rest of this line's departures, so "I'll catch the one after" needs no second tap. */}
               <div className="flex flex-wrap items-center gap-2.5 border-t border-line-soft px-3 py-2.5">

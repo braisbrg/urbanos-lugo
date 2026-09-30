@@ -53,6 +53,7 @@ export const es: Dict = {
     youAreHere: 'Estás aquí',
     locating: 'Localizando…',
     none: 'sin salidas en la próxima hora',
+    nextLater: 'La siguiente:',
     emptyTitle: 'Todavía no has guardado ninguna parada.',
     emptyBody:
       'Busca tu parada arriba, escanea el código del poste o tócala en el mapa. Después pulsa la estrella y aparecerá aquí.',
@@ -406,7 +407,8 @@ export const es: Dict = {
     unsaveLine: 'Quitar de favoritos',
     viewRunAt: (time: string) => `Ver el recorrido de la salida de las ${time}`,
     frequency: 'Frecuencia',
-    serviceHours: 'Horario de servicio',
+    serviceHoursToday: 'Horario hoy',
+    notToday: 'Hoy no circula',
     days: 'Días de servicio',
     stopsInDirection: 'Paradas del recorrido',
     viewOnMap: 'Ver recorrido en el Mapa',
@@ -430,7 +432,6 @@ export const es: Dict = {
     derivedDepartures: '~ Salida que el operador no imprime: sale de la frecuencia que publica o del tiempo hasta el primer punto con horario.',
     estimatedSr: 'hora estimada',
     busScheduledHere: 'Según el horario, el bus estaría llegando aquí',
-    viewStop: 'Ver parada',
   },
 
   arrivals: {

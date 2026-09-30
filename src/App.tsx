@@ -184,7 +184,9 @@ export default function App() {
               <button onClick={() => setActiveTab('info')} className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left">
                 <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold">{t.nightBanner.closed(rest.firstBus, dayWord(lang, rest.daysAhead, now))}</span>
+                  {/* Wraps rather than cuts: the time is the end of the sentence, and with the day
+                      word in it "primeiro bus mañá ás ~06:50" was cut at "~0…". */}
+                  <span className="block text-body font-semibold">{t.nightBanner.closed(rest.firstBus, dayWord(lang, rest.daysAhead, now))}</span>
                   <span className="block truncate text-label text-ink-3">{t.nightBanner.festivals} ›</span>
                 </span>
                 <span className="sr-only">{t.nightBanner.seeNotices}</span>
@@ -236,7 +238,7 @@ export default function App() {
                 <div className={activeTab === 'map' ? 'contents' : 'hidden'}>
                   <Suspense
                     fallback={
-                      <div className="max-w-7xl mx-auto px-4 py-10">
+                      <div className="max-w-7xl mx-auto px-cap-4 py-10">
                         <div className="flex h-[540px] animate-pulse items-center justify-center rounded-card bg-surface text-body font-medium text-ink-3">{t.map.loadingMap}</div>
                       </div>
                     }

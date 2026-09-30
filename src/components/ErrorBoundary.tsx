@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, { failed: boole
     if (!this.state.failed) return this.props.children;
     const { t } = this.props;
     return (
-      <div className="mx-auto w-full max-w-3xl px-3.5 py-8" role="alert">
+      <div className="mx-auto w-full max-w-3xl px-cap-3.5 py-8" role="alert">
         <h2 className="text-title font-semibold tracking-[-0.012em]">{t.error.title}</h2>
         <p className="mt-2 text-body leading-relaxed text-ink-2">{t.error.body}</p>
         <div className="mt-4 flex flex-wrap gap-2">

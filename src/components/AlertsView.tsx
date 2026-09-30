@@ -57,15 +57,17 @@ function AlertCard({ alert, when, source }: { alert: ServiceAlert; when: string;
   const t = useT();
   const warning = alert.severity === 'warning';
   return (
-    <div className={`p-5 rounded-card border transition-all ${warning ? 'bg-warn/60 border-warn' : 'bg-surface/60 border-edge'}`}>
+    <div className={`py-5 px-cap-5 rounded-card border transition-all ${warning ? 'bg-warn/60 border-warn' : 'bg-surface/60 border-edge'}`}>
       {source && <span className="text-label font-bold uppercase tracking-wider text-ink-3">{source}</span>}
-      <div className="mb-2 mt-1 flex items-center justify-between gap-2">
+      <div className="mb-2 mt-1 flex flex-wrap items-center justify-between gap-2">
         <span className={`text-label font-black uppercase tracking-wider px-2 py-0.5 rounded ${warning ? 'bg-warn text-warn-ink' : 'bg-surface text-accent'}`}>{when}</span>
-        <div className="flex flex-wrap items-center gap-1 justify-end max-w-[65%]">
+        {/* Under the date when both do not fit, rather than a third of the row: "Todas as liñas"
+            ran 26 px off the screen at 200% text. */}
+        <div className="ml-auto flex flex-wrap items-center gap-1 justify-end">
           <LinesAffected lines={alert.linesAffected || []} />
         </div>
       </div>
-      <h3 className="font-bold text-ink text-body">{alert.title}</h3>
+      <h3 className="break-words font-bold text-ink text-body">{alert.title}</h3>
       {/* The operator posts a notice as one line, so the title and the description are the same words. */}
       {alert.description !== alert.title && <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{alert.description}</p>}
       {alert.link && (
@@ -99,7 +101,7 @@ export function AlertsView({ alerts }: AlertsViewProps) {
       : [t.fares.normalStatusTitle, t.fares.normalStatusDesc];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="max-w-7xl mx-auto px-cap-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {(hour >= 22 || hour < 6) && (
         <div className="p-4 rounded-card bg-surface border border-edge shadow-sm flex items-start gap-3">
           <Clock className="w-5 h-5 text-ink-2 shrink-0 mt-0.5" />
@@ -148,14 +150,15 @@ export function AlertsView({ alerts }: AlertsViewProps) {
             ))}
           </div>
         ) : (
-          <div className="p-5 rounded-card bg-surface border border-edge flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
+          <div className="py-5 px-cap-5 rounded-card bg-surface border border-edge flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* The words under the tick when both do not fit, rather than "comprobació-n". */}
+            <div className="flex min-w-0 flex-wrap items-start gap-3.5">
               {/* A green tick is a claim. It only goes on the state actually verified. */}
               <div className={`shrink-0 rounded-control p-2 mt-0.5 ${unreachable ? 'bg-surface text-ink-2 border border-edge' : 'bg-official text-on-official'}`}>
                 {unreachable ? <HelpCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
               </div>
-              <div>
-                <h3 className={`text-body font-bold ${unreachable || stale ? 'text-ink' : 'text-official'}`}>{statusTitle}</h3>
+              <div className="min-w-[min(11rem,100%)] flex-1">
+                <h3 className={`break-words text-body font-bold ${unreachable || stale ? 'text-ink' : 'text-official'}`}>{statusTitle}</h3>
                 <p className="text-label text-ink-2 mt-0.5 leading-relaxed">{statusDesc}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-label text-official font-medium">
                   <span>

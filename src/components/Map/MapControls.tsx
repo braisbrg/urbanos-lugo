@@ -154,9 +154,7 @@ export function MapControls(p: MapControlsProps) {
             {p.nearbyLines.map(({ line, nearestStop, walkMeters }) => (
               <button key={line.id} onClick={() => p.onSelectLine(line)} className="w-full p-2 rounded-md text-left flex items-center gap-2 text-label bg-surface border border-line hover:bg-surface transition-colors">
                 <LineBadge number={line.number} color={line.color} size="sm" />
-                <span title={nearestStop.name} className="truncate flex-1 text-ink-2">
-                  {nearestStop.name}
-                </span>
+                <span className="min-w-0 flex-1 break-words text-ink-2">{nearestStop.name}</span>
                 <span className="tnum shrink-0 font-semibold text-ink-3">~{walkMeters} m</span>
               </button>
             ))}
@@ -201,11 +199,11 @@ export function MapControls(p: MapControlsProps) {
             const isSelected = p.pickedLineIds.includes(line.id);
             return (
               <div key={line.id} className={`flex items-stretch gap-1 rounded-control text-label transition-all border bg-surface ${isSelected ? 'border-accent font-bold shadow-xs' : 'border-line text-ink-2'}`}>
-                <button onClick={() => p.onSelectLine(line)} aria-pressed={isSelected} className="flex min-h-11 flex-1 items-center gap-2 truncate p-2.5 text-left">
+                <button onClick={() => p.onSelectLine(line)} aria-pressed={isSelected} className="flex min-h-11 min-w-0 flex-1 items-center gap-2 p-2.5 text-left">
                   <LineBadge number={line.number} color={line.color} size="sm" />
-                  <span className="truncate" title={line.name}>
-                    {line.name}
-                  </span>
+                  {/* Two lines rather than one cut: cut, it kept the origin and lost where the line goes,
+                      "Opuesto Piscina Pedreiras - Rúa Mercad..." in the desktop column. */}
+                  <span className="line-clamp-2 min-w-0 break-words">{line.name}</span>
                   {/* The row is a switch, and a tick is what says so. */}
                   {isSelected && <Check className="ml-auto h-4 w-4 shrink-0 text-accent" strokeWidth={3} aria-hidden="true" />}
                 </button>

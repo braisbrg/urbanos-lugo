@@ -4,7 +4,7 @@ import { useDialog } from '../hooks/useDialog';
 import { useLang, useT } from '../i18n';
 import { daysLabel, frequencyLabel } from '../utils/serviceLabels';
 import { BusStop, BusLine } from '../types';
-import { BUS_STOPS, BUS_LINES, lineById, poleCode } from '../data/transitData';
+import { BUS_STOPS, BUS_LINES, linesByNumber, poleCode } from '../data/transitData';
 import { LineBadge } from './ui/LineBadge';
 import { Segmented } from './ui/controls';
 
@@ -22,15 +22,19 @@ interface FavoritesDrawerProps {
 /** A saved thing: the body opens it, the bin removes it, the arrow opens it too. */
 function SavedRow({ onOpen, onRemove, removeLabel, children }: { onOpen: () => void; onRemove: () => void; removeLabel: string; children: ReactNode }) {
   return (
-    <div className="p-3.5 rounded-control border border-edge hover:border-accent hover:bg-surface/40 transition-all flex items-center justify-between gap-3 group bg-bg shadow-xs">
-      <button type="button" onClick={onOpen} className="flex-1 cursor-pointer text-left">
+    // The buttons go under the text when both do not fit: beside it at 200% text the stop's
+    // zone spilled 54 px out of the row.
+    <div className="py-3.5 px-cap-3.5 rounded-control border border-edge hover:border-accent hover:bg-surface/40 transition-all flex flex-wrap items-center justify-between gap-3 group bg-bg shadow-xs">
+      <button type="button" onClick={onOpen} className="min-w-[min(7rem,100%)] flex-1 cursor-pointer text-left">
         {children}
       </button>
-      <div className="flex items-center gap-1">
-        <button onClick={onRemove} className="p-1.5 text-ink-3 hover:text-warn-ink rounded-md hover:bg-warn transition-colors" title={removeLabel}>
-          <Trash2 className="w-4 h-4" />
+      <div className="ml-auto flex shrink-0 items-center">
+        {/* 44 px like every other control: at 28 it sat a finger's width from the arrow. */}
+        <button onClick={onRemove} aria-label={removeLabel} title={removeLabel} className="flex h-11 w-11 items-center justify-center text-ink-3 hover:text-warn-ink rounded-md hover:bg-warn transition-colors">
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
-        <button onClick={onOpen} className="p-1.5 text-accent hover:text-accent">
+        {/* The row's own button already opens it: this one is for the eye, not a second stop for a screen reader. */}
+        <button onClick={onOpen} tabIndex={-1} aria-hidden="true" className="p-1.5 text-accent hover:text-accent">
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -63,16 +67,21 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
   return (
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t.favourites.title} className="fixed inset-0 z-[2000] overflow-hidden">
       <div className="anim-fade-full absolute inset-0 bg-scrim" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="anim-slide-in w-screen max-w-md bg-bg shadow-2xl flex flex-col border-l border-edge">
-          <div className="p-5 border-b border-edge bg-surface">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-md bg-warn flex items-center justify-center text-estimated">
+      {/* The strip of page to the left stops growing with the type, and the panel may be
+          narrower than its content wants: at 200% text it was 80 px wider than the screen
+          and hid its own close button. */}
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-[min(2.5rem,12.5vw)]">
+        <div className="anim-slide-in w-screen min-w-0 max-w-md bg-bg shadow-2xl flex flex-col border-l border-edge">
+          <div className="@container py-5 px-cap-5 border-b border-edge bg-surface">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex min-w-0 items-center gap-2.5">
+                {/* The star is the title's decoration: where the heading has less than 14rem it goes,
+                    rather than the heading breaking as "FAVORI-TOS". */}
+                <div className="hidden w-9 h-9 shrink-0 rounded-md bg-warn items-center justify-center text-estimated @min-[14rem]:flex">
                   <Star className="w-5 h-5 fill-current text-warn-ink" />
                 </div>
-                <div>
-                  <h2 className="font-bold text-ink text-body uppercase tracking-tight">{t.favourites.title}</h2>
+                <div className="min-w-0">
+                  <h2 className="break-words font-bold text-ink text-body uppercase tracking-tight">{t.favourites.title}</h2>
                   <p className="text-label text-ink-3 font-medium">{t.favourites.subtitle}</p>
                 </div>
               </div>
@@ -80,6 +89,7 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
+            {/* The tabs' icons go with the star, for the same reason: the word before the picture. */}
             <Segmented
               value={tab}
               onChange={setTab}
@@ -88,7 +98,7 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
                   id: 'stops',
                   label: (
                     <span className="flex items-center justify-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-accent" />
+                      <MapPin className="hidden w-3.5 h-3.5 shrink-0 text-accent @min-[14rem]:block" />
                       {t.favourites.tabStops} ({favoriteStops.length})
                     </span>
                   ),
@@ -97,7 +107,7 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
                   id: 'lines',
                   label: (
                     <span className="flex items-center justify-center gap-1.5">
-                      <Route className="w-3.5 h-3.5 text-estimated" />
+                      <Route className="hidden w-3.5 h-3.5 shrink-0 text-estimated @min-[14rem]:block" />
                       {t.favourites.tabLines} ({favoriteLines.length})
                     </span>
                   ),
@@ -106,7 +116,7 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-2.5">
+          <div className="flex-1 overflow-y-auto py-5 px-cap-5 space-y-2.5">
             {tab === 'stops' &&
               (favoriteStops.length === 0 ? (
                 <Empty icon={Star} title={t.favourites.noFavoriteStops} hint={t.favourites.noFavoriteStopsHint} />
@@ -115,7 +125,7 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
                   <SavedRow key={stop.id} onOpen={open(() => onSelectStop(stop))} onRemove={() => onRemoveFavoriteStop(stop.id)} removeLabel={t.favourites.remove}>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-accent shrink-0" />
-                      <span className="font-bold text-body text-ink group-hover:text-accent">{stop.name}</span>
+                      <span className="min-w-0 break-words font-bold text-body text-ink group-hover:text-accent">{stop.name}</span>
                     </div>
                     <div className="text-label text-ink-3 mt-0.5 ml-6">
                       {poleCode(stop) && (
@@ -126,8 +136,10 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
                       {stop.zone}
                     </div>
                     <div className="flex gap-1 flex-wrap mt-2 ml-6">
-                      {stop.lines.map((l) => (
-                        <LineBadge key={l} number={l} color={lineById(l)?.color || '#6b615f'} size="sm" className="h-auto min-w-0 py-0.5 font-black" />
+                      {/* The number, once: they printed the line's id, and the 11 and its three
+                          variants, "11-Igrexa de Bóveda" among them, are all an "11" on the bus. */}
+                      {linesByNumber(stop.lines).map((line) => (
+                        <LineBadge key={line.number} number={line.number} color={line.color} size="sm" className="h-auto min-w-0 py-0.5 font-black" />
                       ))}
                     </div>
                   </SavedRow>
@@ -142,9 +154,9 @@ export function FavoritesDrawer({ isOpen, onClose, favoriteStopIds, favoriteLine
                   <SavedRow key={line.id} onOpen={open(() => onSelectLine(line))} onRemove={() => onRemoveFavoriteLine(line.id)} removeLabel={t.favourites.remove}>
                     <div className="flex items-center gap-2.5">
                       <LineBadge number={line.number} color={line.color} size="sm" className="h-7 w-7 rounded-md shadow-xs font-black" />
-                      <div>
-                        <span className="font-bold text-body text-ink group-hover:text-accent">{line.name}</span>
-                        <div className="text-label text-ink-3 mt-0.5 flex items-center gap-2">
+                      <div className="min-w-0">
+                        <span className="break-words font-bold text-body text-ink group-hover:text-accent">{line.name}</span>
+                        <div className="text-label text-ink-3 mt-0.5 flex flex-wrap items-center gap-x-2">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3 text-ink-3" />
                             {frequencyLabel(line, lang)}

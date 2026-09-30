@@ -64,6 +64,7 @@ export const en: Dict = {
     youAreHere: 'You are here',
     locating: 'Locating…',
     none: 'no departures in the next hour',
+    nextLater: 'Next:',
     emptyTitle: 'You have not saved any stops yet.',
     emptyBody:
       'Search for your stop above, scan the code on the pole, or tap it on the map. Then press the star and it will appear here.',
@@ -417,7 +418,8 @@ export const en: Dict = {
     unsaveLine: 'Remove from saved',
     viewRunAt: (time: string) => `Show the run that leaves at ${time}`,
     frequency: 'Frequency',
-    serviceHours: 'Service hours',
+    serviceHoursToday: 'Hours today',
+    notToday: 'Not running today',
     days: 'Days of service',
     stopsInDirection: 'Stops along the route',
     viewOnMap: 'Show the route on the map',
@@ -441,7 +443,6 @@ export const en: Dict = {
     derivedDepartures: '~ Not printed by the operator: worked out from its stated frequency or from the running time to the first timed stop.',
     estimatedSr: 'estimated time',
     busScheduledHere: 'On the timetable, the bus would be reaching this stop now',
-    viewStop: 'See stop',
   },
 
   arrivals: {

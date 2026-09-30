@@ -115,8 +115,8 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
     .slice(0, 5);
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t.qr.title} className="anim-fade-full fixed inset-0 z-[2000] overflow-y-auto bg-scrim flex items-center justify-center p-4">
-      <div className="anim-scale-in bg-bg rounded-card max-w-lg w-full p-6 shadow-2xl border border-edge relative">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t.qr.title} className="anim-fade-full fixed inset-0 z-[2000] overflow-y-auto bg-scrim flex items-center justify-center py-4 px-cap-4">
+      <div className="anim-scale-in bg-bg rounded-card max-w-lg w-full py-6 px-cap-6 shadow-2xl border border-edge relative">
         <button
           onClick={() => {
             stopCamera();
@@ -128,12 +128,14 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-control bg-accent text-on-accent flex items-center justify-center">
+        {/* Clear of the close button over the corner, and wrapping: at 200% text the heading ran
+            68 px past the card, under the button. */}
+        <div className="flex flex-wrap items-center gap-3 mb-4 pr-11">
+          <div className="w-12 h-12 shrink-0 rounded-control bg-accent text-on-accent flex items-center justify-center">
             <QrCode className="w-6 h-6" />
           </div>
-          <div>
-            <h2 className="font-bold text-emph text-ink uppercase tracking-tight">{t.qr.title}</h2>
+          <div className="min-w-[min(8rem,100%)] flex-1">
+            <h2 className="break-words font-bold text-emph text-ink uppercase tracking-tight">{t.qr.title}</h2>
             <p className="text-label text-ink-3 font-medium">{t.qr.subtitle}</p>
           </div>
         </div>
@@ -192,9 +194,7 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
                 }}
                 className="group flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-edge bg-surface p-2.5 text-left text-label transition-colors hover:bg-surface"
               >
-                <span title={stop.name} className="font-semibold text-ink group-hover:text-accent truncate">
-                  {stop.name}
-                </span>
+                <span className="min-w-0 break-words font-semibold text-ink group-hover:text-accent">{stop.name}</span>
                 <span className="font-mono text-accent font-bold shrink-0">{stop.code}</span>
               </button>
             ))}

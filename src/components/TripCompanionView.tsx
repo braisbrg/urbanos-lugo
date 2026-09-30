@@ -65,13 +65,13 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
   const nextStop = riding ? progress?.stops.find((s) => !s.passed) : undefined;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-3.5 pt-4 lg:px-6">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-cap-3.5 pt-4 lg:px-6">
       <h2 ref={headingRef} tabIndex={-1} className="sr-only">
         {t.companion.title}
       </h2>
 
       {/* The one thing that matters, first and biggest. While the alert stands the whole card turns. */}
-      <div className={`space-y-4 rounded-card border p-6 shadow-sm ${phase === 'alighting' ? 'border-warn bg-warn/40' : 'border-edge bg-bg'}`}>
+      <div className={`space-y-4 rounded-card border py-6 px-cap-6 shadow-sm ${phase === 'alighting' ? 'border-warn bg-warn/40' : 'border-edge bg-bg'}`}>
         {phase === 'alighting' && segment?.toStop && (
           <p role="alert" className="anim-rise rounded-md border border-warn bg-warn px-3 py-2.5 text-body font-semibold text-warn-ink">
             {t.arrivals.alarmFired(segment.toStop.name)}

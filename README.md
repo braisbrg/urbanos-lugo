@@ -127,8 +127,8 @@ da parada.
 ### Avisos de bus e de baixada
 Dous avisos, os dous opcionais:
 
-- **"Avisar 5 min antes"** en calquera liña do taboleiro, para non perder o bus por
-  despiste.
+- **"Avisar 5 min antes"** en calquera liña do taboleiro —nun móbil, unha campá co
+  mesmo nome para o lector de pantalla—, para non perder o bus por despiste.
 - **"Avisarme ao chegar"**, que soa ao achegarte a menos de 300 m da parada elixida,
   para non pasarte de largo.
 
@@ -140,7 +140,9 @@ desde outro sitio.
 
 ### A portada son as túas paradas
 O tab de paradas abre nas **gardadas**, xa coas súas próximas saídas: o caso habitual
-custa cero toques e cero escritura. Debaixo, as **vistas hai pouco** —as últimas seis que
+custa cero toques e cero escritura. Nunha gardada onde hoxe xa non queda ningún bus, a
+tarxeta di cal é o seguinte —a liña, o día se non é hoxe e a hora co seu `~` se é
+calculada—, como fai o taboleiro da mesma parada, en lugar de quedar nun nome sen máis. Debaixo, as **vistas hai pouco** —as últimas seis que
 abriches, gardadas só como identificadores— porque buscar unha parada faino todo o mundo
 e gardala case ninguén, e a segunda visita non debería custar escribir outra vez. E
 debaixo, **preto de min**, que precisa permiso de localización e non inventa distancias
@@ -372,7 +374,10 @@ Seis dos 48 sentidos van e volven pola mesma avenida — na 4.1 a parada 20 e a 
 
 ### Liñas e horarios
 Ficha de cada liña co seu percorrido en ambos sentidos, cadro horario por tipo de día
-(laborables / sábados / domingos e festivos) e tempo de paso estimado en cada parada.
+(laborables / sábados / domingos e festivos) e tempo de paso estimado en cada parada. O
+horario da ficha é o de **hoxe**, lido das expedicións de hoxe: poñía a primeira e a
+última saída de calquera día, «07:15 - 22:00» para a 7 nun martes cuxo primeiro bus sae
+ás 07:30.
 
 ### Códigos QR das marquesiñas
 Escaneo pola cámara usando `BarcodeDetector`, a API nativa do navegador (dispoñible en
@@ -1197,6 +1202,15 @@ base de 16), así que o axuste de tamaño de letra do sistema operativo funciona
 a aplicación en lugar de quedar conxelado en píxeles. `prefers-reduced-motion` desactiva
 transicións e animacións.
 
+**Texto grande.** Co texto ao 200 %, as marxes en `rem` dobraban coa letra: entre a
+páxina, o panel e a tarxeta levaban 172 px dun teléfono de 375 e deixaban o nome dunha
+liña en 51 px, «R…». Agora as marxes laterais deixan de crecer onde a pantalla non ten
+sitio (`px-cap-*`: nunca máis do que miden nun teléfono de 320 px coa letra normal), e
+onde un nome comparte fila cunha insignia ou cunha hora ten un mínimo en `rem`, así que o
+outro baixa á liña seguinte en lugar de espremelo. `audit:browser` conta o texto que non se
+ve a 200 % sen que a páxina se alargue: 177 textos en claro e 179 en escuro nos doce
+estados antes desta rolda, 0 despois.
+
 **Movemento.** O que se move é a interface, nunca un número. Os paneis entran polo bordo
 ao que pertencen (o menú pola dereita, a ficha de parada e a barra da viaxe por abaixo),
 os despregables abren coa frecha xirando, o control Próximas/Por liña leva un pulgar que
@@ -1456,7 +1470,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-168 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+174 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1601,7 +1615,9 @@ documento e de `<main>`, que é onde as pantallas fan scroll: o formulario da ru
 medir 553 px máis có teléfono sen que o `scrollWidth` da páxina dixese nada— do mesmo
 estado a 320 px de ancho e co texto ao 200%, que é o que fai o axuste «texto máis grande»
 dun móbil (atopou a fila de liñas saíndo 42 px pola dereita a 200%, e o culpable era un
-`sr-only` posicionado fóra da pantalla); e o que a consola rexistra en cada carga fresca.
+`sr-only` posicionado fóra da pantalla); co mesmo 200%, o texto que non se ve aínda que a
+páxina non se alargue —cortado cunha elipse, saíndo da súa caixa ou pasado do bordo dentro
+de `<main>`, que recorta—; e o que a consola rexistra en cada carga fresca.
 Despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta enteira ao menú sen saír del
 (10 controis de 10 visitados, para que a comprobación non poida aprobar por non moverse),
 Escape péchao e devolve o foco ao botón que o abriu, e unha viaxe planificada deixa o

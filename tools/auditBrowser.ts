@@ -7,7 +7,8 @@
  *
  * The bar: nothing interactive under 44x44, no text under 12 px, no contrast failure
  * (WCAG: 4.5 for body text, 3.0 for large), every control named, every image described,
- * no sideways scroll at 320 px or at 200% text, one <h1>, the document's lang the app's,
+ * no sideways scroll at 320 px or at 200% text, no text cut at 200% text, one <h1>, the
+ * document's lang the app's,
  * nothing animating under reduced motion. Colours are resolved by painting them to a
  * canvas and reading the pixel back, because the app is written in oklch() and a regex
  * over rgb() silently scores 1.00 everywhere. Run by hand or by the weekly measure
@@ -27,11 +28,13 @@ const SCREENS = ['paradas', 'linhas', 'mapa', 'ruta', 'avisos', 'tarifas'];
  *             with only an image, a field with no label
  *   alt       an <img> with no alt attribute at all (alt="" is decorative, and fine)
  *   overflow  the page scrolls sideways, which on a phone is content off the edge
+ *   cut       at 200% text, words the reader cannot see: cut by an ellipsis, spilling out
+ *             of their box over the next thing, or past the right edge of the screen
  *   lang      the document says it is in one language while the app speaks another
  *   headings  not exactly one <h1>, so the page has no single name for a screen reader
  */
-type Kind = 'contrast' | 'size' | 'target' | 'name' | 'alt' | 'overflow' | 'lang' | 'headings';
-const KINDS: Kind[] = ['contrast', 'size', 'target', 'name', 'alt', 'overflow', 'lang', 'headings'];
+type Kind = 'contrast' | 'size' | 'target' | 'name' | 'alt' | 'overflow' | 'cut' | 'lang' | 'headings';
+const KINDS: Kind[] = ['contrast', 'size', 'target', 'name', 'alt', 'overflow', 'cut', 'lang', 'headings'];
 
 interface Finding {
   kind: Kind;
@@ -399,7 +402,7 @@ async function audit(browser: Browser, theme: 'light' | 'dark') {
     const narrow = await page.evaluate<number>('document.documentElement.scrollWidth - document.documentElement.clientWidth');
     await page.send('Emulation.setDeviceMetricsOverride', PHONE);
     if (narrow > 1) report.findings.push({ kind: 'overflow', where: 'body', detail: `at 320 px the page is ${narrow} px wider than the viewport`, value: 320 + narrow, need: 320 });
-    const large = await page.evaluate<{ over: number; nav: number; off: number; culprit: string }>(`(async () => {
+    const large = await page.evaluate<{ over: number; nav: number; off: number; culprit: string; cut: { words: string; how: string; px: number }[] }>(`(async () => {
       document.documentElement.style.fontSize = '200%';
       await new Promise((r) => setTimeout(r, 400));
       const root = document.documentElement;
@@ -428,12 +431,33 @@ async function audit(browser: Browser, theme: 'light' | 'dark') {
           culprit = describe(el, b) + ' (positioned, escapes its scroll container)';
         }
       }
-      const out = { over: root.scrollWidth - root.clientWidth, nav: links.length, off, culprit };
+      // Words the reader cannot see, which no sideways scroll reports: inside <main>, which
+      // clips, a name can be an ellipsis, spill over its neighbour or sit past the edge and
+      // the page stays exactly as wide as the screen. A line's name was "R…" at 200%, and a
+      // route option printed its warning over its minutes. Judged on blocks that hold words
+      // themselves; screen-reader text and the map clip on purpose.
+      const hasWords = (el) => [...el.childNodes].some((n) => (n.nodeType === 3 && n.textContent.trim()) || (n.nodeType === 1 && getComputedStyle(n).display === 'inline' && n.textContent.trim()));
+      const sideScroller = (el) => { for (let n = el.parentElement; n; n = n.parentElement) { if (/auto|scroll/.test(getComputedStyle(n).overflowX) && n.scrollWidth > n.clientWidth + 1) return true; } return false; };
+      const cut = [];
+      for (const el of document.querySelectorAll('body *')) {
+        if (!el.getClientRects().length || el.closest('.sr-only, [aria-hidden="true"], [inert], .leaflet-container, .maplibregl-map, svg, input, textarea')) continue;
+        const style = getComputedStyle(el);
+        if (style.display === 'inline' || style.display === 'contents' || style.visibility === 'hidden') continue;
+        const words = '"' + (el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 40) + '"';
+        const over = el.scrollWidth - el.clientWidth;
+        const past = Math.round(el.getBoundingClientRect().right - innerWidth);
+        if (style.textOverflow === 'ellipsis' && over > 1) cut.push({ words, how: 'cut by an ellipsis', px: over });
+        else if (hasWords(el) && style.overflowX === 'visible' && over > 1) cut.push({ words, how: 'spilling out of its box', px: over });
+        else if (hasWords(el) && past > 1 && !sideScroller(el)) cut.push({ words, how: 'past the right edge', px: past });
+      }
+      const out = { over: root.scrollWidth - root.clientWidth, nav: links.length, off, culprit, cut };
       document.documentElement.style.fontSize = '';
       return out;
     })()`);
     if (large.over > 1) report.findings.push({ kind: 'overflow', where: large.culprit || 'body', detail: `at 200% text the page is ${large.over} px wider than the viewport`, value: large.over, need: 0 });
     if (large.off > 0) report.findings.push({ kind: 'overflow', where: 'nav', detail: `at 200% text ${large.off} of ${large.nav} navigation links sit off screen`, value: large.off, need: 0 });
+    // The value is the pixels of words out of sight.
+    for (const { words, how, px } of large.cut) report.findings.push({ kind: 'cut', where: words, detail: `at 200% text, ${how}`, value: px, need: 0 });
 
     out.set(`${state.screen}/${state.name}`, { ...report, reached, console: [...new Set([...logged, ...thrown.map((line) => `uncaught: ${line}`)])] });
   }
@@ -614,7 +638,7 @@ await withBrowser(async (browser) => {
     console.log(
       `  ${theme.padEnd(6)} ${all.reduce((s, r) => s + r.measured, 0)} texts, ${all.reduce((s, r) => s + r.named, 0)} controls   ` +
         `contrast ${n('contrast')}   under 12 px ${n('size')}   under 44 px ${n('target')}   ` +
-        `unnamed ${n('name')}   no alt ${n('alt')}   overflow ${n('overflow')}   lang ${n('lang')}   headings ${n('headings')}`,
+        `unnamed ${n('name')}   no alt ${n('alt')}   overflow ${n('overflow')}   cut ${n('cut')}   lang ${n('lang')}   headings ${n('headings')}`,
     );
   }
 });

@@ -297,7 +297,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const folded = asked && !formOpen;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-3.5 py-4 lg:px-6">
+    <div className="mx-auto w-full max-w-7xl px-cap-3.5 py-4 lg:px-6">
       {/* The form stays put while the itinerary scrolls beside it from lg up; below, the two take turns. */}
       <div className="lg:grid lg:grid-cols-12 lg:gap-6">
         <div ref={formRef} className="space-y-4 lg:col-span-5 lg:sticky lg:top-4 lg:self-start">
@@ -311,10 +311,12 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 ask('toggleForm');
               }}
               aria-expanded={formOpen}
-              className="flex min-h-11 w-full scroll-mt-[1rem] items-center gap-2 px-1 text-left lg:hidden"
+              className="flex min-h-11 w-full scroll-mt-[1rem] flex-wrap items-center gap-x-2 text-left lg:hidden"
             >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-              <span title={`${placeLabel(originQuery)} → ${placeLabel(destQuery)}`} className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
+              {/* A floor under the route, in rem: when the text is set large there is no room for
+                  both, and the link goes to the next line instead of the route shrinking to nothing. */}
+              <span title={`${placeLabel(originQuery)} → ${placeLabel(destQuery)}`} className="line-clamp-2 min-w-[min(8rem,100%)] flex-1 break-words text-label font-semibold text-ink">
                 {placeLabel(originQuery)} → {placeLabel(destQuery)}
               </span>
               <span className="shrink-0 text-label font-semibold text-accent underline">{formOpen ? t.planner.backToAnswer : t.planner.editTrip}</span>
@@ -329,7 +331,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
           >
             {/* A bare wrapper: the row can only shrink to its item's padding and border, so the card itself as the item left a 30 px stub when folded. */}
             <div>
-          <div className="bg-bg rounded-card p-3.5 sm:p-6 shadow-sm border border-edge">
+          <div className="bg-bg rounded-card py-3.5 px-cap-3.5 sm:p-6 shadow-sm border border-edge">
             <h2 className="sr-only">{t.planner.title}</h2>
             <div className="relative">
               <div className="relative rounded-card border border-edge bg-surface">
@@ -419,7 +421,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                         className={`flex min-h-11 w-full items-center gap-2 py-1.5 text-left ${idx > 0 ? 'border-t border-t-line' : ''}`}
                       >
                         <Navigation className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-                        <span className="min-w-0 flex-1 truncate text-label font-semibold text-ink">
+                        <span className="line-clamp-2 min-w-0 flex-1 break-words text-label font-semibold text-ink">
                           {placeLabel(route.from)}
                           <span className="px-1 text-ink-3" aria-hidden="true">
                             →
@@ -460,7 +462,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
         <div ref={answerRef} tabIndex={-1} className={`anim-rise space-y-4 lg:animate-none lg:col-span-7 lg:block ${folded ? '' : 'hidden'}`}>
           {planResult && shown ? (
             /* The column owns the rhythm; the blocks say nothing about spacing. */
-            <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
+            <div className="space-y-4 bg-bg rounded-card py-4 px-cap-4 sm:p-6 shadow-sm border border-edge">
               {!planResult.isServiceActive && planResult.serviceNotice && (
                 <div className="p-3.5 rounded-control bg-warn border border-warn text-warn-ink text-label font-bold flex items-start gap-2.5 shadow-xs">
                   <AlertCircle className="w-4 h-4 text-estimated shrink-0 mt-0.5" />
@@ -479,7 +481,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   <span className="tnum text-num font-bold tracking-[-0.025em]">{shown.durationMinutes}</span>
                   <span className="text-body text-ink-3">{t.common.min}</span>
                 </span>
-                <span className="flex items-baseline gap-2">
+                <span className="flex flex-wrap items-baseline gap-x-2">
                   <span className="sr-only">{t.planner.departureLabel}</span>
                   {/* Past the last bus the answer is another day's: said beside the clock, where the eye goes. */}
                   {!!planResult.daysAhead && <span className="text-body font-semibold text-estimated">{dayWord(lang, planResult.daysAhead)}</span>}
@@ -504,16 +506,17 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-label font-semibold text-ink-2">
                   <span className="sr-only">{t.planner.tripInfoTitle}</span>
                   <ChevronDown className="disclosure-chevron h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
-                  <span className="flex flex-1 items-baseline justify-between gap-3 font-mono">
+                  <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-mono">
                     {measuredWalk && (
-                      <span className="flex items-baseline gap-1.5 text-ink">
+                      <span className="flex flex-wrap items-baseline gap-x-1.5 text-ink">
                         <span className="sr-only">{t.planner.measuredWalkTitle}: </span>
                         <Footprints className="h-3.5 w-3.5 shrink-0 self-center text-ink-3" aria-hidden="true" />
-                        {measuredWalk.minutes} min · {formatKm(measuredWalk.meters)} km
+                        <span className="whitespace-nowrap">{measuredWalk.minutes} min ·</span>
+                        <span className="whitespace-nowrap">{formatKm(measuredWalk.meters)} km</span>
                       </span>
                     )}
                     {/* The ordinary fare, not the card one: a visitor pays 0,64 €. */}
-                    {planResult.fare && planResult.fare.busLegs > 0 && <span className="font-black text-ink">{planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €</span>}
+                    {planResult.fare && planResult.fare.busLegs > 0 && <span className="whitespace-nowrap font-black text-ink">{planResult.fare.singleTicketEuros.toFixed(2).replace('.', ',')} €</span>}
                   </span>
                 </summary>
                 <div className="px-3 pb-3">
@@ -556,7 +559,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
 
               {/* Reading a list of streets is much harder than seeing the shape of the trip. */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 mb-2">
                   <SectionLabel icon={MapPin} className="">
                     {t.planner.routeMap}
                   </SectionLabel>
@@ -575,7 +578,9 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                       onClick={() => stepsRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })}
                       className="absolute left-1/2 top-0 z-[500] flex h-11 -translate-x-1/2 items-center px-2"
                     >
-                      <span className="flex items-center gap-1.5 rounded-full border border-accent bg-bg/90 px-3 py-1.5 text-label font-semibold text-ink shadow-sm backdrop-blur-sm">
+                      {/* One line: from the middle of the map it had half the width, and at 200% text
+                          it broke into three and covered the route. */}
+                      <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-accent bg-bg/90 px-3 py-1.5 text-label font-semibold text-ink shadow-sm backdrop-blur-sm">
                         {t.planner.stepByStepTitle}
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-accent" strokeWidth={2.5} aria-hidden="true" />
                       </span>
@@ -595,7 +600,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
               </div>
             </div>
           ) : (
-            <div className="bg-bg rounded-card p-8 text-center border border-edge">
+            <div className="bg-bg rounded-card py-8 px-cap-8 text-center border border-edge">
               <AlertCircle className="w-8 h-8 text-ink-3 mx-auto mb-2" />
               <p className="text-body text-ink-2 font-medium">{timeMode === 'arrive' ? t.planner.noArriveOption : t.planner.noRouteFound}</p>
             </div>

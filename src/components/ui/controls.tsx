@@ -79,6 +79,7 @@ export function Segmented<T extends string>({
   onChange,
   label,
   dense = false,
+  stack = false,
   className = '',
 }: {
   options: readonly { id: T; label: ReactNode; title?: string }[];
@@ -87,11 +88,13 @@ export function Segmented<T extends string>({
   label?: string;
   /** Label-sized text, for three options in a phone-wide track. */
   dense?: boolean;
+  /** One option a row below sm, for options too long to share a phone's width. */
+  stack?: boolean;
   className?: string;
 }) {
   const pressed = Math.max(0, options.findIndex((o) => o.id === value));
   return (
-    <div role="group" aria-label={label} className={`seg ${dense ? 'seg-dense' : ''} ${className}`} style={{ '--n': options.length, '--i': pressed } as CSSProperties}>
+    <div role="group" aria-label={label} className={`seg ${dense ? 'seg-dense' : ''} ${stack ? 'seg-stack' : ''} ${className}`} style={{ '--n': options.length, '--i': pressed } as CSSProperties}>
       <span className="seg-thumb" aria-hidden="true" />
       {options.map((o) => (
         <button key={o.id} type="button" onClick={() => onChange(o.id)} aria-pressed={o.id === value} title={o.title} className={`seg-btn ${o.id === value ? 'seg-on' : ''}`}>

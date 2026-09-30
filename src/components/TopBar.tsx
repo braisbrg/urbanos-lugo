@@ -40,7 +40,7 @@ function searchAll(q: string) {
 
 const Heading = ({ children }: { children: string }) => <div className="tnum px-4 pb-1.5 pt-3 text-label font-medium tracking-[0.05em] text-ink-3">{children.toUpperCase()}</div>;
 const Row = ({ onClick, children }: { onClick: () => void; children: ReactNode }) => (
-  <button onClick={onClick} className="flex w-full items-center gap-3 border-t border-line-soft px-4 py-3 text-left">
+  <button onClick={onClick} className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-soft px-cap-4 py-3 text-left">
     {children}
   </button>
 );
@@ -82,8 +82,10 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
 
   return (
     // A landmark, so a screen reader moving by landmark does not skip the search band.
-    <header ref={boxRef} className="relative border-b border-line bg-bg px-3.5 py-3 lg:px-6">
+    <header ref={boxRef} className="relative border-b border-line bg-bg px-cap-3.5 py-3 lg:px-6">
       <div className="flex items-center gap-2">
+        {/* The buttons in the bar are sized in px like the bar itself: in rem they doubled with
+            the type inside a 46 px bar, and at 200% the QR button was pushed half out of it. */}
         <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-control border border-edge bg-surface pl-3">
           <Search className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           <input
@@ -101,14 +103,14 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
             className="h-full min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-3"
           />
           {q.length > 0 && (
-            <button onClick={choose(() => {})} className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-3" aria-label={t.search.clear}>
+            <button onClick={choose(() => {})} className="flex h-[44px] w-[44px] shrink-0 items-center justify-center text-ink-3" aria-label={t.search.clear}>
               <X className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
             </button>
           )}
-          <button onClick={onOpenFavorites} className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center border-l border-line text-ink-2" aria-label={t.favourites.title} title={t.favourites.title}>
+          <button onClick={onOpenFavorites} className="ml-auto flex h-[44px] w-[44px] shrink-0 items-center justify-center border-l border-line text-ink-2" aria-label={t.favourites.title} title={t.favourites.title}>
             <Star className={`h-4.5 w-4.5 ${savedCount > 0 ? 'text-warn-ink' : ''}`} strokeWidth={1.8} fill={savedCount > 0 ? 'currentColor' : 'none'} aria-hidden="true" />
           </button>
-          <button onClick={onOpenQrScanner} className="flex h-11 w-11 shrink-0 items-center justify-center border-l border-line text-ink-2" aria-label={t.search.qr} title={t.search.qr}>
+          <button onClick={onOpenQrScanner} className="flex h-[44px] w-[44px] shrink-0 items-center justify-center border-l border-line text-ink-2" aria-label={t.search.qr} title={t.search.qr}>
             <QrCode className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
@@ -142,13 +144,15 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
           {stops.map((stop) => (
             <Row key={stop.id} onClick={choose(() => onSelectStop(stop))}>
               <MapPin className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-emph font-semibold">{stop.name}</span>
-                <span className="block truncate text-label text-ink-3">
+              {/* The name keeps 6rem and the pole code goes under it when both do not fit: at 200%
+                  text the names spilled up to 130 px out of their box, over the code. */}
+              <span className="min-w-[min(6rem,100%)] flex-1">
+                <span className="block break-words text-emph font-semibold">{stop.name}</span>
+                <span className="block text-label text-ink-3">
                   {stop.zone} · {t.common.lines(stop.lines.length)}
                 </span>
               </span>
-              {poleCode(stop) && <span className="tnum shrink-0 rounded bg-surface px-2 py-1 text-label text-ink-2">{poleCode(stop)}</span>}
+              {poleCode(stop) && <span className="tnum ml-auto shrink-0 rounded bg-surface px-2 py-1 text-label text-ink-2">{poleCode(stop)}</span>}
             </Row>
           ))}
 
@@ -156,7 +160,7 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
           {lines.map((line) => (
             <Row key={line.id} onClick={choose(() => onSelectLine(line))}>
               <LineBadge number={line.number} color={line.color} size="md" className="h-[38px] w-[38px] font-semibold" />
-              <span className="min-w-0 flex-1 text-body font-medium">{line.name}</span>
+              <span className="min-w-0 flex-1 break-words text-body font-medium">{line.name}</span>
             </Row>
           ))}
 
@@ -165,8 +169,8 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
             <Row key={lm.name} onClick={choose(() => onSelectPlace(lm.name))}>
               <Landmark className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block text-emph font-semibold">{lm.name}</span>
-                <span className="block truncate text-label text-ink-3">{t.search.nearestStop(stop.name, walkMeters)}</span>
+                <span className="block break-words text-emph font-semibold">{lm.name}</span>
+                <span className="block text-label text-ink-3">{t.search.nearestStop(stop.name, walkMeters)}</span>
               </span>
             </Row>
           ))}

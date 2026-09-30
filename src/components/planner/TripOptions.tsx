@@ -49,11 +49,11 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
         key={idx}
         onClick={() => onChoose(idx)}
         aria-pressed={idx === chosen}
-        className={`grid min-h-11 w-full grid-cols-[auto_1fr_auto] items-center gap-2.5 border-l-[3px] py-1.5 pl-2 pr-1 text-left transition-colors ${idx > 0 ? 'border-t border-t-line' : ''} ${
+        className={`grid min-h-11 w-full grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-1 border-l-[3px] py-1.5 pl-2 pr-1 text-left @min-[18rem]:grid-cols-[auto_1fr_auto] transition-colors ${idx > 0 ? 'border-t border-t-line' : ''} ${
           idx === chosen ? 'border-l-ink bg-surface text-ink' : 'border-l-transparent text-ink'
         }`}
       >
-        <span className="flex items-center gap-1">
+        <span className="flex flex-wrap items-center gap-1">
           {busLegs.length === 0 ? (
             <span className="flex items-center gap-1 text-label font-bold">
               <Footprints className="h-3.5 w-3.5" />
@@ -68,17 +68,18 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
             ))
           )}
         </span>
-        <span className="min-w-0">
+        <span className="col-span-2 row-start-2 min-w-0 @min-[18rem]:col-span-1 @min-[18rem]:row-start-auto">
           <span className="tnum block font-mono text-label font-semibold text-ink">
             {/* Not today: the day goes before the clock, or "07:00" reads as this morning's. */}
             {!!option.daysAhead && <span className="mr-1.5 font-sans text-estimated">{dayWord(lang, option.daysAhead)}</span>}
             {shown.departure} → ~{shown.arrival}
           </span>
           {notes.length > 0 && <span className="block text-label text-ink-3">{notes.join(' · ')}</span>}
-          {!shown.reachable && <span className="block truncate text-label font-semibold text-warn-ink">{t.planner.unreachableWalk}</span>}
+          {/* The one thing on the row that must be read whole: it was cut to "Co paseo medido xa ...". */}
+          {!shown.reachable && <span className="block text-label font-semibold text-warn-ink">{t.planner.unreachableWalk}</span>}
           {busLegs.length > 1 && <span className="sr-only">{t.planner.transfersShort(busLegs.length - 1)}</span>}
         </span>
-        <span className={`tnum shrink-0 font-mono text-body ${idx === chosen ? 'font-black' : 'font-bold text-ink-2'}`}>{shown.durationMinutes} min</span>
+        <span className={`tnum shrink-0 justify-self-end whitespace-nowrap font-mono text-body @min-[18rem]:justify-self-auto ${idx === chosen ? 'font-black' : 'font-bold text-ink-2'}`}>{shown.durationMinutes} min</span>
       </button>
     );
   };
@@ -86,7 +87,11 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
   return (
     <div>
       <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">{t.planner.optionsTitle}</span>
-      <div className="border-y border-line">
+      {/* A container, so a row can tell when it is narrow for its text: below 18rem the clocks go
+          under the lines and the duration. Between the two at 200% text the clocks ran 88 px out
+          of their column and "Co paseo medido xa non chegas a este bus" was printed over the
+          minutes; on a 320 px phone at the default size that sentence took four lines. */}
+      <div className="@container border-y border-line">
         {options.slice(0, VISIBLE_OPTIONS).map(row)}
         {/* The rest fold open rather than appearing, and the rows underneath slide instead of jumping. */}
         {options.length > VISIBLE_OPTIONS && (

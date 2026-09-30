@@ -68,6 +68,7 @@ export const gl = {
     youAreHere: 'Estás aquí',
     locating: 'Localizando…',
     none: 'sen saídas na próxima hora',
+    nextLater: 'A seguinte:',
     emptyTitle: 'Aínda non gardaches ningunha parada.',
     emptyBody:
       'Busca a túa parada arriba, escanea o código do poste ou tócaa no mapa. Despois preme a estrela e aparecerá aquí.',
@@ -448,7 +449,8 @@ export const gl = {
     unsaveLine: 'Quitar dos favoritos',
     viewRunAt: (time: string) => `Ver o percorrido da saída das ${time}`,
     frequency: 'Frecuencia',
-    serviceHours: 'Horario de servizo',
+    serviceHoursToday: 'Horario hoxe',
+    notToday: 'Hoxe non circula',
     days: 'Días de servizo',
     stopsInDirection: 'Paradas do percorrido',
     viewOnMap: 'Ver percorrido no Mapa',
@@ -473,7 +475,6 @@ export const gl = {
     derivedDepartures: '~ Saída que o operador non imprime: sae da frecuencia que publica ou do tempo ata o primeiro punto con horario.',
     estimatedSr: 'hora estimada',
     busScheduledHere: 'Segundo o horario, o bus estaría chegando aquí',
-    viewStop: 'Ver parada',
   },
 
   arrivals: {

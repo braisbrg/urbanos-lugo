@@ -98,10 +98,10 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
   const duration = scheduledDuration(currentLine, directionIdx, BUS_STOPS);
 
   return (
-    <div className="mx-auto h-full w-full max-w-7xl px-3.5 py-4 lg:px-6 lg:pb-0">
+    <div className="mx-auto h-full w-full max-w-7xl px-cap-3.5 py-4 lg:px-6 lg:pb-0">
       <div className="lg:grid lg:h-full lg:grid-cols-12 lg:gap-6">
         <div className={`space-y-4 lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? 'hidden' : ''}`}>
-          <div className="space-y-4 bg-bg rounded-card border border-edge p-4 lg:p-5">
+          <div className="space-y-4 bg-bg rounded-card border border-edge py-4 px-cap-4 lg:p-5">
             <div>
               <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
                 <Route className="w-4 h-4 text-accent" />
@@ -134,7 +134,10 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
               className="h-11 w-full rounded-control border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3 focus:outline-none"
             />
 
-            <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+            {/* No scroll box of its own: on a phone the page scrolls, on a desktop the column
+                does, and a 520 px box inside either was a scroll within a scroll -- and left a
+                gap under it on a tablet. */}
+            <div className="space-y-2">
               {visibleLines.map((line) => {
                 const isCurrent = currentLine.id === line.id;
                 const running = buses.filter((b) => b.lineId === line.id).length;
@@ -151,27 +154,31 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                       setShowDetail(true);
                     }}
                     style={{ '--line': line.color } as CSSProperties}
-                    className={`tint tint-strong w-full px-3 py-2.5 rounded-control cursor-pointer border transition-all flex items-center justify-between gap-2.5 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
+                    className={`tint tint-strong w-full px-cap-3 py-2.5 rounded-control cursor-pointer border transition-all flex items-center justify-between gap-2.5 text-left ${isCurrent ? 'border-accent shadow-xs' : 'tint-edge'}`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    {/* The name keeps a floor of 6rem and goes under the number when both do not fit:
+                        with the type at 200% it was cut to its first letter, "R…". */}
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1.5">
                       <span className="w-9 h-9 rounded-md flex items-center justify-center font-black text-white text-body shadow-xs shrink-0" style={{ backgroundColor: line.color }}>
                         {line.number}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-[6rem] flex-1">
                         {/* Keep the end of the name, not the beginning: nine distinct openings across twenty-four lines, seventeen distinct endings. */}
                         <div className="font-bold text-body text-ink leading-tight flex items-baseline gap-1.5 min-w-0" title={line.name}>
-                          <span className="hidden truncate text-ink-2 font-semibold sm:inline">{parts.slice(0, -1).join(' - ')}</span>
-                          <span className="hidden shrink-0 sm:inline" aria-hidden="true">
+                          {/* Only while the row is a whole screen wide: in the desktop's list column both
+                              halves were cut, "Opuesto Pis... – Rúa Mercad...", even at 1920 px. */}
+                          <span className="hidden truncate text-ink-2 font-semibold sm:inline lg:hidden">{parts.slice(0, -1).join(' - ')}</span>
+                          <span className="hidden shrink-0 sm:inline lg:hidden" aria-hidden="true">
                             –
                           </span>
-                          <span className="truncate">{parts[parts.length - 1]}</span>
+                          <span className="line-clamp-3 break-words">{parts[parts.length - 1]}</span>
                           {favoriteLineIds.includes(line.id) && <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0 self-center" />}
                         </div>
                         {/* Wrapping: at 200% text the frequency and the running-bus badge, both shrink-0, ran 42 px past a 390 px phone and made the page scroll sideways. */}
                         <div className="text-label text-ink-2 mt-0.5 flex min-w-0 flex-wrap items-center gap-2">
                           <span className="shrink-0">{frequencyLabel(line, lang)}</span>
                           <span className="shrink-0">&bull;</span>
-                          <span className="truncate">{daysLabel(line, lang)}</span>
+                          <span>{daysLabel(line, lang)}</span>
                           {running > 0 && (
                             <span title={t.lines.enRouteHint} className="flex shrink-0 items-center gap-0.5 text-ink-2 font-bold text-label bg-surface px-1.5 py-0.2 rounded border border-edge">
                               <Bus className="w-2.5 h-2.5 text-ink-3" aria-hidden="true" />
@@ -196,14 +203,15 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
             {t.lines.backToLines}
           </button>
 
-          <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
-            <div className="flex flex-col justify-between gap-4 border-b border-line pb-5 xl:flex-row xl:items-center">
-              <div className="flex items-center gap-4">
+          <div className="space-y-4 bg-bg rounded-card py-6 px-cap-6 shadow-sm border border-edge">
+            <div className="flex flex-col justify-between gap-4 border-b border-line pb-5 2xl:flex-row 2xl:items-center">
+              {/* Wrapping: at 200% text the chips and the name ran 144 px past the card. */}
+              <div className="flex flex-wrap items-center gap-4">
                 <span className="w-14 h-14 rounded-control flex items-center justify-center font-black text-white text-title shadow-sm shrink-0" style={{ backgroundColor: currentLine.color }}>
                   {currentLine.number}
                 </span>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-[min(10rem,100%)] flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-label font-bold px-2 py-0.5 rounded bg-surface text-ink-2 uppercase tracking-wider">{t.lines.lineLabel(currentLine.number)}</span>
                     {currentLine.category === 'hospital' && <span className="text-label font-bold px-2 py-0.5 rounded bg-warn text-warn-ink">{t.lines.categories.hospital}</span>}
                     {busesOnLine.length > 0 && (
@@ -213,10 +221,10 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                       </span>
                     )}
                   </div>
-                  <h2 className="text-emph font-bold text-ink mt-1">{currentLine.name}</h2>
+                  <h2 className="text-emph font-bold text-ink mt-1 break-words">{currentLine.name}</h2>
                 </div>
               </div>
-              <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
                 {onToggleFavoriteLine && <SaveStar key={currentLine.id} on={isSaved} label={isSaved ? t.lines.unsaveLine : t.lines.saveLine} className="bg-bg" onToggle={() => onToggleFavoriteLine(currentLine.id)} />}
                 {/* min-h rather than h: at a narrow column the label wraps to two lines. */}
                 <button id="btn-view-line-map" onClick={() => onViewLineOnMap(currentLine)} className="flex min-h-11 items-center gap-1.5 rounded-control bg-accent px-4 py-2 text-body font-semibold text-on-accent">
@@ -227,15 +235,29 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
             </div>
 
             {/* Six facts about one line; the last three belong to the direction and change with the selector. */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border border-line bg-surface/50 p-3 sm:grid-cols-3">
+            {/* Columns of at least 6rem, so they follow the text: two on a phone at the default size,
+                one from 125% up. In two fixed columns at 200% the frequency's label ran 64 px
+                into the next one. */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] gap-x-4 gap-y-3 rounded-md border border-line bg-surface/50 p-3 sm:grid-cols-3">
               <Fact icon={Clock} label={t.lines.frequency}>
                 <span className="font-sans font-semibold">{frequencyLabel(currentLine, lang)}</span>
               </Fact>
               <Fact icon={Calendar} label={t.lines.days}>
                 <span className="font-sans font-semibold">{daysLabel(currentLine, lang)}</span>
               </Fact>
-              <Fact icon={Bus} label={t.lines.serviceHours}>
-                {currentLine.firstDeparture} - {currentLine.lastDeparture}
+              {/* Today's, read from today's runs of this direction. It printed the line's first and
+                  last departure of any day: "07:15 - 22:00" for the 7 on a Tuesday, whose first
+                  bus is 07:30 -- the 07:15 runs at weekends. */}
+              <Fact icon={Bus} label={t.lines.serviceHoursToday}>
+                {runs.length ? (
+                  <>
+                    {derived(runs[0], 0) && '~'}
+                    {formatMinutes(runs[0].minutesByStopIndex[0])}–{derived(runs[runs.length - 1], 0) && '~'}
+                    {formatMinutes(runs[runs.length - 1].minutesByStopIndex[0])}
+                  </>
+                ) : (
+                  <span className="font-sans font-semibold">{t.lines.notToday}</span>
+                )}
               </Fact>
               <Fact icon={Route} label={t.lines.routeLength}>
                 {t.lines.kilometres((direction.totalMeters / 1000).toFixed(1))}
@@ -258,12 +280,13 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
             )}
           </div>
 
-          <div className="bg-bg rounded-card p-5 shadow-sm border border-edge">
+          <div className="bg-bg rounded-card py-5 px-cap-5 shadow-sm border border-edge">
             <h3 className="font-bold text-ink text-label uppercase tracking-wider mb-2 flex items-center gap-2">
               <Clock className="w-4 h-4 text-accent" />
-              {t.lines.scheduleTable} &mdash; {direction.origin.slice(0, 28)} ({departures.length})
+              {t.lines.scheduleTable} &mdash; {direction.origin} ({departures.length})
             </h3>
-            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+            {/* All of them: two rows of 30 in a box that scrolled on its own hid the rest from a thumb. */}
+            <div className="flex flex-wrap gap-1.5">
               {departures.map(({ time, derived: guessed }, idx) => (
                 <button
                   key={idx}
@@ -280,8 +303,8 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
             {departures.some((d) => d.derived) && <p className="mt-2 text-label leading-relaxed text-ink-3">{t.lines.derivedDepartures}</p>}
           </div>
 
-          <div className="space-y-4 bg-bg rounded-card p-6 shadow-sm border border-edge">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="@container space-y-4 bg-bg rounded-card py-6 px-cap-6 shadow-sm border border-edge">
+            <div className="flex flex-col gap-3">
               <div>
                 <h3 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
                   <Route className="w-4 h-4 text-accent" />
@@ -293,7 +316,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
               </div>
               {currentLine.directions.length > 1 && (
                 <Segmented
-                  className="self-start sm:self-auto"
+                  stack
                   options={currentLine.directions.map((dir, idx) => ({ id: String(idx), label: directionLabel(dir, lang) }))}
                   value={String(directionIndex)}
                   onChange={(idx) => setDirectionIndex(Number(idx))}
@@ -302,11 +325,13 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
             </div>
 
             {shownRun ? (
-              <div className="flex items-center justify-between gap-3 p-2.5 rounded-control bg-surface border border-edge">
-                <button onClick={() => setPickedRunIndex(Math.max(0, runIndex - 1))} disabled={runIndex === 0} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
+              // Narrower than 16rem, the times go on top and the arrows under them: squeezed between
+              // the two at 200% text, they pushed the right arrow 118 px off the screen.
+              <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-control bg-surface border border-edge">
+                <button onClick={() => setPickedRunIndex(Math.max(0, runIndex - 1))} disabled={runIndex === 0} className="order-2 @min-[16rem]:order-none flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
                   &larr;
                 </button>
-                <div className="text-center leading-tight">
+                <div className="order-1 basis-full text-center leading-tight @min-[16rem]:order-none @min-[16rem]:basis-0 @min-[16rem]:flex-1">
                   <div className="text-label font-bold text-accent uppercase tracking-widest">{t.lines.showingRun}</div>
                   <div className="text-body font-black text-accent font-mono">
                     {derived(shownRun, 0) && '~'}
@@ -324,7 +349,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                     )}
                   </div>
                 </div>
-                <button onClick={() => setPickedRunIndex(Math.min(runs.length - 1, runIndex + 1))} disabled={runIndex >= runs.length - 1} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
+                <button onClick={() => setPickedRunIndex(Math.min(runs.length - 1, runIndex + 1))} disabled={runIndex >= runs.length - 1} className="order-3 @min-[16rem]:order-none flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
                   &rarr;
                 </button>
               </div>
@@ -366,15 +391,17 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                         busHere ? 'bg-estimated ring-2 ring-estimated' : isFirst || isLast ? 'bg-accent ring-2 ring-accent' : 'bg-ink-3 group-hover:bg-ink-2'
                       }`}
                     />
-                    <div className={`px-3 py-2 rounded-control border transition-all flex items-center justify-between gap-2.5 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}>
+                    {/* Stacked on a phone: beside the name, the time chip left it about 110 px, and
+                        "Fonte dos Ranchos 8 (Cafetería Prados)" took four lines. */}
+                    <div className={`px-cap-3 py-2 rounded-control border transition-all flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2.5 ${busHere ? 'bg-surface/80 border-edge ring-1 ring-official/50 shadow-xs' : 'bg-bg border-line hover:border-edge hover:bg-surface/40 shadow-xs'}`}>
                       <div className="min-w-0 flex-1">
                         {/* The stop name is not shortened: it is the only thing on the row a reader has to match against a pole. */}
                         <div className="flex min-w-0 flex-wrap items-center gap-x-2">
-                          <span className="font-bold text-body text-ink transition-colors group-hover:text-accent">{stop.name}</span>
+                          <span className="min-w-0 break-words font-bold text-body text-ink transition-colors group-hover:text-accent">{stop.name}</span>
                           {isFirst && <span className="shrink-0 rounded bg-surface px-1.5 py-0.5 text-label font-bold text-accent">{t.lines.origin}</span>}
                           {isLast && <span className="shrink-0 rounded bg-ink px-1.5 py-0.5 text-label font-bold text-bg">{t.lines.destination}</span>}
                         </div>
-                        <div className="mt-0.5 truncate text-label text-ink-3">
+                        <div className="mt-0.5 break-words text-label text-ink-3">
                           {stop.zone}
                           {poleCode(stop) && (
                             <>
@@ -384,7 +411,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                           )}
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2.5">
+                      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2.5 self-start sm:shrink-0 sm:self-auto">
                         {busHere && (
                           <div className="flex shrink-0 items-center gap-1.5 rounded-md bg-official px-1.5 py-1 text-label font-bold text-on-official shadow-xs">
                             <Bus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -392,7 +419,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                             <span className="sr-only sm:hidden">{t.lines.busScheduledHere}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface border border-edge text-ink font-mono text-label font-bold shrink-0">
+                        <div className="flex min-w-0 items-center gap-1 px-2.5 py-1 rounded-md bg-surface border border-edge text-ink font-mono text-label font-bold">
                           <Clock className="w-3.5 h-3.5 text-accent" />
                           <span>
                             {passingMinutes === undefined ? (
@@ -419,7 +446,6 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                             )}
                           </span>
                         </div>
-                        <span className="hidden whitespace-nowrap text-label font-bold text-accent opacity-0 transition-opacity group-hover:opacity-100 sm:inline">{t.lines.viewStop} &rarr;</span>
                       </div>
                     </div>
                   </div>

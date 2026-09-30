@@ -1864,3 +1864,94 @@ unha endurecida: a do venres pedía «>= 1» e aceptaba o sábado, que era a res
 - Na ficha de liña a 375 px o chip da hora parte os nomes longos en tres liñas. Vén de
   antes; queda para unha pasada de deseño.
 - `isLineInService` e `isWithinServiceWindow` quedan usadas só polo seu propio check.
+
+## Rolda 24: pasada de deseño en todos os modos — 30 de setembro de 2026
+
+Cada pantalla en dez modos —teléfono de 375 en escuro e en claro, 320 px en castelán, inglés,
+o texto ao 200 %, de noite despois do último bus, tableta, 1280 en escuro e en claro e
+1920— capturada coa CDP e un reloxo fixo (martes 29 ás 09:12, e ás 23:30 para a noite), e
+despois un escáner que busca en cada estado o texto que non se ve: cortado cunha elipse,
+saíndo da súa caixa ou pasado do bordo. O 200 % emúlase co tamaño da raíz, que é o que fai
+coa maquetación en `rem` o axuste de letra dun navegador ou o zoom de páxina dun iPhone.
+
+### Atopado e arranxado: o que se cortaba co texto grande
+
+**As marxes dobraban coa letra.** En `rem`, a páxina, o panel e a tarxeta levaban 172 px dun
+teléfono de 375 ao 200 % e deixaban o nome dunha liña en 51 px: «R…». Unha utilidade nova,
+`px-cap-*`, pon as marxes laterais en `min()` co que a mesma medida mide nun teléfono de
+320 px coa letra normal (1,25vw por paso): á letra normal non cambia nada desde 320 px
+(medido: 12/16/14 px antes e despois), e ao 200 % a tarxeta pasou de 253 a 303 px.
+
+**Onde un nome comparte fila, ten un mínimo en `rem` e o outro baixa.** No taboleiro o
+destino saía unha letra por liña; con `min-w-[6rem]` a 320 px 9 das 10 filas manteñen os
+minutos ao lado (só baixa «hace 5 min», a etiqueta máis longa) e ao 150 e 200 % baixan
+todas. O mesmo nas tarxetas de liña (ata tres liñas antes da elipse), na cabeceira da ficha,
+nos resultados da busca (o código do poste baixa; os nomes saían ata 130 px da súa caixa),
+no paso a paso e nas liñas gardadas da portada. Un mínimo non pode pasar do que hai: o da cabeceira, 10rem, mide
+320 px ao 200 % nun panel de 284, e desbordaba 36 px ata poñelo en `min(10rem, 100%)`.
+
+**As opcións de traxecto pintaban o aviso enriba dos minutos.** Entre as insignias e a
+duración, ao 200 % as horas saían 88 px da súa columna e «Co paseo medido xa non chegas a
+este bus» imprimíase sobre «38 min». A lista é agora un `@container`: por debaixo de 18rem
+cada opción son dúas liñas, liñas e minutos arriba e as horas debaixo. Tamén a 320 px coa
+letra normal, onde esa frase ocupaba catro liñas.
+
+**A ficha de liña.** Os seis datos van en columnas de polo menos 6rem (dúas no teléfono,
+unha desde o 125 %; en dúas fixas, ao 200 % «Frecuencia» montaba 64 px na seguinte); os
+sentidos, un por fila nun
+teléfono (`seg-stack`: dous destinos longos ao lado ocupaban tres liñas cada un e ao 200 %
+partían palabras); o navegador de expedicións pon as horas enriba das frechas por debaixo
+de 16rem (espremidas entre elas, ao 200 % empuxaban a frecha dereita 118 px fóra da
+pantalla); e o chip da hora de cada parada baixa baixo o nome, o que a rolda 23 deixara para
+esta pasada.
+
+**Favoritos.** O panel era 80 px máis ancho ca a pantalla ao 200 % e escondía o seu propio
+botón de pechar. E un fallo que non era de tamaño: as insignias imprimían o id da liña, así
+que en 96 das 417 paradas unha dicía «11-Igrexa de Bóveda», «11-Calde» ou «11-Santa
+Comba», e en tres o 11 saía dúas veces. Agora `linesByNumber`: o número, unha vez. A papeleira
+tiña 28 px e só un `title`, a un dedo da frecha, que era un botón sen nome que repetía o que
+xa fai a fila: 44 px con nome, e a frecha fóra do teclado e do lector.
+
+**O resto.** A barra de arriba ten altura en px e os seus botóns estaban en `rem`: ao 200 %
+o do QR quedaba medio fóra; agora 44 px como a barra. No menú e en favoritos, a frecha e a
+estrela decorativas van onde o texto non cabe, para que «Avisos do servizo» e «Favoritos
+gardados» non se partan; o control segmentado limita o seu recheo lateral igual e parte
+unha palabra só se non cabe soa. A tarxeta de avisos pon a frase baixo o tick
+(«comprobació-n»); o lector de QR deixa sitio ao botón de pechar, que caía enriba do título;
+a pílula «Paso a paso» vai nunha liña (no medio do mapa tiña a metade do ancho e partíase en
+tres). A lista de liñas do mapa cortaba o final do nome —«Opuesto Piscina Pedreiras - Rúa
+Mercad…» a 1280 e a 1920, xusto ao revés do que decidiu a lista de liñas—: dúas liñas.
+
+### Atopado e arranxado na primeira metade da pasada
+
+Antes do texto grande, a 375 e a 320 px: as tarxetas gardadas da portada cortaban o nome
+co barrio na mesma liña («Rda. Muralla 56 (Si…»), e unha gardada sen máis buses hoxe
+quedaba nun nome sen máis mentres o taboleiro da mesma parada nomea o seguinte: agora di
+«A seguinte:» coa liña, o día e a `~`. O botón «Avisar 5 min antes» facía caer a unha
+terceira liña cada fila oficial (363 px nunha fila de 323): nun móbil é unha campá co mesmo
+nome. A ficha de liña tiña a lista en 520 px con scroll propio dentro da columna (e un
+oco debaixo na tableta), a táboa de saídas en dúas filas con scroll e o título cortado aos
+28 caracteres, o horario «de servizo» de calquera día (07:15 - 22:00 para a 7 nun martes
+que empeza ás 07:30; agora o de hoxe, das expedicións de hoxe), e un aviso invisible ao
+pasar o rato que medía 75 px e sacaba cada fila 7 px da columna. O aviso de noite cortaba a
+súa propia hora («~0…»).
+
+### Medido e limpo
+
+`audit:browser` ten un tipo novo, `cut`: o texto que non se ve ao 200 % aínda que a páxina
+non se alargue, porque `<main>` recorta. Sobre develop, 177 en claro e 179 en escuro nos
+doce estados; sobre esta rolda, 0 e 0, e o resto do audit tamén a 0 (contraste, obxectivos,
+nomes, desbordamento, consola, teclado e movemento reducido). `measure:browser`, as dúas
+builds seguidas: primeira pintura 3.036 ms fronte a 3.228, 195 KB fronte a 194, CLS 0,000
+nas dúas, ningún orzamento superado. `check:deep`: 240.192 taboleiros e 38.329 viaxes, todo
+en pé. 174 comprobacións (168 + 6).
+
+### Mirado e deixado
+
+- A fila de destinos rápidos sae 4 px (8 ao 200 %) sobre o recheo da tarxeta: é a marxe
+  negativa que deixa esvarar a fila ata o bordo. De propósito.
+- A 320 px a fila vencida «hace 5 min» baixa os minutos baixo o destino; é a única.
+- O tinte forte da lista de liñas (`.tint-strong`, 40 %) pesa nos dous temas, pero é unha
+  decisión medida en `index.css`: queda proposta unha alternativa, non feita.
+- Ao 200 % a fila de filtros de liña e a de destinos rápidos esvaran de lado, como a 100 %:
+  son filas para escoller, non para ler.
