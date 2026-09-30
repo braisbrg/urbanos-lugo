@@ -24,7 +24,8 @@ So the interesting surface is small:
   buslugo.com and the feed are read at most once a minute, and the stop page at most 120
   times a minute, per server process or worker instance, however many people ask. Anything
   that gets either of them to read a file, run a command, hammer an outside host, or spend
-  a long time on one request is worth a report.
+  a long time on one request is worth a report. `pnpm dev` listens on localhost only, because in
+  development Vite serves every file in the working tree, ignored ones included.
 - **The Content Security Policy** in `src/security/csp.ts`. If you can execute script in
   a published build, that is a finding regardless of how it got there.
 - **The build and its dependencies.** A postinstall script that runs when it should not,

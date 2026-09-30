@@ -160,7 +160,13 @@ async function startServer() {
 
   // Fails on a busy port rather than quietly moving to the next one; PORT exists for choosing another.
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
-  const server = app.listen(port, '0.0.0.0', () => {
+  // Development listens on this machine alone. There Vite serves any file under the project
+  // root to whoever asks, gitignored ones included -- .claude/, .agents/, .antigravity/, the
+  // session transcripts CLAUDE.md keeps out of git -- and on every interface that was anyone
+  // on the same Wi-Fi. HOST=0.0.0.0 opens it on purpose, to try the app on a phone. The built
+  // server serves dist/ alone, and keeps listening everywhere, as self-hosting needs.
+  const host = process.env.HOST ?? (isDev ? '127.0.0.1' : '0.0.0.0');
+  const server = app.listen(port, host, () => {
     console.log(`\n======================================================`);
     console.log(` Urbanos Lugo Web App dispoñible en:`);
     console.log(` 👉 http://localhost:${port}`);

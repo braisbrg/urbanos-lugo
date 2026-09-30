@@ -2159,6 +2159,16 @@ ok('the policy is not sent in development, where it serves a blank page', () => 
   assert(/apply: 'build'/.test(vite), 'the CSP injector no longer limits itself to builds');
 });
 
+ok('the development server answers this machine, not the network', () => {
+  // In development Vite serves any file under the project root, gitignored ones included,
+  // and the server listened on 0.0.0.0: a file planted in .claude/ came back 200 through the
+  // machine's own Wi-Fi address. Development listens on localhost unless HOST says otherwise;
+  // the built server serves dist/ alone and still listens everywhere.
+  const server = read('server.ts');
+  assert(/const host = process\.env\.HOST \?\? \(isDev \? '127\.0\.0\.1' : '0\.0\.0\.0'\);/.test(server), 'development listens on every interface again');
+  assert(/app\.listen\(port, host,/.test(server), 'the server does not listen on the host it chose');
+});
+
 ok('no comment quotes a stop count the dataset no longer has', () => {
   // Merging nine duplicated poles moved the total from 429 to 417 and left five comments
   // asserting the old one. Only counts about stops in src/ are checked; "used to" is history.

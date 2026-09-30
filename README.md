@@ -1430,7 +1430,10 @@ pnpm install
 pnpm dev
 ```
 
-Dispoñible en `http://localhost:3001` (ou o primeiro porto libre).
+Dispoñible en `http://localhost:3001`, e só nesta máquina: en desenvolvemento Vite serve
+calquera ficheiro da árbore, tamén os que git ignora, así que non escoita na rede salvo que
+se lle pida (`HOST=0.0.0.0 pnpm dev`, para probala nun teléfono da mesma wifi). Cun porto
+ocupado dío e para; `PORT=3005 pnpm dev` escolle outro.
 
 ```bash
 pnpm build
@@ -1486,7 +1489,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-183 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+184 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

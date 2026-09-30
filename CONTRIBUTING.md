@@ -20,7 +20,7 @@ primeira; o resto está no [README](README.md), que é a documentación enteira.
 
 ```bash
 pnpm install          # pnpm, sempre; o lockfile é pnpm-lock.yaml
-pnpm dev              # Express + Vite en http://localhost:3001
+pnpm dev              # Express + Vite en http://localhost:3001, só nesta máquina (HOST=0.0.0.0 para a rede)
 ```
 
 Antes de abrir o PR, as catro portas que pasa a integración continua:
