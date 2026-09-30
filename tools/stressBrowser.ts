@@ -297,6 +297,31 @@ async function mapTab(browser: Browser): Promise<void> {
   budget('ResizeObserver callbacks over four zooms', probe.resizes, 8, 'calls');
   top('where the zooming went, self time, top 12', zooming, 12);
 
+  // Panning, the gesture a finger makes most on a map: four drags across the middle of it,
+  // real mouse events that Leaflet's dragging answers. Nothing measured it, and a layer
+  // that redrew on every `move` would show here and nowhere else.
+  const box = await page.evaluate<{ x: number; y: number; w: number; h: number }>(
+    `(() => { const r = document.querySelector('.leaflet-container').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; })()`,
+  );
+  await reset(page);
+  const panning = await profile(page, async () => {
+    for (let i = 0; i < 4; i++) {
+      const [cx, cy] = [box.x + box.w / 2, box.y + box.h / 2];
+      const step = (s: number) => ({ x: cx + (i % 2 ? -1 : 1) * s * 14, y: cy + (i < 2 ? 1 : -1) * s * 8 });
+      await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: cx, y: cy, button: 'left', buttons: 1, clickCount: 1 });
+      for (let s = 1; s <= 12; s++) {
+        await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...step(s), button: 'left', buttons: 1 });
+        await sleep(16);
+      }
+      await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...step(12), button: 'left', buttons: 0, clickCount: 1 });
+      await sleep(800);
+    }
+  });
+  probe = await probeOf(page);
+  budget('main thread blocked over four pans', blockingMs(probe), 900);
+  report('worst frame while panning', `${probe.worstFrame.toFixed(0)} ms`, `${probe.longtasks.length} long tasks`);
+  top('where the panning went, self time, top 8', panning, 8);
+
   // Twelve laps between Paradas and Mapa. The map stays mounted behind `hidden` once
   // opened, so this measures show/hide, which is what would quietly accumulate.
   const before = await footprint(page);

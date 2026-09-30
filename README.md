@@ -1622,7 +1622,9 @@ co reloxo da páxina nun mércores ás 13:30 (medido: primeiro pintado 2,7 s e p
 2,9 s; eran 2,9 e 3,0 antes de que a comprobación do fuso horario deixase de cargar a base
 de datos de fusos nun teléfono que xa está no de Lugo); e —o que é cada visita dunha app instalada— en quente, co *service
 worker* xa instalado (medido: 1.360 ms ata o primeiro pintado a 6× na rolda completa, 824 só, 8 de 8 respostas do
-*worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom, teclear no
+*worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom e catro
+arrastres (medido: 0 ms de fío bloqueado arrastrando; o traballo é do renderizador, dentro
+de cada cadro), teclear no
 buscador e doce voltas entre pestanas; planificar, dende o toque en «Calcular ruta» ata a
 resposta pintada, co reloxo da páxina fixado nun mércores ás 13:30 (medido co par máis
 caro: 0,7–0,8 s saíndo agora e 5,1 s chegando antes das 17:00, que eran 1,0 e 12,4 s; o
