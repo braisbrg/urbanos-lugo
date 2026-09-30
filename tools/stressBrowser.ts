@@ -429,7 +429,8 @@ async function typing(browser: Browser): Promise<void> {
  * A Wednesday lunchtime, as measure:engine plans at: what a plan or a board costs depends on
  * how many buses are left in the day, so the page's clock is pinned there and runs on from it.
  */
-const PINNED_CLOCK = `(() => { const Real = Date; const offset = ${new Date(2026, 8, 30, 13, 30).getTime()} - Real.now(); class Pinned extends Real { constructor(...a) { if (a.length) super(...a); else super(Real.now() + offset); } static now() { return Real.now() + offset; } } window.Date = Pinned; })();`;
+const PINNED_AT = new Date(2026, 8, 30, 13, 30);
+const PINNED_CLOCK = `(() => { const Real = Date; const offset = ${PINNED_AT.getTime()} - Real.now(); class Pinned extends Real { constructor(...a) { if (a.length) super(...a); else super(Real.now() + offset); } static now() { return Real.now() + offset; } } window.Date = Pinned; })();`;
 
 /**
  * Somebody scans the sticker on a pole: from the tap on the link to the first departure on
@@ -630,7 +631,9 @@ async function plannedRide(): Promise<{ packed: string; path: [number, number][]
   const byName = (name: string) => BUS_STOPS.find((s) => s.name.startsWith(name));
   const [from, to] = [byName('Rda. Muralla 56'), byName('HULA')];
   if (!from || !to) return null;
-  const plan = planTrips(from.name, to.name, { now: new Date() }).find((p) => p.segments.some((s) => s.type === 'bus'));
+  // Planned for the pinned lunchtime the page also runs at: at 00:14 the trip was tomorrow's,
+  // the screen sat waiting for it, and the minute measured was a different screen's minute.
+  const plan = planTrips(from.name, to.name, { now: PINNED_AT }).find((p) => p.segments.some((s) => s.type === 'bus'));
   const leg = plan?.segments.find((s) => s.type === 'bus');
   const direction = leg?.line && lineById(leg.line.id)?.directions.find((d) => d.id === leg.directionId);
   if (!plan || !leg?.fromStop || !leg.toStop || !direction) return null;
@@ -647,14 +650,14 @@ async function plannedRide(): Promise<{ packed: string; path: [number, number][]
 
 async function ride(browser: Browser): Promise<void> {
   const seconds = Number(process.env.RIDE_SECONDS ?? 60);
-  console.log(`\na ride in "Vou nesta" -- ${CPU_THROTTLE}x CPU, a GPS fix a second, ${seconds} s measured`);
+  console.log(`\na ride in "Vou nesta" -- ${CPU_THROTTLE}x CPU, a Wednesday at 13:30, a GPS fix a second, ${seconds} s measured`);
   const trip = await plannedRide();
   if (!trip) return console.log('  could not plan the ride this round takes; nothing measured.');
   const seed = `(() => { try { if (!sessionStorage.getItem('urbanos-lugo-trip')) sessionStorage.setItem('urbanos-lugo-trip', ${JSON.stringify(trip.packed)}); } catch (e) {} })();`;
   await browser.grant(new URL(BASE).origin, ['geolocation']);
 
   for (const lookedAtMap of [false, true]) {
-    const page = await phonePage(browser, RIDE_COUNTERS, seed);
+    const page = await phonePage(browser, RIDE_COUNTERS, seed, PINNED_CLOCK);
     await page.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
     const fix = (i: number) => {
       const [latitude, longitude] = trip.path[i % trip.path.length];
