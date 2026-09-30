@@ -2751,18 +2751,36 @@ ok('hostile markup at the read cap parses in milliseconds, not minutes', () => {
   // field, the <script>/<style> pre-pass, and the operator's blocks, kept quadratic on a
   // reckoning of one stop every 20 s while a server reads 271. Measured at the 512 KB
   // readCapped allows: 49.7 s, 11.3 s, 7.4 s and half a second of a server doing nothing
-  // else. The sizes below keep a failure to a few seconds rather than the full minute.
-  const cases: [string, number, (kb: number) => unknown][] = [
-    ['a <ul whose tag never ends', 128, (kb) => extractAlertsFromHtml('<ul '.repeat((kb * 1024) / 4))],
-    ['an item of unclosed <title>s', 256, (kb) => extractConcelloNotices(`<item>${'<title>'.repeat((kb * 1024) / 7)}</item>`)],
-    ['unclosed <script openings', 256, (kb) => plainText('<script '.repeat((kb * 1024) / 8))],
-    ['unclosed departure blocks', MAX_BODY_BYTES / 1024, (kb) => parseOperatorTimes('<div class="sae-content-info">'.repeat((kb * 1024) / 30))],
+  // else.
+  //
+  // Not a fixed limit on one run: that took 223 ms once on a CI runner for work that takes 4
+  // here, and the operator's old scan stays under half a second at the cap. A fourfold input
+  // costs a linear scan four times as long and a quadratic one sixteen, on any machine, so
+  // each shape runs at a quarter of its size and at its size, the fastest of three runs
+  // each: a collector's pause lands in one run, the scan in all of them. The 50 ms floor is
+  // for ratios of fractions of a millisecond; the old scans take 0.4 to 0.7 s at these sizes.
+  const cases: [string, number, (kb: number) => string, (html: string) => unknown][] = [
+    ['a <ul whose tag never ends', 64, (kb) => '<ul '.repeat((kb * 1024) / 4), extractAlertsFromHtml],
+    ['an item of unclosed <title>s', 128, (kb) => `<item>${'<title>'.repeat((kb * 1024) / 7)}</item>`, extractConcelloNotices],
+    ['unclosed <script openings', 128, (kb) => '<script '.repeat((kb * 1024) / 8), plainText],
+    ['unclosed departure blocks', MAX_BODY_BYTES / 1024, (kb) => '<div class="sae-content-info">'.repeat((kb * 1024) / 30), parseOperatorTimes],
   ];
-  for (const [label, kb, run] of cases) {
-    const started = performance.now();
-    run(kb);
-    const spent = performance.now() - started;
-    assert(spent < 150, `${label}: ${spent.toFixed(0)} ms for ${kb} KB, which is the quadratic scan back`);
+  const fastest = (parse: (html: string) => unknown, html: string) => {
+    let best = Infinity;
+    for (let run = 0; run < 3; run++) {
+      const started = performance.now();
+      parse(html);
+      best = Math.min(best, performance.now() - started);
+    }
+    return best;
+  };
+  for (const [label, kb, markup, parse] of cases) {
+    const quarter = fastest(parse, markup(kb / 4));
+    const whole = fastest(parse, markup(kb));
+    assert(
+      whole < Math.max(8 * quarter, 50),
+      `${label}: ${quarter.toFixed(1)} ms for ${kb / 4} KB and ${whole.toFixed(1)} ms for ${kb} KB, which is the quadratic scan back`,
+    );
   }
 
   // The walkers search a lower-cased copy and slice the original, so the copy must keep
