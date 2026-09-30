@@ -3977,6 +3977,29 @@ ok('an empty saved stop names its next bus, with its day and its tilde, and the 
   assert(/<span className="block text-body font-semibold">\{t\.nightBanner\.closed\(/.test(read('src/App.tsx')), 'the night banner cuts its sentence again');
 });
 
+ok('the page never scrolls under its own bars: main holds what is positioned inside it', () => {
+  // <main> was not positioned, so each absolute box inside it -- the screen-reader text of a
+  // line card, 1 px -- took its place from the page: on the lines tab the page grew 1,392 px
+  // taller than the screen, and a desktop scrollbar narrowed the bottom bar from 375 to
+  // 360 px each time the tab opened. The other three tabs had none that far down.
+  assert(/<main id="contido" className="relative\b/.test(read('src/App.tsx')), 'main is not the containing block of its absolute boxes again');
+  assert(/root\.scrollHeight - root\.clientHeight/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer measures a page taller than the screen');
+});
+
+ok('the map’s buses start hidden, and while they are shown the map says they are the timetable’s', () => {
+  // Drawn by default and moving, the buses read as tracked ones, and the one sentence saying
+  // otherwise lived in a popup that only opens on a tap. Nobody publishes where this
+  // network's buses are; the count above the map called them "buses en servizo".
+  const map = read('src/components/Map/TransitMap.tsx');
+  assert(/useState<Record<Layer, boolean>>\(\{ stops: true, buses: false, routes: true \}\)/.test(map), 'the buses are drawn by default again');
+  assert(/\{layers\.buses && \([\s\S]{0,600}\{t\.map\.busesEstimatedNotice\}/.test(map), 'the buses can be on the map without the sentence that says they are estimated');
+  assert(/aria-label=\{t\.map\.hideBuses\}/.test(map), 'the sentence lost its way to hide the buses');
+  for (const lang of LANGS) {
+    assert(/horario|timetable/.test(translations(lang).map.scheduledBusesCount), `${lang}: the bus count no longer says where the buses come from`);
+  }
+  assert(/name: 'buses'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer measures the map with its buses on');
+});
+
 // Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which
 // is the kind of figure the front-doors rule exists for and the one nobody re-reads.
 ok('the README quotes the number of checks this file runs', () => {

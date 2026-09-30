@@ -1955,3 +1955,21 @@ en pé. 174 comprobacións (168 + 6).
   decisión medida en `index.css`: queda proposta unha alternativa, non feita.
 - Ao 200 % a fila de filtros de liña e a de destinos rápidos esvaran de lado, como a 100 %:
   son filas para escoller, non para ler.
+
+### Despois, co teléfono na man
+
+**A barra de abaixo saltaba ao abrir Liñas, e só aí.** Medido fotograma a fotograma: ao
+entrar na pestana, o documento pasaba a ter 1.392 px máis ca a pantalla. Cada tarxeta de
+liña con buses no horario leva un texto para o lector de pantalla, unha caixa absoluta de
+1 px, e `<main>` non estaba posicionado: o bloque que contiña esas caixas era a páxina, e as
+59 da lista alargábana. Nun teléfono a páxina podía rolar coas barras; nun escritorio
+aparecía unha barra de desprazamento e a de abaixo pasaba de 375 a 360 px de ancho cada vez.
+As outras tres pestanas non tiñan ningunha tan abaixo. `<main>` é agora `relative`: 0 px de
+máis en todas as pantallas, e a barra non se move en ningún fotograma. `audit:browser` medía
+só o desbordamento lateral; agora tamén o vertical do documento.
+
+**Os buses do mapa, apagados por defecto** (decidido en DECIDIDO.md): con eles acesos, o
+mapa leva o aviso «~ Posición dos buses estimada polo horario, non en directo» e un botón
+para apagalos, e a conta do panel di «segundo o horario». O audit ten un estado máis, o mapa
+cos buses acesos, para medir ese aviso: trece estados, 0 en todo nos dous temas.
+176 comprobacións.

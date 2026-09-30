@@ -249,6 +249,12 @@ const PROBE = `(() => {
   const mainEl = document.querySelector('main');
   const overMain = mainEl ? mainEl.scrollWidth - mainEl.clientWidth : 0;
   if (overMain > 1) push('overflow', mainEl, 'the screen is ' + overMain + ' px wider than its scroller', mainEl.scrollWidth, mainEl.clientWidth);
+  // Nor downwards: <main> is the only thing that scrolls, so a page taller than the screen
+  // scrolls the bars with it. The lines tab once made the page 1,392 px taller, through the
+  // screen-reader text of its cards placed against the page, and a desktop scrollbar
+  // narrowed the bottom bar every time the tab opened.
+  const overY = root.scrollHeight - root.clientHeight;
+  if (overY > 1) push('overflow', document.body, 'the page is ' + overY + ' px taller than the viewport, and scrolls under its bars', root.scrollHeight, root.clientHeight);
   const lang = (root.getAttribute('lang') || '').toLowerCase();
   if (lang !== EXPECT_LANG) push('lang', root, '<html lang="' + lang + '">, the app speaks ' + EXPECT_LANG, 0, 1);
   const h1s = document.querySelectorAll('h1').length;
@@ -309,6 +315,14 @@ const STATES: State[] = [
             if (!c) return 'no line card'; c.click(); await pause(1200); return true;`,
   },
   { screen: 'mapa', name: 'mapa' },
+  // The buses start hidden; switched on, the map carries the sentence that they are the
+  // timetable's, and that sentence and its close button are measured like everything else.
+  {
+    screen: 'mapa',
+    name: 'buses',
+    setup: `const b = [...document.querySelectorAll('button[aria-pressed]')].find((x) => x.textContent.trim() === 'Buses');
+            if (!b) return 'no buses layer button'; b.click(); await pause(900); return true;`,
+  },
   {
     screen: 'mapa',
     name: 'filtros',

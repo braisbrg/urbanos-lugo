@@ -90,7 +90,7 @@ export function MapControls(p: MapControlsProps) {
           <div className="text-right">
             <span className="flex items-center gap-1 text-label font-black text-estimated">
               <Bus className="w-3.5 h-3.5 text-estimated" aria-hidden="true" />
-              {p.busCount} {t.map.liveBusesCount}
+              {p.busCount} {t.map.scheduledBusesCount}
             </span>
             <span className="text-label text-ink-3 font-medium">{t.map.stopsCount(p.stopCount, p.stopsWithQr)}</span>
           </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { LocateFixed, SlidersHorizontal } from 'lucide-react';
+import { LocateFixed, SlidersHorizontal, X } from 'lucide-react';
 import { useT } from '../../i18n';
 import { BusStop, BusLine } from '../../types';
 import { BUS_STOPS, BUS_LINES, LUGO_CENTER, lineById, poleCode } from '../../data/transitData';
@@ -69,7 +69,10 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
   /** The lines the reader has picked out (toggled, so two can be compared), or none for "everything in scope". */
   const [pickedLineIds, setPickedLineIds] = useState<string[]>(selectedLine ? [selectedLine.id] : []);
   const [preset, setPreset] = useState<Preset>('all');
-  const [layers, setLayers] = useState<Record<Layer, boolean>>({ stops: true, buses: true, routes: true });
+  // The buses start hidden. Nobody publishes where this network's buses are: the ones drawn
+  // are where the timetable puts them, and a moving bus on a map reads as a tracked one
+  // whatever a popup says. Whoever turns them on gets the sentence on the map with them.
+  const [layers, setLayers] = useState<Record<Layer, boolean>>({ stops: true, buses: false, routes: true });
   const now = useClock(3000);
   const buses = useMemo(() => getScheduledBuses(now), [now]);
   const [nearbyLines, setNearbyLines] = useState<NearbyLine[]>([]);
@@ -262,6 +265,20 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
                 if (line) onOpenLine(line);
               }}
             />
+
+            {/* While the buses are drawn, the map says what they are, on the map: the popup that
+                said it is opened by nobody who is only looking. Under the line chips on a phone,
+                and beneath them when those open; one tap takes the buses off again. */}
+            {layers.buses && (
+              <div className="pointer-events-none absolute inset-x-0 top-16 z-[400] flex justify-center px-3 lg:top-3">
+                <p className="pointer-events-auto flex items-center gap-1 rounded-full border-[1.5px] border-dashed border-estimated-line bg-bg/95 pl-3.5 text-estimated shadow-sm backdrop-blur-xs">
+                  <span className="text-label font-semibold">~ {t.map.busesEstimatedNotice}</span>
+                  <button type="button" onClick={() => setLayers((l) => ({ ...l, buses: false }))} aria-label={t.map.hideBuses} title={t.map.hideBuses} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2">
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </p>
+              </div>
+            )}
 
             {/* Two controls cannot wait a viewport away on a phone: which line, and where you are. They ride over the map below `lg`. */}
             <LineChips listed={listedLines} picked={pickedLineIds} onToggle={handleSelectLine} onAll={() => handlePreset('all')} />

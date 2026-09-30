@@ -189,6 +189,17 @@ descrición. Catro regras, e o que quedou fóra:
   Transitions entre pestanas (o indicador que esvara di o mesmo por nada), e calquera
   cousa no mapa, que segue na lista de abaixo.
 
+## Os buses do mapa — 30 de setembro de 2026
+
+- **Empezan apagados.** Ninguén publica onde van os buses desta rede; os do mapa saen do
+  cadro horario, e un marcador que avanza sobre un mapa lese como un bus seguido por moito
+  que o diga un globo que só se abre ao tocalo. Quen os queira acéndeos en «Capas visibles».
+- **Mentres se ven, o mapa dío enriba**, co trazo discontinuo de `~ ESTIMADO`: «Posición dos
+  buses estimada polo horario, non en directo», e un botón de 44 px para apagalos. Non se
+  pecha o aviso deixando os buses: quitar o aviso é quitar os buses.
+- **A conta di de onde sae**: «buses en ruta segundo o horario», non «en servizo».
+- Non se garda a elección entre visitas: cada vez que se abre a app empezan apagados.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

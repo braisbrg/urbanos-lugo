@@ -199,7 +199,12 @@ export default function App() {
             </div>
           )}
 
-          <main id="contido" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          {/* Positioned, so it is the containing block of every absolute box inside it. It was
+              not, and the screen-reader text of each line card (an absolute 1 px box) took its
+              place from the page: on the lines tab the page grew 1,392 px taller than the
+              screen, scrolled under the bars, and on a desktop a page scrollbar narrowed the
+              bottom bar from 375 to 360 px each time the tab opened. */}
+          <main id="contido" className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
             <ErrorBoundary t={t} resetKey={activeTab}>
               {/* One heading for the page, naming what is on screen: correct in both the one-pane and the two-pane layout. */}
               <h1 className="sr-only">{screenTitle}</h1>

@@ -215,6 +215,12 @@ o mesmo bus dando a volta, así que cando o cadro xa o ten saíndo de volta, o m
 ida retírase nese minuto: a ida das 07:30 da liña 7 seguía debuxada a 139 m da súa propia
 volta das 07:45. O globo de cada un dío explicitamente; non son posicións medidas.
 
+Por iso **empezan apagados**. Un bus que se move sobre un mapa lese como un bus seguido,
+diga o que diga un globo que só se abre ao tocalo. Acéndense en «Capas visibles», e mentres
+se ven o propio mapa di enriba «~ Posición dos buses estimada polo horario, non en
+directo», cun botón para apagalos de novo. A conta do panel tampouco di «en servizo», senón
+«buses en ruta segundo o horario».
+
 ### Planificador de traxectos
 Compara a liña directa contra os transbordos posibles e devolve **o que chega antes**.
 Considera varias paradas de saída e chegada próximas, porque camiñar dous minutos ata
@@ -1470,7 +1476,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-174 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+176 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1604,7 +1610,7 @@ ao lado, co porqué, e dende o 19 de setembro de 2026 tamén os bytes (260 KB en
 250 antes do primeiro pintado: unha dependencia que engorde o anaco de entrada xa non é
 un número máis nun rexistro que ninguén le) e o desprazamento de deseño acumulado (CLS,
 0,1; medido 0,000 nas dúas visitas).
-`audit:browser` mide, en doce estados e nos dous temas, o contraste de cada texto (as
+`audit:browser` mide, en trece estados e nos dous temas, o contraste de cada texto (as
 cores en `oklch()` resólvense pintándoas nun lenzo, non cunha expresión regular; a
 opacidade herdada desconta, e o texto tecleado e o *placeholder* dun campo mídense polo
 seu pseudoelemento, que antes non se medían), os textos por baixo de 12 px, os obxectivos
@@ -1612,7 +1618,9 @@ por baixo de 44 px, o nome accesible de cada control (un botón só con icona e 
 `aria-label` anúnciase como «botón»: 380 controis con nome, 0 sen el), as imaxes sen
 `alt`, o `lang` do documento, que haxa un só `<h1>`, e o desbordamento lateral —do
 documento e de `<main>`, que é onde as pantallas fan scroll: o formulario da ruta chegou a
-medir 553 px máis có teléfono sen que o `scrollWidth` da páxina dixese nada— do mesmo
+medir 553 px máis có teléfono sen que o `scrollWidth` da páxina dixese nada—, e o
+vertical do documento, porque só `<main>` fai scroll e unha páxina máis alta ca a pantalla
+leva as barras con ela (a de liñas medía 1.392 px de máis); todo iso do mesmo
 estado a 320 px de ancho e co texto ao 200%, que é o que fai o axuste «texto máis grande»
 dun móbil (atopou a fila de liñas saíndo 42 px pola dereita a 200%, e o culpable era un
 `sr-only` posicionado fóra da pantalla); co mesmo 200%, o texto que non se ve aínda que a
