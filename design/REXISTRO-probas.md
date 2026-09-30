@@ -1973,3 +1973,231 @@ mapa leva o aviso «~ Posición dos buses estimada polo horario, non en directo�
 para apagalos, e a conta do panel di «segundo o horario». O audit ten un estado máis, o mapa
 cos buses acesos, para medir ese aviso: trece estados, 0 en todo nos dous temas.
 176 comprobacións.
+
+---
+
+## Rolda 25: seguridade e rendemento, a fondo, despois da simplificación — 30 de setembro e 1 de outubro de 2026
+
+A simplificación do 20 e 21 de setembro reescribiu case todo o que toca a seguridade
+(`server.ts`, `worker/index.ts`, `src/security/`, `src/services/`, `src/utils/html.ts`,
+`vite.config.ts`) e case todas as roldas anteriores son de antes dela. Esta volveu mirar cada
+protección anotada aquí e en SECURITY.md —se segue no código, se segue funcionando e se hai
+un check que a garde—, pasou os escáneres (`pnpm audit`, semgrep, gitleaks sobre todo o
+historial, zizmor) e mediu o rendemento coas ferramentas da casa, contra a build anterior á
+simplificación (425e38a) e, en cada arranxo, contra a build de xusto antes, na mesma
+máquina e na mesma sesión. Todo o que segue está medido; o que só se leu dise.
+
+Once pulls, cada un dunha soa cousa: cinco de seguridade (`sec/*`), cinco de rendemento
+(`perf/*`), empillados nesa orde, e este rexistro.
+
+### Seguridade: atopado e arranxado
+
+**Marcado hostil paraba o servidor ata cincuenta segundos.** Catro patróns preguiceiros
+sobreviviran á pasada que fixo lineais os outros percorridos, e cada un retrocede desde cada
+apertura que non pecha. Medido no teito de 512 KB que deixa `readCapped`: o `<ul class=
+"msg_list">` da campá de buslugo.com, **49,7 s**; un campo do feed do Concello, un `<title>`
+que non pecha, 11,3 s; o prepaso de `<script>`/`<style>` de `stripTags`, 7,4 s; e os bloques
+de saídas da páxina do operador, medio segundo. Os catro percorren agora con `indexOf`: 1, 1,
+8 e 0 ms. O cuarto quedara cuadrático a propósito na rolda de probas de esforzo, «unha vez por
+parada cada 20 s, e só nun servidor propio»: o servidor le cada poste con código e o *worker*
+de Deno corre o mesmo analizador, así que o motivo xa non se sostiña. Comparados o vello e o
+novo sobre 40.000 documentos aleatorios, o feed real enteiro (10 de 10 elementos) e a portada
+real: a mesma saída en todo; e `check:parsers` unha vez contra as páxinas vivas, verde.
+
+De camiño, un fallo pequeno de verdade: os percorridos buscan nunha copia en minúsculas e
+cortan o orixinal, e `toLowerCase` non garda os índices («İ» pasa a dúas unidades). Con oito
+diante dun artigo, a tarxeta empezaba por «> Desvío». A copia só dobra ASCII.
+
+**Un cliente facía 813 peticións por minuto á páxina do operador.** A caché gardaba unha
+parada vinte segundos e nada limitaba o conxunto: percorrendo os postes con código unha vez
+por segundo, 813 peticións por minuto a `info.urbanoslugo.com` desde un proceso ou unha illa
+do *worker*; e cunha páxina que respondía erros, que non se gardan, dez por segundo aquí eran
+dez alí. En Express facían falta moitos enderezos (120 por minuto cada un); no *worker*, que
+non ten limitador, abondaba un. Agora como moito 120 por minuto en total, por proceso ou illa,
+e pasado iso o 502 que a app xa le como «amosa só as nosas estimacións». O check que esixe
+que un fallo se volva preguntar segue enteiro: o reintento gasta do mesmo minuto. E a caché de
+bordo do *worker* levaba a cadea de consulta enteira na chave: cada `?x=1`, `?x=2` era outra
+copia gardada. Só conta `refresh`.
+
+DATA.md prometía «como moito unha vez por minuto» para esa páxina (eran tres por minuto e
+parada, e 813 entre todas) e, con SECURITY.md e un comentario de `measure.yml`, tres feeds do
+Concello onde o código le un desde o 15 de setembro. Agora din o que fai o código.
+
+**Co axuste «non permitir que os sitios garden datos», a app quedaba en branco.** Ler
+`window.localStorage` lanza entón `SecurityError`, e os axudantes de almacenamento recibían o
+almacén como parámetro por defecto, que se avalía antes do `try`: a primeira lectura, a lingua
+no primeiro render de `App`, lanzaba. Reproducido nun Chromium co axuste de verdade, non cun
+*getter* finxido: ningunha navegación e un `SecurityError` sen capturar. É unha regresión da simplificación: antes
+cada lectura ía dentro do seu propio `try`. `audit:browser` ten agora unha rolda con ese axuste.
+
+**A política da cabeceira deixaba o mapa ráster en gris nun servidor propio.** Servida como
+cabeceira, a CSP é tamén a do *service worker*, e o *worker* volve pedir con `fetch` o que
+garda, que responde a `connect-src`; `tile.openstreetmap.org` só estaba en `img-src`. A mesma
+tesela cargaba como imaxe antes de que o *worker* tomase o control e fallaba despois. Arranxo
+funcional da política, e así o di o seu pull; Pages non envía cabeceiras e nunca o tivo.
+
+**Dezanove accións fixadas por etiqueta.** Unha etiqueta pódese mover a outro código despois
+de revisada, e `denoland/setup-deno@v2` nin sequera era unha etiqueta, senón unha póla. Agora
+cada acción vai ao seu commit coa versión nun comentario. O traballo que ten o token de Deno
+Deploy corría `deno run -A jsr:@deno/deploy` e Deno `v2.x`, o máis novo dese minuto: versións
+exactas. `id-token: write` estaba en todo o workflow do *worker* «para unha credencial curta»
+que ninguén pide: o despregue usa o segredo e `@deno/deploy` 0.0.9904 non ten código OIDC de
+GitHub. Fóra. zizmor pasou de 33 achados (20 altos) a 11 (ningún alto). SECURITY.md dicía que
+`package.json` nomeaba a única excepción de scripts de instalación; está en
+`pnpm-workspace.yaml` desde pnpm 11 e non permite ningunha.
+
+**`pnpm dev` servía á rede os ficheiros ignorados.** En desenvolvemento Vite serve calquera
+ficheiro da árbore, tamén os que git ignora (só rexeita `.env*` e `.git`), e o servidor
+escoitaba en `0.0.0.0`. Un ficheiro inofensivo posto en `.claude/` volveu con 200 polo
+enderezo wifi da propia máquina e por cada adaptador virtual. Na árbore principal `.claude/`
+ten 489 ficheiros e `.agents/` 260: as transcricións que CLAUDE.md deixa fóra de git. A
+comprobación de host de Vite rexeita nomes alleos (403 a `Host: evil.example`), así que a
+porta non era o *rebinding* senón un enderezo IP. Agora desenvolvemento escoita só en
+`127.0.0.1` salvo `HOST=0.0.0.0`, a propósito, para probar nun teléfono. O README dicía que
+`pnpm dev` collía «o primeiro porto libre»; para cun porto ocupado, e dío.
+
+### Seguridade: o que se comprobou e segue en pé
+
+Das proteccións anotadas nas roldas anteriores e en SECURITY.md, todas seguen no código:
+encamiñamento sensible a maiúsculas, `readCapped` que recorta o anaco, os percorridos lineais
+de `<item>`, `<article>` e `<li>`, `escapeHtml` e o seu gardián nos *tooltips*, `Vary` nos
+precomprimidos, o limitador, `cacheHolds` para os fallos, a CSP con `frame-ancestors` só na
+cabeceira e un só *hash*, `allowBuilds`, o *in-flight* que fai de cincuenta lectores unha
+petición, só paradas coñecidas ao operador, o 400 ante un enderezo mal formado nos dous
+servidores, a garda de `dist/` co separador e os *overrides* de `qs` e `fast-uri`. Sete non
+tiñan ningún check, e agora teñen: o CORS do *worker* que falla pechado, a orixe na chave da
+súa caché, a copia vencida que non se serve, un prazo en cada `fetch` a un servidor alleo
+(servizos e *hooks*), as cabeceiras de seguridade de `server.ts` e o seu tope de corpo, e
+`persist-credentials: false` en cada checkout. Cada un, retirado, fai fallar a suite.
+
+- **Escáneres.** `pnpm audit`: 0 vulnerabilidades, produción e desenvolvemento. gitleaks
+  sobre 283 commits e sobre a árbore: nada, e nada que rotar. semgrep, 36 resultados: 19 as
+  accións por etiqueta (arranxadas); 7 `path.join` (a garda de `server.ts`, comprobada abaixo,
+  e o resto sobre ficheiros propios na build); 7 `RegExp` non literais (constantes, e a busca
+  escapa a entrada); 2 a falta de `cooldown` en Dependabot (decisión do dono); 1
+  `child_process` en `tools/cdp.ts` (o Chromium das ferramentas). zizmor, os 11 que quedan: 6
+  traballos sen nome, 1 permiso sen comentario en `deploy-pages` (usado) e 4 «segredo fóra
+  dun ambiente», que pide un axuste de GitHub.
+- **Code scanning.** Unha alerta aberta, a #14 `js/missing-rate-limiting` sobre o *fallback*
+  da SPA: é a #2, pechada como «won't fix», que volveu ao moverse as liñas. Falso positivo
+  polo que xa di SECURITY.md.
+- **Rutas.** Catorce variantes de travesía —codificadas, con contrabarra, con segmentos de
+  punto, cun nulo, cara a `.git`—, con brotli e sen el: todas devolven o armazón da app.
+  Nada fóra de `dist/`.
+- **O que custa unha petición.** Cada endpoint por baixo de 10 ms salvo `/api/plan` (peor
+  38 ms agora), limitado a 30 por minuto e enderezo: 1,1 s de CPU por minuto no peor caso.
+  «Chegar antes» non se alcanza pola API. Saídas por minuto e proceso ou illa: buslugo.com 1,
+  o feed 1, o operador 120.
+- **Texto alleo ata o DOM.** Todo o raspado chega como texto de React; o `link` do feed vai a
+  un `href`, e React bloquea `javascript:` (a cadea está no paquete) e a CSP sen
+  `'unsafe-inline'` tamén o faría; as cores de liña saen dunha táboa do xerador cun check; o
+  QR só serve para un `findStop` exacto e nunca se navega a el.
+- **Valores gardados estragados.** Favoritos que son un obxecto, rutas recentes con lixo e
+  catro formas de viaxe mal feita: a app degrada e segue.
+- **PRIVACY.md.** O que sae do navegador é o que di: as teselas de OpenFreeMap e de OSM, a
+  API se está configurada (un código de parada e nada máis) e `alerts.json` desta orixe.
+
+### Rendemento: medido e arranxado
+
+**Unha viaxe custaba 45 s de fío principal por minuto.** `measure:browser` ten unha rolda
+`ride`: unha viaxe planificada polo propio motor, un fix de GPS por segundo, sesenta segundos
+contados polo navegador. A 6× de CPU, 45,0 s de cada 60, dos que 39 eran o latexo da seguinte
+parada: unha `box-shadow`, que se repinta en cada cadro, contra a propia regra da folla de
+estilos (só `opacity` e `transform`). Agora un disco que medra e se esvae, que o compositor
+move só e que se ve igual nos dous temas: **1,8 s por minuto**. E o mapa, montado detrás de
+`hidden` desde que se abre, seguía co seu reloxo de tres segundos baixo a viaxe: 24 chamadas
+de temporizador por minuto contra 12, e 2,1 s de *script* contra 0,9. Agora sabe cando non se
+ve.
+
+**O planificador lembra o que non depende do reloxo.** «Chegar antes» non o medía nada;
+agora `measure:engine` e unha rolda `planner` de `measure:browser` (toques de rato de verdade,
+do toque á resposta pintada, o reloxo da páxina nun mércores ás 13:30, o par máis caro).
+
+| | antes | despois |
+| :--- | ---: | ---: |
+| `measure:engine`, saíndo agora (mediana / p95 / peor) | 13 / 42 / 64 ms | 7 / 19 / 37 ms |
+| `measure:engine`, chegar antes | 585 / 1.600 / 1.650 ms | 240 / 565 / 690 ms |
+| Navegador, 6×, toque → resposta, saíndo agora | 0,94–1,04 s | 0,66–0,82 s |
+| Navegador, 6×, toque → resposta, chegar antes | 12,4 s | 5,0–6,4 s |
+
+O que alcanza cada parada e os postes a un transbordo andando, unha vez por parada; as
+expedicións que pasan por un poste, ordenadas unha vez; a expedición na que cae cada pregunta,
+mentres `now` é o mesmo instante (3.686 preguntas nun plan, 1.098 distintas); e «chegar
+antes» atopa os seus dous lugares unha vez e non 37. As 187 respostas gravadas antes saen
+idénticas byte a byte. O que queda entre isto e un INP bo (200 ms) é que o plan enteiro corre
+dentro do toque: saíndo agora, ~180 ms de plan, ~210 de React e ~300 do mapa repintando; e
+«chegar antes» son 37 plans. Sacalo do toque é outro pull.
+
+**A comprobación do fuso horario cargaba a base de fusos antes do primeiro pintado.** Era a
+peza máis grande do traballo propio no arranque en frío: un formateador `Intl` cun
+`timeZone`, uns 150 ms a 6×, no primeiro render de cada taboleiro, o da portada incluído. Un
+teléfono en Lugo dá o desprazamento que di a regra de Lugo, e iso non precisa base ningunha;
+só un que discrepa pregunta a `Intl`. O primeiro render do taboleiro, de 243 a 83 ms. Nova
+rolda `board` de `measure:browser`: a ligazón do QR dun poste, en frío, ata a primeira saída.
+Tres pares alternados, medianas: primeiro pintado 2.928 → 2.736 ms, primeira saída 2.982 →
+2.877 ms.
+
+**As teselas ráster custaban megabytes de cota cada unha.** Pedidas sen CORS, cada tesela era
+unha resposta opaca, que o Chrome conta por megabytes sexa do tamaño que sexa, e a caché de
+teselas aceptaba o estado 0, con sitio para 600. Seis teselas ráster eran 42,8 MB de caché
+onde dez vectoriais eran 7,6: agora 8,1. Pasaba tamén en Pages.
+
+**Arrastrar o mapa non bloquea nada.** `measure:browser` mide agora catro arrastres: 0–28 ms
+bloqueados, o traballo é do renderizador dentro de cada cadro.
+
+### Medido e limpo
+
+A simplificación non empeorou nada que se medise: o motor (mediana 15 antes, 17 despois,
+dentro do ruído), abrir o mapa (~1,8 s de mediana antes e ~1,6 despois), o arranque en frío
+(3,0–3,3 s antes, 3,0–3,8 despois) e os bytes (186 KB antes do primeiro pintado antes, 189
+despois). Na punta da pila, `measure:browser` enteiro sen ningún orzamento superado: primeiro
+pintado en frío 2.876 ms, QR 2.592 e primeira saída 2.747, segunda visita 652, abrir o mapa
+1.301 ms bloqueados, zoom 233, arrastres 28, tecla máis lenta 144 ms, media hora de taboleiro
+0 ms bloqueados, e a viaxe entre 1,7 e 3,1 s por minuto segundo a carga da máquina.
+`audit:browser`: 0 en contraste, tamaño, obxectivos, nomes e desbordamento nos dous temas,
+consola limpa, teclado e movemento reducido ben, e a app debúxase co almacenamento negado.
+`check:deep`: 240.192 taboleiros e 38.329 viaxes, todo en pé. Os tamaños de descarga do
+README, medidos de novo.
+
+### Erros nosos durante esta rolda
+
+- A primeira proba da CSP ráster pediu a tesela con `fetch` desde a páxina, que responde a
+  `connect-src` coma o *worker*: fallaba nos dous casos e non demostraba nada. Refeita con
+  `<img>`, antes e despois de que o *worker* tomase o control.
+- O primeiro check das caches do planificador comparaba o módulo consigo mesmo, e unha chave
+  sen o sentido da viaxe, que cambiaba 168 das 187 respostas sen romper ningún invariante,
+  pasábao. Agora compara cunha copia do módulo que non lembra nada.
+- Un arnés de comparación deu 509 diferenzas que eran del: a súa versión «vella» non
+  descodificaba entidades.
+- As roldas frías de `measure:browser` limpaban o *service worker* desde `about:blank`, que
+  non ve o sitio: a do QR, corrida despois do arranque, saía da caché (852 ms). Agora
+  `Storage.clearDataForOrigin`. E a rolda da viaxe planificaba para a hora real: ás 00:14 era
+  o bus de mañá e mediu outra pantalla. Fixada ás 13:30 coma as outras.
+- Python en Windows escribe CRLF, e o *rebase* tamén: `core.eol=lf` en cada paso.
+
+### Mirado e deixado
+
+- **O anaco de entrada**, 601 KB: `react-dom` o 34 %, os datos o 23 %, os tres dicionarios o
+  11 % e as pestanas que non son a portada o 13 %. Partir os dicionarios custaría unha ida e
+  volta a quen le en castelán ou inglés; cargar as pestanas á demanda aforraría uns 150 ms
+  ao primeiro pintado a cambio de esperar pola rede ao abrir Ruta ou Liñas a primeira vez.
+  Decisión do dono.
+- **Sacar o plan do toque** (un *worker*, ou ceder o fío antes de planificar): o arranxo do
+  INP do planificador, e un cambio en `RoutePlannerView`.
+- **A precaché**: 1,04 MB en brotli na primeira visita, 406 KB deles a rede peonil. Decisión
+  do dono.
+- A sonda de WebGL2 (170 ms baixo SwiftShader), decidida na rolda 14; `networkAtRest` (100 ms
+  a 6× no arranque); e o taboleiro oculto da portada no teléfono, que ocioso custa 139 ms de
+  fío e sete temporizadores por minuto: pequenos.
+- Lembrar pernas enteiras do plan: non gañou nada e cambiaba respostas, porque a mesma parada
+  chega como dous obxectos.
+- As animacións `attention` (sombra, 0,7 s, unha vez) e `seg-reveal` (cor de fondo) seguen
+  fóra da regra de `opacity` e `transform`; son dunha vez, non de cada cadro.
+- Un «&nbsp;» literal nunha nota do Concello, codificada dúas veces na orixe.
+
+### Non se puido
+
+Un iPhone de verdade. Outra máquina na mesma rede para ver se a devasa de Windows deixaba
+pasar `pnpm dev`. Os workflows que só corren en `main` —o despregue de Pages e o do *worker*,
+as comprobacións semanais e as medicións—, que se proban no primeiro que corra. Os límites de
+Deno Deploy, que son da plataforma. 188 comprobacións.

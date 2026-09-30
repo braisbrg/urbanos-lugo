@@ -1042,18 +1042,18 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 
 | | sen comprimir | gzip | brotli |
 | :--- | ---: | ---: | ---: |
-| Anaco de entrada | 604 KB | 159 KB | **133 KB** |
-| Folla de estilos | 51 KB | 10 KB | **8 KB** |
-| `index.html` | 4 KB | 2 KB | **2 KB** |
-| **Primeira carga** | **660 KB** | ~171 KB | **~143 KB** |
-| Tipografía | 50 KB | — | 50 KB, en paralelo |
-| Renderizador do mapa, co estilo e a paleta | 1.184 KB | 311 KB | 255 KB, ao abrir un mapa |
+| Anaco de entrada | 601 KB | 163 KB | **136 KB** |
+| Folla de estilos | 58 KB | 11 KB | **10 KB** |
+| `index.html` | 5 KB | 2 KB | **2 KB** |
+| **Primeira carga** | **664 KB** | ~176 KB | **~147 KB** |
+| Tipografía | 51 KB | — | 51 KB, en paralelo |
+| Renderizador do mapa, co estilo e a paleta | 1.185 KB | 312 KB | 256 KB, ao abrir un mapa |
 | Estilos do renderizador | 96 KB | 16 KB | 14 KB, ao abrir un mapa |
 | Worker do renderizador | 495 KB | 141 KB | 116 KB, ao abrir un mapa |
 | Xeometría viaria | 511 KB | 82 KB | 28 KB, ao abrir un mapa |
 | Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
 
-Medido o 16 de setembro de 2026 (versión 1.1.2). O anaco de entrada medra co que leva
+Medido o 1 de outubro de 2026 (rolda 25). O anaco de entrada medra co que leva
 dentro: MapLibre 6.9 e as cabeceiras por pestana. A instantánea de avisos xa non vai
 nel: é un ficheiro á parte, `alerts.json`, e o motivo está xusto debaixo.
 
@@ -1067,8 +1067,9 @@ deixa ao lado de cada ficheiro.
 
 **O que si baixa enteiro, en segundo plano.** «Só cando fan falta» describe o que a
 páxina pide para pintarse; o service worker é outra cousa. Para que a app funcione sen
-cobertura, na primeira visita garda **todo** o que a build produce — os 31 ficheiros,
-4,32 MB sen comprimir e 1,29 MB en gzip, medidos sobre `dist/sw.js` — sen esperar a que
+cobertura, na primeira visita garda **todo** o que a build produce — 28 ficheiros
+distintos (o manifesto lista 32: catro iconas van dúas veces e baixan unha), 4,29 MB sen
+comprimir, 1,26 MB en gzip e 1,04 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
 se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
 pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira

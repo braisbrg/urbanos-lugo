@@ -350,6 +350,21 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    man; un tempo esgotado, cousa dun día. Un espello de Overpass, só se a caída se repite,
    e decídeo o dono: sería outro servidor alleo.
 
+11. **O que deixou a rolda 25 de `REXISTRO-probas.md`** (1 de outubro de 2026), para
+   decidir e para vixiar:
+   - **O planificador fóra do toque.** Saíndo agora son 0,66–0,82 s do toque á resposta a
+     6× de CPU, e «chegar antes» 5,0–6,4 s; o INP bo son 0,2 s. Un *worker* ou ceder o fío
+     antes de planificar é un cambio en `RoutePlannerView`, e obra.
+   - **As pestanas á demanda.** Uns 150 ms menos ao primeiro pintado, a cambio de agardar
+     pola rede ao abrir Ruta ou Liñas a primeira vez.
+   - **A precaché**, 1,04 MB en brotli na primeira visita, 406 KB deles a rede peonil, que
+     se podería gardar só cando se trace o primeiro camiño.
+   - **O token de Deno Deploy nun ambiente de GitHub** con despregue só desde `main`
+     (zizmor, `secrets-outside-env`), e pechar a alerta #14 de code scanning como a #2, que
+     é a mesma. Un `cooldown` en Dependabot (semgrep) para non adoptar versións do mesmo día.
+   - **Os primeiros workflows en `main`** coas accións fixadas ao seu commit: que despreguen
+     Pages e o *worker*, e que o do *worker* funcione sen `id-token`.
+
 ### Lista para o iPhone
 
 Media hora cun iPhone real, en Safari, con iOS 16.4 ou máis. Anotar o modelo e a versión.
