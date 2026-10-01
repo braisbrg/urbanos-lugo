@@ -1075,7 +1075,7 @@ comprimir, 1,26 MB en gzip e 1,05 MB en brotli, medidos sobre `dist/sw.js` — s
 se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
 pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
-carga de 143 KB.
+carga de ~147 KB.
 
 E cando un despregue cambia os nomes deses ficheiros debaixo dunha páxina aberta, a
 páxina que pide o mapa despois de publicado recarga unha soa vez en lugar de amosar «a

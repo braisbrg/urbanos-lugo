@@ -2190,7 +2190,7 @@ README, medidos de novo.
   Decisión do dono.
 - **Sacar o plan do toque** (un *worker*, ou ceder o fío antes de planificar): o arranxo do
   INP do planificador, e un cambio en `RoutePlannerView`.
-- **A precaché**: 1,04 MB en brotli na primeira visita, 406 KB deles a rede peonil. Decisión
+- **A precaché**: 1,04 MB en brotli na primeira visita, 396 KB deles a rede peonil. Decisión
   do dono.
 - A sonda de WebGL2 (170 ms baixo SwiftShader), decidida na rolda 14; `networkAtRest` (100 ms
   a 6× no arranque); e o taboleiro oculto da portada no teléfono, que ocioso custa 139 ms de
