@@ -357,7 +357,7 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
      antes de planificar é un cambio en `RoutePlannerView`, e obra.
    - **As pestanas á demanda.** Uns 150 ms menos ao primeiro pintado, a cambio de agardar
      pola rede ao abrir Ruta ou Liñas a primeira vez.
-   - **A precaché**, 1,04 MB en brotli na primeira visita, 406 KB deles a rede peonil, que
+   - **A precaché**, 1,05 MB en brotli na primeira visita, 406 KB deles a rede peonil, que
      se podería gardar só cando se trace o primeiro camiño.
    - **O token de Deno Deploy nun ambiente de GitHub** con despregue só desde `main`
      (zizmor, `secrets-outside-env`), e pechar a alerta #14 de code scanning como a #2, que

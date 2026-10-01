@@ -1047,15 +1047,17 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 | `index.html` | 5 KB | 2 KB | **2 KB** |
 | **Primeira carga** | **664 KB** | ~176 KB | **~147 KB** |
 | Tipografía | 51 KB | — | 51 KB, en paralelo |
-| Renderizador do mapa, co estilo e a paleta | 1.185 KB | 312 KB | 256 KB, ao abrir un mapa |
+| Renderizador do mapa, co estilo e a paleta | 1.191 KB | 314 KB | 258 KB, ao abrir un mapa |
 | Estilos do renderizador | 96 KB | 16 KB | 14 KB, ao abrir un mapa |
-| Worker do renderizador | 495 KB | 141 KB | 116 KB, ao abrir un mapa |
+| Worker do renderizador | 498 KB | 142 KB | 116 KB, ao abrir un mapa |
 | Xeometría viaria | 511 KB | 82 KB | 28 KB, ao abrir un mapa |
 | Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
 
-Medido o 1 de outubro de 2026 (rolda 25). O anaco de entrada medra co que leva
-dentro: MapLibre 6.9 e as cabeceiras por pestana. A instantánea de avisos xa non vai
-nel: é un ficheiro á parte, `alerts.json`, e o motivo está xusto debaixo.
+Medido o 1 de outubro de 2026 (rolda 25; o renderizador e o seu worker, de novo con
+MapLibre 6.11). O anaco de entrada medra co que leva dentro, as cabeceiras por pestana;
+MapLibre non vai nel, senón enteiro no anaco do renderizador, que baixa ao abrir un mapa.
+A instantánea de avisos tampouco: é un ficheiro á parte, `alerts.json`, e o motivo está
+xusto debaixo.
 
 A tipografía non leva columnas: o `woff2` xa vén comprimido e volver comprimilo non aforra
 nada, así que a build nin o intenta. Son dous ficheiros e non oito —son fontes variables,
@@ -1068,8 +1070,8 @@ deixa ao lado de cada ficheiro.
 **O que si baixa enteiro, en segundo plano.** «Só cando fan falta» describe o que a
 páxina pide para pintarse; o service worker é outra cousa. Para que a app funcione sen
 cobertura, na primeira visita garda **todo** o que a build produce — 28 ficheiros
-distintos (o manifesto lista 32: catro iconas van dúas veces e baixan unha), 4,29 MB sen
-comprimir, 1,26 MB en gzip e 1,04 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
+distintos (o manifesto lista 32: catro iconas van dúas veces e baixan unha), 4,30 MB sen
+comprimir, 1,26 MB en gzip e 1,05 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
 se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
 pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
