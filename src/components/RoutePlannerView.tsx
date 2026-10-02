@@ -25,6 +25,8 @@ const DEFAULT_DEST = 'Hospital Lucus Augusti (HULA)';
 const MAX_OPTIONS = 4;
 
 const toPoint = (r: { name: string; lat: number; lng: number } | null) => (r ? { name: r.name, lat: r.lat, lng: r.lng } : undefined);
+/** Once the frame already committed is on screen: the next animation frame, then a task after it. */
+const afterPaint = (run: () => void) => requestAnimationFrame(() => setTimeout(run, 0));
 const clockNow = () => {
   const d = new Date();
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -188,23 +190,38 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   };
 
   const [questions, setQuestions] = useState(0);
+  const [calculating, setCalculating] = useState(false);
+  const calculatingRef = useRef(false);
   const calculate = (orig = originQuery, dest = destQuery, gps = userLocation, fold = true) => {
-    if (!orig.trim() || !dest.trim()) return;
-    setGpsRefused(false);
-    const opts = { ...timeOptions(), userLocation: gps };
-    askedRef.current = { orig, dest, opts };
-    replannedRef.current = false;
-    const plans = planTrips(orig, dest, { ...opts, lang });
-    setPlanOptions(plans);
-    setChosenOption(0);
-    setQuestions((n) => n + 1);
-    if (fold) {
-      setFolding(true);
-      ask('answer');
-    }
-    if (plans.length) rememberRoute({ from: orig.trim(), to: dest.trim() });
-    setEndpoints({ origin: toPoint(resolveLocationQuery(orig, gps)), destination: toPoint(resolveLocationQuery(dest, gps)) });
-    setActiveInput(null);
+    if (!orig.trim() || !dest.trim() || calculatingRef.current) return;
+    // The plan runs on this thread, and "arrive by" holds it for seconds on a slow phone
+    // (5.0-6.4 s at 6x CPU), where the tap showed nothing until the answer. So the button
+    // says «Calculando» in a frame of its own, and the plan starts once that frame is on
+    // screen. A second tap meanwhile is the same question asked twice, and is dropped.
+    calculatingRef.current = true;
+    setCalculating(true);
+    afterPaint(() => {
+      try {
+        setGpsRefused(false);
+        const opts = { ...timeOptions(), userLocation: gps };
+        askedRef.current = { orig, dest, opts };
+        replannedRef.current = false;
+        const plans = planTrips(orig, dest, { ...opts, lang });
+        setPlanOptions(plans);
+        setChosenOption(0);
+        setQuestions((n) => n + 1);
+        if (fold) {
+          setFolding(true);
+          ask('answer');
+        }
+        if (plans.length) rememberRoute({ from: orig.trim(), to: dest.trim() });
+        setEndpoints({ origin: toPoint(resolveLocationQuery(orig, gps)), destination: toPoint(resolveLocationQuery(dest, gps)) });
+        setActiveInput(null);
+      } finally {
+        calculatingRef.current = false;
+        setCalculating(false);
+      }
+    });
   };
 
   // A place chosen in the search box arrives as the destination, already planned from whatever origin is set.
@@ -389,9 +406,22 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 )}
               </div>
 
-              <button onClick={() => calculate()} className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-control bg-accent px-4 text-body font-semibold text-on-accent transition-colors">
-                <span>{t.planner.calculate}</span>
-                <ArrowRight className="h-4.5 w-4.5" strokeWidth={2.5} aria-hidden="true" />
+              <button onClick={() => calculate()} aria-busy={calculating} className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-control bg-accent px-4 text-body font-semibold text-on-accent transition-colors">
+                {calculating ? (
+                  <span>
+                    {t.planner.calculating}
+                    <span className="calc-dots" aria-hidden="true">
+                      <span>.</span>
+                      <span>.</span>
+                      <span>.</span>
+                    </span>
+                  </span>
+                ) : (
+                  <>
+                    <span>{t.planner.calculate}</span>
+                    <ArrowRight className="h-4.5 w-4.5" strokeWidth={2.5} aria-hidden="true" />
+                  </>
+                )}
               </button>
             </div>
 

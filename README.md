@@ -1498,7 +1498,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-188 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+190 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1632,11 +1632,15 @@ worker* xa instalado (medido: 1.360 ms ata o primeiro pintado a 6× na rolda com
 *worker*, 0 KB pola rede fóra dos avisos); abrir o mapa, catro pasos de zoom e catro
 arrastres (medido: 0 ms de fío bloqueado arrastrando; o traballo é do renderizador, dentro
 de cada cadro), teclear no
-buscador e doce voltas entre pestanas; planificar, dende o toque en «Calcular ruta» ata a
-resposta pintada, co reloxo da páxina fixado nun mércores ás 13:30 (medido co par máis
-caro: 0,7–0,8 s saíndo agora e 5,1 s chegando antes das 17:00, que eran 1,0 e 12,4 s; o
-«bo» de INP son 0,2 s e ningún dos dous chega mentres o plan enteiro corre dentro do
-toque); e un minuto de «Vou nesta» cun fix de GPS por
+buscador e doce voltas entre pestanas; planificar, dende o toque en «Calcular ruta» ata
+«Calculando» e ata a resposta pintada, co reloxo da páxina fixado nun mércores ás 13:30
+(medido co par máis caro: o toque responde en 56–72 ms, por debaixo dos 0,2 s que son un
+INP «bo», porque o botón pinta «Calculando» antes de que o plan colla o fío; a resposta
+chega en 0,9–1,0 s saíndo agora e 10,3–12,2 s chegando antes das 17:00, onde a build
+anterior, a mesma tarde, tardaba 0,85–1,0 e 8,6–9,4 s: os tres puntos que botan mentres
+calcula seguen movéndose co fío ocupado, e a 6× iso cóbralle ao plan 1–3 s, que con
+movemento reducido non paga; o 30 de setembro esta mesma máquina daba 5,0–6,4 s, e 12,4
+antes de que o planificador lembrase o que non cambia); e un minuto de «Vou nesta» cun fix de GPS por
 segundo, contado polo propio navegador (medido: 1,8 s de fío principal por minuto a 6×;
 eran 45 s mentres o latexo da seguinte parada foi unha sombra, que se repinta en cada
 cadro, e non un disco que medra e se esvae, que o compositor move só). Cada cifra compárase co orzamento que ten escrito

@@ -187,6 +187,7 @@ export const gl = {
     useMyLocation: 'Usar a miña localización GPS',
     locating: 'Obtendo a localización…',
     calculate: 'Calcular ruta',
+    calculating: 'Calculando',
     swap: 'Inverter orixe e destino',
     departureLabel: 'Saída',
     arrivalLabel: 'Chegada',

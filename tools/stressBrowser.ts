@@ -502,13 +502,13 @@ const fill = (page: Session, index: number, value: string) =>
   );
 
 /**
- * Planning a trip, from the tap on "Calcular ruta" to the frame that shows the answer: the
- * whole plan runs in that tap, on the main thread. Two questions across the network, one
- * leaving now and one that has to be there by a time three and a half hours ahead, which
- * walks back from the deadline a plan at a time.
+ * Planning a trip, timed twice: to the tap's own frame, which says «Calculando» before the
+ * plan starts, and to the frame with the answer, once the whole plan has run on the main
+ * thread. Two questions across the network, one leaving now and one that has to be there
+ * by a time three and a half hours ahead, which walks back from the deadline a plan at a time.
  */
 async function planner(browser: Browser): Promise<void> {
-  console.log(`\nplanning a trip -- ${CPU_THROTTLE}x CPU, a Wednesday at 13:30, from the tap to the painted answer`);
+  console.log(`\nplanning a trip -- ${CPU_THROTTLE}x CPU, a Wednesday at 13:30, from the tap to «Calculando» and to the painted answer`);
   // The costliest of measure:engine's pairs for both modes; the network's two ends if they are gone.
   const { BUS_STOPS } = await import('../src/data/transitData');
   const named = (name: string) => BUS_STOPS.find((s) => s.name === name)?.name;
@@ -534,16 +534,37 @@ async function planner(browser: Browser): Promise<void> {
     }
     await sleep(600);
     await reset(page);
+    // When the tap landed, and the frame after the button stopped being busy: that frame has the answer in it.
+    await page.evaluate(`(() => {
+      const button = [...document.querySelectorAll('main button')].find((b) => b.textContent.trim() === 'Calcular ruta');
+      window.__tapAt = 0;
+      window.__answerAt = 0;
+      addEventListener('pointerup', (e) => { if (!window.__tapAt) window.__tapAt = e.timeStamp; }, { capture: true });
+      if (button) new MutationObserver(() => {
+        if (button.getAttribute('aria-busy') === 'false' && !window.__answerAt) requestAnimationFrame(() => setTimeout(() => { window.__answerAt = performance.now(); }, 0));
+      }).observe(button, { attributes: true, attributeFilter: ['aria-busy'] });
+    })()`);
     if (!(await tap(page, 'main button', 'Calcular ruta'))) console.log('  no "Calcular ruta" button found');
-    await sleep(Math.max(3000, 12 * CPU_THROTTLE * 100));
+    const answerAt = () => page.evaluate<number>('window.__answerAt');
+    for (let waited = 0; waited < 16_000 && !(await answerAt()); waited += 250) await sleep(250);
+    await sleep(500); // the tap's Event Timing entry, and whatever the answer set off
     const probe = await probeOf(page);
     const taps = probe.events.filter(([name]) => /^(pointerup|mouseup|click)$/.test(name));
-    const answered = Math.max(0, ...taps.map(([, , duration]) => duration));
+    const tapFrame = Math.max(0, ...taps.map(([, , duration]) => duration));
+    const answered = (await answerAt()) - (await page.evaluate<number>('window.__tapAt'));
     console.log(`\n  ${mode === 'Agora' ? 'leaving now' : `there by ${hhmm}`}: ${from} -> ${to}`);
-    // Guards above the measured spread, not targets: leaving now 660-820 ms (940-1,040 before
-    // the planner remembered what does not change), arriving by 5.0-6.4 s (12.4). "Good" INP
-    // is 200 ms, and neither gets there while the whole plan runs inside the tap.
-    budget('tap to the painted answer', answered, mode === 'Agora' ? 1000 : 8000);
+    // Guards above the measured spread, not targets. The tap's own frame was the answer until
+    // «Calculando» (3 Oct 2026): now 56-72 ms, under the 200 ms that is "good" INP. The answer,
+    // the build before and this one back to back the same afternoon: leaving now 0.85-1.0 s
+    // and 0.88-0.97 s; arriving by 8.6-9.4 s and 10.3-12.2 s. The difference is the dots: the
+    // compositor keeps them bouncing through the plan (116 distinct frames in 5 s of it), and
+    // at 6x the throttled thread pays 1-3 s for that; with reduced motion, 9.2-10.0 s. On 30
+    // September the same machine planned "arrive by" in 5.0-6.4 s, and 12.4 before that.
+    budget('tap to «Calculando» on screen', tapFrame, 200);
+    if (!(await answerAt())) {
+      failures++;
+      report('tap to the painted answer', 'never', '<-- the button was still busy after 16 s');
+    } else budget('tap to the painted answer', answered, mode === 'Agora' ? 1300 : 13000);
     report('main thread blocked', `${blockingMs(probe).toFixed(0)} ms`, `longest task ${longest(probe)}`);
     await page.close();
   }

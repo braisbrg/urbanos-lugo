@@ -4046,6 +4046,34 @@ ok('a ride costs the phone what it shows, not a repaint every frame', () => {
   assert(/<InteractiveMap [^>]*visible=\{activeTab === 'map'\}/.test(read('src/App.tsx')), 'the map is no longer told when it is hidden');
 });
 
+ok('every animation moves on the compositor: opacity and transform, nothing else', () => {
+  // The motion rule of 20 September 2026 says opacity and transform only, and two one-shots
+  // broke it until 2 October: `attention`, the ring around «Vou nesta», spread a box-shadow,
+  // and `seg-reveal` held a button's background colour. Each repainted every frame it ran,
+  // which is what the rule is there to stop; the ride's pulse did it for an hour at a time.
+  const css = read('src/index.css');
+  const keyframes = [...css.matchAll(/@keyframes ([\w-]+) \{([^\n]*)\}\s*$/gm)];
+  assert(keyframes.length > 10, `found ${keyframes.length} one-line @keyframes, so this is reading the wrong thing`);
+  assert(!/@keyframes [\w-]+ \{\s*$/m.test(css), 'a @keyframes spans several lines, where the reading below would not see it');
+  for (const [, name, body] of keyframes) {
+    const properties = [...body.matchAll(/([\w-]+)\s*:/g)].map((m) => m[1]);
+    assert(properties.every((p) => p === 'opacity' || p === 'transform'), `@keyframes ${name} animates ${properties.join(', ')}: that repaints every frame on the main thread`);
+  }
+});
+
+ok('a tap on «Calcular ruta» says «Calculando» before the plan holds the thread', () => {
+  // The plan ran inside the tap: "arrive by" held a slow phone for 5.0-6.4 s with nothing on
+  // screen to say why. The button now says «Calculando» in a frame of its own, and the plan
+  // waits until that frame has been painted.
+  const view = read('src/components/RoutePlannerView.tsx');
+  const body = view.slice(view.indexOf('const calculate = ('), view.indexOf('// A place chosen in the search box'));
+  assert(body.length > 200, 'could not find calculate() in RoutePlannerView, so this is reading the wrong thing');
+  assert(body.includes('setCalculating(true)'), 'calculate() no longer marks the button as calculating');
+  const painted = body.indexOf('afterPaint(');
+  assert(painted !== -1 && painted < body.indexOf('planTrips('), 'calculate() plans before the «Calculando» frame is on screen');
+  assert(/const afterPaint = \(run: \(\) => void\) => requestAnimationFrame\(\(\) => setTimeout\(run, 0\)\)/.test(view), 'afterPaint no longer waits for a painted frame');
+});
+
 await okAsync('what the planner remembers never changes what it answers', async () => {
   // The planner keeps what depends on the network alone per stop, and which bus a question
   // lands on while `now` is one instant: "arrive by" went from 1.6 s to 0.6 s on this machine
