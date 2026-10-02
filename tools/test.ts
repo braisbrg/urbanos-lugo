@@ -2151,6 +2151,12 @@ ok('what the workflows run is pinned, and none of them hands out more than it us
     // A token-minting permission belongs to the job that deploys with it, never to the whole workflow.
     const topLevel = commands.split(/^jobs:/m)[0];
     assert(!/id-token:\s*write/.test(topLevel), `${file}: id-token: write is granted to every job in the workflow`);
+    // A secret lives in an environment that Settings → Environments lets only main deploy
+    // from. A job that reads one without naming its environment reads it on any branch.
+    for (const job of (commands.split(/^jobs:/m)[1] ?? '').split(/\n(?= {2}[\w-]+:[ \t]*\n)/)) {
+      if (!/\bsecrets\.(?!GITHUB_TOKEN\b)/.test(job)) continue;
+      assert(/^ {4}environment:/m.test(job), `${file}: job "${job.trim().split(':')[0]}" reads a secret outside an environment`);
+    }
   }
 });
 

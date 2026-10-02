@@ -59,5 +59,7 @@ install script: `pnpm-workspace.yaml` rules on the one that has one (esbuild, re
 and a new one stops the install until somebody decides. CI installs with
 `--frozen-lockfile` and runs the type check and the test suite before it will build
 anything. Every action is pinned to a commit, with its version beside it, and the one job
-that holds a deploy token runs an exact Deno and an exact `@deno/deploy`; `pnpm test`
-fails if any of that comes loose.
+that holds a deploy token runs an exact Deno and an exact `@deno/deploy`, in the
+`deno-deploy` environment: that is where the token belongs, and Settings → Environments
+lets only `main` deploy from it. `pnpm test` fails if any of that comes loose in the
+workflows.

@@ -1370,8 +1370,9 @@ pregunta aquí era unha alí.
 
 **Vai en Deno Deploy**, e despregao `.github/workflows/deploy-worker.yml` cando cambia algo
 do que está feito. Non hai CLI que instalar nin sesión que iniciar nunha máquina: fai falta
-un `DENO_DEPLOY_TOKEN` nos segredos do repositorio, e **sen ese segredo o workflow non fai
-nada e dío** —non deixa unha execución en vermello nun repositorio que decidiu non montalo.
+un `DENO_DEPLOY_TOKEN` nos segredos do ambiente `deno-deploy`, e **sen ese segredo o
+workflow non fai nada e dío** —non deixa unha execución en vermello nun repositorio que
+decidiu non montalo.
 
 Escribiuse primeiro para Cloudflare Workers e mudarse custou tres liñas —o ambiente, a
 escritura diferida na caché e o punto de entrada—, porque todo o que importa aquí é
@@ -1386,8 +1387,11 @@ Deno esixe extensión explícita nos imports relativos e todo `src/` está escri
 empaquetador, así que o workflow empaqueta antes con esbuild, que xa está aquí por
 `server.ts`. `pnpm run worker:build` fai o mesmo en local.
 
-Fai falta, unha vez: o token de Deno Deploy como segredo `DENO_DEPLOY_TOKEN` e a
-organización como variable `DENO_DEPLOY_ORG`. O resto ponno o workflow: crea a app
+Fai falta, unha vez: un token de organización de Deno Deploy (na consola, *Settings →
+Organization tokens*) como segredo `DENO_DEPLOY_TOKEN` do ambiente `deno-deploy`, que en
+*Settings → Environments* só deixa despregar a `main` (un segredo do repositorio co mesmo
+nome tamén chega ao job), e a organización como variable `DENO_DEPLOY_ORG`. O resto ponno
+o workflow: crea a app
 `urbanos-lugo-api` se non existe e fixa no seu ambiente `ALLOWED_ORIGIN` co enderezo do
 sitio (`https://<usuario>.github.io`, derivado do dono do repositorio) — é o único que
 poderá chamalo. Sen ese valor o worker responde sen cabeceira de CORS e o navegador

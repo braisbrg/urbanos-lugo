@@ -6,8 +6,8 @@ name: Deploy the API worker
 #
 # It only exists if somebody deploys it. Without it the site is exactly what it is today:
 # the notices come from the copy the hourly job commits, and the QR block does not appear.
-# So this workflow does nothing at all until DENO_DEPLOY_TOKEN is set as a repository
-# secret — no red runs on a repository that has decided not to bother.
+# So this workflow does nothing at all until DENO_DEPLOY_TOKEN is set, as a secret of the
+# deno-deploy environment below — no red runs on a repository that has decided not to bother.
 on:
   push:
     branches: [main]
@@ -36,6 +36,11 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Where the token lives: a secret of this environment, which Settings → Environments
+    # lets only main deploy from, so a run from any other branch is refused before it starts.
+    # A repository secret of the same name still reaches the job, so moving the token here
+    # works in either order; GitHub creates the environment on first use if it is missing.
+    environment: deno-deploy
     env:
       # Read here and not in the step's `if`: the secrets context is available to a job's
       # env and not to a step's condition, where it would quietly evaluate to nothing and
