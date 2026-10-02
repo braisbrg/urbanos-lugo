@@ -357,13 +357,19 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
      antes de planificar é un cambio en `RoutePlannerView`, e obra.
    - **As pestanas á demanda.** Uns 150 ms menos ao primeiro pintado, a cambio de agardar
      pola rede ao abrir Ruta ou Liñas a primeira vez.
-   - **A precaché**, 1,05 MB en brotli na primeira visita, 396 KB deles a rede peonil, que
-     se podería gardar só cando se trace o primeiro camiño.
-   - **O token de Deno Deploy nun ambiente de GitHub** con despregue só desde `main`
-     (zizmor, `secrets-outside-env`), e pechar a alerta #14 de code scanning como a #2, que
-     é a mesma. Un `cooldown` en Dependabot (semgrep) para non adoptar versións do mesmo día.
-   - **Os primeiros workflows en `main`** coas accións fixadas ao seu commit: que despreguen
-     Pages e o *worker*, e que o do *worker* funcione sen `id-token`.
+   - **As animacións `attention` e `seg-reveal`** pintan sombra e cor de fondo, fóra da
+     regra de `opacity` e `transform` de `DECIDIDO.md`: pasalas a esas dúas propiedades, ou
+     dicir na regra que un efecto dunha vez, de menos dun segundo, pode pintar.
+   - **O token de Deno Deploy no ambiente `deno-deploy`.** O workflow xa o nomea (2 de
+     outubro); falta crealo en *Settings → Environments* con despregue só desde `main`, pór
+     alí un token de organización novo e borrar o segredo do repositorio e o token vello.
+   - **A organización de Deno Deploy sen verificar** usa só o 1 % do plan gratuíto: 10.000
+     peticións ao mes. Cada visita pide os avisos unha vez, e un taboleiro aberto desde o QR
+     pide os minutos cada 30 s; verificala cun medio de pago dá o millón do plan.
+   - **Os workflows do luns en `main`**, «Check the sources» e «Measure in a browser», coas
+     accións fixadas: a primeira volta despois da 1.2.1 é o 5 de outubro, e a de medir ten
+     que gardar o artefacto `browser-measurements-N` cos catro ficheiros (upload-artifact 7).
+     Pages e o *worker* xa despregaron así o 1 de outubro, o *worker* sen `id-token`.
 
 ### Lista para o iPhone
 

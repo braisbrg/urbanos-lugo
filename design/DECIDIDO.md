@@ -211,6 +211,16 @@ descrición. Catro regras, e o que quedou fóra:
 - Antes descartárase un tinte pálido cunha franxa de cor de 4 px á esquerda: é o patrón de
   tarxeta que delata unha interface xerada.
 
+## A precaché e Dependabot — 2 de outubro de 2026
+
+- **A rede peonil segue na precaché.** Son 396 KB en brotli dos 1,05 MB que baixan en
+  segundo plano na primeira visita, e a cambio o primeiro camiño a pé non agarda pola rede
+  nin falla sen cobertura. Gardala só ao trazar o primeiro camiño aforraba esa descarga a
+  quen nunca traza un, e quedou fóra.
+- **Dependabot sen `cooldown`.** Que abra as súas propostas no momento: van contra
+  `develop`, pasan os catro gates no CI e nada entra sen fundilo a man. semgrep suxería
+  agardar uns días para non adoptar versións do mesmo día.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).
