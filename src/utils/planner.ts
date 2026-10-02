@@ -526,6 +526,7 @@ function planBetweenStops(lang: Lang, fromRes: LocationResolution, toRes: Locati
       // Shared with every option built from the same lead-in, so replaced rather than edited.
       for (let i = 0; i < firstBusAt; i++) {
         const seg = segments[i];
+        if (seg.type === 'bus') continue; // none before the first bus; this says so to the type
         const isWait = seg.type === 'wait';
         segments[i] = {
           ...seg,

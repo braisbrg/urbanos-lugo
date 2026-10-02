@@ -145,8 +145,7 @@ export interface TripFare {
   citizenCardEuros: number;
 }
 
-export interface TripSegment {
-  type: 'walk' | 'wait' | 'bus';
+interface SegmentFields {
   line?: BusLine;
   /** Which direction of `line` this leg rides, so the map can slice its geometry. */
   directionId?: string;
@@ -161,6 +160,30 @@ export interface TripSegment {
   departureTime?: string;
   arrivalTime?: string;
 }
+
+/**
+ * A ride. Both its times come from the timetable and each says which kind it is, so a bus
+ * leg built without its provenance does not compile: the boarding time's, and the
+ * arrival's, which the itinerary marks `~` on its own when the timetable does not print it.
+ */
+export interface BusSegment extends SegmentFields {
+  type: 'bus';
+  line: BusLine;
+  directionId: string;
+  precision: Precision;
+  arrivalPrecision: Precision;
+  fromStop: BusStop;
+  toStop: BusStop;
+  stopsCount: number;
+  departureTime: string;
+  arrivalTime: string;
+}
+
+export interface WalkOrWaitSegment extends SegmentFields {
+  type: 'walk' | 'wait';
+}
+
+export type TripSegment = BusSegment | WalkOrWaitSegment;
 
 export interface RoutePlanResult {
   durationMinutes: number;
