@@ -2256,6 +2256,37 @@ ok('the app imports nothing from the tools, and the browser never imports the po
   assert(/from '\.\/src\/security\/csp'/.test(read('server.ts')) && /from '\.\/src\/security\/csp'/.test(read('vite.config.ts')), 'server.ts or vite.config.ts no longer imports the policy');
 });
 
+ok('no translated string claims a live feed, a remote router or a wake lock', () => {
+  // Nobody publishes where this network's buses are: the README says the app never says
+  // "real time", and DATA.md keeps EN DIRECTO unused until a feed exists. Those words may
+  // appear only to deny it ("non en directo"). The ride's switch never says "wake lock"
+  // (DECIDIDO.md). And no string credits a router with the walk: one said "measured by the
+  // OpenStreetMap pedestrian router" for three weeks after that router left the app.
+  const LIVE = /tempo real|tiempo real|real[- ]?time|en directo|en vivo|ao vivo|\blive\b|EN DIRECTO/i;
+  const DENIED = /\b(non|no|not|nunca|never|sen|sin|without)\b/i;
+  let read = 0;
+  for (const lang of LANGS) {
+    const walk = (node: unknown, path: string) => {
+      if (typeof node === 'string') {
+        read++;
+        assert(!LIVE.test(node) || DENIED.test(node), `${lang}.${path} claims a live feed: "${node.slice(0, 80)}"`);
+        assert(!/wake ?lock/i.test(node), `${lang}.${path} says "wake lock": "${node.slice(0, 80)}"`);
+        assert(!/router|enrutador|routing/i.test(node), `${lang}.${path} credits a router with the walk, which is worked out on the device: "${node.slice(0, 80)}"`);
+      } else if (typeof node === 'function') {
+        // A number in every slot, or a list of lines for the one function that takes them.
+        const call = (arg: unknown) => (node as (...a: unknown[]) => unknown)(...Array(node.length).fill(arg));
+        let out: unknown;
+        try { out = call(1); } catch { out = call(['1']); }
+        walk(out, path);
+      } else if (node && typeof node === 'object') {
+        for (const [k, v] of Object.entries(node)) walk(v, path ? `${path}.${k}` : k);
+      }
+    };
+    walk(translations(lang), '');
+  }
+  assert(read > 300, `read only ${read} strings, so this is not walking the dictionaries`);
+});
+
 ok('the documents name every data file, every bundled library and every host a visit contacts', () => {
   // DATA.md, NOTICE.md and PRIVACY.md are promises about provenance, credit and what leaves
   // the device, and each was kept by hand: three of the fourteen data files went unnamed in
