@@ -1637,6 +1637,25 @@ ok('no view renders Galician or Spanish text of its own', () => {
     });
   }
 
+  // The word list above knows twenty-five words, and only on a line of its own: `<p>Tarifas</p>`
+  // started with "<" and was let through, and so were "Próximos buses" and an English
+  // aria-label. So, in the views, any words between a tag and the next tag or expression,
+  // and any literal accessible name, title, placeholder or alt, in whatever language. The
+  // exceptions are names, which stay as their owners write them.
+  const NAMES = ['buslugo.com', 'Concello de Lugo - Mobilidade: 982 29 74 00', 'Monbus Lugo: 982 24 16 00'];
+  for (const file of sourcesUnder('src').filter((f) => f.endsWith('.tsx') && !f.split(sep).includes('i18n'))) {
+    const code = readFileSync(file, 'utf8').replace(/\{\/\*[\s\S]*?\*\/\}|\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, (comment) => comment.replace(/[^\n]/g, ''));
+    const at = (index: number) => `${relative(file)}:${code.slice(0, index).split('\n').length}`;
+    // Not after `=` or `-`, which make `=>` and `->`; code between them (`a > b && c <`) has operators in it.
+    for (const m of code.matchAll(/(?<![=-])>([^<>{}]*)(?=[<{])/g)) {
+      const text = m[1].trim();
+      if (/\p{L}{2,}/u.test(text) && !/[=;()&|?`$]/.test(text) && !NAMES.includes(text)) offenders.push(`${at(m.index)}  ${text.slice(0, 54)}`);
+    }
+    for (const m of code.matchAll(/\b(aria-label|aria-description|title|placeholder|alt|label)="([^"]*)"/g)) {
+      if (/\p{L}{2,}/u.test(m[2]) && !m[2].includes('${')) offenders.push(`${at(m.index)}  ${m[1]}="${m[2].slice(0, 40)}"`);
+    }
+  }
+
   assert(offenders.length === 0, `text typed straight into the markup instead of coming from the dictionary:\n  ` + offenders.join('\n  '));
 });
 
