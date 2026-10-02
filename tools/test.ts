@@ -2845,17 +2845,82 @@ ok('nothing scraped reaches a Leaflet tooltip unescaped', () => {
       if (!/(bindTooltip|bindPopup)\(|innerHTML\s*=/.test(line)) continue;
       // The call rarely fits on one line; three is enough for every one of them here.
       const call = lines.slice(i, i + 4).join(' ');
-      // Names, zones and line numbers are the scraped fields. Numbers computed here are
-      // not markup and need no escaping.
-      const scraped = /\.(name|zone|number|color|address)\b/.exec(call);
+      // Names, zones and line numbers are the scraped fields, and so are a bus's destination
+      // and next stop. Numbers computed here are not markup and need no escaping.
+      const scraped = /\.(name|zone|number|color|address|destination|nextStopName|lineNumber|lineColor|code)\b/.exec(call);
       if (scraped && !/escapeHtml/.test(call)) {
         offenders.push(`${file}:${i + 1}  ${line.trim().slice(0, 70)}`);
       }
     }
   }
 
+  // That reads four lines and is satisfied by one escapeHtml anywhere in them, and it never
+  // looked at divIcon markup: the trip map's pin printed a line number raw. So every value
+  // interpolated into a template that carries markup, at any depth, has to be escaped, a
+  // number, the dictionary's own markup, or a local escaped where it was made.
+  const NOT_TEXT = new Set(['weight', 'fontSize', 'minWidth', 'bus.bearing', 'rowButtonStyle', 'inner', 'ink']);
+  let read = 0;
+  for (const file of readdirSync(dir).filter((f) => /\.tsx?$/.test(f))) {
+    const code = readFileSync(join(dir, file), 'utf8');
+    const escapedLocals = new Set([...code.matchAll(/const (\w+) = escapeHtml\(/g)].map((m) => m[1]));
+    for (const { expr, at } of markupInterpolations(code)) {
+      read++;
+      const fine = /^(escapeHtml|badgeHtml)\(/.test(expr) || /^t\.\w+\.\w+$/.test(expr) || /\.toFixed\(\d\)$/.test(expr) || NOT_TEXT.has(expr) || escapedLocals.has(expr) || /^\w+ \? `/.test(expr);
+      if (!fine) offenders.push(`${file}:${code.slice(0, at).split('\n').length}  \${${expr.slice(0, 60)}}`);
+    }
+  }
+  assert(read > 25, `found only ${read} values interpolated into map markup, so the scan is not reading the templates`);
+
   assert(offenders.length === 0, `scraped text reaches a Leaflet tooltip without escapeHtml:\n    ${offenders.join('\n    ')}`);
 });
+
+/**
+ * Every `${...}` inside a template literal whose own text carries a tag, nested templates
+ * included, with where it sits. Strings and comments are stepped over, so a backtick or a
+ * brace inside one does not open anything.
+ */
+function markupInterpolations(code: string): { expr: string; at: number }[] {
+  const found: { expr: string; at: number }[] = [];
+  const skipQuoted = (k: number) => {
+    const quote = code[k];
+    for (k++; k < code.length && code[k] !== quote; k++) if (code[k] === '\\') k++;
+    return k;
+  };
+  const skipComment = (k: number) => (code[k + 1] === '/' ? code.indexOf('\n', k) : code.indexOf('*/', k) + 1);
+  const readExpression = (k: number): number => {
+    for (let depth = 0; k < code.length; k++) {
+      const c = code[k];
+      if (c === '`') k = readTemplate(k);
+      else if (c === "'" || c === '"') k = skipQuoted(k);
+      else if (c === '{') depth++;
+      else if (c === '}' && depth-- === 0) return k;
+    }
+    return k;
+  };
+  const readTemplate = (k: number): number => {
+    let text = '';
+    const inside: { expr: string; at: number }[] = [];
+    for (k++; k < code.length; k++) {
+      if (code[k] === '\\') k++;
+      else if (code[k] === '`') break;
+      else if (code[k] === '$' && code[k + 1] === '{') {
+        const end = readExpression(k + 2);
+        inside.push({ expr: code.slice(k + 2, end).trim(), at: k });
+        k = end;
+      } else text += code[k];
+    }
+    if (/</.test(text)) found.push(...inside);
+    return k;
+  };
+  for (let k = 0; k < code.length; k++) {
+    const c = code[k];
+    if (c === '/' && (code[k + 1] === '/' || code[k + 1] === '*')) k = skipComment(k);
+    else if (c === "'" || c === '"') k = skipQuoted(k);
+    else if (c === '`') k = readTemplate(k);
+    if (k < 0) break;
+  }
+  return found;
+}
 
 ok('the build compresses its assets and the server hands them over', () => {
   // Self-hosting put 544 KB on the wire where 116 KB of brotli would do. The fix is two
