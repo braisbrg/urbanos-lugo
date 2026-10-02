@@ -141,7 +141,7 @@ const arrowIcon = (color: string, weight: number, deg: number): L.DivIcon =>
     iconAnchor: [8, 8],
     html:
       `<svg width="16" height="16" viewBox="-8 -8 16 16" style="display:block;transform:rotate(${deg.toFixed(1)}deg)" aria-hidden="true">` +
-      `<path d="M-4 -6 L3 0 L-4 6" fill="none" stroke="${color}" stroke-width="${weight}" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      `<path d="M-4 -6 L3 0 L-4 6" fill="none" stroke="${escapeHtml(color)}" stroke-width="${weight}" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   });
 
 /** The routes under a click, one row per line, with real handlers: a corridor can carry six lines and the reader says which. */

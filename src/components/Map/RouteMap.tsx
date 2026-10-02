@@ -48,7 +48,7 @@ function pinIcon(color: string, label: string): L.DivIcon {
     className: 'route-map-pin',
     iconSize: [28, 28],
     iconAnchor: [14, 14],
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${color};color:${ink};font:700 12px/1 var(--font-sans);box-shadow:0 1px 4px rgba(0,0,0,.4);border:2px solid ${ink};">${label}</div>`,
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${escapeHtml(color)};color:${ink};font:700 12px/1 var(--font-sans);box-shadow:0 1px 4px rgba(0,0,0,.4);border:2px solid ${ink};">${escapeHtml(label)}</div>`,
   });
 }
 
