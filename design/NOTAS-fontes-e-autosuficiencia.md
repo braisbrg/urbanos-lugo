@@ -352,17 +352,12 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
 
 11. **O que deixou a rolda 25 de `REXISTRO-probas.md`** (1 de outubro de 2026), para
    decidir e para vixiar:
-   - **O planificador fóra do toque.** Saíndo agora son 0,66–0,82 s do toque á resposta a
-     6× de CPU, e «chegar antes» 5,0–6,4 s; o INP bo son 0,2 s. Un *worker* ou ceder o fío
-     antes de planificar é un cambio en `RoutePlannerView`, e obra.
    - **As pestanas á demanda.** Uns 150 ms menos ao primeiro pintado, a cambio de agardar
      pola rede ao abrir Ruta ou Liñas a primeira vez.
-   - **As animacións `attention` e `seg-reveal`** pintan sombra e cor de fondo, fóra da
-     regra de `opacity` e `transform` de `DECIDIDO.md`: pasalas a esas dúas propiedades, ou
-     dicir na regra que un efecto dunha vez, de menos dun segundo, pode pintar.
-   - **O token de Deno Deploy no ambiente `deno-deploy`.** O workflow xa o nomea (2 de
-     outubro); falta crealo en *Settings → Environments* con despregue só desde `main`, pór
-     alí un token de organización novo e borrar o segredo do repositorio e o token vello.
+   - **O token de Deno Deploy no ambiente `deno-deploy`.** O workflow nómeao, e o ambiente
+     existe desde o 2 de outubro, só para `main` e co token de organización novo. Falta,
+     cando un despregue do *worker* desde `main` co ambiente saia en verde (o da próxima
+     versión), borrar o segredo do repositorio e o token vello.
    - **A organización de Deno Deploy sen verificar** usa só o 1 % do plan gratuíto: 10.000
      peticións ao mes. Cada visita pide os avisos unha vez, e un taboleiro aberto desde o QR
      pide os minutos cada 30 s; verificala cun medio de pago dá o millón do plan.

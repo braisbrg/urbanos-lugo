@@ -221,6 +221,22 @@ descrición. Catro regras, e o que quedou fóra:
   `develop`, pasan os catro gates no CI e nada entra sen fundilo a man. semgrep suxería
   agardar uns días para non adoptar versións do mesmo día.
 
+## O planificador e a regra do movemento — 3 de outubro de 2026
+
+- **«Calculando», con tres puntos que botan.** O plan corre no fío principal e «chegar
+  antes» ocúpao segundos nun teléfono lento, sen nada na pantalla que o dixese. Agora o
+  botón pinta «Calculando» nun cadro seu e o plan empeza despois: o toque responde en
+  56–72 ms a 6× de CPU. Os puntos móveos o compositor, así que seguen botando co fío
+  ocupado (116 cadros distintos en 5 s dun plan). Custan: a 6×, «chegar antes» pasou de
+  9,2–10,0 s cos puntos quietos a 10,3–12,2 s; nun teléfono o compositor vai noutro núcleo,
+  pero iso non se mediu. O *worker* que deixaría a páxina usable mentres calcula quedou fóra.
+- **A regra de `opacity` e `transform` xa non ten excepcións.** `attention`, o anel arredor
+  de «Vou nesta», é un disco detrás do botón que medra e se esvae na mesma curva, co mesmo
+  alfa en cada cadro que a sombra que era; `seg-reveal` deixou de ser unha animación e o
+  recheo do botón premido chega aos 200 ms dunha vez. Os puntos de «Calculando» son o
+  segundo bucle da app, despois do latexo de «Vou nesta», e duran o que dura o cálculo.
+  `pnpm test` le cada `@keyframes` e falla se algún anima outra cousa.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).
