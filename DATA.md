@@ -25,7 +25,10 @@ Propiedad Intelectual, art. 13). The file has to be extended by hand every year,
 
 Departure times, timing points, stop names and pole codes are transcribed from the
 timetables the concessionaire publishes at <https://buslugo.com>, the page Lugo
-residents are pointed at.
+residents are pointed at. They ship as `src/data/stops.json` and `src/data/lines.json`,
+which `tools/buildDataset.ts` generates from `data/official-raw.json`, the snapshot
+`tools/importOfficialData.ts` takes of those pages. `stops.json` also carries each pole's
+shelter and bench, and one coordinate, from OpenStreetMap; both are covered below.
 
 - **Status:** published for public consultation. No licence is stated on the source
   and no data-reuse agreement has been granted to this project.
