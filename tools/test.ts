@@ -12,6 +12,7 @@ import { dayWord, daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
 import { createHash } from 'node:crypto';
+import { buildSync } from 'esbuild';
 import { REPO_URL } from '../src/project';
 import { ROOT_HEAD, SITE_PATHS, canonicalUrl, pageHead, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
@@ -2252,6 +2253,28 @@ ok('the app imports nothing from the tools, and the browser never imports the po
   assert(offenders.length === 0, `the bundle reaches what it must not:\n    ${offenders.join('\n    ')}`);
   // And the two Node files that may import it still do, or this is checking an unused name.
   assert(/from '\.\/src\/security\/csp'/.test(read('server.ts')) && /from '\.\/src\/security\/csp'/.test(read('vite.config.ts')), 'server.ts or vite.config.ts no longer imports the policy');
+});
+
+ok('the services and the worker bundle for a runtime with no Node in it', () => {
+  // src/services is imported by the browser, server.ts and the Deno worker, so it may use
+  // web standards only (CLAUDE.md). Only the worker's deploy job, on main, ever bundled it
+  // that way, so a Node import would have passed every gate and broken the deployment. This
+  // is the same esbuild call as `pnpm run worker:build`, for every service too, in memory.
+  const entries = ['worker/index.ts', ...readdirSync(join(root, 'src', 'services')).filter((f) => f.endsWith('.ts')).map((f) => `src/services/${f}`)];
+  let bundled: ReturnType<typeof buildSync>;
+  try {
+    bundled = buildSync({ absWorkingDir: root, entryPoints: entries, bundle: true, format: 'esm', platform: 'neutral', target: 'es2022', write: false, metafile: true, outdir: 'out', logLevel: 'silent' });
+  } catch (error) {
+    throw new assert.AssertionError({ message: `the services do not bundle without Node: ${(error as Error).message.split('\n').slice(0, 3).join(' ')}` });
+  }
+  // A global is not an import, so esbuild cannot see it; ours are read for Node's own.
+  const ours = Object.keys(bundled.metafile!.inputs).filter((file) => /^(src|worker)\/.*\.tsx?$/.test(file));
+  assert(ours.length > 5, `the bundle read only ${ours.length} of our files, so this is not looking at the services`);
+  for (const file of ours) {
+    const code = read(file).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    const node = /\b(process\.|Buffer\b|require\(|__dirname|__filename)/.exec(code);
+    assert(!node, `${file} reaches for Node's ${node?.[1]}, and it is bundled into the worker or a service`);
+  }
 });
 
 ok('the development server answers this machine, not the network', () => {
