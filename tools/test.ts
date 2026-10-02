@@ -2236,6 +2236,24 @@ ok('the policy is not sent in development, where it serves a blank page', () => 
   assert(injector.length > 0 && /apply: 'build'/.test(injector), 'the CSP injector no longer limits itself to builds');
 });
 
+ok('the app imports nothing from the tools, and the browser never imports the policy', () => {
+  // CLAUDE.md: tools/ is never imported by the app. csp.ts hashes with node:crypto and reads
+  // process.env, and says it is only ever imported by Node; in the bundle either would be a
+  // broken page or a build that pulls a Node polyfill in. Comments are stripped, because
+  // themeInit.ts names csp.ts in one.
+  const offenders: string[] = [];
+  for (const file of sourcesUnder('src')) {
+    const code = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    for (const [, from] of code.matchAll(/(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g)) {
+      if (/(^|\/)tools\//.test(from)) offenders.push(`${relative(file)} imports ${from}`);
+      if (/(^|\/)csp$|security\/csp(\.ts)?$/.test(from) && !file.endsWith(join('security', 'csp.ts'))) offenders.push(`${relative(file)} imports ${from}`);
+    }
+  }
+  assert(offenders.length === 0, `the bundle reaches what it must not:\n    ${offenders.join('\n    ')}`);
+  // And the two Node files that may import it still do, or this is checking an unused name.
+  assert(/from '\.\/src\/security\/csp'/.test(read('server.ts')) && /from '\.\/src\/security\/csp'/.test(read('vite.config.ts')), 'server.ts or vite.config.ts no longer imports the policy');
+});
+
 ok('the development server answers this machine, not the network', () => {
   // In development Vite serves any file under the project root, gitignored ones included,
   // and the server listened on 0.0.0.0: a file planted in .claude/ came back 200 through the
