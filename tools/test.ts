@@ -1038,15 +1038,26 @@ ok('every map gets its chrome from the one place that has it', () => {
   const basemap = readFileSync(join(mapDir, 'basemap.ts'), 'utf8');
   assert(/attributionControl\?\.setPrefix\(false\)/.test(basemap), 'createBasemap no longer drops the "Leaflet" prefix, so every map prints it again');
 
-  for (const file of readdirSync(mapDir).filter((f) => f.endsWith('.tsx'))) {
-    const source = readFileSync(join(mapDir, file), 'utf8');
-    if (!/\bL\.map\(/.test(source)) continue;
-
-    assert(/createBasemap\(/.test(source), `${file} builds a map without createBasemap, so it gets neither the basemap nor its attribution`);
-    assert(!/setPrefix\(/.test(source), `${file} sets the attribution prefix itself; that belongs in basemap.ts for all of them`);
-    // And its name and control titles in the reader's language. The route map was born
-    // after the other two got theirs, and said "Zoom in" under a Galician itinerary.
-    assert(/useMapChrome\(/.test(source), `${file} builds a map without useMapChrome, so it is an unnamed tab stop with English zoom buttons`);
+  // Since the simplification of 20 September 2026 every map is built in one hook, and the
+  // loop that looked for `L.map(` in Map/*.tsx found none and asserted nothing. So: exactly
+  // one file builds a Leaflet map, and it gives each map the basemap, a name and its zoom
+  // titles in the reader's language. The route map was born after the other two got theirs,
+  // and said "Zoom in" under a Galician itinerary.
+  const buildsAMap = (text: string) => {
+    const leaflet = /import\s+(?:\*\s+as\s+)?(\w+)\s+from\s+'leaflet'/.exec(text)?.[1];
+    return !!leaflet && new RegExp(`\\b${leaflet}\\.map\\(|new\\s+${leaflet}\\.Map\\(`).test(text);
+  };
+  const builders = sourcesUnder('src').filter((file) => buildsAMap(readFileSync(file, 'utf8'))).map(relative);
+  assert.deepStrictEqual(builders, [join('src', 'hooks', 'useLeafletMap.ts')], `Leaflet maps are built in ${builders.join(', ') || 'no file'}; useLeafletMap is the one place that gives them a basemap, a name and translated controls`);
+  const hook = read('src/hooks/useLeafletMap.ts');
+  assert(/createBasemap\(/.test(hook), 'useLeafletMap builds a map without createBasemap, so it gets neither the basemap nor its attribution');
+  assert(/setAttribute\('aria-label', region\)/.test(hook), 'the map hook no longer names its map, so each one is an unnamed tab stop');
+  assert(/t\.map\.zoomIn/.test(hook) && /t\.map\.zoomOut/.test(hook), 'the map hook no longer titles the zoom buttons in the reader’s language');
+  for (const file of readdirSync(mapDir).filter((f) => /\.tsx?$/.test(f) && f !== 'basemap.ts')) {
+    assert(!/setPrefix\(/.test(readFileSync(join(mapDir, file), 'utf8')), `${file} sets the attribution prefix itself; that belongs in basemap.ts for all of them`);
+  }
+  for (const file of ['TransitMap.tsx', 'RouteMap.tsx', 'NearbyMiniMap.tsx']) {
+    assert(/useLeafletMap\(/.test(readFileSync(join(mapDir, file), 'utf8')), `${file} no longer gets its map from useLeafletMap`);
   }
 
   // The two maps that live inside something the reader scrolls have to let them scroll.
