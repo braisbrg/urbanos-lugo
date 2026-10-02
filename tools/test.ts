@@ -43,6 +43,17 @@ import { overpass } from './osm';
 
 hydrateGeometry();
 
+/**
+ * Every gate is offline and deterministic (CLAUDE.md), and this file runs on every push.
+ * A check that reaches somebody else's server is refused here and noted, so one swallowed
+ * by a catch still fails at the end; checks that need an answer stub fetch and put this back.
+ */
+const reachedOut: string[] = [];
+globalThis.fetch = (async (input: unknown) => {
+  reachedOut.push(String(input));
+  throw new Error(`the suite tried to reach ${String(input)}; every gate runs offline`);
+}) as typeof fetch;
+
 /** The repository root, and a file under it, for the checks that read the source rather than run it. */
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
@@ -4403,6 +4414,12 @@ ok('the map’s buses start hidden, and while they are shown the map says they a
     assert(/horario|timetable/.test(translations(lang).map.scheduledBusesCount), `${lang}: the bus count no longer says where the buses come from`);
   }
   assert(/name: 'buses'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer measures the map with its buses on');
+});
+
+ok('no check reached the network', () => {
+  // The other half of the refusal at the top: syncOfficialAlerts and the operator reader turn
+  // a failed request into an answer, so a check that forgot its stub would pass on "unreachable".
+  assert(reachedOut.length === 0, `checks tried to reach ${reachedOut.join(', ')}; every gate runs offline`);
 });
 
 // Last on purpose: it counts itself. The README quoted 141 while this file ran 143, which
