@@ -28,10 +28,14 @@ export interface BusStop {
   bench: boolean | null;
 }
 
+/**
+ * The generated JSON also gives each direction a `name`, `Sentido ${destination}`, and each
+ * line its `days` and `frequency`: the operator's prose, in one language. They are left off
+ * these types on purpose, so reading one does not compile; `directionLabel()`,
+ * `daysLabel()` and `frequencyLabel()` say the same facts in the reader's language.
+ */
 export interface BusDirection {
   id: DirectionId;
-  /** `Sentido ${destination}`, in one language — do NOT render; use `directionLabel()`. */
-  name: string;
   origin: string;
   destination: string;
   stops: string[]; // stop ids in sequence
@@ -60,13 +64,7 @@ export interface BusLine {
   color: string;
   textColor: string;
   category: 'urbano' | 'hospital' | 'periferia' | 'rural' | 'especial';
-  /**
-   * Prose in the operator's Spanish, written once by the generator — do NOT render.
-   * `daysLabel()` / `frequencyLabel()` say the same facts in the reader's language;
-   * `description` exists only so the search matches a line by what it says.
-   */
-  days: string;
-  frequency: string;
+  /** The operator's prose about the line, kept only so the search matches a line by what it says. */
   description: string;
   firstDeparture: string; // "07:00"
   lastDeparture: string; // "22:30"

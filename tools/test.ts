@@ -1899,7 +1899,7 @@ ok('a route drawn from a car route says so', () => {
   for (const line of BUS_LINES) {
     for (const d of line.directions) {
       const src = d.geometrySource ?? 'missing';
-      bySource.set(src, [...(bySource.get(src) ?? []), `${line.number} ${d.name}`]);
+      bySource.set(src, [...(bySource.get(src) ?? []), `${line.number} towards ${d.destination}`]);
     }
   }
   assert(!bySource.has('missing'), 'a direction is drawn with no record of where the shape came from');

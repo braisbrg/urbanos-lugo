@@ -8,6 +8,10 @@ import { getScheduledBuses } from '../src/utils/vehicles';
 import { getArrivalsForStop } from '../src/utils/arrivals';
 import { buildRuns, dayKind, isWithinServiceWindow } from '../src/utils/schedule';
 import { hydrateGeometry } from './hydrateGeometry';
+import type { BusLine } from '../src/types';
+
+/** The operator's own wording, which BusLine leaves off so the app cannot show it; this report is for whoever keeps the data. */
+const operatorFrequency = (line: BusLine) => (line as BusLine & { frequency: string }).frequency;
 
 hydrateGeometry();
 
@@ -42,7 +46,7 @@ console.log('  id      cat        frecuencia     servizo        paradas    km');
 for (const line of BUS_LINES) {
   const stops = line.directions.map((d) => d.stops.length).join('/');
   console.log(
-    `  ${line.id.padEnd(7)} ${line.category.padEnd(10)} ${line.frequency.padEnd(14)} ` +
+    `  ${line.id.padEnd(7)} ${line.category.padEnd(10)} ${operatorFrequency(line).padEnd(14)} ` +
       `${(line.firstDeparture + '-' + line.lastDeparture).padEnd(14)} ${stops.padEnd(10)} ${km(line.directions).toFixed(1)}`,
   );
 }
