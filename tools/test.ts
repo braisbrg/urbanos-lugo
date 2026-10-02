@@ -2230,7 +2230,10 @@ ok('the policy is not sent in development, where it serves a blank page', () => 
   const html = read('index.html');
   assert(!/Content-Security-Policy/.test(html), 'index.html has a CSP meta tag again; it applies to `vite dev` and blocks HMR');
   const vite = read('vite.config.ts');
-  assert(/apply: 'build'/.test(vite), 'the CSP injector no longer limits itself to builds');
+  // Its own plugin, not any of the six that say `apply: 'build'`: with the line taken out of
+  // the injector the old pattern still matched the other five.
+  const injector = vite.slice(vite.indexOf("name: 'inject-csp'"), vite.indexOf('transformIndexHtml', vite.indexOf("name: 'inject-csp'")));
+  assert(injector.length > 0 && /apply: 'build'/.test(injector), 'the CSP injector no longer limits itself to builds');
 });
 
 ok('the development server answers this machine, not the network', () => {
