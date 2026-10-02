@@ -4,6 +4,7 @@
  */
 import assert from 'assert';
 import { readFileSync, readdirSync, existsSync } from 'fs';
+import { execFileSync } from 'child_process';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
@@ -2253,6 +2254,46 @@ ok('the app imports nothing from the tools, and the browser never imports the po
   assert(offenders.length === 0, `the bundle reaches what it must not:\n    ${offenders.join('\n    ')}`);
   // And the two Node files that may import it still do, or this is checking an unused name.
   assert(/from '\.\/src\/security\/csp'/.test(read('server.ts')) && /from '\.\/src\/security\/csp'/.test(read('vite.config.ts')), 'server.ts or vite.config.ts no longer imports the policy');
+});
+
+ok('the documents name every data file, every bundled library and every host a visit contacts', () => {
+  // DATA.md, NOTICE.md and PRIVACY.md are promises about provenance, credit and what leaves
+  // the device, and each was kept by hand: three of the fourteen data files went unnamed in
+  // DATA.md, the dataset itself among them.
+  const tracked = execFileSync('git', ['ls-files', '-z', 'src/data', 'data', 'public'], { cwd: root, encoding: 'utf8' }).split('\0').filter((f) => f.endsWith('.json'));
+  assert(tracked.length >= 10, `git lists only ${tracked.length} data files, so this is not reading the repository`);
+  const data = read('DATA.md');
+  for (const file of tracked) assert(data.includes(file.split('/').pop()!), `${file} ships or builds the dataset and DATA.md does not say where it comes from`);
+
+  // Every library the build bundles, by the name NOTICE.md credits it under. A new
+  // dependency fails here until it has a row there and an entry in this table.
+  const notice = read('NOTICE.md');
+  const CREDITED: Record<string, string> = {
+    react: 'React', 'react-dom': 'React DOM', leaflet: 'Leaflet', 'maplibre-gl': 'MapLibre GL JS',
+    '@maplibre/maplibre-gl-leaflet': 'maplibre-gl-leaflet', 'lucide-react': 'Lucide', express: 'Express',
+    tailwindcss: 'Tailwind CSS', 'vite-plugin-pwa': 'Workbox',
+  };
+  const pkg = JSON.parse(read('package.json'));
+  for (const name of [...Object.keys(pkg.dependencies), 'tailwindcss', 'vite-plugin-pwa']) {
+    assert(CREDITED[name], `${name} is a dependency with no credit recorded; add it to NOTICE.md and to this table`);
+    assert(notice.includes(CREDITED[name]), `NOTICE.md does not credit ${CREDITED[name]} (${name})`);
+  }
+  // The typeface is redistributed, so its licence travels beside it, naming both families,
+  // and NOTICE.md counts the files that are really there.
+  const ofl = read('src/fonts/OFL.txt');
+  assert(/Atkinson Hyperlegible Next/.test(ofl) && /Atkinson Hyperlegible Mono/.test(ofl), 'src/fonts/OFL.txt no longer carries the copyright of both families');
+  const words = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  const woff = readdirSync(join(root, 'src', 'fonts')).filter((f) => f.endsWith('.woff2')).length;
+  assert(new RegExp(`\\b${words[woff]} files\\b`, 'i').test(notice), `src/fonts has ${woff} font files and NOTICE.md says otherwise`);
+  // The heights in the walking network are the IGN's, CC BY, and DATA.md says NOTICE.md carries the credit.
+  assert(notice.includes('CC BY 4.0 scne.es'), 'NOTICE.md lost the attribution the IGN asks for');
+
+  // PRIVACY.md lists the hosts a visit contacts, "and that is the whole list": exactly the
+  // remote origins the content security policy lets the page reach.
+  const privacy = read('PRIVACY.md');
+  const listed = [...privacy.matchAll(/^\| `([a-z0-9.-]+\.[a-z]{2,})` \|/gm)].map((m) => `https://${m[1]}`).sort();
+  const allowed = [...new Set([...CSP_HEADER.matchAll(/https:\/\/[^\s;]+/g)].map((m) => m[0]))].sort();
+  assert.deepStrictEqual(listed, allowed, `PRIVACY.md lists [${listed.join(', ')}] as the hosts a visit contacts; the policy allows [${allowed.join(', ')}]`);
 });
 
 ok('the services and the worker bundle for a runtime with no Node in it', () => {
