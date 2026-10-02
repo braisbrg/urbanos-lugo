@@ -212,7 +212,7 @@ export const en: Dict = {
     unreachableWalk: 'The measured walk no longer gets you to this bus',
     stepByStepTitle: 'Step by step',
     timeProvenanceMeasured:
-      'The walking legs are measured by the OpenStreetMap pedestrian router, not estimated. Bus times still come from the official timetable; those marked ~ are worked out from the driving time measured along the road.',
+      'The walking legs are measured along OpenStreetMap’s streets, on this device, not estimated. Bus times still come from the official timetable; those marked ~ are worked out from the driving time measured along the road.',
     noWaitNoFare: 'no waiting, no fare',
     waitShort: (minutes: number) => `${minutes} min wait`,
     serviceNoticeTitle: 'Service hours notice',

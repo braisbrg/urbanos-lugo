@@ -201,7 +201,7 @@ export const es: Dict = {
     unreachableWalk: 'Con el paseo medido ya no llegas a este bus',
     stepByStepTitle: 'Paso a paso',
     timeProvenanceMeasured:
-      'Los tramos a pie están medidos por el enrutador peatonal de OpenStreetMap, no estimados. Las horas de bus siguen viniendo del cuadro horario oficial; las marcadas con ~ se deducen del tiempo de recorrido medido por carretera.',
+      'Los tramos a pie están medidos sobre las calles de OpenStreetMap, en este dispositivo, no estimados. Las horas de bus siguen viniendo del cuadro horario oficial; las marcadas con ~ se deducen del tiempo de recorrido medido por carretera.',
     noWaitNoFare: 'sin esperas ni billete',
     waitShort: (minutes: number) => `${minutes} min de espera`,
     serviceNoticeTitle: 'Aviso de horario de servicio',

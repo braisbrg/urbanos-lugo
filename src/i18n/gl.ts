@@ -239,7 +239,7 @@ export const gl = {
     unreachableWalk: 'Co paseo medido xa non chegas a este bus',
     stepByStepTitle: 'Paso a paso',
     timeProvenanceMeasured:
-      'Os tramos a pé están medidos polo enrutador peonil de OpenStreetMap, non estimados. As horas de bus seguen a vir do cadro horario oficial; as marcadas con ~ dedúcense do tempo de percorrido medido por estrada.',
+      'Os tramos a pé están medidos sobre as rúas de OpenStreetMap, neste dispositivo, non estimados. As horas de bus seguen a vir do cadro horario oficial; as marcadas con ~ dedúcense do tempo de percorrido medido por estrada.',
     noWaitNoFare: 'sen esperas nin billete',
     waitShort: (minutes: number) => `${minutes} min de espera`,
     serviceNoticeTitle: 'Aviso de horario de servizo',
