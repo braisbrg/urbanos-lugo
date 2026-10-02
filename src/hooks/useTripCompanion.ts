@@ -49,7 +49,7 @@ export const useTripPosition = (): PositionSnapshot => useSyncExternalStore(subs
  * the position watch, the alert, the remembered stops, and the copy in sessionStorage.
  */
 export function useTripCompanion(lang: Lang): TripCompanion {
-  const [trip, setTrip] = useState<TripState | null>(() => unpackTrip(readString(KEY, 'session')));
+  const [trip, setTrip] = useState<TripState | null>(() => unpackTrip(readString(KEY)));
   // The watch's callback outlives any one render; it reads the trip through here.
   const tripRef = useRef(trip);
   tripRef.current = trip;
@@ -57,7 +57,7 @@ export function useTripCompanion(lang: Lang): TripCompanion {
   langRef.current = lang;
 
   useEffect(() => {
-    writeString(KEY, trip ? packTrip(trip) : null, 'session');
+    writeString(KEY, trip ? packTrip(trip) : null);
   }, [trip]);
 
   // The watch runs for exactly as long as there is a trip; most fixes end in the store above.

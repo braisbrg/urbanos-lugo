@@ -12,11 +12,30 @@
  */
 type Store = 'local' | 'session';
 
-const open = (store: Store): Storage => (store === 'session' ? sessionStorage : localStorage);
+/**
+ * Every key this app keeps in the browser, and the store that keeps it. PRIVACY.md has a
+ * row for each under that store, and tools/test.ts holds the two to each other. A key that
+ * is not here does not compile, and the store is read from here rather than passed: the
+ * trip lives in sessionStorage, and dies with the tab, because this table says so.
+ */
+export const STORAGE_KEYS = {
+  urbanos_lugo_fav_stops: 'local',
+  urbanos_lugo_fav_lines: 'local',
+  'urbanos-lugo-recent-stops': 'local',
+  'urbanos-lugo-recent-routes': 'local',
+  'urbanos-lugo-lang': 'local',
+  'urbanos-lugo-theme': 'local',
+  'urbanos-lugo-trip': 'session',
+  'urbanos-lugo-reloaded-for': 'session',
+} as const satisfies Record<string, Store>;
 
-export function readJson<T>(key: string, fallback: T, store: Store = 'local'): T {
+export type StorageKey = keyof typeof STORAGE_KEYS;
+
+const open = (key: StorageKey): Storage => (STORAGE_KEYS[key] === 'session' ? sessionStorage : localStorage);
+
+export function readJson<T>(key: StorageKey, fallback: T): T {
   try {
-    const raw = open(store).getItem(key);
+    const raw = open(key).getItem(key);
     return raw === null ? fallback : (JSON.parse(raw) as T);
   } catch {
     return fallback;
@@ -24,27 +43,27 @@ export function readJson<T>(key: string, fallback: T, store: Store = 'local'): T
 }
 
 /** Writes `value`, or removes the key when it is null. */
-export function writeJson(key: string, value: unknown, store: Store = 'local'): void {
+export function writeJson(key: StorageKey, value: unknown): void {
   try {
-    if (value === null) open(store).removeItem(key);
-    else open(store).setItem(key, JSON.stringify(value));
+    if (value === null) open(key).removeItem(key);
+    else open(key).setItem(key, JSON.stringify(value));
   } catch {
     // Not remembered between sessions; still applies in this one.
   }
 }
 
-export function readString(key: string, store: Store = 'local'): string | null {
+export function readString(key: StorageKey): string | null {
   try {
-    return open(store).getItem(key);
+    return open(key).getItem(key);
   } catch {
     return null;
   }
 }
 
-export function writeString(key: string, value: string | null, store: Store = 'local'): void {
+export function writeString(key: StorageKey, value: string | null): void {
   try {
-    if (value === null) open(store).removeItem(key);
-    else open(store).setItem(key, value);
+    if (value === null) open(key).removeItem(key);
+    else open(key).setItem(key, value);
   } catch {
     // Same as above.
   }

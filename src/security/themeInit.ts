@@ -1,3 +1,5 @@
+import type { StorageKey } from '../utils/storage';
+
 /**
  * The script that settles the theme before the first paint: the app defaults to dark and
  * is read outdoors at night, so a white frame while React boots is the one thing worth
@@ -24,4 +26,4 @@ export const THEME_INIT_SOURCE = `(function () {
 })();`;
 
 /** The key `useTheme` writes, named once so the two cannot drift apart. */
-export const THEME_STORAGE_KEY = 'urbanos-lugo-theme';
+export const THEME_STORAGE_KEY = 'urbanos-lugo-theme' satisfies StorageKey;

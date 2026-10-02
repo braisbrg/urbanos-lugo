@@ -24,7 +24,7 @@ import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
 import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
 import { isSnapshotStale } from '../src/utils/snapshotAge';
 import { plainText } from '../src/utils/html';
-import { readJson, readString, writeJson, writeString } from '../src/utils/storage';
+import { STORAGE_KEYS, readJson, readString, writeJson, writeString } from '../src/utils/storage';
 import { PATHS } from '../src/routes';
 import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
 import { routeOnFoot } from '../src/utils/walkRouter';
@@ -1161,18 +1161,33 @@ ok('every language can plan a trip and gets prose in that language', () => {
 ok('PRIVACY.md lists every key this app writes to the device', () => {
   // PRIVACY.md names the keys and what each holds; a key added without a row is the document
   // quietly becoming false, and a saved trip is text somebody typed.
+  // The helpers take only a key declared in STORAGE_KEYS, which also names the store that
+  // keeps it, so an undeclared key does not compile; this holds that table to the document.
+  // A key mentioned anywhere in it used to be enough, so the trip could have moved to
+  // localStorage, against what the document promises, with the check still green.
   const privacy = read('PRIVACY.md');
-
-  const written = new Set<string>();
-  // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, so the spelling is what is
-  // scanned for, not the call shape. sessionStorage keys match too.
-  for (const full of sourcesUnder('src')) {
-    for (const m of readFileSync(full, 'utf8').matchAll(/'(urbanos[-_]lugo[-_][a-z_-]+)'/g)) written.add(m[1]);
+  const sections = {
+    local: privacy.slice(privacy.indexOf('## Kept on your device'), privacy.indexOf('Two more are kept')),
+    session: privacy.slice(privacy.indexOf('Two more are kept'), privacy.indexOf('## Your location')),
+  };
+  const words = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  const said = (pattern: RegExp) => words.indexOf((privacy.match(pattern)?.[1] ?? '').toLowerCase());
+  const counts = { local: said(/(\w+) things are saved in your browser's `localStorage`/), session: said(/(\w+) more are kept in `sessionStorage`/) };
+  for (const store of ['local', 'session'] as const) {
+    const kept = Object.entries(STORAGE_KEYS).filter(([, s]) => s === store).map(([key]) => key).sort();
+    const listed = [...sections[store].matchAll(/^\| `([^`]+)` \|/gm)].map((m) => m[1]).sort();
+    assert(kept.length > 0, `no key is kept in ${store}Storage, so this is reading the wrong table`);
+    assert.deepStrictEqual(listed, kept, `PRIVACY.md's ${store}Storage table lists [${listed.join(', ')}]; the app keeps [${kept.join(', ')}] there`);
+    assert(counts[store] === kept.length, `PRIVACY.md counts ${counts[store]} keys in ${store}Storage; the app keeps ${kept.length}`);
   }
 
-  assert(written.size >= 4, `only found ${written.size} storage keys; the scan has stopped working`);
-  for (const key of written) {
-    assert(privacy.includes(`\`${key}\``), `${key} is written to the device and PRIVACY.md does not mention it`);
+  // Every key is spelled `urbanos-lugo-…` or `urbanos_lugo_…`, so the spelling is scanned for,
+  // in any quote: a key the helpers never see -- the pre-paint script, the reload guard --
+  // is still a key, and still belongs in the table.
+  for (const full of sourcesUnder('src')) {
+    for (const m of readFileSync(full, 'utf8').matchAll(/['"`](urbanos[-_]lugo[-_][a-z_-]+)['"`]/g)) {
+      assert(m[1] in STORAGE_KEYS, `${relative(full)} spells the storage key ${m[1]}, which STORAGE_KEYS does not declare`);
+    }
   }
 });
 
@@ -2035,11 +2050,11 @@ ok('a browser that refuses site data still gets the app', () => {
   };
   try {
     assert.strictEqual(survives('reading the language', () => readString('urbanos-lugo-lang')), null);
-    assert.strictEqual(survives('reading the trip', () => readString('urbanos-lugo-trip', 'session')), null);
+    assert.strictEqual(survives('reading the trip', () => readString('urbanos-lugo-trip')), null);
     assert.deepStrictEqual(survives('reading the favourites', () => readJson('urbanos_lugo_fav_stops', [])), []);
     survives('saving the theme', () => writeString('urbanos-lugo-theme', 'light'));
     survives('saving a route', () => writeJson('urbanos-lugo-recent-routes', [{ from: 'a', to: 'b' }]));
-    survives('clearing the trip', () => writeString('urbanos-lugo-trip', null, 'session'));
+    survives('clearing the trip', () => writeString('urbanos-lugo-trip', null));
   } finally {
     for (const [name, descriptor] of saved) {
       if (descriptor) Object.defineProperty(g, name, descriptor);

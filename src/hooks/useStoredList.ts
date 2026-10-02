@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { readJson, writeJson } from '../utils/storage';
+import { readJson, writeJson, type StorageKey } from '../utils/storage';
 
 /**
  * A short list remembered on the device, most recent first — the stops you opened, the
@@ -7,7 +7,7 @@ import { readJson, writeJson } from '../utils/storage';
  * list is here to save typing, not to build a record. PRIVACY.md lists each key.
  */
 export function useRecent<T>(
-  key: string,
+  key: StorageKey,
   limit: number,
   valid: (x: unknown) => x is T,
   same: (a: T, b: T) => boolean,
@@ -39,7 +39,7 @@ export function useRecent<T>(
  * Starred ids, filtered against the ids that currently exist: a rebuilt dataset changes
  * stop ids, and stale ones kept inflating the badge over a drawer showing fewer.
  */
-export function useFavourites(key: string, known: Set<string>): [string[], (id: string) => void] {
+export function useFavourites(key: StorageKey, known: Set<string>): [string[], (id: string) => void] {
   const [ids, setIds] = useState<string[]>(() => {
     const stored = readJson<unknown>(key, []);
     return Array.isArray(stored) ? stored.filter((id): id is string => typeof id === 'string' && known.has(id)) : [];
