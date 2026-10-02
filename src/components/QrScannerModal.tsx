@@ -14,7 +14,8 @@ interface QrScannerModalProps {
 }
 
 /** The browser's own BarcodeDetector (Chromium, where people actually scan a pole); elsewhere the manual entry is the whole feature. */
-const hasBarcodeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+const Detector = typeof window !== 'undefined' ? window.BarcodeDetector : undefined;
+const hasBarcodeDetector = Detector !== undefined;
 
 /** Pull a stop code out of whatever the QR encodes: a bare code, or a URL ending in one. */
 function extractStopCode(raw: string): string {
@@ -59,10 +60,10 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
 
   // Scan loop: runs only while the modal is open and the camera is on.
   useEffect(() => {
-    if (!isScanning || !hasBarcodeDetector) return;
+    if (!isScanning || !Detector) return;
     let cancelled = false;
     let frame = 0;
-    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    const detector = new Detector({ formats: ['qr_code'] });
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });

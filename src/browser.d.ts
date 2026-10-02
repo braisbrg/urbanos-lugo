@@ -6,15 +6,22 @@
  * usefully, means a typo in a field name is an error rather than silence.
  */
 
-/** Chrome/Edge/Android barcode scanning. Absent on Safari and Firefox — always feature-detect. */
-declare class BarcodeDetector {
-  constructor(options?: { formats?: string[] });
+/**
+ * Chrome/Edge/Android barcode scanning. Absent on Safari and Firefox, so it is reachable only
+ * as `window.BarcodeDetector`, which is optional: using it without feature-detecting does
+ * not compile. A global class here let `new BarcodeDetector()` type-check anywhere.
+ */
+interface BarcodeDetectorInstance {
   detect(source: CanvasImageSource): Promise<{ rawValue: string; format: string }[]>;
-  static getSupportedFormats(): Promise<string[]>;
+}
+
+interface BarcodeDetectorConstructor {
+  new (options?: { formats?: string[] }): BarcodeDetectorInstance;
+  getSupportedFormats(): Promise<string[]>;
 }
 
 interface Window {
-  BarcodeDetector?: typeof BarcodeDetector;
+  BarcodeDetector?: BarcodeDetectorConstructor;
   /** Safari still exposes the prefixed constructor. */
   webkitAudioContext?: typeof AudioContext;
 }
