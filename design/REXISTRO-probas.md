@@ -2207,3 +2207,59 @@ Un iPhone de verdade. Outra máquina na mesma rede para ver se a devasa de Windo
 pasar `pnpm dev`. Os workflows que só corren en `main` —o despregue de Pages e o do *worker*,
 as comprobacións semanais e as medicións—, que se proban no primeiro que corra. Os límites de
 Deno Deploy, que son da plataforma. 188 comprobacións.
+
+---
+
+## Rolda 26: cada promesa, gardada por unha máquina — 2 e 3 de outubro de 2026
+
+Pedido: que ningunha regra que o proxecto promete dependa da memoria. Lidas as promesas de
+CLAUDE.md, os tres README, PRIVACY, SECURITY, DATA, NOTICE, DECIDIDO e cada comentario do
+código que di «nunca» ou «sempre», e para cada unha buscado o que a garda. E cada garda que
+xa había, rota a propósito: 117 mutantes contra os checks existentes.
+
+### Gardas que non mordían
+
+- O check do «chrome» dos mapas non comprobaba nada desde o 20 de setembro: buscaba `L.map(`
+  en `Map/*.tsx` e os mapas fanse en `useLeafletMap.ts`.
+- `<p>Tarifas</p>` nunha liña pasaba o check de texto sen dicionario; tamén «Próximos buses» e
+  un `aria-label` en inglés.
+- O teito do operador a 1.200 pasaba: o check lía a mesma constante. A clave da viaxe en
+  `localStorage` pasaba o check de PRIVACY.md. O escapado dos *tooltips* non coñecía
+  `destination` nin `nextStopName`, nin lía o HTML dos `divIcon`. O inxector da CSP só se
+  buscaba como «algún `apply: 'build'`», e hai seis.
+- As partes da suite que len `dist/` nunca correran no CI, que proba antes de construír.
+- A varredura de taboleiros de `check:deep` non miraba que o «oficial» fose impreso.
+
+Todas morden agora. As gardas novas son 23 checks, catro tipos (un tramo de bus sen as dúas
+procedencias, unha clave de almacenamento non declarada, a prosa do operador e o
+`BarcodeDetector` sen preguntar non compilan) e dous pasos do CI (o dataset reconstruído non
+pode cambiar nada; a suite outra vez contra a build). Cada unha, co seu fallo de volta, falla.
+
+### Atopado e arranxado
+
+- O mapa abría unha segunda vixilancia de GPS, contra a decisión de unha soa; agora usa a
+  compartida, que entrega o último fix a quen chega tarde.
+- Un 500 rexistraba o URL enteiro: a consulta dun plan son os enderezos tecleados. Agora o camiño.
+- O pin do mapa da viaxe imprimía o número de liña sen escapar.
+- O planificador dicía que o enrutador de OpenStreetMap medía os paseos, tres semanas despois
+  de que deixase a app.
+- `calibrateWalking.ts` pedía ao router de FOSSGIS cada 350 ms; piden un por segundo.
+- Documentos: NOTICE contaba tres feeds do Concello (é un), SECURITY dicía que só se gardan
+  favoritos e tema, PRIVACY contaba catro sitios que piden a posición (son cinco), DATA.md non
+  nomeaba `stops.json`, `lines.json` nin `official-raw.json`, o README dicía 797 paradas e
+  −7,4 min (798 e −8,6) e «ningunha animación por riba de 240 ms» (catro duran máis), e
+  CLAUDE.md dicía que `fetchAlerts.ts` corre só os luns (corre cada hora en Pages).
+
+### Medido
+
+Os catro gates verdes; a suite, 211 comprobacións, tamén contra a build. `audit:browser` sobre
+a build: contraste, obxectivos, desbordamento, cortes, consola, teclado e movemento reducido a 0
+nos dous temas. No panel: a nota do planificador, os pins, «A miña localización» cun GPS finxido
+(unha vixilancia, e liberada ao parar) e o lector de QR sen `BarcodeDetector`.
+
+### Mirado e deixado
+
+- DECIDIDO di «120–240 ms» e catro animacións, escollidas nas demos, duran máis: decisión do dono.
+- `reconcile:selftest` non pode ir ao CI: precisa as 1.186 páxinas de parada en caché.
+- Regras de proceso (sesións compartidas, non borrar checks, quen sube) non as ve o repositorio;
+  a protección de `main` e `develop` é un axuste de GitHub.
