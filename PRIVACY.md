@@ -46,17 +46,19 @@ Clearing your browser's site data removes all of it. There is no copy anywhere e
 
 ## Your location
 
-The app asks for it in four places, and never without you pressing something:
-**"stops near me"**, **"use my GPS location"** in the route planner, the **arrival
-alarm** on a stop's board, and **"Vou nesta"** on a planned trip, which watches your
-position for the length of the ride so it can count the stops you have passed and tell
-you when to get off. Deny the permission and the app says so and carries on — it does not
-fall back to a guess about where you are.
+The app asks for it in five places, and never without you pressing something:
+**"stops near me"**, **"use my GPS location"** in the route planner, **"my location"** on
+the map, which follows you until you press it again, the **arrival alarm** on a stop's
+board, and **"Vou nesta"** on a planned trip, which watches your position for the length
+of the ride so it can count the stops you have passed and tell you when to get off. Deny
+the permission and the app says so and carries on — it does not fall back to a guess
+about where you are.
 
-The alarm and the ride are one and the same watch (`src/services/stopAlarm.ts`): one
-radius, one sound, one permission prompt. The difference is how long it runs — the alarm
-until you reach one stop, the ride until you say you have finished — and in both cases
-it runs only while the page is open, because a web page cannot wake itself in the
+The map, the alarm and the ride read one and the same watch (`src/services/stopAlarm.ts`):
+one GPS client, one permission prompt, and for the alarm and the ride one radius and one
+sound. The difference is how long it runs — the map until you press the button again, the
+alarm until you reach one stop, the ride until you say you have finished — and in every
+case it runs only while the page is open, because a web page cannot wake itself in the
 background.
 
 Your position is used in the browser to sort stops by distance and to draw a marker. It
