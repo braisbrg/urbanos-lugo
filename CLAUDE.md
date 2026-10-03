@@ -162,11 +162,12 @@ build-time dataset instead.
 (`pnpm run check:parsers`, four to six requests) read `buslugo.com`, the council's feed or the
 Overpass API — servers this project does not own and has no agreement with.
 
-They are run by hand, or on the weekly schedule in `.github/workflows/check-source.yml`,
-and their answers are committed so a rebuild costs nothing. Do not put any of them in a
-loop, a watch, a retry or a per-turn check — including an automated loop of your own, such
-as a `/goal` condition that re-runs one of them every turn. One accidental loop is
-hundreds of requests against somebody else's site.
+They are run by hand, or on a schedule — weekly in `.github/workflows/check-source.yml`,
+and `fetchAlerts.ts` before each hourly build in `deploy-pages.yml` — and their answers
+are committed so a rebuild costs nothing; `pnpm test` fails if any other workflow runs
+one. Do not put any of them in a loop, a watch, a retry or a per-turn check — including
+an automated loop of your own, such as a `/goal` condition that re-runs one of them every
+turn. One accidental loop is hundreds of requests against somebody else's site.
 
 </important>
 
