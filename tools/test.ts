@@ -22,7 +22,7 @@ import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText,
 import { LANGS, translations } from '../src/i18n';
 import type { RoutePlanResult } from '../src/types';
 import { tripProgress, rememberPassed, AT_STOP_RADIUS_M, MISSED_AFTER_MIN, BOARDING_SOON_MIN, boardingIsNow, startTrip, advanceTrip, tripPhase, currentLeg, legTimes, shouldAskIfMissed, confirmBoarded, missedBus, packTrip, unpackTrip } from '../src/utils/tripProgress';
-import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
+import { ALARM_RADIUS_M, subscribePosition } from '../src/services/stopAlarm';
 import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
 import { STALE_AFTER_MS, isSnapshotStale } from '../src/utils/snapshotAge';
 import { MAX_PER_WINDOW, MAX_PLANS_PER_WINDOW, rateLimit } from '../src/security/rateLimit';
@@ -1455,6 +1455,60 @@ ok('one alert radius, shared by the board and the trip companion', () => {
   const hook = read('src/hooks/useTripCompanion.ts');
   assert(!/watchPosition\(/.test(companion + hook), 'the companion opened its own GPS watch instead of the shared one');
   assert(/subscribePosition\(/.test(hook) && /ringAlarm\(\)/.test(hook), 'the companion does not ring the board\'s alarm');
+  // DECIDIDO.md: one position watch for the whole app. The map's "follow me" kept a second
+  // one, beside the two files this looked at; now stopAlarm.ts is the only caller anywhere.
+  const watchers = sourcesUnder('src').filter((file) => /watchPosition\(/.test(readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, ''))).map(relative);
+  assert.deepStrictEqual(watchers, [join('src', 'services', 'stopAlarm.ts')], `the GPS is watched from ${watchers.join(', ')}; the app has one watch, in stopAlarm.ts`);
+});
+
+await okAsync('the one position watch serves every listener, and a late one gets the last fix', async () => {
+  // The map joined the board's alarm and the ride on one watch. What that has to keep: one
+  // watchPosition however many listen, every fix to every listener, the last fix at once to
+  // one that joins a running watch -- a phone standing still may not report again for a
+  // while -- and the watch cleared, and forgotten, when the last listener leaves.
+  const g = globalThis as unknown as { navigator: { geolocation?: unknown } };
+  const calls = { watch: 0, clear: 0 };
+  let report: ((pos: { coords: { latitude: number; longitude: number; accuracy: number } }) => void) | null = null;
+  Object.defineProperty(g.navigator, 'geolocation', {
+    configurable: true,
+    value: {
+      watchPosition: (onFix: typeof report) => ((report = onFix), ++calls.watch),
+      clearWatch: () => void calls.clear++,
+    },
+  });
+  // Read through calls: after one assert TypeScript narrows a count to a literal and rejects the next.
+  const watches = () => calls.watch;
+  const clears = () => calls.clear;
+  const flush = () => new Promise<void>((resolve) => queueMicrotask(resolve));
+  try {
+    const board: number[] = [];
+    const ride: number[] = [];
+    const offBoard = subscribePosition((fix) => board.push(fix.lat), () => {});
+    const offRide = subscribePosition((fix) => ride.push(fix.lat), () => {});
+    assert(watches() === 1, `two listeners opened ${watches()} watches`);
+    report!({ coords: { latitude: 43.01, longitude: -7.55, accuracy: 12 } });
+    assert(board[0] === 43.01 && ride[0] === 43.01, 'a fix did not reach every listener');
+    const map: { lat: number; accuracy: number }[] = [];
+    const offMap = subscribePosition((fix) => map.push(fix), () => {});
+    await flush();
+    assert(watches() === 1 && map[0]?.lat === 43.01 && map[0].accuracy === 12, `a listener joining a running watch got ${JSON.stringify(map)} and the watch was opened ${watches()} times`);
+    offBoard();
+    offRide();
+    assert(clears() === 0, 'the watch was cleared while the map was still listening');
+    offMap();
+    assert(clears() === 1, 'the watch outlived its last listener');
+    // A new watch has no fix yet, and the second listener to join it must not be handed the
+    // old one: an hour-old position read as where the phone is now.
+    const later: number[] = [];
+    const offLater = subscribePosition((fix) => later.push(fix.lat), () => {});
+    const offAnother = subscribePosition((fix) => later.push(fix.lat), () => {});
+    await flush();
+    assert(watches() === 2 && later.length === 0, 'a new watch handed out a fix from the last one');
+    offLater();
+    offAnother();
+  } finally {
+    delete g.navigator.geolocation;
+  }
 });
 
 ok('the answer column spaces its blocks in one place', () => {

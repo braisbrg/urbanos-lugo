@@ -17,17 +17,22 @@ export interface AlarmHandle {
 interface PositionFix {
   lat: number;
   lng: number;
+  /** Metres, as the device reports them: a wifi fix indoors can be five hundred out. */
+  accuracy: number;
 }
 
 type Listener = { onFix: (fix: PositionFix) => void; onError: (reason: AlarmFailure) => void };
 
 /**
- * One position watch for the whole app: the board's alarm and the trip companion both read
- * it, and two `watchPosition`s would be two GPS clients and two permission prompts. Started
- * by whoever asks first, cleared when the last listener leaves.
+ * One position watch for the whole app: the board's alarm, the trip companion and the
+ * map's "follow me" all read it, and two `watchPosition`s would be two GPS clients and two
+ * permission prompts. Started by whoever asks first, cleared when the last listener leaves.
+ * A listener that joins a running watch is handed the last fix at once: a phone standing
+ * still may not report again for a while, and it would wait for nothing.
  */
 const listeners = new Set<Listener>();
 let watchId: number | null = null;
+let lastFix: PositionFix | null = null;
 
 export function subscribePosition(onFix: (fix: PositionFix) => void, onError: (reason: AlarmFailure) => void): () => void {
   if (!navigator.geolocation) {
@@ -39,7 +44,8 @@ export function subscribePosition(onFix: (fix: PositionFix) => void, onError: (r
   if (watchId === null) {
     watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const fix = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const fix = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: Math.max(pos.coords.accuracy ?? 0, 0) };
+        lastFix = fix;
         for (const l of listeners) l.onFix(fix);
       },
       () => {
@@ -47,17 +53,21 @@ export function subscribePosition(onFix: (fix: PositionFix) => void, onError: (r
       },
       { enableHighAccuracy: true, maximumAge: 5_000, timeout: 20_000 },
     );
+  } else if (lastFix) {
+    const fix = lastFix;
+    queueMicrotask(() => listeners.has(listener) && listener.onFix(fix));
   }
   return () => {
     listeners.delete(listener);
     if (listeners.size === 0 && watchId !== null) {
       navigator.geolocation.clearWatch(watchId);
       watchId = null;
+      lastFix = null;
     }
   };
 }
 
-export function watchForStop(target: PositionFix, onApproach: (distanceMeters: number) => void, onDistance: (distanceMeters: number) => void, onError: (reason: AlarmFailure) => void): AlarmHandle {
+export function watchForStop(target: { lat: number; lng: number }, onApproach: (distanceMeters: number) => void, onDistance: (distanceMeters: number) => void, onError: (reason: AlarmFailure) => void): AlarmHandle {
   let fired = false;
   const stop = subscribePosition((fix) => {
     const distance = getDistanceMeters(fix.lat, fix.lng, target.lat, target.lng);
