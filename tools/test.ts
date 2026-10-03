@@ -25,7 +25,7 @@ import { tripProgress, rememberPassed, AT_STOP_RADIUS_M, MISSED_AFTER_MIN, BOARD
 import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
 import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
 import { STALE_AFTER_MS, isSnapshotStale } from '../src/utils/snapshotAge';
-import { MAX_PER_WINDOW, MAX_PLANS_PER_WINDOW } from '../src/security/rateLimit';
+import { MAX_PER_WINDOW, MAX_PLANS_PER_WINDOW, rateLimit } from '../src/security/rateLimit';
 import { RECENT_ROUTES } from '../src/hooks/useStoredList';
 import { SNAPSHOT_AFTER_MS } from '../src/hooks/useServiceAlerts';
 import { plainText } from '../src/utils/html';
@@ -2389,6 +2389,33 @@ ok('the figures the documents quote are the ones the code runs and the data hold
     const plural = /\b(two|three|four|dous|tres|catro|\d+) (RSS )?(feeds|fontes RSS)\b/i.exec(doc(file));
     assert(!plural, `${file} says "${plural?.[0]}"; the app reads one council feed`);
   }
+});
+
+ok('the limiter turns an address away past its minute, with a 429 and a time to come back', () => {
+  // The README and SECURITY.md promise 120 requests a minute per address and 30 plans, then
+  // a 429 with Retry-After. Only stress:http, against a running server, ever measured it.
+  const ask = (ip: string, path: string) => {
+    const sent: { status: number; headers: Record<string, string> } = { status: 200, headers: {} };
+    let passed = false;
+    const res = {
+      setHeader: (name: string, value: string) => void (sent.headers[name] = value),
+      status: (code: number) => ((sent.status = code), res),
+      json: () => res,
+    };
+    rateLimit({ ip, path, socket: {} } as unknown as Parameters<typeof rateLimit>[0], res as unknown as Parameters<typeof rateLimit>[1], () => (passed = true));
+    return { ...sent, passed };
+  };
+  const reader = `198.51.100.${Date.now() % 200}`;
+  for (let i = 1; i <= MAX_PER_WINDOW; i++) assert(ask(reader, '/stops').passed, `request ${i} of ${MAX_PER_WINDOW} was turned away`);
+  const over = ask(reader, '/stops');
+  assert(!over.passed && over.status === 429, `request ${MAX_PER_WINDOW + 1} in a minute got ${over.status}`);
+  assert(Number(over.headers['Retry-After']) >= 1 && Number(over.headers['Retry-After']) <= 60, `the 429 says Retry-After ${over.headers['Retry-After']}`);
+  // Planning has its own, lower ceiling, and another address is not touched by either.
+  const planner = `203.0.113.${Date.now() % 200}`;
+  for (let i = 1; i <= MAX_PLANS_PER_WINDOW; i++) assert(ask(planner, '/plan').passed, `plan ${i} of ${MAX_PLANS_PER_WINDOW} was turned away`);
+  assert(ask(planner, '/plan').status === 429, `plan ${MAX_PLANS_PER_WINDOW + 1} in a minute was served`);
+  assert(ask(planner, '/stops').passed, 'an address over its plan limit was turned away from everything else');
+  assert(ask('192.0.2.1', '/plan').passed, 'one address over its limit turned another away');
 });
 
 ok('the services and the worker bundle for a runtime with no Node in it', () => {
