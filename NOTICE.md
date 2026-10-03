@@ -62,7 +62,8 @@ The full account, with what each source permits, is in `DATA.md`.
   own device, so nothing is asked of anybody while the app is being used.
 - Ground height, so a walk up a hill costs what a walk up a hill costs: the **MDT05** of
   the **Instituto Geográfico Nacional**, from PNOA-LiDAR — `CC BY 4.0 scne.es`.
-- Works and traffic notices: three RSS feeds published by the **Concello de Lugo**.
+- Traffic notices: the traffic RSS feed of the **Concello de Lugo**, read for closures and
+  diversions.
 
 ## And what this project is not
 
