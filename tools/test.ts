@@ -2489,6 +2489,21 @@ ok('the servers write nothing down but a failure’s path, and the page sets no 
   }
 });
 
+ok('what the browser floor does not cover is asked for only where it exists', () => {
+  // The README: below Baseline the app promises nothing, and what the floor does not cover
+  // degrades -- the screen kept awake only where the API exists, vibration optional, a
+  // notification only where there is a Notification. A call without its question works in
+  // Chrome and throws in Safari, which is the other half of the phones in Lugo.
+  for (const file of sourcesUnder('src').filter((f) => !f.endsWith('.d.ts'))) {
+    const code = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    const where = relative(file);
+    assert(!/navigator\.vibrate\(/.test(code), `${where} vibrates without asking whether the phone can`);
+    if (/navigator\.wakeLock\./.test(code)) assert(/'wakeLock' in navigator/.test(code), `${where} keeps the screen awake without asking whether the API exists`);
+    if (/new Notification\(|Notification\.(permission|requestPermission)/.test(code)) assert(/typeof Notification (===|!==) 'undefined'/.test(code), `${where} uses Notification without asking whether it exists`);
+    if (/webkitAudioContext|AudioContext/.test(code)) assert(/window\.AudioContext \|\| window\.webkitAudioContext/.test(code), `${where} reaches for AudioContext without Safari's prefixed one`);
+  }
+});
+
 ok('the limiter turns an address away past its minute, with a 429 and a time to come back', () => {
   // The README and SECURITY.md promise 120 requests a minute per address and 30 plans, then
   // a 429 with Retry-After. Only stress:http, against a running server, ever measured it.
