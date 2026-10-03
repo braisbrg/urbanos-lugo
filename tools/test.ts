@@ -2298,6 +2298,68 @@ ok('what the workflows run is pinned, and none of them hands out more than it us
   }
 });
 
+ok('the gates run on every push and proposal, offline, and only the schedule reads other people’s sites', () => {
+  // CLAUDE.md: ci.yml runs the four gates on every push and nothing merges without them;
+  // all four are offline; a pull request never publishes; the tools that read buslugo.com,
+  // the council's feed or Overpass run by hand or on a schedule, never in a loop. SECURITY.md:
+  // the type check and the suite run before anything is built, Dependabot looks weekly. Only
+  // the YAML held any of it, and a step taken out of it is the kind of change nobody re-reads.
+  const workflow = (name: string) => read(`.github/workflows/${name}`).replace(/^\s*#.*$/gm, '');
+  // A step's command, whether on its own line or in a `run: |` block under it.
+  const runs = (text: string) => {
+    const lines = text.split('\n');
+    const out: string[] = [];
+    lines.forEach((line, i) => {
+      const m = /^(\s*)(?:- )?run: (.+)$/.exec(line);
+      if (!m) return;
+      if (!/^[|>]-?$/.test(m[2].trim())) return void out.push(m[2].trim());
+      const block: string[] = [];
+      for (let j = i + 1; j < lines.length && (lines[j].trim() === '' || lines[j].search(/\S/) > m[1].length); j++) block.push(lines[j].trim());
+      out.push(block.filter(Boolean).join('\n'));
+    });
+    return out;
+  };
+  const ci = workflow('ci.yml');
+  assert.deepStrictEqual(runs(ci), [
+    'pnpm install --frozen-lockfile', 'pnpm run lint', 'pnpm test', 'pnpm run check:deep',
+    'pnpm run data:build && git diff --exit-code --stat -- src/data', 'pnpm run build', 'pnpm test',
+  ], 'ci.yml no longer runs the gates, the dataset rebuild and the suite against the build, in that order');
+  assert(/pull_request:\s*\n\s*branches: \[main, develop\]/.test(ci) && /push:\s*\n\s*branches-ignore: \[main\]/.test(ci), 'ci.yml no longer runs on every proposal to main and develop and every push but main');
+  const pkg = JSON.parse(read('package.json'));
+  assert(pkg.scripts['check:deep'] === 'tsx tools/stressInvariants.ts && tsx tools/stressPlanner.ts', `check:deep runs "${pkg.scripts['check:deep']}", not the two offline sweeps`);
+  for (const sweep of ['tools/stressInvariants.ts', 'tools/stressPlanner.ts']) assert(!/\bfetch\(|overpass\(/.test(read(sweep)), `${sweep} reaches the network, and it is a gate`);
+
+  // Deploying is a push to main or the clock, never a proposal, and checks before it builds.
+  for (const [name, build] of [['deploy-pages.yml', 'pnpm run build'], ['deploy-worker.yml', 'pnpm run worker:build']] as const) {
+    const text = workflow(name);
+    assert(!/^\s*pull_request/m.test(text), `${name} runs on a pull request, and a pull request must never publish`);
+    const steps = runs(text);
+    const at = (step: string) => steps.findIndex((s) => s.includes(step));
+    assert(at('pnpm run lint') >= 0 && at('pnpm test') >= 0 && at('pnpm run lint') < at(build) && at('pnpm test') < at(build), `${name} builds before it type-checks and tests`);
+  }
+
+  // Every install is the locked one, and pnpm comes from packageManager, not from a workflow.
+  const network = /importOfficialData|importOsmRoutes|importStopAmenities|fetchAlerts|calibrateWalking|importFonts|checkParsersUnchanged|reconcile\.ts|checkFares|checkOsmGeometry|compareOperatorTimes|data:(fetch|osm|amenities|alerts)\b|pnpm (run )?reconcile\b|compare:operator|calibrate:walking|fonts:import|check:parsers/;
+  for (const name of readdirSync(join(root, '.github', 'workflows')).filter((f) => /\.ya?ml$/.test(f))) {
+    const text = workflow(name);
+    for (const step of runs(text).filter((s) => /pnpm (i|install)\b/.test(s))) assert(step === 'pnpm install --frozen-lockfile', `${name}: "${step}" is not the locked install`);
+    for (const step of text.split(/\n(?=\s*- )/).filter((s) => /uses:\s*pnpm\/action-setup@/.test(s))) assert(!/^\s*version:/m.test(step), `${name}: pnpm/action-setup is given a version, so the workflow and package.json can drift apart`);
+    // Somebody else's site only on the clock: Mondays in check-source.yml, and the notices
+    // snapshot in the hourly Pages build. Never in the gates.
+    const reaching = runs(text).filter((s) => network.test(s));
+    if (name === 'check-source.yml') assert(/cron: '\S+ \S+ \* \* 1'/.test(text) && !/^\s*(push|pull_request):/m.test(text), 'check-source.yml reads other people’s sites on something other than its Monday schedule');
+    else if (name === 'deploy-pages.yml') assert(reaching.every((s) => /fetchAlerts/.test(s)), `deploy-pages.yml reaches other sites beyond the notices: ${reaching.join(' | ')}`);
+    else assert(reaching.length === 0, `${name} runs a tool that reads somebody else’s site: ${reaching.join(' | ')}`);
+  }
+
+  // Each entry read on its own: one pattern across the file found the next entry's "weekly".
+  const entries = read('.github/dependabot.yml').split(/\n(?=\s*- package-ecosystem:)/);
+  for (const ecosystem of ['npm', 'github-actions']) {
+    const entry = entries.find((e) => new RegExp(`package-ecosystem: ${ecosystem}\\b`).test(e)) ?? '';
+    assert(/^\s*interval: weekly\s*$/m.test(entry), `Dependabot no longer looks at ${ecosystem} weekly`);
+  }
+});
+
 ok('the policy is not sent in development, where it serves a blank page', () => {
   // The CSP from the dev server blocked Vite's inline preamble and HMR socket: `pnpm dev`
   // rendered nothing. The header still goes out for `pnpm start`.

@@ -25,12 +25,14 @@ Tailwind 4 + MapLibre, TypeScript throughout, pnpm, Node >= 22.
 **Package manager is pnpm, always.** `bun.lock` and `package-lock.json` are gitignored
 leftovers; CI installs with `--frozen-lockfile` from `pnpm-lock.yaml`.
 
-**The four gates.** `.github/workflows/ci.yml` runs exactly these on every push, and
-nothing merges without them. A change is not done until all four are green:
+**The four gates.** `.github/workflows/ci.yml` runs these on every push, and nothing
+merges without them; it also rebuilds the dataset, which must change nothing, and runs
+the suite again against the build, and `pnpm test` holds that list. A change is not done
+until all four are green:
 
 ```
 pnpm run lint          # tsc --noEmit
-pnpm test              # tools/test.ts — prints "N checks passed" (208 as of this writing)
+pnpm test              # tools/test.ts — prints "N checks passed" (209 as of this writing)
 pnpm run check:deep    # invariant + planner sweeps over the whole dataset, ~20s
 pnpm run build         # vite build + esbuild of the server bundle
 ```

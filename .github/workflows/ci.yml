@@ -7,8 +7,9 @@ name: Checks
 # pull requests this repository actually gets: Dependabot's, where the whole question is
 # whether a version bump still builds and still agrees with the operator's data.
 #
-# Deliberately not the deployment: a pull request must never publish. This runs the same
-# `lint` and `test` and stops there.
+# Deliberately not the deployment: a pull request must never publish. This runs the four
+# gates CLAUDE.md names, and two more steps that need their output, and stops there;
+# tools/test.ts holds this list and the order, so a step dropped here fails the suite.
 on:
   pull_request:
     branches: [main, develop]
@@ -61,6 +62,19 @@ jobs:
       # operator's own site; both have scripts instead.
       - run: pnpm run check:deep
 
+      # stops.json, lines.json and route-geometry.json are generated and never hand-edited
+      # (CLAUDE.md). The generator is offline and deterministic, about two seconds from the
+      # snapshots in data/, so a hand edit, or a generator change committed without its
+      # output, is a difference here.
+      - name: The shipped dataset is what the generator writes
+        run: pnpm run data:build && git diff --exit-code --stat -- src/data
+
       # A dependency bump that breaks the build is the failure this is here to catch, and
       # `pnpm test` does not compile anything.
       - run: pnpm run build
+
+      # Again, with the build there: the parts of the suite that read dist/ -- the page's one
+      # inline script against the policy's hash, the compressed copies, nothing blocking
+      # before the entry chunk -- skip without it, so in CI they had never run.
+      - name: The suite, against the build
+        run: pnpm test
