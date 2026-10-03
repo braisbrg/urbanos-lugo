@@ -1240,8 +1240,11 @@ estados antes desta rolda, 0 despois.
 ao que pertencen (o menú pola dereita, a ficha de parada e a barra da viaxe por abaixo),
 os despregables abren coa frecha xirando, o control Próximas/Por liña leva un pulgar que
 esvara, e a estrela, a campá e o tick confírmanse unha vez ao activalos. Todo en CSS,
-só `opacity` e `transform`, ningunha por riba de 240 ms, e só de entrada: pechar segue
-sendo instantáneo. Unha hora nunca se anima —un número que roda parece unha medición—;
+só `opacity` e `transform`, e só de entrada: pechar segue sendo instantáneo. Entran en
+120–240 ms; catro confirmacións dunha soa vez duran máis —a insignia 260 ms, a estrela
+320, a campá 520 e o anel arredor de «Vou nesta» 700, tras 300 de espera—, e só dous
+movementos se repiten: o latexo da seguinte parada en «Vou nesta» e os puntos de
+«Calculando» mentres calcula. Unha hora nunca se anima —un número que roda parece unha medición—;
 a única excepción é a pantalla «Vou nesta», onde a conta ata un só bus roda ao cambiar
 e a marca da seguinte parada late, porque aí a posición si vén do GPS. Con
 `prefers-reduced-motion` non queda nada en movemento, e `audit:browser` compróbao.
