@@ -2468,6 +2468,24 @@ ok('the figures the documents quote are the ones the code runs and the data hold
   }
 });
 
+ok('what the servers bring reaches the reader only as DATA.md says', () => {
+  // DATA.md: the council's notices are press releases, not incidents, so they never count
+  // towards the navigation badge; the operator's own minutes behind a pole's QR are shown
+  // to somebody who arrived by scanning that sticker "and only them". server.ts: an unknown
+  // /api path is a JSON 404, never the app's page. Each was one line nothing checked.
+  const alerts = read('src/hooks/useServiceAlerts.ts');
+  assert(/const announcedIncidents = [^;]*\.filter\(\(a\) => a\.source !== 'concello'\)/.test(alerts), 'the navigation badge counts the council’s notices as incidents again');
+  const board = read('src/components/StopArrivalsView.tsx');
+  assert(/useOperatorTimes\(viaQr \? /.test(board) && (board.match(/useOperatorTimes\(/g) ?? []).length === 1, 'the board asks for the operator’s minutes without the reader having scanned the pole');
+  const app = read('src/App.tsx');
+  const qrSets = [...app.matchAll(/setQrStopId\(([^)]*)\)/g)].map((m) => m[1]);
+  assert(qrSets.length === 2 && qrSets.includes('viaQr ? stop.id : null') && qrSets.includes('stop.id'), `the scanned pole is set from ${qrSets.join(' and ')}; only the scanner and a ?parada= link may set it`);
+  assert(/onSelectStop=\{\(stop\) => selectStop\(stop, true\)\}/.test(app) && (app.match(/selectStop\([^)]*, true\)/g) ?? []).length === 1, 'something other than the QR scanner opens a board as scanned');
+  const server = read('server.ts');
+  const unknown = server.indexOf("app.use('/api', (_req, res) => res.status(404).json(");
+  assert(unknown > 0 && unknown > server.lastIndexOf("app.get('/api/") && unknown < server.indexOf('app.use(express.static('), 'an unknown /api path no longer gets a JSON 404 before the app’s page is served');
+});
+
 ok('the servers write nothing down but a failure’s path, and the page sets no cookie and parses no HTML', () => {
   // PRIVACY.md: no cookie, nothing written to disk, no access log, and a failure logged by
   // method and path alone. alertSyncService.ts: what is scraped is rendered by React as
