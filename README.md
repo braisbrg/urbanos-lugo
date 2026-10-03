@@ -830,9 +830,9 @@ impresa no cadro. Dúas cousas facían que se sobre-anunciase:
   unha mediana que para algunhas expedicións cae uns minutos fóra do impreso.
 
 Cobertura real hoxe (`pnpm validate:times`): **386 paradas** teñen a súa hora suxeita
-por horas oficiais a ambos os lados, e **797** quedan máis alá do último punto horario e
+por horas oficiais a ambos os lados, e **798** quedan máis alá do último punto horario e
 dependen do modelo de estrada. Nos 21 tramos que se poden contrastar, o erro fronte ao
-impreso ten mediana de 0,1 min, chega a 8,3 min no peor caso lento e a −7,4 no peor rápido,
+impreso ten mediana de 0,1 min, chega a 8,3 min no peor caso lento e a −8,6 no peor rápido,
 e só o 38% cae dentro de dous minutos. Por iso o `~` non é decorativo.
 
 Ese tramo máis alá do último punto horario é tamén o único que o mapa se permite recortar.
