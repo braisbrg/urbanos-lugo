@@ -3437,6 +3437,20 @@ ok('the download sizes the README quotes are the build’s, within five per cent
   const fonts = files.filter((f) => f.endsWith('.woff2')).reduce((n, f) => n + size(f), 0);
   const typeface = Number(/^\| Tipografía \| (\d+) KB/m.exec(readme)?.[1]);
   assert(Math.abs(typeface - fonts) <= Math.max(fonts * 0.05, 2), `README: the typeface is ${typeface} KB; the build has ${fonts.toFixed(0)} KB`);
+
+  // And what the first visit downloads in the background, read from the service worker's
+  // own manifest: entries, distinct files, and their bytes raw, gzip and brotli (a file the
+  // build does not compress counts as itself in all three).
+  const listed = [...read('dist/sw.js').matchAll(/url:"([^"]+)"/g)].map((m) => m[1]);
+  const distinct = [...new Set(listed)];
+  const bytes = (file: string, suffix: string) => statSync(existsSync(join(root, 'dist', file + suffix)) ? join(root, 'dist', file + suffix) : join(root, 'dist', file)).size / 1048576;
+  const precache = ['', '.gz', '.br'].map((suffix) => distinct.reduce((n, file) => n + bytes(file, suffix), 0));
+  const said = /(\d+) ficheiros distintos \(o manifesto lista (\d+):[^)]*\), ([\d,]+) MB sen comprimir, ([\d,]+) MB en gzip e ([\d,]+) MB en brotli/.exec(readme.replace(/\s+/g, ' '));
+  assert(said, 'the README no longer gives the precache in files and megabytes, or the sentence moved');
+  assert(Number(said[1]) === distinct.length && Number(said[2]) === listed.length, `README: the precache is ${said[1]} files in ${said[2]} entries; the build's has ${distinct.length} in ${listed.length}`);
+  said.slice(3, 6).map((n) => Number(n.replace(',', '.'))).forEach((quoted, i) => {
+    assert(Math.abs(quoted - precache[i]) <= precache[i] * 0.05, `README: the precache is ${quoted} MB ${['raw', 'gzip', 'brotli'][i]}; the build's is ${precache[i].toFixed(2)} MB`);
+  });
 });
 
 ok('nothing on the critical path waits for a script over the network', () => {
