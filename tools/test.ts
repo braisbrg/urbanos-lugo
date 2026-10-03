@@ -4320,6 +4320,21 @@ ok('the light basemap draws blocks rather than outlines', () => {
   }
 });
 
+ok('what the basemap left out stays out', () => {
+  // DECIDIDO.md: the one-way arrows went in both themes (nobody reading this is driving, and
+  // they land where the stop labels need the room); the light residential wash went, and
+  // the dark one stays capped at zoom 9, as buildMapStyle.ts says. A re-derived style from
+  // a new upstream would bring either back without a word.
+  for (const [theme, style] of Object.entries(mapStyles())) {
+    const oneWay = style.layers.filter((l) => /oneway/.test(l.id)).map((l) => l.id);
+    assert(oneWay.length === 0, `${theme}: one-way arrows are back (${oneWay.join(', ')})`);
+  }
+  const { light, dark } = mapStyles();
+  assert(!light.layers.some((l) => l.id === 'landuse_residential'), 'light: the residential wash is back over the neighbourhoods');
+  const residential = dark.layers.find((l) => l.id === 'landuse_residential') as { maxzoom?: number } | undefined;
+  assert(!residential || (residential.maxzoom ?? 24) <= 9, `dark: the residential fill reaches zoom ${residential?.maxzoom ?? 'any'}, past the 9 it is capped at`);
+});
+
 ok('the basemap is not being amplified behind the palette', () => {
   // For months the dark map was painted through a brightness filter on the tile pane, so
   // every value in the style meant something else on screen.
