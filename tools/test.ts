@@ -2431,6 +2431,21 @@ ok('no session transcript and no build output is tracked, and the ignore file st
   assert(leaked.length === 0, `tracked, and never to be: ${leaked.slice(0, 5).join(', ')}${leaked.length > 5 ? ` and ${leaked.length - 5} more` : ''}`);
 });
 
+ok('the lockfile keeps the two pinned packages above their advisories', () => {
+  // pnpm-workspace.yaml overrides qs and fast-uri past a denial of service and a bypass,
+  // fast-uri with a ceiling so a fix cannot become an outage; the README and the yaml say
+  // so and nothing checked what was resolved. An override may go once a parent asks for a
+  // fixed version itself, so it is the resolved version that is held, not the line.
+  const lock = read('pnpm-lock.yaml');
+  const versions = (name: string) => [...lock.matchAll(new RegExp(`^  ${name}@(\\d+)\\.(\\d+)\\.(\\d+):`, 'gm'))].map((m) => m.slice(1, 4).map(Number));
+  const atLeast = (v: number[], min: number[]) => v[0] !== min[0] ? v[0] > min[0] : v[1] !== min[1] ? v[1] > min[1] : v[2] >= min[2];
+  const qs = versions('qs');
+  const fastUri = versions('fast-uri');
+  assert(qs.length > 0 && fastUri.length > 0, 'qs or fast-uri is no longer in the lockfile, so this checks nothing; drop it with its override');
+  for (const v of qs) assert(atLeast(v, [6, 16, 0]), `the lockfile resolves qs ${v.join('.')}, under 6.16.0`);
+  for (const v of fastUri) assert(atLeast(v, [3, 1, 6]) && v[0] < 4, `the lockfile resolves fast-uri ${v.join('.')}, outside >=3.1.6 <4`);
+});
+
 ok('the services and the worker bundle for a runtime with no Node in it', () => {
   // src/services is imported by the browser, server.ts and the Deno worker, so it may use
   // web standards only (CLAUDE.md). Only the worker's deploy job, on main, ever bundled it
