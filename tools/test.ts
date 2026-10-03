@@ -4335,6 +4335,33 @@ ok('what the basemap left out stays out', () => {
   assert(!residential || (residential.maxzoom ?? 24) <= 9, `dark: the residential fill reaches zoom ${residential?.maxzoom ?? 'any'}, past the 9 it is capped at`);
 });
 
+ok('three tones carry meaning, at least 50 degrees apart, and the mark is the fleet red', () => {
+  // DECIDIDO.md: red is the app, blue a time the operator publishes, amber a time this app
+  // works out; nothing else carries meaning, they sit 50 degrees or more apart in oklch,
+  // "and a check holds it". There was no such check. The two hues 50 apart are the dark
+  // theme's accent and amber, so a few degrees of drift is a reader with a colour
+  // deficiency losing the difference between published and worked out.
+  const css = read('src/index.css');
+  const block = (selector: string) => css.slice(css.indexOf(`${selector} {`), css.indexOf('\n}', css.indexOf(`${selector} {`)));
+  const hue = (theme: string, token: string) => {
+    const value = new RegExp(`--c-${token}: oklch\\([\\d.]+ [\\d.]+ ([\\d.]+)\\)`).exec(block(theme))?.[1];
+    assert(value, `${theme} no longer gives --c-${token} as oklch, so its hue cannot be read`);
+    return Number(value);
+  };
+  const apart = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+  for (const theme of [':root', '.dark']) {
+    const tones = { accent: hue(theme, 'accent'), published: hue(theme, 'official-bg'), estimated: hue(theme, 'estimated-fg'), 'estimated line': hue(theme, 'estimated-line') };
+    assert(tones.estimated === tones['estimated line'], `${theme}: the estimated text and its dashed line are two hues, ${tones.estimated} and ${tones['estimated line']}`);
+    for (const [a, b] of [['accent', 'published'], ['accent', 'estimated'], ['published', 'estimated']] as const) {
+      assert(apart(tones[a], tones[b]) >= 50, `${theme}: ${a} at ${tones[a]} and ${b} at ${tones[b]} are ${apart(tones[a], tones[b])} degrees apart, under 50`);
+    }
+  }
+  // The token is a step darker for text; the mark itself is the fleet red, in its three places.
+  for (const [file, pattern] of [['index.html', /name="theme-color" content="#d81f26"/], ['vite.config.ts', /theme_color: '#d81f26'/], ['public/favicon.svg', /fill='#d81f26'/]] as const) {
+    assert(pattern.test(read(file)), `${file} no longer carries the fleet red #d81f26`);
+  }
+});
+
 ok('the basemap is not being amplified behind the palette', () => {
   // For months the dark map was painted through a brightness filter on the tile pane, so
   // every value in the style meant something else on screen.
