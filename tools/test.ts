@@ -2418,6 +2418,19 @@ ok('the limiter turns an address away past its minute, with a 429 and a time to 
   assert(ask('192.0.2.1', '/plan').passed, 'one address over its limit turned another away');
 });
 
+ok('no session transcript and no build output is tracked, and the ignore file still says so', () => {
+  // The assistant directories hold verbatim transcripts and absolute paths with the
+  // machine's user name, and this repository is public (CLAUDE.md); build output is not
+  // committed anywhere. Only .gitignore held either, and `git add -f` walks past it.
+  const NEVER = ['.claude/', '.antigravity/', '.agents/', '.codex/', '.impeccable/', 'dist/', 'dist-server/', 'worker/dist/'];
+  const ignore = read('.gitignore').split(/\r?\n/);
+  for (const entry of NEVER) assert(ignore.includes(entry), `.gitignore no longer lists ${entry}`);
+  const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+  assert(tracked.length > 100, `git lists ${tracked.length} files, so this is not reading the repository`);
+  const leaked = tracked.filter((file) => NEVER.some((dir) => file.startsWith(dir)));
+  assert(leaked.length === 0, `tracked, and never to be: ${leaked.slice(0, 5).join(', ')}${leaked.length > 5 ? ` and ${leaked.length - 5} more` : ''}`);
+});
+
 ok('the services and the worker bundle for a runtime with no Node in it', () => {
   // src/services is imported by the browser, server.ts and the Deno worker, so it may use
   // web standards only (CLAUDE.md). Only the worker's deploy job, on main, ever bundled it
