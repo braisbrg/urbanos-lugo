@@ -10,11 +10,28 @@
  */
 import { BUS_LINES, BUS_STOPS } from '../src/data/transitData';
 import { getArrivalsForStop } from '../src/utils/arrivals';
-import { scheduledDuration } from '../src/utils/schedule';
+import { buildRuns, dayKind, formatMinutes, scheduledDuration } from '../src/utils/schedule';
+import type { DayKind } from '../src/types';
 import { violations } from './lib';
 
 const { fail, report } = violations('every answer held up', 'impossible answer');
 const lineIds = new Set(BUS_LINES.map((l) => l.id));
+
+/**
+ * Every time a run prints at a stop, by kind of day: a departure the board calls official
+ * has to be one of them. The suite checks the label at one midday instant; labelling every
+ * departure official passed this whole-day sweep, which asked only that a label exist.
+ */
+const printed = new Set<string>();
+for (const kind of ['laborable', 'sabado', 'domingo'] as DayKind[]) {
+  for (const line of BUS_LINES) {
+    line.directions.forEach((direction, di) => {
+      for (const run of buildRuns(line, di, BUS_STOPS, kind)) {
+        for (const i of run.publishedStopIndices) printed.add(`${kind}|${line.id}|${direction.stops[i]}|${formatMinutes(run.minutesByStopIndex[i])}`);
+      }
+    });
+  }
+}
 const lineNumbers = new Set(BUS_LINES.map((l) => l.number));
 const CLOCK = /^\d{1,2}:\d{2}$/;
 
@@ -52,6 +69,7 @@ for (const [dayName, day] of DAYS) {
         if (!a.destination) fail('a departure has no destination', where);
         if (!CLOCK.test(a.etaTime)) fail('a departure time is not a clock time', `${where}: "${a.etaTime}"`);
         if (a.precision !== 'published' && a.precision !== 'estimated') fail('a departure has no provenance', `${where}: "${a.precision}"`);
+        if (a.precision === 'published' && !printed.has(`${dayKind(at)}|${a.lineId}|${stop.id}|${a.etaTime}`)) fail('a departure called official is not one its run prints at that stop', `${where}: ${a.etaTime}`);
         // The list is sorted, and a reader takes that for granted.
         if (a.etaMinutes < previous) fail('the board is out of order', `${where}: ${a.etaMinutes} after ${previous}`);
         previous = a.etaMinutes;
