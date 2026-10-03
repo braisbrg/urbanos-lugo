@@ -4336,6 +4336,28 @@ ok('an open dialog keeps the keyboard, the board keeps quiet, and an answer take
   // `aria-modal` hides the page from a screen reader, not from the Tab key.
   const dialog = read('src/hooks/useDialog.ts');
   assert(/event\.key !== 'Tab'/.test(dialog) && /event\.shiftKey/.test(dialog), 'useDialog no longer wraps Tab inside the overlay');
+  // And every overlay goes through it, as the README says this file demands: the trap in
+  // the hook did nothing for a fifth modal that built its own. Each element marked
+  // aria-modal carries a ref made by useDialog, in its own file or handed down by the
+  // component that renders it (the map's sheet gets TransitMap's).
+  const views = sourcesUnder('src/components');
+  let overlays = 0;
+  for (const file of views) {
+    const code = readFileSync(file, 'utf8');
+    for (const m of code.matchAll(/aria-modal/g)) {
+      overlays++;
+      const tag = code.slice(code.lastIndexOf('<', m.index), code.indexOf('>', m.index));
+      const ref = /\bref=\{(?:p\.|props\.)?(\w+)\}/.exec(tag)?.[1];
+      const madeHere = !!ref && new RegExp(`const ${ref} = useDialog\\(`).test(code);
+      const handedDown = !!ref && views.some((other) => {
+        const parent = readFileSync(other, 'utf8');
+        const passed = new RegExp(`\\b${ref}=\\{(\\w+)\\}`).exec(parent)?.[1];
+        return !!passed && new RegExp(`const ${passed} = useDialog\\(`).test(parent);
+      });
+      assert(madeHere || handedDown, `${relative(file)} marks an overlay aria-modal without a ref from useDialog, so Tab walks out of it`);
+    }
+  }
+  assert(overlays >= 5, `found ${overlays} modal overlays; there are five, so this is not reading them`);
 
   // The arrivals lists were `aria-live`: the minute tick changed every row at once, so
   // each minute announced up to fifteen bare numbers with no line and no way to stop it.
