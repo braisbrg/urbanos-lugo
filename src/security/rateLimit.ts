@@ -10,8 +10,8 @@ import type { NextFunction, Request, Response } from 'express';
  * twice this, both fine for one small server.
  */
 const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 120;
-const MAX_PLANS_PER_WINDOW = 30;
+export const MAX_PER_WINDOW = 120;
+export const MAX_PLANS_PER_WINDOW = 30;
 
 interface Bucket {
   count: number;

@@ -17,7 +17,7 @@ import { readCapped } from './readCapped';
 const ENDPOINT = 'https://info.urbanoslugo.com/qr-demo-paradas';
 const UA = `UrbanosLugoBot/1.0 (+${REPO_URL}; unofficial timetable reader)`;
 /** Their own page refreshes every 30 s, so nothing is gained by asking more often. */
-const CACHE_TTL_MS = 20_000;
+export const CACHE_TTL_MS = 20_000;
 
 export interface OperatorDeparture {
   /** "3.1", or occasionally a word: they label one service AVENIDA rather than 5.1. */

@@ -73,5 +73,6 @@ export interface RecentRoute {
 const isRoute = (x: unknown): x is RecentRoute =>
   typeof x === 'object' && x !== null && isString((x as RecentRoute).from) && isString((x as RecentRoute).to);
 
-/** The last four trips planned, as typed. Four fills the form's width on a phone. */
-export const useRecentRoutes = () => useRecent<RecentRoute>('urbanos-lugo-recent-routes', 4, isRoute, sameRoute);
+/** The last four trips planned, as typed. Four fills the form's width on a phone; PRIVACY.md says four. */
+export const RECENT_ROUTES = 4;
+export const useRecentRoutes = () => useRecent<RecentRoute>('urbanos-lugo-recent-routes', RECENT_ROUTES, isRoute, sameRoute);

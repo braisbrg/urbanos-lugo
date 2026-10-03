@@ -8,7 +8,7 @@ import { execFileSync } from 'child_process';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { BUS_STOPS, BUS_LINES } from '../src/data/transitData';
-import { MAX_OPERATOR_REQUESTS_PER_MINUTE, operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
+import { MAX_OPERATOR_REQUESTS_PER_MINUTE, CACHE_TTL_MS as OPERATOR_CACHE_MS, operatorTimesForStop, operatorTimesResponse, parseOperatorTimes } from '../src/services/operatorTimes';
 import { dayWord, daysLabel, frequencyLabel } from '../src/utils/serviceLabels';
 import { CSP_HEADER, CSP_META, THEME_INIT_HASH } from '../src/security/csp';
 import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit';
@@ -16,7 +16,7 @@ import { createHash } from 'node:crypto';
 import { buildSync } from 'esbuild';
 import { REPO_URL } from '../src/project';
 import { ROOT_HEAD, SITE_PATHS, canonicalUrl, pageHead, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
-import { extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
+import { CACHE_TTL_MS as ALERTS_CACHE_MS, MIN_OUTBOUND_INTERVAL_MS as ALERTS_MIN_OUTBOUND_MS, extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable, lugoOffsetByRule } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
@@ -24,7 +24,10 @@ import type { RoutePlanResult } from '../src/types';
 import { tripProgress, rememberPassed, AT_STOP_RADIUS_M, MISSED_AFTER_MIN, BOARDING_SOON_MIN, boardingIsNow, startTrip, advanceTrip, tripPhase, currentLeg, legTimes, shouldAskIfMissed, confirmBoarded, missedBus, packTrip, unpackTrip } from '../src/utils/tripProgress';
 import { ALARM_RADIUS_M } from '../src/services/stopAlarm';
 import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
-import { isSnapshotStale } from '../src/utils/snapshotAge';
+import { STALE_AFTER_MS, isSnapshotStale } from '../src/utils/snapshotAge';
+import { MAX_PER_WINDOW, MAX_PLANS_PER_WINDOW } from '../src/security/rateLimit';
+import { RECENT_ROUTES } from '../src/hooks/useStoredList';
+import { SNAPSHOT_AFTER_MS } from '../src/hooks/useServiceAlerts';
 import { plainText } from '../src/utils/html';
 import { STORAGE_KEYS, readJson, readString, writeJson, writeString } from '../src/utils/storage';
 import { PATHS } from '../src/routes';
@@ -35,7 +38,7 @@ import { syncOfficialAlerts } from '../src/services/alertSyncService';
 import { HOLIDAY_YEARS, buildRuns, dayKind, expandHeadway, handoverMinutes, isHoliday, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
 import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
 import festivos from '../src/data/festivos.json';
-import { planTrips, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
+import { planTrips, MAX_HEADLINE_WALK_MIN, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
 import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
 import { getScheduledBuses } from '../src/utils/vehicles';
@@ -2325,6 +2328,67 @@ ok('the documents name every data file, every bundled library and every host a v
   const listed = [...privacy.matchAll(/^\| `([a-z0-9.-]+\.[a-z]{2,})` \|/gm)].map((m) => `https://${m[1]}`).sort();
   const allowed = [...new Set([...CSP_HEADER.matchAll(/https:\/\/[^\s;]+/g)].map((m) => m[0]))].sort();
   assert.deepStrictEqual(listed, allowed, `PRIVACY.md lists [${listed.join(', ')}] as the hosts a visit contacts; the policy allows [${allowed.join(', ')}]`);
+});
+
+ok('the figures the documents quote are the ones the code runs and the data holds', () => {
+  // A limit changed in the code leaves its documents quoting the old one, and nothing failed:
+  // with the operator's ceiling raised from 120 to 1,200 the check on it stayed green, because
+  // it reads the same constant. So each figure is read out of the sentence that quotes it,
+  // whitespace folded so a line break cannot hide it, and compared with what runs.
+  const doc = (file: string) => read(file).replace(/\s+/g, ' ');
+  const WORDS: Record<string, number> = { un: 1, one: 1, once: 1, dous: 2, two: 2, tres: 3, three: 3, catro: 4, four: 4, cinco: 5, five: 5, seis: 6, six: 6, dez: 10, ten: 10, vinte: 20, twenty: 20, trinta: 30, thirty: 30 };
+  const figure = (raw: string) => (raw.toLowerCase() in WORDS ? WORDS[raw.toLowerCase()] : Number(raw.replace(/\./g, '')));
+  const walk = JSON.parse(read('src/data/walk-network.json')) as { junctions: number[]; edges: number[] };
+  let edges = 0;
+  let metres = 0;
+  for (let i = 0; i < walk.edges.length; i += 5 + walk.edges[i + 4] * 2) {
+    edges++;
+    metres += walk.edges[i + 2];
+  }
+  const QUOTED: [string, RegExp, number[]][] = [
+    ['SECURITY.md', /the stop page at most (\d+) times a minute/, [MAX_OPERATOR_REQUESTS_PER_MINUTE]],
+    ['DATA.md', /asks for at most (\d+) pages a minute/, [MAX_OPERATOR_REQUESTS_PER_MINUTE]],
+    ['README.md', /detrás do QR como moito (\d+) veces por minuto/, [MAX_OPERATOR_REQUESTS_PER_MINUTE]],
+    ['SECURITY.md', /capped at (\d+) KB/, [MAX_BODY_BYTES / 1024]],
+    ['DATA.md', /capped at (\d+) KB/, [MAX_BODY_BYTES / 1024]],
+    ['README.md', /teito de (\d+) KB en cada lectura/, [MAX_BODY_BYTES / 1024]],
+    ['README.md', /(\d+) peticións por minuto e enderezo, (\d+) se son de planificación/, [MAX_PER_WINDOW, MAX_PLANS_PER_WINDOW]],
+    ['SECURITY.md', /(\d+) requests a minute per address/, [MAX_PER_WINDOW]],
+    ['SECURITY.md', /fetched at most (once) a minute behind a (\w+)-minute cache/, [60_000 / ALERTS_MIN_OUTBOUND_MS, ALERTS_CACHE_MS / 60_000]],
+    ['README.md', /(\w+) minutos para os avisos, (\w+) se a lectura fallou, (\w+) segundos para unha parada/, [ALERTS_CACHE_MS / 60_000, ALERTS_MIN_OUTBOUND_MS / 60_000, OPERATOR_CACHE_MS / 1000]],
+    ['DATA.md', /cached for (\w+) seconds/, [OPERATOR_CACHE_MS / 1000]],
+    ['README.md', /deixa de contar incidencias ás (\w+) horas/, [STALE_AFTER_MS / 3_600_000]],
+    ['README.md', /máis dos (\w+) segundos que o \*hook\* concede/, [SNAPSHOT_AFTER_MS / 1000]],
+    ['README.md', /(\w+) minutos abondan cando a chegada é oficial, [^;]*; (\w+) cando é interpolada/, [TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN]],
+    ['README.md', /Ten que sacarlle (\w+) minutos ao mellor bus, e nunca encabeza por riba de (\d+) minutos/, [WALK_MUST_BEAT_BUS_BY_MIN, MAX_HEADLINE_WALK_MIN]],
+    ['design/DECIDIDO.md', /a (\d+) m ou no propio poste/, [ALARM_RADIUS_M]],
+    ['design/DECIDIDO.md', /nos (\w+) minutos antes do bus/, [BOARDING_SOON_MIN]],
+    ['README.md', /nos (\w+) minutos antes do/, [BOARDING_SOON_MIN]],
+    ['design/DECIDIDO.md', /Aos (\w+) minutos da hora impresa/, [MISSED_AFTER_MIN]],
+    ['README.md', /Se pasan (\w+) minutos da hora de subida/, [MISSED_AFTER_MIN]],
+    ['PRIVACY.md', /it is capped at (\w+)/, [RECENT_ROUTES]],
+    ['PRIVACY.md', /the last (\w+) trips you planned/, [RECENT_ROUTES]],
+    ['README.md', /(\d+\.\d{3}) cruces e (\d+\.\d{3}) arestas/, [walk.junctions.length / 2, edges]],
+    ['DATA.md', /(\d+\.\d{3}) junctions, (\d+\.\d{3}) edges, (\d+\.\d{3}) km of walkable way/, [walk.junctions.length / 2, edges, Math.floor(metres / 1000)]],
+    ['PRIVACY.md', /(\d+\.\d{3}) junctions and (\d+\.\d{3}) edges/, [walk.junctions.length / 2, edges]],
+    ['README.md', /Paradas cun código QR no poste \| (\d+)/, [BUS_STOPS.filter((s) => poleCode(s)).length]],
+    ['CLAUDE.md', /(\d+) lines, (\d+) stops/, [BUS_LINES.length, BUS_STOPS.length]],
+    ['CLAUDE.md', /(\d+) stops, (\d+) lines, (\d+) poles with a printed code/, [BUS_STOPS.length, BUS_LINES.length, BUS_STOPS.filter((s) => poleCode(s)).length]],
+  ];
+  for (const [file, pattern, expected] of QUOTED) {
+    const found = pattern.exec(doc(file));
+    assert(found, `${file} no longer has the sentence ${pattern}; if it moved, move this with it`);
+    const said = found.slice(1).map(figure);
+    assert.deepStrictEqual(said, expected, `${file} says ${found[0]}, and the code or the data says ${expected.join(', ')}`);
+  }
+
+  // The council's feeds: one is read since 15 September 2026, and NOTICE.md went on crediting three.
+  const feeds = [...read('src/services/alertSyncService.ts').matchAll(/concellodelugo\.gal\/[^'"]*feed/g)].length;
+  assert(feeds === 1, `the app reads ${feeds} council feeds; the documents say one`);
+  for (const file of ['README.md', 'DATA.md', 'NOTICE.md', 'SECURITY.md', 'PRIVACY.md']) {
+    const plural = /\b(two|three|four|dous|tres|catro|\d+) (RSS )?(feeds|fontes RSS)\b/i.exec(doc(file));
+    assert(!plural, `${file} says "${plural?.[0]}"; the app reads one council feed`);
+  }
 });
 
 ok('the services and the worker bundle for a runtime with no Node in it', () => {

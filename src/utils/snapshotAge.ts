@@ -4,7 +4,7 @@
  * refresh has actually stopped — and a stale snapshot must not keep asserting, in the
  * present tense, that the network is running normally.
  */
-const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
+export const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 
 /** True when a snapshot is too old to speak for the present, or its date makes no sense. */
 export function isSnapshotStale(fetchedAt: string | null | undefined, now: Date = new Date()): boolean {

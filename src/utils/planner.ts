@@ -12,7 +12,7 @@ import { LocationResolution, estimateWalk, getNearbyStops, resolveLocationQuery 
 import { LineDeparture, getNextLineDeparture } from './arrivals';
 
 /** How long to allow for changing bus: two minutes on a printed connecting time, four on an interpolated one. */
-const TRANSFER_BUFFER_MIN = 2;
+export const TRANSFER_BUFFER_MIN = 2;
 export const TRANSFER_BUFFER_ESTIMATED_MIN = 4;
 const bufferFor = (precision: Precision | undefined) => (precision === 'published' ? TRANSFER_BUFFER_MIN : TRANSFER_BUFFER_ESTIMATED_MIN);
 
@@ -39,7 +39,7 @@ const MAX_TRANSFER_WAIT_MIN = 180;
  */
 export const WALK_MUST_BEAT_BUS_BY_MIN = 5;
 /** Past this a walk stays in the list but never leads it, however bad the bus is (~5.6 km). */
-const MAX_HEADLINE_WALK_MIN = 75;
+export const MAX_HEADLINE_WALK_MIN = 75;
 
 /**
  * How far to look for a stop worth walking to. Measured over 40 trips: widening past 2 km

@@ -29,9 +29,9 @@ const OPERATOR_URL = 'https://buslugo.com';
 let cachedAlerts: AlertSyncResult | null = null;
 let lastFetchTimestamp = 0;
 let inFlight: Promise<AlertSyncResult> | null = null;
-const CACHE_TTL_MS = 30 * 60 * 1000;
+export const CACHE_TTL_MS = 30 * 60 * 1000;
 /** Minimum between outbound requests to buslugo.com, whatever anybody asks. */
-const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000;
+export const MIN_OUTBOUND_INTERVAL_MS = 60 * 1000;
 
 /** An answer is held for half an hour; a failure only for the outbound cooldown — a six-second hiccup is not a fact about the next thirty minutes. */
 function cacheHolds(cached: AlertSyncResult, elapsed: number, forceRefresh: boolean): boolean {
