@@ -3613,9 +3613,18 @@ ok('every request to somebody else’s server has a deadline, and the server kee
       if (/alerts\.json/.test(call)) continue;
       calls.push(relative(file));
       assert(/signal: AbortSignal\.timeout\??\.?\(\d/.test(call), `${relative(file)}: a fetch with no deadline: ${call.slice(0, 90)}`);
+      // A server reading somebody else's site says who it is (DATA.md: "identifies itself in
+      // its User-Agent"); a browser cannot set one, and asks only our own API.
+      const isServerSide = file.split(sep).includes('services') && !/apiUrl\(/.test(call);
+      if (isServerSide) assert(/'User-Agent': \w+/.test(call), `${relative(file)}: a request to somebody else's site that does not say who is asking: ${call.slice(0, 90)}`);
+      // And in the browser the deadline is asked for only where it exists: Safari 16 has none.
+      else assert(/AbortSignal\.timeout\?\.\(/.test(call), `${relative(file)}: AbortSignal.timeout is called in the browser without asking whether it exists`);
     }
   }
   assert(calls.length >= 5, `found ${calls.length} outside requests, which means this is not reading what it thinks`);
+  for (const file of ['src/services/alertSyncService.ts', 'src/services/operatorTimes.ts']) {
+    assert(/= `UrbanosLugoBot\/[\d.]+ \(\+\$\{REPO_URL\}; unofficial timetable reader\)`/.test(read(file)), `${file} no longer sends a User-Agent naming this project and what it is`);
+  }
 
   const server = read('server.ts');
   for (const header of [
