@@ -45,6 +45,7 @@ import { getScheduledBuses } from '../src/utils/vehicles';
 import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
 import { overpass } from './osm';
+import { rideTimeReport } from './validateRideTimes';
 
 hydrateGeometry();
 
@@ -2476,7 +2477,8 @@ ok('the figures the documents quote are the ones the code runs and the data hold
   // whitespace folded so a line break cannot hide it, and compared with what runs.
   const doc = (file: string) => read(file).replace(/\s+/g, ' ');
   const WORDS: Record<string, number> = { un: 1, one: 1, once: 1, dous: 2, two: 2, tres: 3, three: 3, catro: 4, four: 4, cinco: 5, five: 5, seis: 6, six: 6, dez: 10, ten: 10, vinte: 20, twenty: 20, trinta: 30, thirty: 30 };
-  const figure = (raw: string) => (raw.toLowerCase() in WORDS ? WORDS[raw.toLowerCase()] : Number(raw.replace(/\./g, '')));
+  // Galician writes 21.093 and 0,1: a dot groups thousands, a comma marks the decimal.
+  const figure = (raw: string) => (raw.toLowerCase() in WORDS ? WORDS[raw.toLowerCase()] : raw.includes(',') ? Number(raw.replace(',', '.')) : Number(raw.replace(/\./g, '')));
   const walk = JSON.parse(read('src/data/walk-network.json')) as { junctions: number[]; edges: number[] };
   let edges = 0;
   let metres = 0;
@@ -2484,7 +2486,30 @@ ok('the figures the documents quote are the ones the code runs and the data hold
     edges++;
     metres += walk.edges[i + 2];
   }
+  // The dataset's own counts the README states: legs between consecutive stops, those that
+  // drive four times the straight line, and the operator's listings with no coordinates.
+  let legs = 0;
+  let detours = 0;
+  for (const line of BUS_LINES) {
+    for (const direction of line.directions) {
+      direction.legMeters?.forEach((road, i) => {
+        const a = BUS_STOPS.find((s) => s.id === direction.stops[i]);
+        const b = BUS_STOPS.find((s) => s.id === direction.stops[i + 1]);
+        if (!a || !b) return;
+        legs++;
+        const straight = getDistanceMeters(a.lat, a.lng, b.lat, b.lng);
+        if (direction.stopPathIndex?.length && straight > 5 && road / straight > 4) detours++;
+      });
+    }
+  }
+  const unplaced = (JSON.parse(read('data/official-raw.json')).stops as { coords?: unknown }[]).filter((s) => !Array.isArray(s.coords)).length;
+  const timing = rideTimeReport();
+  const tenth = (n: number) => Math.round(n * 10) / 10;
   const QUOTED: [string, RegExp, number[]][] = [
+    ['README.md', /\*\*(\d+) paradas\*\* teñen a súa hora suxeita por horas oficiais a ambos os lados, e \*\*(\d+)\*\* quedan/, [timing.bracketed, timing.extrapolated]],
+    ['README.md', /Nos (\d+) tramos que se poden contrastar, o erro fronte ao impreso ten mediana de ([\d,]+) min, chega a ([\d,]+) min no peor caso lento e a −([\d,]+) no peor rápido, e só o (\d+)% cae/, [timing.legs.length, tenth(timing.median), tenth(timing.worstSlow), tenth(-timing.worstFast), timing.withinTwoMinutes]],
+    ['README.md', /\*\*(\d+) tramos de (\d+) \(/, [detours, legs]],
+    ['README.md', /\*\*(\d+) paradas sen coordenadas\*\*/, [unplaced]],
     ['SECURITY.md', /the stop page at most (\d+) times a minute/, [MAX_OPERATOR_REQUESTS_PER_MINUTE]],
     ['DATA.md', /asks for at most (\d+) pages a minute/, [MAX_OPERATOR_REQUESTS_PER_MINUTE]],
     ['README.md', /detrás do QR como moito (\d+) veces por minuto/, [MAX_OPERATOR_REQUESTS_PER_MINUTE]],

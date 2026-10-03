@@ -8,69 +8,97 @@
  * stretched onto measured road time. So: how much of a route sits inside a published
  * bracket, where the error is pinned at both ends, and how far the road model drifts
  * from the printed times it can be checked against. The second number is the residual
- * risk of a "~" time.
+ * risk of a "~" time. The README quotes these figures, and tools/test.ts holds it to them.
  */
+import { pathToFileURL } from 'node:url';
 import { BUS_LINES, BUS_STOPS } from '../src/data/transitData';
 import { buildRuns } from '../src/utils/schedule';
 import { mean, median } from './lib';
 
-const byId = new Map(BUS_STOPS.map((s) => [s.id, s]));
-
-let bracketed = 0;
-let extrapolated = 0;
-let anchoredDirections = 0;
-let directions = 0;
-const legs: { line: string; from: string; to: string; published: number; modelled: number }[] = [];
-
-for (const line of BUS_LINES) {
-  line.directions.forEach((direction, di) => {
-    const runs = buildRuns(line, di, BUS_STOPS, 'laborable');
-    if (!runs.length) return;
-    directions++;
-
-    // The widest published bracket any run of this direction has.
-    const anchors = runs.reduce<number[]>((best, r) => (r.publishedStopIndices.length > best.length ? r.publishedStopIndices : best), []);
-    if (anchors.length > 1) anchoredDirections++;
-    const first = anchors[0] ?? 0;
-    const last = anchors[anchors.length - 1] ?? 0;
-    for (let i = 0; i < direction.stops.length; i++) {
-      if (anchors.length > 1 && i >= first && i <= last) bracketed++;
-      else extrapolated++;
-    }
-
-    // Road time vs printed time, on the one thing that can be checked: consecutive anchors.
-    const cum = [0];
-    for (let i = 0; i < direction.stops.length - 1; i++) cum.push(cum[i] + (direction.legSeconds?.[i] ?? 90) + 20);
-    const run = runs.find((r) => r.publishedStopIndices.length > 1);
-    if (!run) return;
-    for (let k = 1; k < run.publishedStopIndices.length; k++) {
-      const a = run.publishedStopIndices[k - 1];
-      const b = run.publishedStopIndices[k];
-      legs.push({
-        line: line.number,
-        from: byId.get(direction.stops[a])?.name ?? '?',
-        to: byId.get(direction.stops[b])?.name ?? '?',
-        published: run.minutesByStopIndex[b] - run.minutesByStopIndex[a],
-        modelled: (cum[b] - cum[a]) / 60,
-      });
-    }
-  });
+export interface RideTimeLeg {
+  line: string;
+  from: string;
+  to: string;
+  published: number;
+  modelled: number;
 }
 
-console.log(`${anchoredDirections}/${directions} directions run between two or more published timing points`);
-console.log(`stops with their time pinned at both ends : ${bracketed}`);
-console.log(`stops beyond the last published point     : ${extrapolated}`);
+export function rideTimeReport() {
+  const byId = new Map(BUS_STOPS.map((s) => [s.id, s]));
+  let bracketed = 0;
+  let extrapolated = 0;
+  let anchoredDirections = 0;
+  let directions = 0;
+  const legs: RideTimeLeg[] = [];
 
-if (!legs.length) {
-  console.log('\nno checkable legs.');
-} else {
-  const diff = (l: (typeof legs)[number]) => l.modelled - l.published;
-  const errors = legs.map(diff);
-  console.log(`\nroad model vs printed time, on ${legs.length} checkable legs (minutes, + = we run late)`);
-  console.log(`  median ${median(errors).toFixed(1)}   mean ${mean(errors).toFixed(1)}   worst fast ${Math.min(...errors).toFixed(1)}   worst slow ${Math.max(...errors).toFixed(1)}`);
-  console.log(`  within 2 min: ${Math.round((errors.filter((e) => Math.abs(e) <= 2).length / errors.length) * 100)}%`);
+  for (const line of BUS_LINES) {
+    line.directions.forEach((direction, di) => {
+      const runs = buildRuns(line, di, BUS_STOPS, 'laborable');
+      if (!runs.length) return;
+      directions++;
+
+      // The widest published bracket any run of this direction has.
+      const anchors = runs.reduce<number[]>((best, r) => (r.publishedStopIndices.length > best.length ? r.publishedStopIndices : best), []);
+      if (anchors.length > 1) anchoredDirections++;
+      const first = anchors[0] ?? 0;
+      const last = anchors[anchors.length - 1] ?? 0;
+      for (let i = 0; i < direction.stops.length; i++) {
+        if (anchors.length > 1 && i >= first && i <= last) bracketed++;
+        else extrapolated++;
+      }
+
+      // Road time vs printed time, on the one thing that can be checked: consecutive anchors.
+      const cum = [0];
+      for (let i = 0; i < direction.stops.length - 1; i++) cum.push(cum[i] + (direction.legSeconds?.[i] ?? 90) + 20);
+      const run = runs.find((r) => r.publishedStopIndices.length > 1);
+      if (!run) return;
+      for (let k = 1; k < run.publishedStopIndices.length; k++) {
+        const a = run.publishedStopIndices[k - 1];
+        const b = run.publishedStopIndices[k];
+        legs.push({
+          line: line.number,
+          from: byId.get(direction.stops[a])?.name ?? '?',
+          to: byId.get(direction.stops[b])?.name ?? '?',
+          published: run.minutesByStopIndex[b] - run.minutesByStopIndex[a],
+          modelled: (cum[b] - cum[a]) / 60,
+        });
+      }
+    });
+  }
+
+  const errors = legs.map((l) => l.modelled - l.published);
+  return {
+    directions,
+    anchoredDirections,
+    bracketed,
+    extrapolated,
+    legs,
+    errors,
+    median: errors.length ? median(errors) : 0,
+    worstFast: errors.length ? Math.min(...errors) : 0,
+    worstSlow: errors.length ? Math.max(...errors) : 0,
+    withinTwoMinutes: errors.length ? Math.round((errors.filter((e) => Math.abs(e) <= 2).length / errors.length) * 100) : 0,
+  };
+}
+
+function main() {
+  const report = rideTimeReport();
+  console.log(`${report.anchoredDirections}/${report.directions} directions run between two or more published timing points`);
+  console.log(`stops with their time pinned at both ends : ${report.bracketed}`);
+  console.log(`stops beyond the last published point     : ${report.extrapolated}`);
+
+  if (!report.legs.length) {
+    console.log('\nno checkable legs.');
+    return;
+  }
+  const diff = (l: RideTimeLeg) => l.modelled - l.published;
+  console.log(`\nroad model vs printed time, on ${report.legs.length} checkable legs (minutes, + = we run late)`);
+  console.log(`  median ${report.median.toFixed(1)}   mean ${mean(report.errors).toFixed(1)}   worst fast ${report.worstFast.toFixed(1)}   worst slow ${report.worstSlow.toFixed(1)}`);
+  console.log(`  within 2 min: ${report.withinTwoMinutes}%`);
   console.log('\n  line   printed  modelled   diff   from -> to');
-  for (const l of [...legs].sort((x, y) => diff(x) - diff(y))) {
+  for (const l of [...report.legs].sort((x, y) => diff(x) - diff(y))) {
     console.log(`  ${l.line.padEnd(5)}  ${l.published.toFixed(0).padStart(7)}  ${l.modelled.toFixed(1).padStart(8)}  ${diff(l).toFixed(1).padStart(6)}   ${l.from} -> ${l.to}`);
   }
 }
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
