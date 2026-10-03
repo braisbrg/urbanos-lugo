@@ -2299,6 +2299,30 @@ ok('what the workflows run is pinned, and none of them hands out more than it us
   }
 });
 
+ok('the tools that ask public routers and the IGN keep to the gap DATA.md promises', () => {
+  // DATA.md: FOSSGIS ask for one request a second, and the IGN's elevation tiles are asked
+  // for 1,5 s apart. compareWalkRouter.ts kept 1.1 s ("the only rate this may ever run at");
+  // calibrateWalking.ts asked the same router every 350 ms. Each file that names one of
+  // these hosts is pinned to the pause of the tool that sends the requests, and a new one
+  // fails until it is added here. The IGN's address is built in terrain.ts and fetched,
+  // paced, by importElevation.ts.
+  const POLITE: [string, string, RegExp, number][] = [
+    ['tools/calibrateWalking.ts', 'tools/calibrateWalking.ts', /const PAUSE_MS = ([\d_]+);/, 1000],
+    ['tools/compareWalkRouter.ts', 'tools/compareWalkRouter.ts', /const MIN_GAP_MS = ([\d_]+);/, 1000],
+    ['tools/importOfficialData.ts', 'tools/importOfficialData.ts', /await sleep\(([\d_]+)\);\n {2}\}\n {2}return \{ path/, 1000],
+    ['tools/terrain.ts', 'tools/importElevation.ts', /const GAP_MS = ([\d_]+);/, 1500],
+  ];
+  const hosts = /routing\.openstreetmap\.de|router\.project-osrm\.org|servicios\.idee\.es/;
+  const naming = readdirSync(join(root, 'tools')).filter((f) => f.endsWith('.ts') && !f.startsWith('_') && f !== 'test.ts').map((f) => `tools/${f}`).filter((f) => hosts.test(read(f).replace(/^\s*(\/\/|\*).*$/gm, '')));
+  assert.deepStrictEqual(naming.sort(), POLITE.map(([f]) => f).sort(), `these tools name a public router or the IGN: ${naming.join(', ')}; each needs its pause pinned here`);
+  for (const [, file, pattern, floor] of POLITE) {
+    const pause = Number((pattern.exec(read(file))?.[1] ?? '0').replace(/_/g, ''));
+    assert(pause >= floor, `${file} waits ${pause} ms between requests; the service it asks wants ${floor}`);
+  }
+  const gap = Number(/const GAP_MS = ([\d_]+);/.exec(read('tools/importElevation.ts'))?.[1]);
+  assert(read('DATA.md').replace(/\s+/g, ' ').includes(`spaced ${String(gap / 1000).replace('.', ',')} s apart`), `DATA.md no longer says the IGN is asked ${gap / 1000} s apart`);
+});
+
 ok('the gates run on every push and proposal, offline, and only the schedule reads other people’s sites', () => {
   // CLAUDE.md: ci.yml runs the four gates on every push and nothing merges without them;
   // all four are offline; a pull request never publishes; the tools that read buslugo.com,

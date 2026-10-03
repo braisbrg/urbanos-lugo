@@ -13,7 +13,8 @@ import { getDistanceMeters as haversine } from '../src/utils/geo';
 import { mean, median, percentile, sleep } from './lib';
 
 const FOOT_ROUTER = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
-const PAUSE_MS = 350;
+/** FOSSGIS ask for one request a second (DATA.md); compareWalkRouter.ts keeps the same gap. */
+const PAUSE_MS = 1100;
 const SAMPLE_PAIRS = 120;
 
 /** Keep the current values here so the report can show the error they cause. */
