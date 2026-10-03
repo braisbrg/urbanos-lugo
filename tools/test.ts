@@ -1511,6 +1511,29 @@ await okAsync('the one position watch serves every listener, and a late one gets
   }
 });
 
+ok('the places that ask for a position are the ones PRIVACY.md lists', () => {
+  // PRIVACY.md names each place the app asks where you are, and said four while the map's
+  // "my location" made five. Each file that asks is pinned to the words PRIVACY.md uses for
+  // it: a sixth fails here until the page, and this table, say so.
+  const PLACES: Record<string, string> = {
+    [join('src', 'components', 'StopHome.tsx')]: '"stops near me"',
+    [join('src', 'components', 'RoutePlannerView.tsx')]: '"use my GPS location"',
+    [join('src', 'components', 'Map', 'useFollowMe.ts')]: '"my location"** on the map',
+    [join('src', 'components', 'StopArrivalsView.tsx')]: '**arrival alarm**',
+    [join('src', 'hooks', 'useTripCompanion.ts')]: '"Vou nesta"',
+  };
+  const asking = sourcesUnder('src')
+    .filter((file) => !file.endsWith(join('services', 'stopAlarm.ts')))
+    .filter((file) => /getCurrentPosition\(|subscribePosition\(|watchForStop\(|watchPosition\(/.test(readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')))
+    .map(relative)
+    .sort();
+  assert.deepStrictEqual(asking, Object.keys(PLACES).sort(), `the position is asked for in ${asking.join(', ')}; PRIVACY.md lists ${Object.keys(PLACES).length} places`);
+  const privacy = read('PRIVACY.md').replace(/\s+/g, ' ');
+  const words = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
+  assert(privacy.includes(`asks for it in ${words[asking.length]} places`), `PRIVACY.md does not say the app asks in ${words[asking.length]} places`);
+  for (const [file, label] of Object.entries(PLACES)) assert(privacy.includes(label.replace(/\s+/g, ' ')), `PRIVACY.md no longer names ${label}, where ${file} asks`);
+});
+
 ok('the answer column spaces its blocks in one place', () => {
   // The gaps down the Ruta column ran 20, 0, 20, 20, 24 px because each block carried its
   // own margin; Líneas ran 10, 12, 16, 16, 20. The column owns the rhythm now, and a block
