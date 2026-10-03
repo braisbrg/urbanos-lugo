@@ -14,7 +14,7 @@
  * until 10:00.
  */
 import { BUS_STOPS } from '../src/data/transitData';
-import { planTrips } from '../src/utils/planner';
+import { planTrips, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN } from '../src/utils/planner';
 import { dayKind, lineRunsOn } from '../src/utils/schedule';
 import { violations } from './lib';
 
@@ -52,8 +52,15 @@ for (const [day, pairs] of DAYS) {
       planned++;
       const where = `${from.name} -> ${to.name} at ${hour}:20 (${kind})`;
 
-      for (const plan of planTrips(from.name, to.name, { now: at })) {
+      const plans = planTrips(from.name, to.name, { now: at });
+      // The README: never a boarding stop that takes longer to walk to than walking the
+      // whole way would; walking is always offered, so its duration is the bound.
+      const walkOnly = plans.find((p) => p.segments.every((seg) => seg.type === 'walk'));
+      for (const plan of plans) {
         offered++;
+        const firstBus = plan.segments.findIndex((seg) => seg.type === 'bus');
+        const walkToBus = plan.segments.slice(0, Math.max(firstBus, 0)).reduce((n, seg) => n + (seg.type === 'walk' ? seg.durationMinutes : 0), 0);
+        if (firstBus !== -1 && walkOnly && walkToBus >= walkOnly.durationMinutes) fail('a plan walks as long to its first bus as walking the whole way', `${where}: ${walkToBus} min to the stop, ${walkOnly.durationMinutes} min on foot`);
         for (const field of ['departureTime', 'arrivalTime'] as const) {
           if (!CLOCK.test(plan[field])) fail(`a plan's ${field} is not a clock time`, `${where}: "${plan[field]}"`);
         }
@@ -67,6 +74,7 @@ for (const [day, pairs] of DAYS) {
 
         let busLegs = 0;
         let lastArrival: number | null = null;
+        let lastArrivalPrecision: string | undefined;
         for (const seg of plan.segments) {
           if (!['walk', 'wait', 'bus'].includes(seg.type)) fail('a segment has an unknown type', `${where}: ${seg.type}`);
           if (seg.durationMinutes < 0) fail('a segment lasts a negative time', where);
@@ -104,8 +112,13 @@ for (const [day, pairs] of DAYS) {
             const dep = toMinutes(seg.departureTime);
             const arr = toMinutes(seg.arrivalTime);
             if (lastArrival !== null && minutesAfter(lastArrival, dep) > 12 * 60) fail('a bus segment departs before the previous one arrived', `${where}: boards ${seg.departureTime}, previous leg arrived ${lastArrival}`);
+            // The README's transfer margin: two minutes after a printed arrival, four after a
+            // worked-out one. Short of it somebody is left on the pavement.
+            const margin = lastArrivalPrecision === 'published' ? TRANSFER_BUFFER_MIN : TRANSFER_BUFFER_ESTIMATED_MIN;
+            if (lastArrival !== null && minutesAfter(lastArrival, dep) < margin) fail('a change of bus leaves less than its margin', `${where}: ${minutesAfter(lastArrival, dep)} min after a ${lastArrivalPrecision} arrival, ${margin} needed`);
             if (minutesAfter(dep, arr) > 12 * 60) fail('a bus segment arrives before it departs', `${where}: ${seg.departureTime} -> ${seg.arrivalTime}`);
             lastArrival = arr;
+            lastArrivalPrecision = seg.arrivalPrecision;
           }
         }
 
