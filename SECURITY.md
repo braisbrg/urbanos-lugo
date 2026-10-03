@@ -11,8 +11,10 @@ service, and saying so is more useful than promising a turnaround nobody is on c
 ## What is worth reporting
 
 The app is a reader for a public timetable. It has no accounts, no payments and no
-personal data — the only thing it stores about anyone is a list of favourite stops and a
-theme, in that browser's own `localStorage`, which never leaves the device.
+server-side personal data. What it keeps is in that browser's own storage and never
+leaves the device: favourites, recent stops, the last four trips as typed, the language,
+the theme and the trip in progress. `PRIVACY.md` lists every key, and `pnpm test` holds
+that list to the code.
 
 So the interesting surface is small:
 
