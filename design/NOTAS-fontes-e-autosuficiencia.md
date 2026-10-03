@@ -352,15 +352,13 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
 
 11. **O que deixou a rolda 25 de `REXISTRO-probas.md`** (1 de outubro de 2026), para
    decidir e para vixiar:
-   - **As pestanas á demanda.** Uns 150 ms menos ao primeiro pintado, a cambio de agardar
-     pola rede ao abrir Ruta ou Liñas a primeira vez.
+   - **As pestanas á demanda, por facer** (decidido o 3 de outubro): Ruta e Liñas fóra do
+     anaco de entrada, uns 150 ms menos ao primeiro pintado, e cargadas en repouso despois
+     del para que a primeira vez que se abren xa estean. Medir antes e despois.
    - **O token de Deno Deploy no ambiente `deno-deploy`.** O workflow nómeao, e o ambiente
      existe desde o 2 de outubro, só para `main` e co token de organización novo. Falta,
      cando un despregue do *worker* desde `main` co ambiente saia en verde (o da próxima
      versión), borrar o segredo do repositorio e o token vello.
-   - **A organización de Deno Deploy sen verificar** usa só o 1 % do plan gratuíto: 10.000
-     peticións ao mes. Cada visita pide os avisos unha vez, e un taboleiro aberto desde o QR
-     pide os minutos cada 30 s; verificala cun medio de pago dá o millón do plan.
    - **Os workflows do luns en `main`**, «Check the sources» e «Measure in a browser», coas
      accións fixadas: a primeira volta despois da 1.2.1 é o 5 de outubro, e a de medir ten
      que gardar o artefacto `browser-measurements-N` cos catro ficheiros (upload-artifact 7).

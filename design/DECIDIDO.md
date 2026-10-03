@@ -237,6 +237,17 @@ descrición. Catro regras, e o que quedou fóra:
   segundo bucle da app, despois do latexo de «Vou nesta», e duran o que dura o cálculo.
   `pnpm test` le cada `@keyframes` e falla se algún anima outra cousa.
 
+## Deno e as pestanas — 3 de outubro de 2026
+
+- **A organización de Deno Deploy queda sen verificar**, polo de agora. Sen medio de pago
+  non hai nada que cobrar, e o teito é o 1 % do plan gratuíto: 10.000 peticións ao mes.
+  Cada visita pide os avisos unha vez, e un taboleiro aberto desde o QR pide os minutos
+  cada 30 s. Se se esgota, a app segue: os avisos saen da copia de cada hora, marcada como
+  copia, e os minutos do operador non se amosan ata o mes seguinte.
+- **Ruta e Liñas cárganse á demanda**: uns 150 ms menos ao primeiro pintado de calquera
+  visita, a do QR incluída. Para que a primeira vez que se abren non agarden pola rede,
+  cárganse en repouso despois do primeiro pintado; a precaché xa as baixa igual.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).
