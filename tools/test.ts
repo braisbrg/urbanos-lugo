@@ -4562,6 +4562,33 @@ ok('what the basemap left out stays out', () => {
   assert(!residential || (residential.maxzoom ?? 24) <= 9, `dark: the residential fill reaches zoom ${residential?.maxzoom ?? 'any'}, past the 9 it is capped at`);
 });
 
+ok('what the interface announces, names and keeps is what the README and DECIDIDO say', () => {
+  // Small promises, each in one sentence and held by none. The README: toggles carry
+  // aria-pressed -- board views, map layers, line filters, time mode, trip options, theme and
+  // language -- and the navigation aria-current="page"; occupancy is "expected"; the line
+  // list says "1 en ruta", not "1 GPS". DECIDIDO: one segmented control, shared by the board
+  // and the planner; the ride has four states and no "done"; the keep-awake switch starts
+  // off and is not shown where the API is missing; one favicon file; the manifest dark.
+  const pressed = { 'ui/controls.tsx': 2, 'ui/Settings.tsx': 2, 'Map/MapControls.tsx': 3, 'Map/LineChips.tsx': 2, 'planner/TripOptions.tsx': 1 };
+  for (const [file, least] of Object.entries(pressed)) {
+    const found = (read(`src/components/${file}`).match(/aria-pressed=/g) ?? []).length;
+    assert(found >= least, `${file} announces ${found} pressed states, fewer than its ${least} toggles`);
+  }
+  for (const file of ['StopArrivalsView.tsx', 'RoutePlannerView.tsx']) assert(/<Segmented\b/.test(read(`src/components/${file}`)), `${file} draws its own segmented control again`);
+  for (const file of ['BottomNav.tsx', 'SideNav.tsx']) assert(/aria-current=\{[^}]*'page'/.test(read(`src/components/${file}`)), `${file} no longer marks the current tab as the page`);
+  for (const lang of LANGS) {
+    const t = translations(lang);
+    assert(/prevista|expected/i.test(t.map.occupancyLabel), `${lang}: occupancy is no longer called expected: "${t.map.occupancyLabel}"`);
+    assert(!/gps|live|directo/i.test(t.lines.enRoute(2)), `${lang}: the line list counts buses as tracked: "${t.lines.enRoute(2)}"`);
+  }
+  assert(/export type TripPhase = 'waiting' \| 'riding' \| 'alighting' \| 'walking';/.test(read('src/utils/tripProgress.ts')), 'the ride no longer has exactly its four states');
+  const ride = read('src/hooks/useTripCompanion.ts');
+  assert(/const \[keepAwakeOn, setKeepAwakeOn\] = useState\(false\)/.test(ride) && /CAN_KEEP_AWAKE \? \{/.test(ride), 'the keep-awake switch no longer starts off, or shows where the API is missing');
+  assert.deepStrictEqual(readdirSync(join(root, 'public')).filter((f) => f.endsWith('.svg')), ['favicon.svg'], 'there is more than one drawing of the icon again');
+  const background = /background_color: '(#[0-9a-f]{6})'/i.exec(read('vite.config.ts'))?.[1] ?? '#ffffff';
+  assert(relLum(background) < 0.02, `the installed app opens on ${background}, a white flash before the dark page`);
+});
+
 ok('three tones carry meaning, at least 50 degrees apart, and the mark is the fleet red', () => {
   // DECIDIDO.md: red is the app, blue a time the operator publishes, amber a time this app
   // works out; nothing else carries meaning, they sit 50 degrees or more apart in oklch,
