@@ -148,13 +148,15 @@ async function startServer() {
     process.exit(1);
   }
 
-  // Anything that still throws returns JSON, not Express's HTML stack trace page. The URL
-  // goes as an argument, never into the format string: `/%s` would swallow the error.
+  // Anything that still throws returns JSON, not Express's HTML stack trace page. The path
+  // goes as an argument, never into the format string: `/%s` would swallow the error. And
+  // never the query: a plan's query is the two addresses somebody typed, and PRIVACY.md
+  // says a failure is logged by method and path alone.
   // A malformed URL (`%E0%A4%A`) is the caller's mistake and Express marks it 400: it was
   // answered 500 and logged with a stack trace as if this server had failed.
   app.use((err: Error & { status?: number }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const status = err.status && err.status >= 400 && err.status < 500 ? err.status : 500;
-    if (status === 500) console.error('request failed:', req.method, req.originalUrl, err);
+    if (status === 500) console.error('request failed:', req.method, req.path, err);
     if (!res.headersSent) res.status(status).json({ error: status === 500 ? 'Internal error' : 'Bad request' });
   });
 

@@ -2468,6 +2468,27 @@ ok('the figures the documents quote are the ones the code runs and the data hold
   }
 });
 
+ok('the servers write nothing down but a failure’s path, and the page sets no cookie and parses no HTML', () => {
+  // PRIVACY.md: no cookie, nothing written to disk, no access log, and a failure logged by
+  // method and path alone. alertSyncService.ts: what is scraped is rendered by React as
+  // text, never as HTML. The 500 handler logged the whole URL, and a plan's query is the two
+  // addresses somebody typed; nothing else held any of these.
+  const serverSide = ['server.ts', 'worker/index.ts', ...sourcesUnder('src/security', 'src/services').map(relative)];
+  for (const file of serverSide) {
+    const code = read(file).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    assert(!/\b(writeFile|appendFile|createWriteStream|writeFileSync|appendFileSync)\b/.test(code), `${file} writes to disk`);
+    for (const [call] of code.matchAll(/console\.\w+\([^;]*\)/g)) {
+      assert(!/originalUrl|req\.url\b|req\.query|searchParams|request\.url\b/.test(call), `${file} logs a request's query: ${call.slice(0, 80)}`);
+    }
+  }
+  assert(/console\.error\('request failed:', req\.method, req\.path, err\)/.test(read('server.ts')), 'the 500 handler no longer logs the method and path alone');
+  for (const file of sourcesUnder('src')) {
+    const code = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    assert(!/dangerouslySetInnerHTML/.test(code), `${relative(file)} renders a string as HTML through React`);
+    assert(!/document\.cookie/.test(code), `${relative(file)} touches cookies, and PRIVACY.md promises none`);
+  }
+});
+
 ok('the limiter turns an address away past its minute, with a 429 and a time to come back', () => {
   // The README and SECURITY.md promise 120 requests a minute per address and 30 plans, then
   // a 429 with Retry-After. Only stress:http, against a running server, ever measured it.

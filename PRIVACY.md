@@ -108,7 +108,9 @@ browser directly. It is sent a stop code and nothing else — no identifier, no 
 `server.ts` keeps request counts per IP address **in memory** so one caller cannot exhaust
 the route planner for everybody (`src/security/rateLimit.ts`). It is a `Map` that a timer
 sweeps; nothing is written to disk, and restarting the process forgets it. Nothing else
-about a request is recorded — there is no access log in this project.
+about a request is recorded — there is no access log in this project. A request that fails
+with an error inside the server writes its method and path, never its query, to the
+server's error output, so the fault can be found; a planned trip's query is what you typed.
 
 Whoever hosts it may of course be keeping their own logs. GitHub Pages does, and so does
 Deno Deploy where the API is configured; that is between you and them, and their policies
