@@ -3,7 +3,7 @@
  * rather than in the browser, and each check names the bug it guards against.
  */
 import assert from 'assert';
-import { readFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
@@ -3394,6 +3394,49 @@ ok('the build compresses its assets and the server hands them over', () => {
   const entry = readdirSync(assets).find((f) => /^index-.*\.js$/.test(f));
   if (!entry) return;
   assert(existsSync(join(assets, entry + '.br')) && existsSync(join(assets, entry + '.gz')), `dist has ${entry} but no compressed copy beside it`);
+});
+
+ok('the download sizes the README quotes are the build’s, within five per cent', () => {
+  // "Every measured figure lives here and is updated here" (CLAUDE.md), and the size table
+  // is the one most moved by a change nobody connects to it: a dependency bump renamed and
+  // regrew the renderer, and the README was re-measured by hand afterwards. Read against the
+  // build when there is one -- CI's second run of this file, after `pnpm run build`.
+  const assets = join(root, 'dist', 'assets');
+  if (!existsSync(assets)) return;
+  const files = readdirSync(assets);
+  const size = (file: string) => statSync(join(assets, file)).size / 1024;
+  const chunk = (pattern: RegExp) => {
+    const found = files.filter((f) => pattern.test(f));
+    assert(found.length === 1, `the build has ${found.length} files matching ${pattern}, so the README's row cannot be read against it`);
+    return [size(found[0]), size(`${found[0]}.gz`), size(`${found[0]}.br`)];
+  };
+  const html = join(root, 'dist', 'index.html');
+  const page = [statSync(html).size, statSync(`${html}.gz`).size, statSync(`${html}.br`).size].map((n) => n / 1024);
+  const entry = chunk(/^index-[\w-]+\.js$/);
+  const styles = chunk(/^index-[\w-]+\.css$/);
+  const ROWS: [string, number[]][] = [
+    ['Anaco de entrada', entry],
+    ['Folla de estilos', styles],
+    ['\\*\\*Primeira carga\\*\\*', [0, 1, 2].map((i) => entry[i] + styles[i] + page[i])],
+    ['Renderizador do mapa, co estilo e a paleta', chunk(/^palette-[\w-]+\.js$/)],
+    ['Estilos do renderizador', chunk(/^palette-[\w-]+\.css$/)],
+    ['Worker do renderizador', chunk(/^maplibre-gl-worker-[\w-]+\.js$/)],
+    ['Xeometría viaria', chunk(/^route-geometry-[\w-]+\.js$/)],
+    ['Rede peonil con alturas', chunk(/^walk-network-[\w-]+\.js$/)],
+  ];
+  const readme = read('README.md');
+  const kb = (cell: string) => Number(cell.replace(/[*~\s]|KB.*$/g, '').replace(/\./g, ''));
+  for (const [label, built] of ROWS) {
+    const row = new RegExp(`^\\| ${label} \\| ([^|]+) \\| ([^|]+) \\| ([^|]+) \\|`, 'm').exec(readme);
+    assert(row, `the README's size table has no row "${label}"`);
+    row.slice(1, 4).forEach((cell, i) => {
+      const quoted = kb(cell);
+      assert(Math.abs(quoted - built[i]) <= Math.max(built[i] * 0.05, 2), `README: ${label.replace(/\\/g, '')} ${['raw', 'gzip', 'brotli'][i]} is ${cell.trim()}; the build has ${built[i].toFixed(0)} KB`);
+    });
+  }
+  const fonts = files.filter((f) => f.endsWith('.woff2')).reduce((n, f) => n + size(f), 0);
+  const typeface = Number(/^\| Tipografía \| (\d+) KB/m.exec(readme)?.[1]);
+  assert(Math.abs(typeface - fonts) <= Math.max(fonts * 0.05, 2), `README: the typeface is ${typeface} KB; the build has ${fonts.toFixed(0)} KB`);
 });
 
 ok('nothing on the critical path waits for a script over the network', () => {
