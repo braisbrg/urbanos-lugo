@@ -464,6 +464,8 @@ export const gl = {
       'Canto tarda unha viaxe enteira deste sentido segundo o cadro horario do operador, da primeira parada á última. Non contempla atrasos.',
     routeDurationUnknown: 'Sen horario',
     kilometres: (km: string) => `${km} km`,
+    operatorNotice: 'Aviso do operador',
+    seeFullNotice: 'Ver o aviso enteiro',
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:
       'O trazado deste sentido no mapa non está topografiado: constrúese coa ruta que faría un coche entre as paradas, así que pode desviarse por onde o bus non pasa. As paradas e as horas son as oficiais.',
@@ -481,6 +483,10 @@ export const gl = {
   },
 
   arrivals: {
+    operatorNoticeFor: (lines: string[]) =>
+      lines.length === 0
+        ? 'Aviso do operador sobre cambios nas liñas'
+        : `Aviso do operador para ${lines.length === 1 ? 'a liña' : 'as liñas'} ${lines.join(', ')}`,
     operatorSaysTitle: 'O que amosa o QR desta parada',
     operatorSaysNote: (at: string) =>
       `Isto é o que amosa agora o código deste poste, lido ás ${at}. É o dato do operador, non o desta app.`,

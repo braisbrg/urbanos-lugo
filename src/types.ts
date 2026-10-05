@@ -122,6 +122,18 @@ export interface ServiceAlert {
   /** The operator speaks about its own service; the Concello's press feed is a different kind of claim. */
   source?: 'operator' | 'concello';
   link?: string;
+  /** The notice's own parts, when the operator wrote it out line by line on its home page. */
+  sections?: NoticeSection[];
+}
+
+/** One part of an operator notice, in the operator's words: a line's own changes, or the rest. */
+export interface NoticeSection {
+  /** As written: "Línea 1.2 : Campus USC – Fingoi – O Ceao – HULA", "Resto de líneas". */
+  heading: string;
+  /** The line the heading names; none when the section is about every other line. */
+  lines: string[];
+  /** Its paragraphs, a line break in theirs a new paragraph here. */
+  paragraphs: string[];
 }
 
 export interface TripFare {

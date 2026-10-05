@@ -412,6 +412,15 @@ setembro de 2026, en dous meses deran un récord de viaxeiros, unha declaración
 os cortes dunha carreira que seguirían en pantalla ata novembro. Ademais, os avisos
 estruturais escritos neste proxecto, cada un coa súa data de revisión.
 
+Cando o operador escribe un aviso liña a liña na súa portada —o do San Froilán de 2026
+chegou así, e a campá só dicía «Cambios en las líneas por San Froilán»—, a app le esa
+páxina, que xa descargaba, e reparte o aviso: enteiro e por partes en **Avisos**, a parte
+de cada liña na **ficha** desa liña, e unha franxa que leva a el no **taboleiro** das paradas,
+coas liñas desa parada que nomea. Sempre coas palabras do operador, e só mentres o dato é
+fresco. Os horarios non se tocan: se o aviso di «ata as 03:07» sen publicar as saídas desas
+horas, a app non as inventa, e o aviso ao lado é o que explica a diferenza. Se o formato
+cambia, queda o titular da campá, como antes.
+
 A consulta faise **desde o servidor** (o navegador non pode por CORS), contra buslugo.com e
 o feed de tráfico do Concello. Se non hai servidor —ou non responde— úsase a copia que
 deixou a tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por
@@ -1498,7 +1507,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-190 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+191 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

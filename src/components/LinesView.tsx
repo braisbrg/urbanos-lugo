@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowLeft, Bus, Calendar, ChevronRight, Clock, MapPin, Route, Star, TriangleAlert } from 'lucide-react';
 import { useLang, useT } from '../i18n';
-import { BusLine, BusStop } from '../types';
+import { BusLine, BusStop, ServiceAlert } from '../types';
+import { namesLine } from '../utils/operatorNotices';
 import { BUS_LINES, BUS_STOPS, poleCode, stopById } from '../data/transitData';
 import { getScheduledBuses } from '../utils/vehicles';
 import { buildRuns, dayKind, formatMinutes, isHoliday, minutesNow, scheduledDuration, type ScheduledRun } from '../utils/schedule';
@@ -24,6 +25,9 @@ interface LinesViewProps {
   onViewLineOnMap: (line: BusLine) => void;
   favoriteLineIds?: string[];
   onToggleFavoriteLine?: (lineId: string) => void;
+  /** The operator's notices written out line by line, fresh ones only; this line's parts show under its facts. */
+  notices?: ServiceAlert[];
+  onOpenAlerts?: () => void;
 }
 
 /** One fact about the line: an icon, a label and the value. */
@@ -39,7 +43,7 @@ function Fact({ icon: Icon, label, children, title }: { icon: typeof Clock; labe
   );
 }
 
-export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelectStop, onViewLineOnMap, favoriteLineIds = [], onToggleFavoriteLine }: LinesViewProps) {
+export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelectStop, onViewLineOnMap, favoriteLineIds = [], onToggleFavoriteLine, notices = [], onOpenAlerts }: LinesViewProps) {
   const t = useT();
   const lang = useLang();
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -269,6 +273,31 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                 {duration === undefined ? t.lines.routeDurationUnknown : `${duration} ${t.common.min}`}
               </Fact>
             </div>
+
+            {/* What the operator says about this line these days, in its words: San Froilán 2026 ran four lines past 03:00 and moved stops on three. */}
+            {notices.flatMap((alert) =>
+              (alert.sections ?? []).filter((section) => namesLine(section, currentLine)).map((section, i) => (
+                <div key={`${alert.id}-${i}`} className="rounded-md border border-warn bg-warn/60 p-3 text-label leading-relaxed text-warn-ink">
+                  <p className="flex gap-2 font-semibold">
+                    <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                    <span>
+                      {t.lines.operatorNotice}
+                      {alert.description !== alert.title && `. ${alert.description}`}
+                    </span>
+                  </p>
+                  {section.paragraphs.map((paragraph, j) => (
+                    <p key={j} className="mt-1">
+                      {paragraph}
+                    </p>
+                  ))}
+                  {onOpenAlerts && (
+                    <button onClick={onOpenAlerts} className="mt-1 inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
+                      {t.lines.seeFullNotice}
+                    </button>
+                  )}
+                </div>
+              )),
+            )}
 
             {direction.geometrySource && direction.geometrySource !== 'osm' && (
               <p className="flex gap-2 rounded-md border border-line bg-surface/50 p-3 text-label leading-relaxed text-ink-2">

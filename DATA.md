@@ -163,7 +163,9 @@ The notices screen reads two kinds of thing, and keeps them apart on screen beca
 are not the same claim:
 
 - The operator's own service notices, scraped from <https://buslugo.com>, under the same
-  terms as the timetables above.
+  terms as the timetables above: the items of the bell in its navigation and, when one
+  links to the home page and that page writes the notice out line by line, its headings
+  and paragraphs, word for word. The same page, read once; nothing more is requested.
 - The traffic feed (RSS) of the **Concello de Lugo**, read for closures and diversions
   from the last week. These are municipal press releases, not incidents on the network, so
   they never count towards the navigation badge.

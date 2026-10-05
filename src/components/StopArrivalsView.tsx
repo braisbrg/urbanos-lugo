@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { ArrowLeft, Bell, Check, ChevronDown, Clock, Map as MapIcon, Share2 } from 'lucide-react';
-import { BusStop, BusLine, StopArrival } from '../types';
+import { ArrowLeft, Bell, Check, ChevronDown, Clock, Map as MapIcon, Share2, TriangleAlert } from 'lucide-react';
+import { BusStop, BusLine, ServiceAlert, StopArrival } from '../types';
+import { namesLine } from '../utils/operatorNotices';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { lineById, poleCode } from '../data/transitData';
 import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../utils/arrivals';
@@ -26,6 +27,9 @@ interface StopArrivalsViewProps {
   onToggleFavorite: (stopId: string) => void;
   /** True only when this stop was opened by scanning the QR on its own pole: the one place the operator's own minutes are shown. */
   viaQr: boolean;
+  /** The operator's notices written out line by line, fresh ones only. */
+  notices?: ServiceAlert[];
+  onOpenAlerts?: () => void;
 }
 
 /** The operator's label for a service, not shouted: they call one AVENIDA where we say 5.1, and the mapping is not published. */
@@ -60,9 +64,14 @@ interface LineGroup {
 
 const tint = (color: string) => ({ '--line': color }) as CSSProperties;
 
-export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSelectStop, onBack, isFavorite, onToggleFavorite, viaQr }: StopArrivalsViewProps) {
+export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSelectStop, onBack, isFavorite, onToggleFavorite, viaQr, notices = [], onOpenAlerts }: StopArrivalsViewProps) {
   const t = useT();
   const lang = useLang();
+  // The lines here that a notice names; with a notice and none of them named, the strip still shows, since its
+  // detours and provisional stops can reach any stop.
+  const noticeSections = notices.flatMap((alert) => alert.sections ?? []);
+  const noticeLines = [...new Set(selectedStop.lines.map(lineById).filter((line): line is BusLine => !!line && noticeSections.some((s) => namesLine(s, line))).map((line) => line.number))];
+  const noticeDays = notices.find((alert) => alert.description !== alert.title)?.description;
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
   const [view, setView] = useState<'next' | 'byLine'>('next');
   /** A time to read the board at, or '' for now — the question the night before. */
@@ -313,6 +322,18 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
           </span>
         </div>
       </header>
+
+      {noticeSections.length > 0 && (
+        <Notice warn>
+          <button onClick={onOpenAlerts} disabled={!onOpenAlerts} className="flex min-h-11 w-full items-start gap-2 text-left">
+            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+            <span>
+              <span className="block font-semibold">{t.arrivals.operatorNoticeFor(noticeLines)}</span>
+              {noticeDays && <span className="block">{noticeDays}</span>}
+            </span>
+          </button>
+        </Notice>
+      )}
 
       {/* By time when you will take whatever comes, by line when you are waiting for one in particular. */}
       <div className="border-b border-line py-3">

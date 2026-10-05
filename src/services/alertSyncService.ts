@@ -5,7 +5,7 @@
  */
 import { readCapped } from './readCapped';
 import { asciiLower, plainText } from '../utils/html';
-import { ServiceAlert } from '../types';
+import { NoticeSection, ServiceAlert } from '../types';
 import { REPO_URL } from '../project';
 
 export interface AlertSyncResult {
@@ -197,15 +197,102 @@ function extractNavNotices(html: string, lower: string): ServiceAlert[] {
     const text = plainText(item);
     // A bare "no notices" item, or an empty <li>, is not an incident.
     if (text.length < 6 || QUIET.test(text)) continue;
-    notices.push(noticeFrom(`nav-notice-${notices.length + 1}`, text, clip(text, 90)));
+    notices.push({ ...noticeFrom(`nav-notice-${notices.length + 1}`, text, clip(text, 90)), link: operatorLink(item) });
   }
   return notices;
+}
+
+/** Where a bell item points, kept only when it is the operator's own site: a scraped href is otherwise somebody else's link in our page. */
+function operatorLink(item: string): string | undefined {
+  const at = item.indexOf('href="');
+  if (at === -1) return undefined;
+  const end = item.indexOf('"', at + 6);
+  const href = end === -1 ? '' : item.slice(at + 6, end);
+  return href === OPERATOR_URL || href.startsWith(`${OPERATOR_URL}/`) ? href : undefined;
+}
+
+/** A heading that belongs to lines: "Línea 1.2 : …", "Líneas 9 y 12: …", "Liña 5ES - …". */
+const LINES_HEADING = /^l[ií](?:neas?|ñas?)\b/iu;
+/** Bounds on one notice, whatever the page holds: San Froilán 2026 ran to six lines and the rest, none over five paragraphs. */
+const MAX_SECTIONS = 40;
+const MAX_PARAGRAPHS = 30;
+const MAX_PARAGRAPH = 600;
+
+/**
+ * Text out of one heading or paragraph: its tags off with nothing in their place, then the
+ * entities (`&#8211;`, `&nbsp;`) decoded. Only inline tags live in there, and the operator's
+ * editor splits words across them: a space per tag printed "recorrido h abitual".
+ */
+const textOf = (fragment: string) => decodedText(plainText(fragment, ''));
+
+/** The lines a heading names, read only up to its colon or dash: the route after it has street numbers in it. */
+function linesOfHeading(heading: string): string[] {
+  if (!LINES_HEADING.test(heading)) return [];
+  return [...new Set(heading.split(/[:–—-]/)[0].match(/\b[0-9]+(?:\.[0-9]+)?(?:ES|DS)?\b/g) ?? [])];
+}
+
+/**
+ * A notice the operator writes into the body of its home page, which its bell then links to:
+ * an <h1>, the days in an <h3>, one <h2> per line ("Línea 1.2 : …") with its paragraphs, and
+ * an <h2> for every other line. San Froilán 2026 came this way, and the bell alone carried
+ * nothing but "Cambios en las líneas por San Froilán". Walked tag by tag with indexOf, and
+ * nothing comes out unless a heading names a line, so the page's ordinary text never reads
+ * as a notice. The walk ends at the page's own buttons, which follow every notice.
+ */
+export function noticeOnPage(html: string, lower = asciiLower(html)): { title: string; days: string; sections: NoticeSection[] } | null {
+  let title = '';
+  let days = '';
+  let sections: NoticeSection[] = [];
+  const footer = lower.indexOf('<footer');
+  const end = footer === -1 ? lower.length : footer;
+  for (let at = lower.indexOf('<h1'); at !== -1 && sections.length <= MAX_SECTIONS; ) {
+    const open = lower.indexOf('<', at);
+    if (open === -1 || open >= end) break;
+    const name = (['h1', 'h2', 'h3', 'p'] as const).find((tag) => lower.startsWith(tag, open + 1) && /[\s>/]/.test(lower[open + 1 + tag.length] ?? ''));
+    if (!name) {
+      at = open + 1;
+      continue;
+    }
+    const tagEnd = lower.indexOf('>', open);
+    const close = tagEnd === -1 ? -1 : lower.indexOf(`</${name}>`, tagEnd);
+    if (close === -1) break;
+    const inner = html.slice(tagEnd + 1, close);
+    at = close + name.length + 3;
+    if (name === 'p' && lower.slice(tagEnd, close).includes('<button')) break;
+    if (name === 'h1') {
+      // A second notice, or a title before the real one: what came before it named no line.
+      if (sections.some((s) => s.lines.length > 0)) break;
+      [title, days, sections] = [textOf(inner), '', []];
+    } else if (name === 'h3') {
+      if (!days && !sections.length) days = textOf(inner);
+    } else if (name === 'h2') {
+      const heading = textOf(inner);
+      if (heading) sections.push({ heading: clip(heading, 160), lines: linesOfHeading(heading), paragraphs: [] });
+    } else {
+      // Before the first heading a paragraph is the notice's spacing, and nothing reads it.
+      const section = sections[sections.length - 1];
+      for (const part of section ? inner.split(/<br\s*\/?>/i) : []) {
+        const text = textOf(part);
+        if (text && section.paragraphs.length < MAX_PARAGRAPHS) section.paragraphs.push(clip(text, MAX_PARAGRAPH));
+      }
+    }
+  }
+  const kept = sections.filter((s) => s.paragraphs.length > 0);
+  return kept.some((s) => s.lines.length > 0) ? { title, days, sections: kept } : null;
 }
 
 /** Every notice on the operator's page: the navigation bell, plus any article that reads like one. */
 export function extractAlertsFromHtml(html: string): ServiceAlert[] {
   const lower = asciiLower(html);
   const alerts = extractNavNotices(html, lower);
+  // The bell item is the headline and the page it links to the detail, when that page is the home page this is.
+  const notice = noticeOnPage(html, lower);
+  if (notice) {
+    const severity = SERIOUS.test(notice.sections.map((s) => s.paragraphs.join(' ')).join(' ')) ? 'warning' : 'info';
+    const headline = alerts.find((a) => a.link === OPERATOR_URL || a.link === `${OPERATOR_URL}/`);
+    if (headline) Object.assign(headline, { description: notice.days || headline.description, sections: notice.sections, severity });
+    else alerts.push({ ...noticeFrom('page-notice-1', notice.title, clip(notice.title || notice.days, 90)), description: notice.days || notice.title, sections: notice.sections, severity, link: `${OPERATOR_URL}/` });
+  }
   [...blocks(html, lower, '<article', '</article>')].forEach((block, i) => {
     const cleanText = plainText(block);
     if (!/desv[ií]o|corte|obras|reforzo|aviso|modificaci[oó]n|parada/i.test(cleanText) || cleanText.length <= 20) return;

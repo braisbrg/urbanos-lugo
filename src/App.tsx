@@ -27,6 +27,8 @@ import { networkAtRest } from './utils/arrivals';
 import { dayWord } from './utils/serviceLabels';
 import { findStop } from './utils/places';
 import { readString, writeString } from './utils/storage';
+import { sectionedNotices } from './utils/operatorNotices';
+import { isSnapshotStale } from './utils/snapshotAge';
 import { BusStop, BusLine } from './types';
 
 // Leaflet and its layers are only needed on the map tab, so they load with it.
@@ -94,6 +96,8 @@ export default function App() {
 
   /** The operator's notices, fetched once here for everybody who shows them. */
   const alerts = useServiceAlerts();
+  // A notice written out line by line goes on the lines and boards it names; a stale snapshot's would be last week's news.
+  const operatorNotices = isSnapshotStale(alerts.snapshotAt) ? [] : sectionedNotices(alerts.data?.alerts);
   /** The ride in progress, above the tabs: the planner is unmounted the moment the reader looks at the map. */
   const companion = useTripCompanion(lang);
 
@@ -230,13 +234,15 @@ export default function App() {
                       isFavorite={favoriteStopIds.includes(selectedStop.id)}
                       onToggleFavorite={toggleFavoriteStop}
                       viaQr={qrStopId === selectedStop.id}
+                      notices={operatorNotices}
+                      onOpenAlerts={() => setActiveTab('info')}
                     />
                   </div>
                 </div>
               )}
 
               {activeTab === 'lines' && (
-                <LinesView selectedLine={selectedLine} lineRequest={lineRequest} onSelectLine={setSelectedLine} onSelectStop={selectStop} onViewLineOnMap={viewLineOnMap} favoriteLineIds={favoriteLineIds} onToggleFavoriteLine={toggleFavoriteLine} />
+                <LinesView selectedLine={selectedLine} lineRequest={lineRequest} onSelectLine={setSelectedLine} onSelectStop={selectStop} onViewLineOnMap={viewLineOnMap} favoriteLineIds={favoriteLineIds} onToggleFavoriteLine={toggleFavoriteLine} notices={operatorNotices} onOpenAlerts={() => setActiveTab('info')} />
               )}
 
               {mapEverOpened && (

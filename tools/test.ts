@@ -2508,6 +2508,43 @@ ok("a notice in the operator’s navigation bar is still a notice", () => {
   assert(extractAlertsFromHtml(quietMarkup).length === 0, 'the "no notices" item in the bell dropdown was reported as a notice');
 });
 
+ok('a notice the operator writes out line by line comes out line by line', () => {
+  // San Froilán 2026: the bell said only "Cambios en las líneas por San Froilán", and the
+  // changes (four lines past 03:00, stops moved on three) were on the home page it links to,
+  // one heading per line. The operator's editor also splits words across tags, and a space
+  // per tag printed "recorrido h abitual". A page of the same shape:
+  const page = `<html><body><ul class="dropdown-menu list-unstyled msg_list"><li><a href="https://buslugo.com/"><i class="fa fa-warning"></i> Cambios en las líneas por las fiestas</a></li></ul>
+    <div><h3></h3></div><div><h1><strong>INFORMACIÓN ESPECIAL</strong></h1><h3><strong>Refuerzo los días 3, 4 y 5</strong></h3><p>&nbsp;</p>
+    <h2><strong>Línea 1.2 : Campus &#8211; HULA</strong></h2><p><span>Prolongación hasta las 03:07, siguiendo su recorrido h</span><span>abitual.</span></p>
+    <h2><strong>Línea 13 : Rda. Muralla 56 &#8211; Gándaras</strong></h2><p>Hasta las 03:00</p><p>Los días 5 y 12 termina a la 1:00</p>
+    <h2></h2><h2><strong>Resto de líneas</strong></h2><p><strong>Corte desde la Muralla</strong>: desvío por rúa Santiago.</p><p>Calle A, 14<br />Calle B (esquina)</p><p>&nbsp;</p>
+    <p><a href="/lineas"><button type="button">Consulta de líneas</button></a></p><p>¿Has encontrado algún dato erróneo?</p></div><footer><p>©2026</p></footer></body></html>`;
+
+  const found = extractAlertsFromHtml(page);
+  assert.strictEqual(found.length, 1, `the bell and its page came out as ${found.length} notices; they are one`);
+  const [notice] = found;
+  assert.strictEqual(notice.title, 'Cambios en las líneas por las fiestas');
+  assert.strictEqual(notice.link, 'https://buslugo.com/', 'the bell item no longer points at the page its detail is on');
+  assert.strictEqual(notice.description, 'Refuerzo los días 3, 4 y 5', 'the days under the title were not read as what the notice says');
+  assert.strictEqual(notice.severity, 'warning', 'a notice of closures and diversions read as a note');
+  // The street number after the colon is the route, not a line; the site's buttons, what follows them and the footer are not the notice.
+  assert.deepStrictEqual(
+    notice.sections?.map((s) => [s.heading, s.lines, s.paragraphs]),
+    [
+      ['Línea 1.2 : Campus – HULA', ['1.2'], ['Prolongación hasta las 03:07, siguiendo su recorrido habitual.']],
+      ['Línea 13 : Rda. Muralla 56 – Gándaras', ['13'], ['Hasta las 03:00', 'Los días 5 y 12 termina a la 1:00']],
+      ['Resto de líneas', [], ['Corte desde la Muralla: desvío por rúa Santiago.', 'Calle A, 14', 'Calle B (esquina)']],
+    ],
+  );
+
+  // A page whose headings name no line is the page's own text, not a notice.
+  assert.strictEqual(extractAlertsFromHtml(page.replace(/Línea (1\.2|13) :/g, 'Tramo :'))[0].sections, undefined, 'ordinary headings were read as a notice');
+  // A bell item pointing anywhere but the operator's own site is not a link we put in our page, and its detail is a notice of its own.
+  const elsewhere = extractAlertsFromHtml(page.replace('https://buslugo.com/', 'https://example.org/'));
+  assert.strictEqual(elsewhere[0].link, undefined, 'a scraped link to another site became a link in the app');
+  assert.deepStrictEqual(elsewhere.map((a) => [a.title, (a.sections ?? []).length]), [['Cambios en las líneas por las fiestas', 0], ['INFORMACIÓN ESPECIAL', 3]]);
+});
+
 ok("the city's traffic feed is read for closures and diversions, and for nothing else", () => {
   // Sixty days of three council feeds were audited: only the traffic tag carried anything a
   // passenger could use, and it would have stayed on screen for two months. So: that tag,
@@ -2900,6 +2937,9 @@ ok('hostile markup at the read cap parses in milliseconds, not minutes', () => {
     ['an item of unclosed <title>s', 128, (kb) => `<item>${'<title>'.repeat((kb * 1024) / 7)}</item>`, extractConcelloNotices],
     ['unclosed <script openings', 128, (kb) => '<script '.repeat((kb * 1024) / 8), plainText],
     ['unclosed departure blocks', MAX_BODY_BYTES / 1024, (kb) => '<div class="sae-content-info">'.repeat((kb * 1024) / 30), parseOperatorTimes],
+    // The walker that reads a notice off the home page, linear from the start; this keeps it so.
+    ['a notice with a page of paragraphs', MAX_BODY_BYTES / 1024, (kb) => `<h1>x</h1><h2>Línea 1 : y</h2>${'<p>z</p>'.repeat((kb * 1024) / 8)}`, extractAlertsFromHtml],
+    ['a notice of unclosed paragraphs', MAX_BODY_BYTES / 1024, (kb) => `<h1>x</h1><h2>Línea 1 : y</h2>${'<p>z'.repeat((kb * 1024) / 4)}`, extractAlertsFromHtml],
   ];
   const fastest = (parse: (html: string) => unknown, html: string) => {
     let best = Infinity;

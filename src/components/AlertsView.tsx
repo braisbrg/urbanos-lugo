@@ -70,6 +70,17 @@ function AlertCard({ alert, when, source }: { alert: ServiceAlert; when: string;
       <h3 className="break-words font-bold text-ink text-body">{alert.title}</h3>
       {/* The operator posts a notice as one line, so the title and the description are the same words. */}
       {alert.description !== alert.title && <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{alert.description}</p>}
+      {/* A notice the operator wrote out line by line, read off its home page: each part in its words, its heading naming the line. */}
+      {alert.sections?.map((section, i) => (
+        <div key={i} className="mt-3 border-t border-line pt-3">
+          <h4 className="break-words text-label font-semibold text-ink">{section.heading}</h4>
+          {section.paragraphs.map((paragraph, j) => (
+            <p key={j} className="mt-1 text-label leading-relaxed text-ink-2">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      ))}
       {alert.link && (
         <a href={alert.link} target="_blank" rel="noopener noreferrer" className={`${external} mt-1`}>
           {t.fares.readInFull}

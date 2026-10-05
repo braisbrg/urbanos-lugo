@@ -433,6 +433,8 @@ export const en: Dict = {
       'How long a whole trip in this direction takes according to the operator\u2019s timetable, first stop to last. It does not allow for delays.',
     routeDurationUnknown: 'No timetable',
     kilometres: (km: string) => `${km} km`,
+    operatorNotice: 'Operator notice',
+    seeFullNotice: 'See the whole notice',
     approximatePathTitle: 'Approximate path',
     approximatePath:
       'The path drawn for this direction has not been surveyed: it is built from the route a car would take between the stops, so it may detour where the bus does not. The stops and times are the official ones.',
@@ -449,6 +451,10 @@ export const en: Dict = {
   },
 
   arrivals: {
+    operatorNoticeFor: (lines: string[]) =>
+      lines.length === 0
+        ? 'Operator notice about changes to the lines'
+        : `Operator notice for ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')}`,
     operatorSaysTitle: 'What this stop’s QR shows',
     operatorSaysNote: (at: string) =>
       `This is what the code on this pole shows right now, read at ${at}. The operator’s figure, not this app’s.`,

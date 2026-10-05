@@ -422,6 +422,8 @@ export const es: Dict = {
       'Cuánto tarda un viaje entero de este sentido según el cuadro horario del operador, de la primera parada a la última. No contempla retrasos.',
     routeDurationUnknown: 'Sin horario',
     kilometres: (km: string) => `${km} km`,
+    operatorNotice: 'Aviso del operador',
+    seeFullNotice: 'Ver el aviso completo',
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:
       'El trazado de este sentido en el mapa no está topografiado: se construye con la ruta que haría un coche entre las paradas, así que puede desviarse por donde el bus no pasa. Las paradas y los horarios son los oficiales.',
@@ -438,6 +440,10 @@ export const es: Dict = {
   },
 
   arrivals: {
+    operatorNoticeFor: (lines: string[]) =>
+      lines.length === 0
+        ? 'Aviso del operador sobre cambios en las líneas'
+        : `Aviso del operador para ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')}`,
     operatorSaysTitle: 'Lo que muestra el QR de esta parada',
     operatorSaysNote: (at: string) =>
       `Esto es lo que muestra ahora el código de este poste, leído a las ${at}. Es el dato del operador, no el de esta app.`,
