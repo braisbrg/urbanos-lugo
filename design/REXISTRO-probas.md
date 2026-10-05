@@ -2281,7 +2281,7 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
   520 e o anel de «Vou nesta» de 700), escollidas vendo unha maqueta coas mesmas curvas lado a
   lado; o anel segue agardando 300 ms. O check do movemento perde a lista de excepcións.
 - **O check do movemento só lía `src/index.css`.** Buscando o que non vía, apareceron dúas
-  cousas: a frecha que intercambia orixe e destino xiraba en `duration-[260ms]`, unha clase de
+  cousas: a frecha que intercambia orixe e destino xiraba en 260 ms, nunha clase de
   Tailwind no compoñente (baixa a 240), e cinco bucles de Tailwind que o README non contaba
   (dicía dous): `animate-pulse` no oco do mapa, nos dous do mapa do traxecto e na icona da
   localización, e `animate-spin` en Avisos. Son indicadores de espera e quedan (DECIDIDO). O

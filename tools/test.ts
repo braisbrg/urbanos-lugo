@@ -4908,8 +4908,9 @@ ok('every animation runs 120 to 240 ms, and only two loop besides the waiting in
     assert(ms(value, unit) <= 240, `a transition runs ${ms(value, unit)} ms, over the 240 every movement keeps to`);
   }
   // And a duration written in a component, which the stylesheet never shows: the planner's
-  // swap arrow turned in duration-[260ms]. Tailwind's duration-N is N ms; in an inline
-  // style, the first time in the value is the duration.
+  // swap arrow turned in 260 ms, in a bracketed Tailwind class (spelled out here, Tailwind
+  // would read it and ship the rule). Tailwind's duration-N is N ms; in an inline style, the
+  // first time in the value is the duration.
   let inComponents = 0;
   for (const file of sourcesUnder('src')) {
     const source = readFileSync(file, 'utf8');
