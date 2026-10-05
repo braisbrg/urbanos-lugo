@@ -157,7 +157,7 @@ build-time dataset instead.
 `reconcile.ts`, `checkFares.ts`, `checkOsmGeometry.ts`, `compareOperatorTimes.ts`,
 `importOfficialData.ts`, `importOsmRoutes.ts`, `importStopAmenities.ts`,
 `fetchAlerts.ts`, `calibrateWalking.ts`, `importFonts.ts` and `checkParsersUnchanged.ts`
-(`pnpm run check:parsers`, four requests) read `buslugo.com`, the council's feed or the
+(`pnpm run check:parsers`, four to six requests) read `buslugo.com`, the council's feed or the
 Overpass API — servers this project does not own and has no agreement with.
 
 They are run by hand, or on the weekly schedule in `.github/workflows/check-source.yml`,
