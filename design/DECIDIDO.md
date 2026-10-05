@@ -259,7 +259,8 @@ descrición. Catro regras, e o que quedou fóra:
 - **Os 120–240 ms quedan sen excepcións.** Catro confirmacións duraban máis desde as
   demos de setembro: a insignia de avisos 260 ms, a estrela 320, a campá 520 e o anel
   arredor de «Vou nesta» 700. Vistas lado a lado, coas mesmas curvas a 240 ms, baixan as
-  catro; o anel segue agardando 300 ms antes de saír.
+  catro; o anel segue agardando 300 ms antes de saír. A frecha que intercambia orixe e
+  destino xiraba en 260 ms, nunha clase do compoñente que o check non lía; baixa tamén.
 
 ## Quedou aberto
 

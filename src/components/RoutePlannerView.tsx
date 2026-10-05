@@ -385,7 +385,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   title={t.planner.swap}
                 >
                   {/* Turns with the swap, so the button shows what it just did to the fields. */}
-                  <ArrowDownUp className="relative h-4 w-4 transition-transform duration-[260ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]" style={{ transform: `rotate(${swaps * 180}deg)` }} />
+                  <ArrowDownUp className="relative h-4 w-4 transition-transform duration-[240ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]" style={{ transform: `rotate(${swaps * 180}deg)` }} />
                 </button>
               </div>
 
