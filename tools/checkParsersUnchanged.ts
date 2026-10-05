@@ -66,10 +66,18 @@ async function main() {
     check('the same departures come out', before === after, `${n} departure(s)`);
     // The drift check. In service hours the page has departures or the markup changed;
     // outside them an empty page is the timetable, and comparing nothing to nothing
-    // proves nothing, so it says so rather than print a tick.
+    // proves nothing, so it says so rather than print a tick. An empty page is two different
+    // stories: on 5 October 2026 the departures container came back with nothing before its
+    // closing marker, for every pole tried, and "the markup may be gone" sent the reader the
+    // wrong way.
     if (inServiceHours()) {
+      const emptyApp = /<div class="sae-content"[^>]*>\s*<!-- \/app -->/.test(uncapped);
       check('the parser still finds departures on the page, in service hours', n > 0,
-        n > 0 ? `${n} departure(s)` : 'none: the markup the parser expects may be gone');
+        n > 0
+          ? `${n} departure(s)`
+          : emptyApp
+            ? 'none: the page is up and its departures area is empty, so the operator is publishing nothing for this pole (the parser is not the problem)'
+            : 'none: the markup the parser expects may be gone');
     } else if (n === 0) {
       console.log('  --   but it is outside service hours and the page carried no departures, so that told us nothing');
     }

@@ -359,10 +359,18 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
      existe desde o 2 de outubro, só para `main` e co token de organización novo. Falta,
      cando un despregue do *worker* desde `main` co ambiente saia en verde (o da próxima
      versión), borrar o segredo do repositorio e o token vello.
-   - **Os workflows do luns en `main`**, «Check the sources» e «Measure in a browser», coas
-     accións fixadas: a primeira volta despois da 1.2.1 é o 5 de outubro, e a de medir ten
-     que gardar o artefacto `browser-measurements-N` cos catro ficheiros (upload-artifact 7).
-     Pages e o *worker* xa despregaron así o 1 de outubro, o *worker* sen `id-token`.
+   - **A páxina do operador cos minutos de cada poste está baleira** desde o 5 de outubro,
+     polo menos. Ese luns «Check the sources» saíu en vermello: en horario de servizo,
+     `oTWQ` (Rda. Muralla 25) ás 14:25 e ás 19:53, e `kZtJ` (Avda. Coruña 394, lonxe das
+     rúas cortadas polo San Froilán) ás 19:53, todas co contedor das saídas baleiro e a
+     marcación de sempre. Non é o analizador: o operador non publica nada. A app segue
+     sen o bloque do QR e coas estimacións do horario. Ver se volve no seguinte luns, e se
+     os QR dos postes levan agora a outro sitio. O resto daquel luns, en verde: horarios
+     24/24, prezos, e «Measure in a browser» gardou o seu artefacto coas accións fixadas.
+   - **Os orzamentos do planificador en `measure:browser`** saíron das medidas desta
+     máquina o 3 de outubro, un día lento: o mesmo código, «chegar antes» en 8,6–9,4 s
+     aquí e en 5,9 s no *runner* o 5. Axustalos ás cifras do *runner* cando a medición
+     semanal lea a versión con «Calculando».
 
 ### Lista para o iPhone
 
