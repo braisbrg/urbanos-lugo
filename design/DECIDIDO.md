@@ -244,10 +244,15 @@ descrición. Catro regras, e o que quedou fóra:
   Cada visita pide os avisos unha vez, e un taboleiro aberto desde o QR pide os minutos
   cada 30 s. Se se esgota, a app segue: os avisos saen da copia de cada hora, marcada como
   copia, e os minutos do operador non se amosan ata o mes seguinte.
-- **Ruta e Liñas á demanda, reaberto o 6 de outubro antes de facelo**: decidírase que si,
-  uns 150 ms menos ao primeiro pintado de calquera visita, a do QR incluída, e cargadas en
-  repouso despois del para que a primeira vez que se abren non agarden pola rede. Antes
-  de tocar nada, estúdase se compensa; mentres, segue como estaba.
+- **Ruta e Liñas seguen no anaco de entrada: descartado o 6 de outubro, medido.** Decidírase
+  cargalas á demanda e en repouso despois do primeiro pintado, e probouse nunha rama antes
+  de facelo. A primeira carga baixaba de 148 a 138 KB en brotli, 54 KB menos de código, pero
+  a 6× de CPU e 4G lento, mediana de tres medidas alternas, nada o notou: o primeiro pintado
+  3,38 s fronte a 3,48, a primeira saída do QR 3,35 fronte a 3,53, a segunda visita 1,23
+  fronte a 1,30. E abrir Ruta nada máis cargar pasaba de 0,93 a 2,05 s, e Liñas de 0,52 a
+  1,18, agardando pola rede. O navegador apenas traballa co código que non executa, e a
+  precarga competía co taboleiro. Os 150 ms do 1 de outubro saían dun perfil, non dunha
+  medida de antes e despois.
 
 ## Quedou aberto
 
