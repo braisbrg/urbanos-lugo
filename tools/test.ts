@@ -1363,6 +1363,18 @@ ok('the trip companion moves through its phases on fixes alone, rings once a leg
   }
   assert(state.alertedLeg === legs[1], 'the second leg never rang');
   assert(tripPhase(state, progress) === 'walking', `phase is ${tripPhase(state, progress)} at the last pole`);
+
+  // The approach is where a second ring would be heard: fixes inside the alarm radius, short
+  // of the pole. With the once-a-leg guard taken out it rang on every fix, and the walk above
+  // never noticed, because at the pole the cursor has already moved on to the next leg.
+  let approach = advanceTrip(startTrip(plan, null, null), tripProgress(plan, at(ride1[1]), new Set())).state;
+  const pole = ride1[ride1.length - 1];
+  const rang = [0.0016, 0.001].map((north) => {
+    const step = advanceTrip(approach, tripProgress(plan, { lat: pole.lat + north, lng: pole.lng }, new Set(approach.seen)));
+    approach = step.state;
+    return step.ring;
+  });
+  assert(rang.filter(Boolean).length === 1, `two fixes approaching the alighting pole rang ${rang.filter(Boolean).length} times`);
 });
 
 ok('the trip companion asks about a missed bus and answers with the timetable, or with the truth that there is none', () => {
