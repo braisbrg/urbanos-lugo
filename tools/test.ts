@@ -4874,30 +4874,29 @@ ok('every animation moves on the compositor: opacity and transform, nothing else
   }
 });
 
-ok('an animation enters in 120 to 240 ms but for the four the README names, and only two loop', () => {
+ok('every animation runs 120 to 240 ms, and only two loop', () => {
   // The README said none ran over 240 ms while four did, from the day the sentence was
-  // written. It now names them, and this holds the stylesheet and that sentence together:
-  // an animation over 240 ms, a new loop, or one of the four retimed without the README
-  // fails here. The reduced-motion block zeroes every duration and is not read.
+  // written; it then named them, and on 6 October they came down to 240 (DECIDIDO). An
+  // animation outside 120-240 ms, a new loop, or a transition over 240 fails here, and so
+  // does the README if it stops saying so. The reduced-motion block zeroes every duration
+  // and is not read.
   const css = read('src/index.css').replace(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\n\s{2}\}\n/, '');
   const ms = (value: string, unit: string) => Number(value) * (unit === 's' ? 1000 : 1);
-  const LONGER: Record<string, string> = { 'badge-in': 'a insignia', pop: 'a estrela', ring: 'a campá', attention: 'o anel arredor de «Vou nesta»' };
   const LOOPS = ['pulse-ring', 'dot-bounce'];
   const readme = read('README.md').replace(/\s+/g, ' ');
+  assert(readme.includes('Cada un dura entre 120 e 240 ms'), 'the README no longer says every animation runs 120 to 240 ms');
   const animations = [...css.matchAll(/animation:\s*([\w-]+)\s+(\d+(?:\.\d+)?)(ms|s)\b([^;]*);/g)];
   assert(animations.length > 12, `found ${animations.length} animations, so this is reading the wrong thing`);
   for (const [, name, value, unit, rest] of animations) {
-    const duration = ms(value, unit);
     if (/\binfinite\b/.test(rest)) {
       assert(LOOPS.includes(name), `${name} loops for ever; the README names two loops, the ride's pulse and «Calculando»`);
       continue;
     }
-    if (duration >= 120 && duration <= 240) continue;
-    assert(LONGER[name], `${name} runs ${duration} ms, outside the 120-240 ms the README gives every entrance but four`);
-    // The README gives the one-shots in ms after the first, and the ring's delay with it.
+    const duration = ms(value, unit);
+    assert(duration >= 120 && duration <= 240, `${name} runs ${duration} ms, outside the 120-240 ms the README gives every animation`);
+    // The one delay is the ring around «Vou nesta», and the README gives it.
     const delay = /(\d+(?:\.\d+)?)(ms|s)\b/.exec(rest);
-    const said = new RegExp(`${LONGER[name]} ${duration}( ms)?${delay ? `, tras ${ms(delay[1], delay[2])} de espera` : ''}`);
-    assert(said.test(readme), `${name} runs ${duration} ms${delay ? ` after ${ms(delay[1], delay[2])}` : ''} and the README says otherwise`);
+    if (delay) assert(name === 'attention' && readme.includes(`«Vou nesta» agarda ${ms(delay[1], delay[2])} ms`), `${name} waits ${ms(delay[1], delay[2])} ms and the README says otherwise`);
   }
   for (const [, value, unit] of css.matchAll(/transition:[^;]*?\b(\d+(?:\.\d+)?)(ms|s)\b/g)) {
     assert(ms(value, unit) <= 240, `a transition runs ${ms(value, unit)} ms, over the 240 every movement keeps to`);

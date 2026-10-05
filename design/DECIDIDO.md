@@ -254,6 +254,13 @@ descrición. Catro regras, e o que quedou fóra:
   precarga competía co taboleiro. Os 150 ms do 1 de outubro saían dun perfil, non dunha
   medida de antes e despois.
 
+## As confirmacións, tamén en 240 ms — 6 de outubro de 2026
+
+- **Os 120–240 ms quedan sen excepcións.** Catro confirmacións duraban máis desde as
+  demos de setembro: a insignia de avisos 260 ms, a estrela 320, a campá 520 e o anel
+  arredor de «Vou nesta» 700. Vistas lado a lado, coas mesmas curvas a 240 ms, baixan as
+  catro; o anel segue agardando 300 ms antes de saír.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

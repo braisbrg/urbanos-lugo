@@ -245,13 +245,13 @@
   .anim-sheet-up { animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
   .anim-push-in { animation: push-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1); }
   .anim-scale-in { animation: scale-in 160ms cubic-bezier(0.2, 0.7, 0.2, 1); }
-  .anim-pop { animation: pop 320ms cubic-bezier(0.2, 0.7, 0.2, 1); }
-  .anim-ring { animation: ring 520ms ease-in-out; transform-origin: 50% 15%; }
+  .anim-pop { animation: pop 240ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-ring { animation: ring 240ms ease-in-out; transform-origin: 50% 15%; }
   .anim-tick-in { animation: tick-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1); }
-  .anim-badge-in { animation: badge-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anim-badge-in { animation: badge-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1); }
   .anim-roll-in { animation: roll-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1); }
   .anim-attention { position: relative; isolation: isolate; }
-  .anim-attention::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: color-mix(in oklch, var(--c-accent) 55%, transparent); opacity: 0; animation: attention 700ms ease-out 300ms; }
+  .anim-attention::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: color-mix(in oklch, var(--c-accent) 55%, transparent); opacity: 0; animation: attention 240ms ease-out 300ms; }
   /* «Calculando» while the planner works: three dots bouncing in turn. Transform only, so
      the compositor keeps them moving while the plan holds the main thread, which "arrive
      by" does for seconds on a slow phone. */
