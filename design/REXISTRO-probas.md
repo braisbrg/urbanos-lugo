@@ -2215,7 +2215,7 @@ Deno Deploy, que son da plataforma. 188 comprobacións.
 Pedido: que ningunha regra que o proxecto promete dependa da memoria. Lidas as promesas de
 CLAUDE.md, os tres README, PRIVACY, SECURITY, DATA, NOTICE, DECIDIDO e cada comentario do
 código que di «nunca» ou «sempre», e para cada unha buscado o que a garda. E cada garda que
-xa había, rota a propósito: 117 mutantes contra os checks existentes.
+xa había, rota a propósito: 133 mutantes contra os checks existentes, e 130 contra os novos.
 
 ### Gardas que non mordían
 
@@ -2229,8 +2229,11 @@ xa había, rota a propósito: 117 mutantes contra os checks existentes.
   buscaba como «algún `apply: 'build'`», e hai seis.
 - As partes da suite que len `dist/` nunca correran no CI, que proba antes de construír.
 - A varredura de taboleiros de `check:deep` non miraba que o «oficial» fose impreso.
+- O check da orixe da API aprobaba co nome da variable nun comentario. O da viaxe só probaba
+  un segundo aviso no propio poste, onde o cursor xa pasou ao tramo seguinte: sen a garda de
+  un aviso por tramo, a aproximación soaba en cada fix.
 
-Todas morden agora. As gardas novas son 23 checks, catro tipos (un tramo de bus sen as dúas
+Todas morden agora. As gardas novas son 22 checks, catro tipos (un tramo de bus sen as dúas
 procedencias, unha clave de almacenamento non declarada, a prosa do operador e o
 `BarcodeDetector` sen preguntar non compilan) e dous pasos do CI (o dataset reconstruído non
 pode cambiar nada; a suite outra vez contra a build). Cada unha, co seu fallo de volta, falla.
@@ -2252,7 +2255,7 @@ pode cambiar nada; a suite outra vez contra a build). Cada unha, co seu fallo de
 
 ### Medido
 
-Os catro gates verdes; a suite, 211 comprobacións, tamén contra a build. `audit:browser` sobre
+Os catro gates verdes; a suite, 212 comprobacións, tamén contra a build. `audit:browser` sobre
 a build: contraste, obxectivos, desbordamento, cortes, consola, teclado e movemento reducido a 0
 nos dous temas. No panel: a nota do planificador, os pins, «A miña localización» cun GPS finxido
 (unha vixilancia, e liberada ao parar) e o lector de QR sen `BarcodeDetector`.
@@ -2261,5 +2264,10 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
 
 - DECIDIDO di «120–240 ms» e catro animacións, escollidas nas demos, duran máis: decisión do dono.
 - `reconcile:selftest` non pode ir ao CI: precisa as 1.186 páxinas de parada en caché.
+- O luns 5 de outubro «Check the sources» quedou en vermello en `check:parsers`: a páxina do
+  poste do operador chega co bloque `sae-content` baleiro e un guión que o enche despois. Non
+  era o festivo: lida unha vez a man ás 19:53, cun bus da propia rede a 12 minutos, seguía
+  baleira. A app degrada como está previsto (sen o bloque do operador). As fixacións das
+  accións da rolda 25 resolveron todas nese primeiro luns en `main`.
 - Regras de proceso (sesións compartidas, non borrar checks, quen sube) non as ve o repositorio;
   a protección de `main` e `develop` é un axuste de GitHub.
