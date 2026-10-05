@@ -355,10 +355,6 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    - **As pestanas á demanda, por facer** (decidido o 3 de outubro): Ruta e Liñas fóra do
      anaco de entrada, uns 150 ms menos ao primeiro pintado, e cargadas en repouso despois
      del para que a primeira vez que se abren xa estean. Medir antes e despois.
-   - **O token de Deno Deploy no ambiente `deno-deploy`.** O workflow nómeao, e o ambiente
-     existe desde o 2 de outubro, só para `main` e co token de organización novo. Falta,
-     cando un despregue do *worker* desde `main` co ambiente saia en verde (o da próxima
-     versión), borrar o segredo do repositorio e o token vello.
    - **Os orzamentos do planificador en `measure:browser`** saíron das medidas desta
      máquina o 3 de outubro, un día lento: o mesmo código, «chegar antes» en 8,6–9,4 s
      aquí e en 5,9 s no *runner* o 5. Axustalos ás cifras do *runner* cando a medición
