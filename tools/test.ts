@@ -2321,14 +2321,17 @@ ok('the tools that ask public routers and the IGN keep to the gap DATA.md promis
   const POLITE: [string, string, RegExp, number][] = [
     ['tools/calibrateWalking.ts', 'tools/calibrateWalking.ts', /const PAUSE_MS = ([\d_]+);/, 1000],
     ['tools/compareWalkRouter.ts', 'tools/compareWalkRouter.ts', /const MIN_GAP_MS = ([\d_]+);/, 1000],
-    ['tools/importOfficialData.ts', 'tools/importOfficialData.ts', /await sleep\(([\d_]+)\);\n {2}\}\n {2}return \{ path/, 1000],
+    ['tools/importOfficialData.ts', 'tools/importOfficialData.ts', /await sleep\(([\d_]+)\);\r?\n {2}\}\r?\n {2}return \{ path/, 1000],
     ['tools/terrain.ts', 'tools/importElevation.ts', /const GAP_MS = ([\d_]+);/, 1500],
   ];
   const hosts = /routing\.openstreetmap\.de|router\.project-osrm\.org|servicios\.idee\.es/;
   const naming = readdirSync(join(root, 'tools')).filter((f) => f.endsWith('.ts') && !f.startsWith('_') && f !== 'test.ts').map((f) => `tools/${f}`).filter((f) => hosts.test(read(f).replace(/^\s*(\/\/|\*).*$/gm, '')));
   assert.deepStrictEqual(naming.sort(), POLITE.map(([f]) => f).sort(), `these tools name a public router or the IGN: ${naming.join(', ')}; each needs its pause pinned here`);
   for (const [, file, pattern, floor] of POLITE) {
-    const pause = Number((pattern.exec(read(file))?.[1] ?? '0').replace(/_/g, ''));
+    // A pause this cannot find is reported as lost, not as 0 ms: a CRLF checkout once read so.
+    const found = pattern.exec(read(file))?.[1];
+    assert(found, `${file}: the pause is no longer where this check reads it (${pattern})`);
+    const pause = Number(found.replace(/_/g, ''));
     assert(pause >= floor, `${file} waits ${pause} ms between requests; the service it asks wants ${floor}`);
   }
   const gap = Number(/const GAP_MS = ([\d_]+);/.exec(read('tools/importElevation.ts'))?.[1]);
