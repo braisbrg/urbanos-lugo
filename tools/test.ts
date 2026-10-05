@@ -4901,6 +4901,20 @@ ok('every animation runs 120 to 240 ms, and only two loop', () => {
   for (const [, value, unit] of css.matchAll(/transition:[^;]*?\b(\d+(?:\.\d+)?)(ms|s)\b/g)) {
     assert(ms(value, unit) <= 240, `a transition runs ${ms(value, unit)} ms, over the 240 every movement keeps to`);
   }
+  // And a duration written in a component, which the stylesheet never shows: the planner's
+  // swap arrow turned in duration-[260ms]. Tailwind's duration-N is N ms; in an inline
+  // style, the first time in the value is the duration.
+  let inComponents = 0;
+  for (const file of sourcesUnder('src')) {
+    const source = readFileSync(file, 'utf8');
+    const found = [
+      ...[...source.matchAll(/\bduration-(?:(\d+)\b|\[(\d+(?:\.\d+)?)(ms|s)\])/g)].map(([, n, value, unit]) => (n ? Number(n) : ms(value, unit))),
+      ...[...source.matchAll(/\b(?:transition|animation)(?:Duration)?:\s*['"`][^'"`]*?(\d+(?:\.\d+)?)(ms|s)\b/g)].map(([, value, unit]) => ms(value, unit)),
+    ];
+    for (const duration of found) assert(duration <= 240, `${relative(file)} moves for ${duration} ms, over the 240 every movement keeps to`);
+    inComponents += found.length;
+  }
+  assert(inComponents >= 3, `found ${inComponents} durations in the components, so this is reading the wrong thing`);
 });
 
 ok('a tap on «Calcular ruta» says «Calculando» before the plan holds the thread', () => {
