@@ -25,10 +25,13 @@ Tailwind 4 + MapLibre, TypeScript throughout, pnpm, Node >= 22.
 **Package manager is pnpm, always.** `bun.lock` and `package-lock.json` are gitignored
 leftovers; CI installs with `--frozen-lockfile` from `pnpm-lock.yaml`.
 
-**The four gates.** `.github/workflows/ci.yml` runs these on every push, and nothing
-merges without them; it also rebuilds the dataset, which must change nothing, and runs
-the suite again against the build, and `pnpm test` holds that list. A change is not done
-until all four are green:
+**The four gates.** `.github/workflows/ci.yml` runs these on every push but main's; it
+also rebuilds the dataset, which must change nothing, and runs the suite again against
+the build, and `pnpm test` holds that list. Nothing reaches main without them: a GitHub
+ruleset lets main take only a commit whose `checks` job passed (push develop, wait for its
+green, then main), neither branch takes a force-push or a deletion, and `check-source.yml`
+asks GitHub every Monday that this still holds. A change is not done until all four are
+green:
 
 ```
 pnpm run lint          # tsc --noEmit

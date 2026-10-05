@@ -2365,6 +2365,12 @@ ok('the gates run on every push and proposal, offline, and only the schedule rea
     'pnpm run data:build && git diff --exit-code --stat -- src/data', 'pnpm run build', 'pnpm test',
   ], 'ci.yml no longer runs the gates, the dataset rebuild and the suite against the build, in that order');
   assert(/pull_request:\s*\n\s*branches: \[main, develop\]/.test(ci) && /push:\s*\n\s*branches-ignore: \[main\]/.test(ci), 'ci.yml no longer runs on every proposal to main and develop and every push but main');
+  // What makes "nothing merges without them" true is a ruleset on GitHub that main requires
+  // the job called checks; the weekly job asks GitHub that it still does. A renamed job is
+  // a check main waits for and never gets.
+  assert(/^ {2}checks:\s*$/m.test(ci), 'the ci.yml job is no longer called "checks", the name the ruleset on main requires');
+  const weekly = runs(workflow('check-source.yml')).join('\n');
+  assert(weekly.includes('rules/branches/main') && weekly.includes('.context == "checks"') && weekly.includes('for branch in main develop'), 'check-source.yml no longer asks GitHub that main requires the checks and that main and develop cannot be rewritten');
   const pkg = JSON.parse(read('package.json'));
   assert(pkg.scripts['check:deep'] === 'tsx tools/stressInvariants.ts && tsx tools/stressPlanner.ts', `check:deep runs "${pkg.scripts['check:deep']}", not the two offline sweeps`);
   for (const sweep of ['tools/stressInvariants.ts', 'tools/stressPlanner.ts']) assert(!/\bfetch\(|overpass\(/.test(read(sweep)), `${sweep} reaches the network, and it is a gate`);

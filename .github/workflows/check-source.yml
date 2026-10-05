@@ -81,3 +81,20 @@ jobs:
       - name: Re-read the pole page and the feed through the parsers
         if: always()
         run: pnpm run check:parsers
+
+      # Nothing merges without the four gates (CLAUDE.md), and what holds main to that is a
+      # GitHub ruleset, which a settings page can switch off without a commit. Three reads of
+      # this repository's own rules: main still requires the Checks job, and neither main
+      # nor develop can be force-pushed or deleted.
+      - name: Main still requires the checks, and neither branch can be rewritten
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gated=$(gh api "repos/$REPO/rules/branches/main" --jq 'any(.[]; .type == "required_status_checks" and any(.parameters.required_status_checks[]; .context == "checks"))')
+          [ "$gated" = true ] || { echo "main no longer requires the Checks job"; exit 1; }
+          for branch in main develop; do
+            locked=$(gh api "repos/$REPO/rules/branches/$branch" --jq 'any(.[]; .type == "non_fast_forward") and any(.[]; .type == "deletion")')
+            [ "$locked" = true ] || { echo "$branch can be force-pushed or deleted"; exit 1; }
+          done
