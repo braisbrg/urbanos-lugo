@@ -2262,7 +2262,8 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
 
 ### Mirado e deixado
 
-- DECIDIDO di «120–240 ms» e catro animacións, escollidas nas demos, duran máis: decisión do dono.
+- DECIDIDO di «120–240 ms» e catro animacións, escollidas nas demos, duran máis: decisión do
+  dono (resolto o 6 de outubro, abaixo).
 - `reconcile:selftest` non pode ir ao CI: precisa as 1.186 páxinas de parada en caché.
 - O luns 5 de outubro «Check the sources» quedou en vermello en `check:parsers`: o poste que
   le, `oTWQ`, chegaba co contedor das saídas baleiro, tamén lido unha vez a man ás 19:53. Un
@@ -2272,4 +2273,24 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
   postes antes de dar a páxina por rota. As fixacións das accións da rolda 25 resolveron
   todas nese primeiro luns en `main`.
 - Regras de proceso (sesións compartidas, non borrar checks, quen sube) non as ve o repositorio;
-  a protección de `main` e `develop` é un axuste de GitHub.
+  a protección de `main` e `develop` é un axuste de GitHub (posto o 6 de outubro, abaixo).
+
+### Despois, o 6 de outubro
+
+- **As catro confirmacións baixan a 240 ms** (a insignia de 260, a estrela de 320, a campá de
+  520 e o anel de «Vou nesta» de 700), escollidas vendo unha maqueta coas mesmas curvas lado a
+  lado; o anel segue agardando 300 ms. O check do movemento perde a lista de excepcións.
+- **O check do movemento só lía `src/index.css`.** Buscando o que non vía, apareceron dúas
+  cousas: a frecha que intercambia orixe e destino xiraba en `duration-[260ms]`, unha clase de
+  Tailwind no compoñente (baixa a 240), e cinco bucles de Tailwind que o README non contaba
+  (dicía dous): `animate-pulse` no oco do mapa, nos dous do mapa do traxecto e na icona da
+  localización, e `animate-spin` en Avisos. Son indicadores de espera e quedan (DECIDIDO). O
+  check le agora as duracións e os `animate-*` dos compoñentes, e quere eses cinco.
+- **A protección das ramas está posta**: unha regra sobre `main` que require o traballo
+  `checks` do CI, sen excepcións, e outra sobre `develop`; as dúas impiden reescribir e borrar
+  a rama. «Check the sources» pregúntalle a GitHub cada luns que siga así, e `pnpm test` garda
+  ese paso e o nome do traballo que a regra require.
+- Mirado e deixado: o mapa move a cámara con Leaflet (transicións de 0,25 s en `leaflet.css`)
+  e MapLibre; é da biblioteca, e DECIDIDO deixa o mapa fóra das regras do movemento. E «A miña
+  localización», pasada a primeira posición, recibe un erro do GPS compartido aos 20 s en vez
+  de aos 8 que tiña o mapa; queda así, sen probar nun teléfono.
