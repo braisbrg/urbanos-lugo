@@ -352,9 +352,10 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
 
 11. **O que deixou a rolda 25 de `REXISTRO-probas.md`** (1 de outubro de 2026), para
    decidir e para vixiar:
-   - **As pestanas á demanda, por facer** (decidido o 3 de outubro): Ruta e Liñas fóra do
-     anaco de entrada, uns 150 ms menos ao primeiro pintado, e cargadas en repouso despois
-     del para que a primeira vez que se abren xa estean. Medir antes e despois.
+   - **As pestanas á demanda, para estudar** (decidido o 3 de outubro, reaberto o 6): Ruta
+     e Liñas fóra do anaco de entrada, uns 150 ms menos ao primeiro pintado, e cargadas en
+     repouso despois del para que a primeira vez que se abren xa estean. Medir antes de
+     decidir.
    - **Os orzamentos do planificador en `measure:browser`** saíron das medidas desta
      máquina o 3 de outubro, un día lento: o mesmo código, «chegar antes» en 8,6–9,4 s
      aquí e en 5,9 s no *runner* o 5. Axustalos ás cifras do *runner* cando a medición
