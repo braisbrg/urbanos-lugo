@@ -15,11 +15,13 @@ to all three.
 ## Public holidays — Diario Oficial de Galicia
 
 `src/data/festivos.json` lists, per year, the days the operator runs its Sunday timetable
-on that are not Sundays: the regional calendar (a decree in the DOG each spring) and the
-two local holidays of Lugo (a resolution in the DOG each autumn). Each year carries the
-DOG entries it was read from. Legal texts are not subject to copyright in Spain (Ley de
-Propiedad Intelectual, art. 13). The file has to be extended by hand every year, and
-`tools/test.ts` fails once the current year is missing, which is the reminder.
+on that are not Sundays: the regional calendar (a decree in the DOG, out by July) and the
+two local holidays of Lugo (a resolution in the DOG, late in October). Each year carries
+the DOG entries it was read from, and a year without the local resolution among them does
+not pass. Legal texts are not subject to copyright in Spain (Ley de Propiedad Intelectual,
+art. 13). The file has to be extended by hand every year: from November the weekly source
+check fails every Monday while next year is missing, and `tools/test.ts` fails once the
+current year is.
 
 ## Timetables and stops — buslugo.com (AULUSA / Grupo Monbus)
 

@@ -1733,7 +1733,9 @@ de que alguén se lembre.
   e do 6 de decembro, que caen en domingo— e os dous de Lugo, Martes de Entroido e San
   Froilán). Non hai regra que os calcule, porque as substitucións cambian cada ano, así
   que un check de `pnpm test` falla o 1 de xaneiro se o ano novo non está no ficheiro:
-  é o recordatorio, e é ruidoso a propósito. A varredura de invariantes pasa por un
+  é o recordatorio, e é ruidoso a propósito. Antes, desde novembro, «Check the sources»
+  falla cada luns mentres falte o ano seguinte, e un ano sen a resolución dos festivos
+  locais de Lugo entre as súas fontes non pasa. A varredura de invariantes pasa por un
   festivo en luns, e a pantalla di «hoxe é festivo» cando unha liña de laborables non
   circula por iso.
 - **Tres sentidos debúxanse coa ruta dun coche**, non co itinerario levantado en OSM:

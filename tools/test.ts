@@ -38,6 +38,7 @@ import { syncOfficialAlerts } from '../src/services/alertSyncService';
 import { HOLIDAY_YEARS, buildRuns, dayKind, expandHeadway, handoverMinutes, isHoliday, isWithinServiceWindow, lineRunsOn, parseTimeToMinutes, formatMinutes, anchorIndex, isLineInService, scheduledDuration } from '../src/utils/schedule';
 import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
 import festivos from '../src/data/festivos.json';
+import { holidaysDue } from './checkHolidaysAhead';
 import { planTrips, MAX_HEADLINE_WALK_MIN, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
 import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
@@ -2435,6 +2436,7 @@ ok('the gates run on every push and proposal, offline, and only the schedule rea
   assert(/^ {2}checks:\s*$/m.test(ci), 'the ci.yml job is no longer called "checks", the name the ruleset on main requires');
   const weekly = runs(workflow('check-source.yml')).join('\n');
   assert(weekly.includes('rules/branches/main') && weekly.includes('.context == "checks"') && weekly.includes('for branch in main develop'), 'check-source.yml no longer asks GitHub that main requires the checks and that main and develop cannot be rewritten');
+  assert(weekly.includes('pnpm exec tsx tools/checkHolidaysAhead.ts'), 'check-source.yml no longer warns from November that next year’s holidays are missing');
   const pkg = JSON.parse(read('package.json'));
   assert(pkg.scripts['check:deep'] === 'tsx tools/stressInvariants.ts && tsx tools/stressPlanner.ts', `check:deep runs "${pkg.scripts['check:deep']}", not the two offline sweeps`);
   for (const sweep of ['tools/stressInvariants.ts', 'tools/stressPlanner.ts']) assert(!/\bfetch\(|overpass\(/.test(read(sweep)), `${sweep} reaches the network, and it is a gate`);
@@ -3316,9 +3318,19 @@ ok('a public holiday runs the Sunday timetable, and the file that says which day
       last = day;
     }
     assert(entry.days.length >= 12 && entry.days.length <= 16, `${year} lists ${entry.days.length} holidays; Galicia plus two local ones is 14`);
+    // The Xunta's decree is out by July and Lugo's two days only in late October, so a year
+    // entered early, from the decree alone, would pass the count and miss San Froilán.
+    assert(entry.source.some((s) => /local/i.test(s) && /Lugo/.test(s)), `${year} has no source for Lugo's two local holidays, the DOG resolution each autumn`);
   }
   const thisYear = String(new Date().getFullYear());
   assert(HOLIDAY_YEARS.includes(thisYear), `src/data/festivos.json has no entry for ${thisYear}: add the year's holidays from the DOG (see the 2026 entry for the sources)`);
+  // And the weekly job's warning ahead of that: quiet through October, due from November
+  // until next year is in, and quiet again once it is.
+  assert(holidaysDue(['2026'], new Date(2026, 9, 31)) === null, 'the holiday reminder fires before November');
+  assert(holidaysDue(['2026'], new Date(2026, 10, 1))?.includes('2027'), 'the holiday reminder is quiet on 1 November with next year missing');
+  assert(holidaysDue(['2026'], new Date(2026, 11, 31))?.includes('2027'), 'the holiday reminder is quiet on 31 December with next year missing');
+  assert(holidaysDue(['2026', '2027'], new Date(2026, 10, 1)) === null, 'the holiday reminder fires with next year already in');
+  assert(holidaysDue(['2027'], new Date(2027, 0, 5)) === null, 'the holiday reminder fires in January, which the suite already covers');
 });
 
 ok('a line\u2019s trip time comes from the timetable, not from a road model', () => {

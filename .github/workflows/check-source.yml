@@ -98,3 +98,10 @@ jobs:
             locked=$(gh api "repos/$REPO/rules/branches/$branch" --jq 'any(.[]; .type == "non_fast_forward") and any(.[]; .type == "deletion")')
             [ "$locked" = true ] || { echo "$branch can be force-pushed or deleted"; exit 1; }
           done
+
+      # The holidays file runs out on 1 January, and the suite fails that morning with the
+      # hourly Pages build behind it. From November this fails every Monday instead, while
+      # the DOG can still be read. No request: it reads the file.
+      - name: Next year's holidays are in before January
+        if: always()
+        run: pnpm exec tsx tools/checkHolidaysAhead.ts
