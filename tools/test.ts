@@ -3543,8 +3543,11 @@ ok('src/data holds only what ships, and the build inputs stay out of it', () => 
 ok('the address the app calls for /api is the one the policy admits', () => {
   // apiUrl.ts builds the request URL and csp.ts admits the origin; name the setting
   // differently in one and the build succeeds and fails silently in the browser.
+  // In the code, not a comment: apiUrl.ts names the variable in its doc comment, and with the
+  // read renamed on purpose the comment alone kept this green.
   for (const file of ['src/services/apiUrl.ts', 'src/security/csp.ts']) {
-    assert(read(file).includes('VITE_API_ORIGIN'), `${file} no longer reads VITE_API_ORIGIN, so the request and the policy can disagree`);
+    const code = read(file).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert(code.includes('VITE_API_ORIGIN'), `${file} no longer reads VITE_API_ORIGIN, so the request and the policy can disagree`);
   }
 
   // csp.ts runs in Node, where import.meta.env does not exist. Comments are stripped first:
