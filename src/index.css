@@ -209,8 +209,9 @@
    thumb sliding, a tick appearing -- never a number that would then read as live. The one
    pulse, `.live-dot`, marks the GPS position on the ride, which is the one thing in this
    app that is measured; the one other loop, `.calc-dots`, lasts as long as the planner is
-   working and no longer. `prefers-reduced-motion` at the foot of this file stops every one
-   of them. */
+   working and no longer. Five waits in the components pulse or spin with Tailwind's own
+   classes, and stop when the wait does. `prefers-reduced-motion` at the foot of this file
+   stops every one of them. */
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
 @keyframes fade { from { opacity: 0.25; } }

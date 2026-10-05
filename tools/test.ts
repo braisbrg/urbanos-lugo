@@ -4880,7 +4880,7 @@ ok('every animation moves on the compositor: opacity and transform, nothing else
   }
 });
 
-ok('every animation runs 120 to 240 ms, and only two loop', () => {
+ok('every animation runs 120 to 240 ms, and only two loop besides the waiting indicators', () => {
   // The README said none ran over 240 ms while four did, from the day the sentence was
   // written; it then named them, and on 6 October they came down to 240 (DECIDIDO). An
   // animation outside 120-240 ms, a new loop, or a transition over 240 fails here, and so
@@ -4921,6 +4921,16 @@ ok('every animation runs 120 to 240 ms, and only two loop', () => {
     inComponents += found.length;
   }
   assert(inComponents >= 3, `found ${inComponents} durations in the components, so this is reading the wrong thing`);
+  // Tailwind's own loops (animate-spin, animate-pulse, …) never pass through the stylesheet
+  // either, and the README counted two loops while five more ran. They are waiting
+  // indicators, kept by DECIDIDO on 6 October; a sixth fails here.
+  const WAITING = [
+    'src/App.tsx animate-pulse', 'src/components/AlertsView.tsx animate-spin', 'src/components/RoutePlannerView.tsx animate-pulse',
+    'src/components/TripCompanionView.tsx animate-pulse', 'src/components/planner/PlaceField.tsx animate-pulse',
+  ];
+  const tailwindLoops = sourcesUnder('src').flatMap((file) => [...readFileSync(file, 'utf8').matchAll(/\banimate-(?!none\b)[\w-]+/g)].map(([cls]) => `${relative(file).replace(/\\/g, '/')} ${cls}`));
+  assert.deepStrictEqual(tailwindLoops.sort(), [...WAITING].sort(), `the Tailwind loops are not the five waiting indicators DECIDIDO keeps: ${tailwindLoops.join(', ')}`);
+  assert(readme.includes('Á parte van os indicadores de espera'), 'the README no longer names the waiting indicators');
 });
 
 ok('a tap on «Calcular ruta» says «Calculando» before the plan holds the thread', () => {

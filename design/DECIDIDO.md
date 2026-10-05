@@ -261,6 +261,11 @@ descrición. Catro regras, e o que quedou fóra:
   arredor de «Vou nesta» 700. Vistas lado a lado, coas mesmas curvas a 240 ms, baixan as
   catro; o anel segue agardando 300 ms antes de saír. A frecha que intercambia orixe e
   destino xiraba en 260 ms, nunha clase do compoñente que o check non lía; baixa tamén.
+- **Os indicadores de espera quedan.** Ademais dos dous bucles, cinco sitios repítense
+  mentres agardan, coas clases de Tailwind: o oco do mapa e os dous do mapa do traxecto
+  (Ruta e «Vou nesta») latexan mentres carga o seu código, a icona da localización
+  mentres busca, e a de actualizar xira en Avisos mentres sincroniza. Rematan coa espera,
+  como «Calculando»; quitalos deixaría o oco e a icona sen nada que diga que traballan.
 
 ## Quedou aberto
 

@@ -1243,7 +1243,9 @@ esvara, e a estrela, a campá e o tick confírmanse unha vez ao activalos. Todo 
 só `opacity` e `transform`, e só de entrada: pechar segue sendo instantáneo. Cada un dura
 entre 120 e 240 ms, tamén as confirmacións (o anel arredor de «Vou nesta» agarda 300 ms
 antes de saír), e só dous movementos se repiten: o latexo da seguinte parada en «Vou nesta» e os puntos de
-«Calculando» mentres calcula. Unha hora nunca se anima —un número que roda parece unha medición—;
+«Calculando» mentres calcula. Á parte van os indicadores de espera, que duran o que dura
+a espera: o oco do mapa latexa mentres carga, a icona da localización mentres busca e a
+de actualizar xira mentres se sincronizan os avisos. Unha hora nunca se anima —un número que roda parece unha medición—;
 a única excepción é a pantalla «Vou nesta», onde a conta ata un só bus roda ao cambiar
 e a marca da seguinte parada late, porque aí a posición si vén do GPS. Con
 `prefers-reduced-motion` non queda nada en movemento, e `audit:browser` compróbao.
