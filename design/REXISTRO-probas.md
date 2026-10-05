@@ -2255,7 +2255,7 @@ pode cambiar nada; a suite outra vez contra a build). Cada unha, co seu fallo de
 
 ### Medido
 
-Os catro gates verdes; a suite, 212 comprobacións, tamén contra a build. `audit:browser` sobre
+Os catro gates verdes; a suite, 213 comprobacións (as 191 de `develop` e as 22), tamén contra a build. `audit:browser` sobre
 a build: contraste, obxectivos, desbordamento, cortes, consola, teclado e movemento reducido a 0
 nos dous temas. No panel: a nota do planificador, os pins, «A miña localización» cun GPS finxido
 (unha vixilancia, e liberada ao parar) e o lector de QR sen `BarcodeDetector`.
@@ -2264,10 +2264,12 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
 
 - DECIDIDO di «120–240 ms» e catro animacións, escollidas nas demos, duran máis: decisión do dono.
 - `reconcile:selftest` non pode ir ao CI: precisa as 1.186 páxinas de parada en caché.
-- O luns 5 de outubro «Check the sources» quedou en vermello en `check:parsers`: a páxina do
-  poste do operador chega co bloque `sae-content` baleiro e un guión que o enche despois. Non
-  era o festivo: lida unha vez a man ás 19:53, cun bus da propia rede a 12 minutos, seguía
-  baleira. A app degrada como está previsto (sen o bloque do operador). As fixacións das
-  accións da rolda 25 resolveron todas nese primeiro luns en `main`.
+- O luns 5 de outubro «Check the sources» quedou en vermello en `check:parsers`: o poste que
+  le, `oTWQ`, chegaba co contedor das saídas baleiro, tamén lido unha vez a man ás 19:53. Un
+  primeiro borrador desta rolda culpaba a un guión que enchería a páxina despois; non era iso.
+  A páxina dun poste lista só os buses que van cara a el nese minuto, e `Zjge`, na mesma
+  Ronda, listaba un 6 a oito minutos, lido sen erro. `check:parsers` pregunta agora ata tres
+  postes antes de dar a páxina por rota. As fixacións das accións da rolda 25 resolveron
+  todas nese primeiro luns en `main`.
 - Regras de proceso (sesións compartidas, non borrar checks, quen sube) non as ve o repositorio;
   a protección de `main` e `develop` é un axuste de GitHub.
