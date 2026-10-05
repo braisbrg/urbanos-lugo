@@ -5205,6 +5205,21 @@ ok('the map’s buses start hidden, and while they are shown the map says they a
   assert(/name: 'buses'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer measures the map with its buses on');
 });
 
+ok('the small "never"s in the comments hold', () => {
+  // Five promises written as a comment beside the line that keeps them, and held by nothing
+  // else: the stops screen never guesses where you are; the scanner never leaves the camera
+  // on behind a closed dialog; a stop change never leaves the last stop's operator minutes on
+  // screen; colour never carries provenance alone; checkFares reports and never applies.
+  const home = read('src/components/StopHome.tsx');
+  assert(!/LUGO_CENTER/.test(home) && /\(\) => \{\s*\/\/[^\n]*\n\s*setLocationError\(t\.stopHome\.denied\);/.test(home), 'the stops screen falls back to a position the phone never gave');
+  const scanner = read('src/components/QrScannerModal.tsx');
+  assert(/if \(!isOpen\) stopCamera\(\);/.test(scanner) && /streamRef\.current\?\.getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\);/.test(scanner), 'the scanner can leave the camera running behind a closed dialog');
+  assert(/useEffect\(\(\) => \{\s*setTimes\(null\);/.test(read('src/hooks/useOperatorTimes.ts')), 'a stop change can leave the previous stop’s operator minutes on screen');
+  const chip = read('src/components/ui/Provenance.tsx');
+  assert((chip.match(/\{text\}/g) ?? []).length === 2 && /t\.common\.officialBadge/.test(chip) && /t\.common\.estimatedBadge/.test(chip) && /border-dashed/.test(chip), 'a provenance chip carries its meaning in colour alone: both say their label, the estimated one dashed');
+  assert(!/\b(writeFile|writeJson|appendFile|createWriteStream)/.test(read('tools/checkFares.ts')), 'checkFares.ts writes a scraped fare somewhere; it reports a disagreement and applies nothing');
+});
+
 ok('no check reached the network', () => {
   // The other half of the refusal at the top: syncOfficialAlerts and the operator reader turn
   // a failed request into an answer, so a check that forgot its stub would pass on "unreachable".
