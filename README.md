@@ -1051,10 +1051,10 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 
 | | sen comprimir | gzip | brotli |
 | :--- | ---: | ---: | ---: |
-| Anaco de entrada | 601 KB | 163 KB | **136 KB** |
-| Folla de estilos | 58 KB | 11 KB | **10 KB** |
+| Anaco de entrada | 604 KB | 163 KB | **136 KB** |
+| Folla de estilos | 59 KB | 11 KB | **10 KB** |
 | `index.html` | 5 KB | 2 KB | **2 KB** |
-| **Primeira carga** | **664 KB** | ~176 KB | **~147 KB** |
+| **Primeira carga** | **668 KB** | ~177 KB | **~148 KB** |
 | Tipografía | 51 KB | — | 51 KB, en paralelo |
 | Renderizador do mapa, co estilo e a paleta | 1.191 KB | 314 KB | 258 KB, ao abrir un mapa |
 | Estilos do renderizador | 96 KB | 16 KB | 14 KB, ao abrir un mapa |
@@ -1062,8 +1062,8 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 | Xeometría viaria | 511 KB | 82 KB | 28 KB, ao abrir un mapa |
 | Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
 
-Medido o 1 de outubro de 2026 (rolda 25; o renderizador e o seu worker, de novo con
-MapLibre 6.11). O anaco de entrada medra co que leva dentro, as cabeceiras por pestana;
+Medido o 5 de outubro de 2026, na 1.2.2, con MapLibre 6.11. O anaco de entrada medra co
+que leva dentro, as cabeceiras por pestana;
 MapLibre non vai nel, senón enteiro no anaco do renderizador, que baixa ao abrir un mapa.
 A instantánea de avisos tampouco: é un ficheiro á parte, `alerts.json`, e o motivo está
 xusto debaixo.
@@ -1080,11 +1080,11 @@ deixa ao lado de cada ficheiro.
 páxina pide para pintarse; o service worker é outra cousa. Para que a app funcione sen
 cobertura, na primeira visita garda **todo** o que a build produce — 28 ficheiros
 distintos (o manifesto lista 32: catro iconas van dúas veces e baixan unha), 4,30 MB sen
-comprimir, 1,26 MB en gzip e 1,05 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
+comprimir, 1,27 MB en gzip e 1,05 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
 se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
 pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
-carga de ~147 KB.
+carga de ~148 KB.
 
 E cando un despregue cambia os nomes deses ficheiros debaixo dunha páxina aberta, a
 páxina que pide o mapa despois de publicado recarga unha soa vez en lugar de amosar «a
