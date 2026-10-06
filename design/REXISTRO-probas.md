@@ -2294,6 +2294,26 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
   e MapLibre; é da biblioteca, e DECIDIDO deixa o mapa fóra das regras do movemento. E «A miña
   localización», pasada a primeira posición, recibe un erro do GPS compartido aos 20 s en vez
   de aos 8 que tiña o mapa; queda así, sen probar nun teléfono.
+- **Os festivos avisan antes de caducar.** `festivos.json` ten só 2026, e o 1 de xaneiro
+  `pnpm test` falla adrede, co despregue de cada hora detrás. Desde o 1 de novembro «Check the
+  sources» falla cada luns mentres falte o ano seguinte, e un ano sen a resolución dos
+  festivos locais de Lugo entre as súas fontes non pasa: o decreto galego de 2027 xa saíu, os
+  dous días de Lugo aínda non.
+- **Volver correr a importación de servizos de OSM devolvía Monte Segade ao pin mal metido.**
+  Lía o pin de `stops.json`, que xa é a saída da construción, e alí a parada xa estaba no
+  poste: 0 m, nada que gardar, e o seguinte `data:build` levábaa de volta. Corrida desde a
+  caché de OSM, reproducía o ficheiro gardado salvo iso. Agora garda tamén o poste dunha
+  parada xa movida.
+- **`s133` Rúa Industria (Aula 9) está no seu poste**, o nodo de OSM que Street View confirmou
+  o 21 de setembro, a 43 m do pin do operador. Segunda excepción ás coordenadas do operador,
+  nunha lista con que se viu e cando (`POLE_SEEN_AT_OSM`); 417 paradas, 271 con QR e 24 liñas,
+  como antes.
+- **Os orzamentos do planificador en `measure:browser`**, medidos no *runner* cunha corrida a
+  man sobre `main` con «Calculando»: saír agora 540 ms e chegar antes 7,0 s (648 ms e 5,9 s o
+  5, sen os puntos). Pasan de 1,3 e 13 s a 1 e 9 s. Na mesma corrida, os catro pasos de zoom
+  levaron 1.051 ms contra un orzamento de 900, e xa ían por riba o 28 de setembro e o 5 de
+  outubro (733 o 21): queda en NOTAS.
+- NOTAS «Pendente» pasa de once puntos a cinco; as interurbanas saen por decisión (DECIDIDO).
 
 ## Rolda 27: os servidores alleos que non responden — 6 de outubro de 2026
 
