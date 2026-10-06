@@ -239,6 +239,18 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    sitio novo sen ligazóns de entrada; o que se pode facer é «Request indexing» nas seis
    URL, unha vez. IndexNow é o protocolo para avisar a Bing en cada cambio de contido
    desde o despregue; con seis URL fixas, o botón fai o mesmo.*
+   *Mirado o 6 de outubro. Google: a raíz e outras dúas, indexadas; `/paradas/` sae como
+   duplicada da raíz, que é o que se quere (Google amosa aínda a canónica de antes do 21 de
+   setembro; a validación está iniciada). O sitemap segue «non se puido ler» desde o 21 de
+   setembro, con 0 páxinas, e figura como «/sitemap.xml»: na raíz do dominio iso dá 404, e
+   o bo é `https://braisbrg.github.io/urbanos-lugo/sitemap.xml`, que hai que enviar co
+   enderezo completo. Bing ten ese, correcto, 7 URL; a raíz segue «Discovered but not
+   crawled» desde o 17 de setembro, e pediuse outra vez a indexación das seis. Nada o
+   bloquea (200, sen `noindex`, canónicas ben, escaneo limpo), pero sen JavaScript cada
+   páxina ten 55 caracteres de texto, o `<h1>`, e ningunha ligazón, e Bing depende do HTML
+   tal como chega máis ca Google. Se en dúas semanas segue igual, é iso o que hai que
+   cambiar: o bloque estático de `AUDITORIA-seo.md` (punto 5, aparcado o 15 de setembro
+   polo CLS) ou o prerender do punto 7.*
 3. **Os festivos de 2027.** `src/data/festivos.json` ten só 2026. O decreto galego de 2027
    xa saíu: Decreto 68/2026, DOG do 2 de xullo de 2026, co 19 de marzo e o 17 de maio no
    lugar do 25 de xullo e do 15 de agosto, que caen en domingo. Faltan os dous festivos
