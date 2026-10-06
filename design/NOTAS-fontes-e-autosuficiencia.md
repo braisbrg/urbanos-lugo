@@ -251,6 +251,11 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    tal como chega máis ca Google. Se en dúas semanas segue igual, é iso o que hai que
    cambiar: o bloque estático de `AUDITORIA-seo.md` (punto 5, aparcado o 15 de setembro
    polo CLS) ou o prerender do punto 7.*
+   *Tamén o 6 de outubro, cada idioma pasou a ter os seus enderezos (`/es/…`, `/en/…`, cos
+   `hreflang`); os galegos non cambian, nin o enderezo do sitemap, que agora lista
+   dezaoito. Cando estea publicado: na inspección de Google e de Bing, pedir unha vez a
+   indexación de `/es/` e `/en/`, e mirar en dúas semanas que o resultado sae no idioma de
+   quen busca.*
 3. **Os festivos de 2027.** `src/data/festivos.json` ten só 2026. O decreto galego de 2027
    xa saíu: Decreto 68/2026, DOG do 2 de xullo de 2026, co 19 de marzo e o 17 de maio no
    lugar do 25 de xullo e do 15 de agosto, que caen en domingo. Faltan os dous festivos

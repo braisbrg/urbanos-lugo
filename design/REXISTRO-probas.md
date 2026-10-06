@@ -2314,6 +2314,13 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
   levaron 1.051 ms contra un orzamento de 900, e xa ían por riba o 28 de setembro e o 5 de
   outubro (733 o 21): queda en NOTAS.
 - NOTAS «Pendente» pasa de once puntos a cinco; as interurbanas saen por decisión (DECIDIDO).
+- **Google amosaba o resultado cun título en inglés sobre unha descrición en galego**: o seu
+  navegador di inglés, a app seguía o navegador, e a páxina, ao correr, poñía o título do
+  dicionario inglés. Agora cada idioma ten os seus enderezos (o galego, os de sempre;
+  `/es/lineas/`, `/en/lines/`…), cada copia leva o seu `lang`, título, descrición, canónica
+  e as outras dúas como `hreflang`, o sitemap ten dezaoito, e o título da pestana sae da
+  mesma táboa. Nun enderezo sen prefixo un buscador le galego. Catorce fallos postos de
+  volta, todos collidos; visto no navegador sobre a build.
 
 ## Rolda 27: os servidores alleos que non responden — 6 de outubro de 2026
 
