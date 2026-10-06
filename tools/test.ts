@@ -4893,6 +4893,13 @@ ok('the map opens on nobody’s line, and a zoom step rebuilds only what the zoo
   // layout each on every zoom -- the largest frame left once the three above were gone.
   const stopsLayer = read('src/components/Map/StopLayer.tsx');
   assert(/stopNamesLayer\(/.test(stopsLayer) && !/permanent: true/.test(stopsLayer), 'the stop names are DOM tooltips again');
+
+  // A rung change rebuilt every marker in its new style, then restyled them all again: the
+  // selection effect followed the rung and the theme too, and each setStyle asked the canvas
+  // for a redraw. Traced at 6x CPU: 128 of them at the first zoom step, 67 ms of a 113 ms task.
+  const restyleDeps = stopsLayer.split('useEffect(').find((part) => part.includes('marker.setStyle('))?.match(/\}, \[([^\]]*)\]\);/)?.[1];
+  assert(restyleDeps === 'selectedStop?.id', `the selection restyle follows [${restyleDeps ?? 'nothing found'}], so a rung change restyles the markers the rebuild has just drawn`);
+  assert(stopsLayer.includes('}, [map, stops, visibleLineIds, showStops, rung, colors, thinnedIn]);'), 'the rebuild no longer follows the rung and the theme, and the restyle no longer covers for it');
 });
 
 ok('a page opened before a deploy reloads itself once when a chunk has gone', () => {

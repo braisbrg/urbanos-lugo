@@ -142,6 +142,8 @@ export function StopLayer({ map, stops, visibleLineIds, selectedStop, showStops,
   }, [map, stops, visibleLineIds, showStops, rung, colors, thinnedIn]);
 
   // Selection restyles one marker rather than rebuilding the layer; the others go back to the rung's radius.
+  // The selection only: a new rung or theme rebuilds every marker above, already in its style,
+  // and restyling them here too asked the canvas for a redraw per marker at each rung change.
   useEffect(() => {
     const selectedId = selectedStop?.id;
     // At a thinning zoom the selected stop is kept only when the layer is built; selected afterwards, it may have no dot.
@@ -153,7 +155,7 @@ export function StopLayer({ map, stops, visibleLineIds, selectedStop, showStops,
       marker.setStyle(stopDotStyle(colors, rung.radius, id === selectedId));
       if (id === selectedId) marker.bringToFront();
     }
-  }, [selectedStop?.id, rung, colors]);
+  }, [selectedStop?.id]);
 
   return null;
 }
