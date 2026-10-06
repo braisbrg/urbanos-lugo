@@ -39,6 +39,7 @@ import { HOLIDAY_YEARS, buildRuns, dayKind, expandHeadway, handoverMinutes, isHo
 import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
 import festivos from '../src/data/festivos.json';
 import { holidaysDue } from './checkHolidaysAhead';
+import { poleToRecord } from './importStopAmenities';
 import { planTrips, MAX_HEADLINE_WALK_MIN, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
 import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
@@ -375,6 +376,13 @@ ok('a coordinate is the operator’s unless its pin duplicates the next stop’s
     const gapAfter = getDistanceMeters(segade.lat, segade.lng, after.lat, after.lng);
     assert(gapBefore > 300 && gapAfter > 300, `${dir.id}: Monte Segade is ${Math.round(gapBefore)} m from ${before.name} and ${Math.round(gapAfter)} m from ${after.name}`);
   }
+  // The import that records the pole reads stops.json after the build, where a moved stop
+  // already stands on it: a rerun dropped Monte Segade's position, and the next build put
+  // it back on the mis-entered pin.
+  const pole = { id: 1 };
+  assert(poleToRecord({ positionSource: 'osm' }, { node: pole, d: 0 }) === pole, 'a rerun of the amenities import drops the pole a repositioned stop stands on');
+  assert(poleToRecord({}, { node: pole, d: 1100 }) === pole, 'the amenities import no longer records a same-named pole far from the pin');
+  assert(poleToRecord({}, { node: pole, d: 43 }) === null, 'the amenities import records a nearby pole as a position');
   // And the rule does not fire on the two pairs the operator publishes close together on
   // purpose -- both sides of Avda. Américas, both ends of Rúa Industria: those stay put.
   const close: string[] = [];

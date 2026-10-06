@@ -3,6 +3,7 @@
  * these poles while the operator publishes neither; anything unsurveyed stays `null`.
  * `npx tsx tools/importStopAmenities.ts` writes data/stop-amenities.json for buildDataset.ts.
  */
+import { pathToFileURL } from 'node:url';
 import stops from '../src/data/stops.json';
 import { getDistanceMeters as haversine } from '../src/utils/geo';
 import { at, cached, fold, writeJson } from './lib';
@@ -26,6 +27,18 @@ const fetchOsmStops = (): Promise<any[]> =>
     if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
     return ((await res.json()) as any).elements;
   });
+
+/**
+ * Which same-named pole gets its position recorded: one far from the pin, where one of the
+ * two is wrong and buildDataset.ts decides which, and one the build has already placed the
+ * stop on. stops.json holds the pin after the build, so a repositioned stop's pole is no
+ * longer far: without the second case a rerun dropped Monte Segade's position, and the next
+ * build put it back on the operator's mis-entered pin.
+ */
+export function poleToRecord(stop: { positionSource?: string }, named: { node: any; d: number }): any | null {
+  if (!named.node) return null;
+  return named.d > DISAGREE_M || stop.positionSource === 'osm' ? named.node : null;
+}
 
 /** The node closest to the stop (the first one on a tie), `null` at Infinity when there is none. */
 function nearest(nodes: any[], stop: { lat: number; lng: number }): { node: any; d: number } {
@@ -53,7 +66,7 @@ async function main() {
     // pole far from the pin is recorded, not applied: buildDataset.ts decides when the pin is wrong.
     const name = fold(stop.name);
     const named = nearest(osm.filter((node) => fold(node.tags?.name || '') === name), stop);
-    const far = named.node && named.d > DISAGREE_M ? named.node : null;
+    const far = poleToRecord(stop, named);
     let best = far;
     if (far) disagree++;
     else {
@@ -82,4 +95,4 @@ async function main() {
   console.log(`  unsurveyed stay null and the UI says nothing about them`);
 }
 
-main();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) main();
