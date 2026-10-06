@@ -427,7 +427,12 @@
   "s133": {
     "shelter": false,
     "bench": null,
-    "tactilePaving": null
+    "tactilePaving": null,
+    "position": [
+      43.0457386,
+      -7.5653457
+    ],
+    "osmNode": 11134839623
   },
   "s134": {
     "shelter": false,

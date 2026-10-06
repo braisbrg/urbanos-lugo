@@ -51,16 +51,20 @@ shelter and bench, and one coordinate, from OpenStreetMap; both are covered belo
   it reads the pages a passenger reads, at the rate a passenger would, identifies itself
   in its User-Agent, links back to the source on every screen, and points anyone who needs
   certainty at the operator's own page.
-- **Coordinates are the operator's, with one exception, and the exception is OSM's.**
+- **Coordinates are the operator's, with two exceptions, and both are OSM's.**
   Each pole's position is read from the operator's own page for it. For one stop,
   "Estda. Nova Santiago (Monte Segade)", that page places the pin five metres from the
   previous stop of the same direction and 1.1 km from the pole OpenStreetMap surveys under
   the same name — a mis-entered coordinate, not a position. `tools/buildDataset.ts` takes
   the OSM pole only when both hold (pin duplicating a neighbour's, same-named pole far
   away), marks the stop `positionSource: "osm"`, and reports every other close pair without
-  touching it. That one coordinate is OSM data and carries ODbL and its attribution like the
-  rest of `data/stop-amenities.json`, where it is recorded; `tools/test.ts` holds the count
-  at one.
+  touching it. The other, "Rúa Industria (Aula 9)", was looked at on Street View: the pole
+  stands on the north pavement where OSM puts it, 43 m from the operator's pin, and the stop
+  takes the OSM node's position (listed with what was seen in `POLE_SEEN_AT_OSM`,
+  `tools/lib.ts`); the imagery only confirmed it, and no coordinate comes from it. Those two
+  coordinates are OSM data and carry ODbL and its attribution like the rest of
+  `data/stop-amenities.json`, where they are recorded; `tools/test.ts` holds the list at
+  those two.
 
 ## Route geometry — OpenStreetMap
 

@@ -7,7 +7,7 @@
  */
 import { existsSync } from 'node:fs';
 import { getDistanceMeters as haversine } from '../src/utils/geo';
-import { at, readJson, writeJson } from './lib';
+import { at, POLE_SEEN_AT_OSM, readJson, writeJson } from './lib';
 
 const raw = readJson(at('data', 'official-raw.json'));
 // Optional: written by tools/importStopAmenities.ts from OpenStreetMap surveys.
@@ -301,11 +301,13 @@ for (const s of raw.stops) {
 // ---- the operator's pin against the surveyed pole ------------------------------------
 
 /**
- * Coordinates are the operator's, with one exception the data itself proves: two
+ * Coordinates are the operator's, with two exceptions. One the data itself proves: two
  * consecutive stops of one direction cannot be six metres apart, so a pin that duplicates
  * its neighbour's is a mis-entered coordinate. When a stop is in such a pair AND the OSM
  * importer recorded where the same-named pole is, that position is used and the stop says
- * so (`positionSource: 'osm'`). Either condition alone is only reported.
+ * so (`positionSource: 'osm'`). Either condition alone is only reported. The other is a
+ * pole somebody has looked at and found where OSM puts it (POLE_SEEN_AT_OSM in lib.ts),
+ * taken from the same record.
  */
 const DUPLICATE_PIN_M = 30;
 const clusterById = new Map<string, any>(clusters.map((c: any) => [c.id, c]));
@@ -328,7 +330,7 @@ const repositioned: string[] = [];
 const stops = clusters.map((c) => {
   const { samples, ...rest } = c;
   const surveyed = amenities[c.id];
-  const moved = suspects.has(c.id) && surveyed?.position ? surveyed.position : null;
+  const moved = (suspects.has(c.id) || c.id in POLE_SEEN_AT_OSM) && surveyed?.position ? surveyed.position : null;
   if (moved) repositioned.push(c.id);
   const lat = moved ? moved[0] : c.lat;
   const lng = moved ? moved[1] : c.lng;
@@ -493,7 +495,7 @@ writeJson(at('src', 'data', 'route-geometry.json'), geometry, false);
 
 console.log(`stops : ${served.length} physical poles written`);
 console.log(`        ${collapsed} duplicate operator ids collapsed, ${dropped} without coordinates, ${orphaned} served by no line`);
-console.log(`        ${repositioned.length} placed at the pole OSM surveys under the same name, the operator's pin duplicating a neighbour's: ${repositioned.join(', ') || 'none'}`);
+console.log(`        ${repositioned.length} placed at the pole OSM surveys under the same name, the operator's pin duplicating a neighbour's or the pole seen there: ${repositioned.join(', ') || 'none'}`);
 for (const [a, b, m] of duplicatePairs) {
   if (!repositioned.includes(a) && !repositioned.includes(b)) console.log(`        left as published: ${a} and ${b} are ${Math.round(m)} m apart in one direction`);
 }

@@ -40,6 +40,7 @@ import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
 import festivos from '../src/data/festivos.json';
 import { holidaysDue } from './checkHolidaysAhead';
 import { poleToRecord } from './importStopAmenities';
+import { POLE_SEEN_AT_OSM } from './lib';
 import { planTrips, MAX_HEADLINE_WALK_MIN, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
 import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
@@ -363,10 +364,18 @@ ok('every stop sits on the route drawn for its line', () => {
 ok('a coordinate is the operator’s unless its pin duplicates the next stop’s', () => {
   // Two consecutive stops six metres apart is a mis-entered pin, not a position: the generator
   // takes the same-named surveyed pole for exactly that case and marks it `positionSource`.
+  // The one other is a pole seen standing where OSM puts it (POLE_SEEN_AT_OSM, in lib.ts).
   const moved = BUS_STOPS.filter((s) => s.positionSource === 'osm');
-  assert(moved.length === 1, `${moved.length} stops carry an OSM position; one is known (s1065), any other needs looking at`);
-  const segade = moved[0];
-  assert(segade.id === 's1065' && /Monte Segade/.test(segade.name), `the repositioned stop is ${segade.id} ${segade.name}`);
+  assert.deepStrictEqual(moved.map((s) => s.id).sort(), ['s1065', 's133'], `the stops with an OSM position are ${moved.map((s) => s.id).join(', ')}; two are known (s1065, s133), any other needs looking at`);
+  const segade = moved.find((s) => s.id === 's1065')!;
+  assert(/Monte Segade/.test(segade.name), `the repositioned stop is ${segade.id} ${segade.name}`);
+  // Rúa Industria (Aula 9): its grey totem is on the north pavement, on OSM node 11134839623,
+  // 43 m from the operator's pin, where there is nothing. The coordinate is the node's.
+  const amenities = JSON.parse(read('data/stop-amenities.json'));
+  const aula9 = moved.find((s) => s.id === 's133')!;
+  assert(amenities.s133?.osmNode === 11134839623, `s133 is placed on OSM node ${amenities.s133?.osmNode}, not the pole seen on the street`);
+  assert(aula9.lat === amenities.s133.position[0] && aula9.lng === amenities.s133.position[1], 's133 does not stand on the OSM node recorded for it');
+  assert(Object.keys(POLE_SEEN_AT_OSM).every((id) => /\b20\d\d\b/.test(POLE_SEEN_AT_OSM[id]) && BUS_STOPS.some((s) => s.id === id && s.positionSource === 'osm')), 'a pole in POLE_SEEN_AT_OSM says nothing of when it was seen, or the build did not move it');
   const calde = BUS_LINES.find((l) => l.id === '11-Calde')!;
   for (const dir of calde.directions) {
     const i = dir.stops.indexOf(segade.id);
@@ -383,6 +392,7 @@ ok('a coordinate is the operator’s unless its pin duplicates the next stop’s
   assert(poleToRecord({ positionSource: 'osm' }, { node: pole, d: 0 }) === pole, 'a rerun of the amenities import drops the pole a repositioned stop stands on');
   assert(poleToRecord({}, { node: pole, d: 1100 }) === pole, 'the amenities import no longer records a same-named pole far from the pin');
   assert(poleToRecord({}, { node: pole, d: 43 }) === null, 'the amenities import records a nearby pole as a position');
+  assert(poleToRecord({ id: 's133' }, { node: pole, d: 43 }) === pole, 'the amenities import does not record the pole seen where OSM puts it');
   // And the rule does not fire on the two pairs the operator publishes close together on
   // purpose -- both sides of Avda. Américas, both ends of Rúa Industria: those stay put.
   const close: string[] = [];

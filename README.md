@@ -1715,7 +1715,7 @@ de que alguén se lembre.
   opostos da mesma rúa dentro do mesmo sentido (o bus tería que dar a volta), ou que
   hai sentidos únicos no casco histórico. `pnpm data:audit` lístaos un a un.
 - **12 paradas sen coordenadas** na fonte quedan fóra do conxunto de datos.
-- **As coordenadas son as do operador, agás unha.** O seu pin de «Estda. Nova Santiago
+- **As coordenadas son as do operador, agás dúas.** O seu pin de «Estda. Nova Santiago
   (Monte Segade)» estaba a cinco metros de «Avda. Américas 88», a parada anterior da liña
   11 cara a Calde, e a 1,1 km do poste que OpenStreetMap ten cadastrado con ese mesmo
   nome, sobre a propia ruta levantada da liña. Dúas paradas consecutivas dun sentido non
@@ -1723,7 +1723,10 @@ de que alguén se lembre.
   toma o poste de OSM só nese caso —pin que duplica o da parada veciña **e** poste co
   mesmo nome lonxe— e a parada lévao escrito (`positionSource: "osm"`); os dous outros
   pares que o operador publica a menos de 30 m (Avda. Américas 36/51, Rúa Industria)
-  quedan como están, e `pnpm data:build` di cales son. Un check garda que sexa unha soa.
+  quedan como están, e `pnpm data:build` di cales son. A outra é «Rúa Industria (Aula 9)»:
+  vista en Street View, o poste está na beirarrúa norte, onde o pon OSM, a 43 m do pin do
+  operador, onde non hai nada; a parada toma a posición do nodo de OSM, non a da imaxe, e
+  `tools/lib.ts` (`POLE_SEEN_AT_OSM`) di que se viu e cando. Un check garda que sexan esas dúas.
 - **Os festivos son domingos, e caducan cada ano.** Un festivo entre semana —o 12 de
   outubro, o San Froilán— corre co cadro de domingos e festivos, que é o que o operador
   imprime; ata o 21 de setembro de 2026 a app tratábao como laborable e ningunha varredura

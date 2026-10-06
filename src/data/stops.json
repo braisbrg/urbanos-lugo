@@ -2459,15 +2459,16 @@
     "officialToken": null,
     "name": "Rúa Industria (Aula 9)",
     "aliases": [],
-    "lat": 43.0458049,
-    "lng": -7.5658678,
+    "lat": 43.0457386,
+    "lng": -7.5653457,
     "lines": [
       "1.2",
       "1.4"
     ],
     "zone": "O Ceao",
     "shelter": false,
-    "bench": null
+    "bench": null,
+    "positionSource": "osm"
   },
   {
     "id": "s134",

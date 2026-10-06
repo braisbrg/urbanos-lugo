@@ -6,7 +6,7 @@
 import { pathToFileURL } from 'node:url';
 import stops from '../src/data/stops.json';
 import { getDistanceMeters as haversine } from '../src/utils/geo';
-import { at, cached, fold, writeJson } from './lib';
+import { at, cached, fold, POLE_SEEN_AT_OSM, writeJson } from './lib';
 
 const CACHE = at('.cache', 'osm-stops.json');
 /** Same pole, allowing for survey imprecision on either side. */
@@ -33,11 +33,13 @@ const fetchOsmStops = (): Promise<any[]> =>
  * two is wrong and buildDataset.ts decides which, and one the build has already placed the
  * stop on. stops.json holds the pin after the build, so a repositioned stop's pole is no
  * longer far: without the second case a rerun dropped Monte Segade's position, and the next
- * build put it back on the operator's mis-entered pin.
+ * build put it back on the operator's mis-entered pin. And a pole seen on the street where
+ * OSM puts it (POLE_SEEN_AT_OSM), however close.
  */
-export function poleToRecord(stop: { positionSource?: string }, named: { node: any; d: number }): any | null {
+export function poleToRecord(stop: { id?: string; positionSource?: string }, named: { node: any; d: number }): any | null {
   if (!named.node) return null;
-  return named.d > DISAGREE_M || stop.positionSource === 'osm' ? named.node : null;
+  const seen = stop.id !== undefined && stop.id in POLE_SEEN_AT_OSM;
+  return named.d > DISAGREE_M || stop.positionSource === 'osm' || seen ? named.node : null;
 }
 
 /** The node closest to the stop (the first one on a tie), `null` at Infinity when there is none. */
@@ -59,16 +61,16 @@ async function main() {
     { shelter: boolean | null; bench: boolean | null; tactilePaving: boolean | null; position?: [number, number]; osmNode?: number }
   > = {};
   let matched = 0;
-  let disagree = 0;
+  let positioned = 0;
 
   for (const stop of stops as any[]) {
     // OSM names poles as the operator prints them, so the name survives a wrong pin. A same-named
     // pole far from the pin is recorded, not applied: buildDataset.ts decides when the pin is wrong.
     const name = fold(stop.name);
     const named = nearest(osm.filter((node) => fold(node.tags?.name || '') === name), stop);
-    const far = poleToRecord(stop, named);
-    let best = far;
-    if (far) disagree++;
+    const pole = poleToRecord(stop, named);
+    let best = pole;
+    if (pole) positioned++;
     else {
       const near = nearest(osm, stop);
       if (near.d > MATCH_RADIUS_M) continue;
@@ -81,7 +83,7 @@ async function main() {
       shelter: yesNo(tags.shelter),
       bench: yesNo(tags.bench),
       tactilePaving: yesNo(tags.tactile_paving),
-      ...(far ? { position: [far.lat, far.lon] as [number, number], osmNode: far.id } : {}),
+      ...(pole ? { position: [pole.lat, pole.lon] as [number, number], osmNode: pole.id } : {}),
     };
   }
 
@@ -89,7 +91,7 @@ async function main() {
 
   const count = (key: 'shelter' | 'tactilePaving') => Object.values(amenities).filter((a) => a[key] === true).length;
   console.log(`matched ${matched}/${(stops as any[]).length} stops within ${MATCH_RADIUS_M} m`);
-  console.log(`  same-named pole more than ${DISAGREE_M} m from the operator's pin: ${disagree}`);
+  console.log(`  same-named pole recorded as a position (far from the pin, already applied, or seen there): ${positioned}`);
   console.log(`  with a shelter        : ${count('shelter')}`);
   console.log(`  with tactile paving   : ${count('tactilePaving')}`);
   console.log(`  unsurveyed stay null and the UI says nothing about them`);

@@ -54,6 +54,19 @@ export const fold = (s: string): string =>
     .trim();
 
 /**
+ * Stops whose pole has been seen standing where OpenStreetMap puts it, and not at the
+ * operator's pin. The importer records the OSM node for these and the build uses it; the
+ * coordinate is always the node's, never one read off the imagery it was checked against.
+ * Each entry says what was seen, where and when.
+ */
+export const POLE_SEEN_AT_OSM: Record<string, string> = {
+  s133:
+    'Rúa Industria (Aula 9): the operator’s grey totem stands on the north pavement, where OSM ' +
+    'puts the pole, 43 m from the operator’s pin, where there is nothing. Street View, 2025 ' +
+    'imagery, looked at on 21 September 2026.',
+};
+
+/**
  * One line per kind of problem, however many times it happens, and the first detail
  * seen. `report()` prints `clean` when there were none, else every kind, and sets the
  * exit code.
