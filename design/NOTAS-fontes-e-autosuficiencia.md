@@ -283,11 +283,6 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    soa: 48 de 48 rutas iguais, en 559 s, moito máis que a principal. O feed do Concello ten
    agora 4 s e deixa unha liña por lectura. O que queda é ler esas liñas no worker e no
    despregue.*
-5. **O zoom do mapa, por riba do seu orzamento no *runner* desde o 28 de setembro.** En
-   «Measure in a browser», os catro pasos de zoom bloquean o fío 733 ms o 21 de setembro
-   (orzamento 900), e 1.106 o 28, 1.118 o 5 de outubro e 1.051 o 6. Tres medidas seguidas:
-   algo entre `425e38a` e `b37164e` en `main` encareceu o zoom. Buscar o commit con
-   `measure:browser` entre eses dous, e ver se un teléfono o nota.
 
 ### Lista para o iPhone
 
@@ -317,6 +312,17 @@ Media hora cun iPhone real, en Safari, con iOS 16.4 ou máis. Anotar o modelo e 
 Un fallo en calquera punto é un erro de verdade e vai ao rexistro con modelo e versión.
 
 ## Feito dende que se escribiu isto
+
+- **O zoom do mapa volve estar dentro do seu orzamento no *runner*** (6 de outubro de 2026,
+  rolda 28 do rexistro). Os catro pasos bloqueaban o fío 733 ms o 21 de setembro e
+  1.051–1.242 desde o 28. Unha parte foi o navegador: o código do 21 bloquea 733 ms con
+  Chrome 152 e 897 con Chrome 154, que é o que trouxo a imaxe do *runner*. O resto chegou
+  coa fusión do 21 de setembro (`6d1199d`) e só se ve no *runner*, que pinta sen GPU e con
+  catro núcleos: as capas fan exactamente o mesmo traballo en cada paso antes e despois, e
+  non se buscou máis. O que si se arranxou estaba nas dúas versións: en cada cambio de
+  chanzo, o efecto da selección volvía estilar un por un os marcadores que a reconstrución
+  acababa de debuxar, e cada un pedía repintar o lenzo. Agora segue só á selección, e o
+  *runner* mide 403 e 860 ms, fronte a 908–1.242 co mesmo Chrome e sen o arranxo.
 
 - **O RSS do Concello** lese en cada sincronización e as notas de prensa amósanse á parte
   dos avisos do servizo, sen contar para o distintivo. Dende o 15 de setembro de 2026, só a

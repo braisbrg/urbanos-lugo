@@ -2357,3 +2357,46 @@ luns 5, e cada resposta levou a outra medida.
   desde os servidores o feed non conecta nunca, quitalo de aí (DECIDIDO).
 - «Check the sources» lanzado unha vez a man tras a 1.2.5, para ver a segunda instancia e
   o feed desde o executor sen agardar ao luns.
+
+## Rolda 28: o zoom do mapa no *runner*, e Ubuntu 26.04 — 6 de outubro de 2026
+
+Pedido: por que os catro pasos de zoom de `measure:browser` levan desde o 28 de setembro
+por riba dos seus 900 ms no *runner*, e se as accións aguantan Ubuntu 26.04, a imaxe á que
+GitHub pasa `ubuntu-latest` entre o 19 de outubro e o 19 de novembro.
+
+### Medido
+
+- **Ubuntu 26.04**: o CI e a medida enteira, nunha rama de proba con `runs-on: ubuntu-26.04`
+  (Chrome 154 e Node 24 na imaxe), pasan. As cifras cadran coas de 24.04; o único
+  orzamento superado de máis foi a espera antes de pedir a entrada, 219 ms fronte a 200,
+  nunha execución.
+- **O zoom no *runner***, unha execución por caso, Chrome 154 agás onde se di. O código do
+  21 de setembro (`425e38a`): 733 ms con Chrome 152 e 897 con 154, a versión que trouxo a
+  imaxe. Antes da fusión do 21 de setembro, nas dúas ramas (`397918d`, `e7435db`,
+  `479199d`): 634–917 ms, cun peor frame de 1,0–1,5 s en 9–10 tarefas longas. Desde a
+  fusión (`6d1199d`) e despois: 1.051–1.242 ms, co peor frame en 0,6–0,8 s en 12–16
+  tarefas. A fusión co `index.css` de antes, 1.108; cos ficheiros do mapa de antes, 908.
+- **Neste equipo**, con Chrome 152 limitado a catro núcleos e compilacións sen minificar
+  marcadas nas capas, a secuencia é a mesma antes e despois da fusión. As rutas refanse en
+  cada paso. As paradas reconstrúense e volven estilarse nos dous cambios de chanzo, con
+  128 e 53 marcadores. `getScheduledBuses` custa 0,1 ms por chamada nas dúas versións.
+  Unha traza a 6× de CPU dálle a `setStyle` sobre eses 128 marcadores 67 ms dunha tarefa
+  de 113.
+- Da rolda 27: «Check the sources», lanzado a man na 1.2.5, pasou enteiro. FOSSGIS
+  respondeu e comparáronse as 48 rutas, todas iguais. O feed leuse desde ese executor, e o
+  paso novo das regras das ramas tamén pasou.
+
+### Feito
+
+- `StopLayer`: o efecto da selección segue só á selección (`8026344`). A reconstrución xa
+  segue ao chanzo e ao tema, e o check do zoom garda as dúas listas. Probado contra o seu
+  fallo de volta.
+- No *runner*, co mesmo Chrome 154 e a mesma imaxe: 403 e 860 ms, por baixo dos 900.
+
+### Mirado e deixado
+
+- O resto da diferenza que trouxo a fusión só aparece no *runner*, que pinta sen GPU.
+  Non se buscou o porqué exacto: o que lle importa a quen usa a app é un teléfono, e a
+  lista do iPhone xa mira se o mapa vai fluído. Chegou a prepararse unha comparación A/B
+  no propio *runner*, e descartouse sen lanzala.
+- O orzamento do zoom segue en 900 ms.
