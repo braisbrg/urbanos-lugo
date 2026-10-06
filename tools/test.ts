@@ -2427,7 +2427,9 @@ ok('the gates run on every push and proposal, offline, and only the schedule rea
   // the council's feed or Overpass run by hand or on a schedule, never in a loop. SECURITY.md:
   // the type check and the suite run before anything is built, Dependabot looks weekly. Only
   // the YAML held any of it, and a step taken out of it is the kind of change nobody re-reads.
-  const workflow = (name: string) => read(`.github/workflows/${name}`).replace(/^\s*#.*$/gm, '');
+  // Read through a CRLF checkout: a step's line ending in \r is not "run: |", and every
+  // command under it went unread, so the weekly step looked removed when it was not.
+  const workflow = (name: string) => read(`.github/workflows/${name}`).replace(/\r\n/g, '\n').replace(/^\s*#.*$/gm, '');
   // A step's command, whether on its own line or in a `run: |` block under it.
   const runs = (text: string) => {
     const lines = text.split('\n');
