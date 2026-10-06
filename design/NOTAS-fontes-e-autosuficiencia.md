@@ -212,10 +212,7 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
 
 ## Pendente
 
-1. **Outra rolda de auditoría e de comprobacións**, coa mesma disciplina: medir antes de
-   afirmar, e correr cada aviso ata a súa causa antes de descartalo.
-   *Feita: as roldas 13 a 16 de `REXISTRO-probas.md` (14 e 15 de setembro de 2026).*
-2. **Comprobar navegadores e sistemas.** Non se probou máis que nun Chromium. Importa
+1. **Comprobar navegadores e sistemas.** Non se probou máis que nun Chromium. Importa
    especialmente: **Safari en iOS**, que é o outro medio Lugo, e onde `100dvh`, os
    `<details>`, `oklch()` e o `ResizeObserver` do mapa son os candidatos a romper. Tamén
    Firefox e Chrome en Android. Hai que decidir cal é o chan que se soporta e escribilo.
@@ -223,81 +220,7 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    Chrome/Edge 111, Firefox 114, Safari e iOS 16.4. Do que está por riba do chan xa se
    protexe o código: `AbortSignal.timeout?.`, `wakeLock` só se existe, `vibrate?.`, mapa
    ráster sen WebGL2. O que queda é a proba nun iPhone real, coa lista de abaixo.*
-3. **Probas de esforzo en todo o proxecto**, despois do paso de navegadores. Non se
-   probou nunca nada fóra do camiño feliz: unha sesión longa co taboleiro recalculando cada
-   15 s, o planificador contra pares de paradas afastadas, o mapa con todas as capas, a
-   sincronización de avisos contra un servidor lento ou caído, o endpoint do QR chamado
-   unha e outra vez, consultas enormes na busca, e o comportamento con rede mala. Hai que
-   decidir que se rompe aceptablemente e que non debe romper nunca.
-   *Feitas, e con ferramenta cada unha: a sesión longa e o mapa con todo (`measure:browser`),
-   o planificador contra pares afastados (`stressPlanner`), o QR unha e outra vez e as
-   consultas enormes (`stressHttp`: 50 á vez sobre un poste, 40 plans nunha ventá, o
-   limitador a 120/min), e o 15 de setembro de 2026 os avisos contra un servidor colgado,
-   con erro ou lento e a app sen rede (`stress:network`). O que se decidiu: o taboleiro
-   nunca espera pola rede; a pantalla de avisos nunca queda baleira máis de dous segundos;
-   unha lectura fallida do operador dura un minuto, non media hora; sen rede, o *service
-   worker* dá a última resposta que viu. Rolda 16 do rexistro.*
-4. **Interurbanas no taboleiro, e con elas os postes na beirarrúa.** Un só proxecto de
-   datos, decidido o 15 de setembro de 2026 e sen data. As liñas da Xunta chegan en GTFS
-   (datos abertos; ler a licenza antes, regra de `DATA.md`) con un poste por sentido, na
-   beirarrúa. É o mesmo formato que faría falta para arranxar o que hoxe o mapa non di: o
-   lado da rúa. Medido: de 1.088 pares parada-sentido, 652 pins do operador están a menos
-   de 4 m do eixe da rúa —marcan a calzada, non a beirarrúa— e 143 paradas son un só
-   punto para os dous sentidos. Non se arranxa desprazando os pins «á dereita do sentido»
-   (sería inventar unha posición, e falla en rotondas, dobres calzadas e bucles: os 22
-   casos que saen «á esquerda» son iso), senón tomando o poste real: OpenStreetMap ten 275
-   das 417 co mesmo nome. O prezo: as coordenadas deixan de ser do operador, `stops.json`
-   pasa a ser dato OSM (ODbL), 142 paradas quedan sen fonte, e hai que partir as dobres —
-   co que cambian o reconto, os códigos QR compartidos, os favoritos e `?parada=`. Non se
-   fai por partes.
-5. **Tres paradas que discrepan de OSM no lado da rúa**, para mirar a pé ou en Street View
-   antes de tocar nada: `s589` Czda. Gándaras (enfte. Residencia) —o poste de OSM está 31 m
-   máis alá, na outra beirarrúa da 4.2 cara a Gándaras—, `s133` Rúa Industria (Aula 9)
-   —43 m, outra beirarrúa da 1.2/1.4 de volta— e `s1043` Barbaín (dir. centro) —15 m, outra
-   beirarrúa da 11 a Bóveda de volta—. OSM tamén se equivoca; sen velas, non se move
-   ningunha.
-   *Vistas o 21 de setembro de 2026, en Street View (imaxes de 2025), coas tres respostas
-   distintas que cabían:*
-   - *`s133` Rúa Industria (Aula 9): **ten razón OSM.** O poste —o tótem gris do
-     operador— está na beirarrúa norte, diante da cafetería Zertín (escola de cociña),
-     en 43,04574 −7,56535, xusto onde OSM o pon e 43 m ao leste do pin do operador,
-     onde non hai nada. Norte é a dereita da 1.2/1.4 de volta, que baixa cara ao oeste.
-     Movelo é un cambio de xeometría no xerador; o único precedente (Monte Segade) ten
-     unha regra propia e un check que garda que sexa un só. Vai co proxecto 4 ou como
-     segunda excepción: decisión do dono.*
-   - *`s1043` Barbaín (dir. centro): **ten razón o operador.** A marquesiña verde do
-     Concello («Zona Rural») está no lado leste do tronco sur do cruce, ao pé do sinal
-     «Bóveda», en 43,00732 −7,51735: o pin do operador. O poste de OSM, 15 m ao NNO na
-     bifurcación, non ten nada. Leste é a dereita da 11 de volta, que sobe cara ao norte.*
-   - *`s589` Czda. Gándaras (enfte. Residencia): **non se ve poste en ningún dos dous
-     sitios.** Onde OSM (43,03106 −7,54952, lado leste): sebe, muro de pedra, un poste
-     eléctrico sen placa e o sinal da Protectora de Animais; onde o operador (o cruce,
-     lado leste): o espello, dous sinais e a terraza da cafetería. A única
-     infraestrutura é a marquesiña do lado oeste, diante da Residencia, que é a outra
-     parada (`s595`, 4.2 de volta e 13). A do sentido Gándaras non ten sinal visible en
-     2025; queda onde está.*
-6. **A folla de controis do mapa**, a outra metade da débeda 7 (rolda 15 do rexistro). Non
-   se fai en frío: sería un compoñente de vinte props coa mesma complexidade. Cando se abra
-   `TransitMap` por outro motivo, o que paga é sacar só a lista de liñas (`pickedLineIds`,
-   `linesExpanded`), que si é unha peza soa.
-   *Feita a metade que pagaba, o 21 de setembro de 2026: a tira de fichas de liña do
-   móbil é `Map/LineChips.tsx`, con seis props (idioma, as liñas, as listadas, as
-   escollidas, alternar, todas) e o seu propio estado de despregada, que se pecha só cando
-   cambian as liñas escollidas —tamén ao escoller desde a folla, como antes—. Con ela
-   fóronse `sharedNumbers` e `destinationOf`, que só ela usaba: 118 liñas menos en
-   `TransitMap` (1.063). O resto da folla queda onde está, polo motivo de arriba.
-   Comprobado no navegador a 375 px: despregar, escoller a 1.2, a tira prégase e a liña
-   queda marcada; `audit:browser` sen achados no estado `mapa`.*
-7. **«WebGL context lost»**, visto unha vez na consola de produción o 16 de setembro de
-   2026, entre o ruído das extensións do navegador, sen que se anotase que pasou co mapa.
-   Sen investigar. O que hai que comprobar, forzándoo (`WEBGL_lose_context` desde a
-   consola): que o mapa volve pintar cando o contexto se restaura, e que se non se
-   restaura cae ás teselas ráster en vez de quedar en branco.
-   *Feito (19 de setembro de 2026, rolda 19 do rexistro): forzado, o renderizador volve
-   pintar só cando o contexto se restaura; se non se restaura, quedaba en branco para
-   sempre. Agora, cinco segundos sen volver —contados só coa páxina visible— e a capa
-   cámbiase pola ráster no mesmo mapa; os mapas que nazan despois xa nacen ráster.*
-8. **Volver mirar os buscadores** nunhas semanas, cousa do dono: en Search Console, que
+2. **Volver mirar os buscadores** nunhas semanas, cousa do dono: en Search Console, que
    «Páxinas» amose as seis; en Bing Webmaster, que o escaneo do sitio xa non avise de
    «H1 tag missing» (arranxado o 16 de setembro cun `<h1>` estático en cada copia).
    *A configuración está feita desde o 15 de setembro (verificación, sitemap enviado en
@@ -316,28 +239,14 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    sitio novo sen ligazóns de entrada; o que se pode facer é «Request indexing» nas seis
    URL, unha vez. IndexNow é o protocolo para avisar a Bing en cada cambio de contido
    desde o despregue; con seis URL fixas, o botón fai o mesmo.*
-9. **Os festivos.** `dayKind()` non os coñece: un festivo entre semana é «laborable» para
-   a app e «domingo e festivos» para o operador, así que ese día o taboleiro amosa un
-   cadro que non circula, etiquetado HORARIO OFICIAL. Visto o 19 de setembro de 2026 ao
-   revisar as varreduras: ningunha pasa por un festivo, e o README dicía «non se
-   distinguen dos domingos», que era o contrario do que fai o código (corrixido). O que
-   fai falta é dato con fonte, non código: `data/festivos.json` por ano —os nacionais e os
-   galegos do calendario laboral do DOG, os dous locais do Concello—, `dayKind` que
-   devolva `domingo` neses días, a varredura de invariantes cun festivo entre os seus
-   días, e un check que falle en xaneiro se o ano en curso non está no ficheiro, que é o
-   recordatorio honesto de que caduca. Decisión do dono: fonte e quen a mantén cada ano.
-   *Feito o 21 de setembro de 2026, coa fonte atopada: o Decreto 46/2025 (DOG do 20 de
-   xuño de 2025) dá os doce festivos galegos de 2026 —co 19 de marzo e o 24 de xuño no
-   lugar do 1 de novembro e do 6 de decembro, que caen en domingo, e sen o 17 de maio, que
-   tamén— e a Resolución do 21 de outubro de 2025 (DOG do 30 de outubro) os dous locais de
-   Lugo: 17 de febreiro, Martes de Entroido, e 5 de outubro, San Froilán. Catorce días en
-   `src/data/festivos.json`, coas dúas ligazóns; `dayKind` devolve `domingo` neses días,
-   as dúas pantallas que din «non circula hoxe» din tamén «hoxe é festivo», o recuo ao
-   seguinte día de servizo salta o festivo, a varredura de invariantes pasa polo 12 de
-   outubro, e o check falla o 1 de xaneiro de 2027 se ninguén engade o ano: quen o
-   mantén é quen o vexa fallar, cos dous DOG de cada ano (o decreto sae en xuño, os locais
-   en outubro).*
-10. **O traballo dos luns e os servidores alleos que non responden.** O 28 de setembro de
+3. **Os festivos de 2027.** `src/data/festivos.json` ten só 2026. O decreto galego de 2027
+   xa saíu: Decreto 68/2026, DOG do 2 de xullo de 2026, co 19 de marzo e o 17 de maio no
+   lugar do 25 de xullo e do 15 de agosto, que caen en domingo. Faltan os dous festivos
+   locais de Lugo, que saen nunha resolución do DOG cara a finais de outubro (a de 2026 saíu
+   o 30 de outubro de 2025). Cando saia, engadir o ano cos seus días e as dúas fontes, como
+   o de 2026. Desde o 1 de novembro «Check the sources» falla cada luns mentres falte, e
+   `pnpm test` o 1 de xaneiro; un ano sen a resolución local entre as súas fontes non pasa.
+4. **O traballo dos luns e os servidores alleos que non responden.** O 28 de setembro de
    2026 fallou: overpass-api.de non aceptaba conexións —dende o executor de GitHub pola
    mañá e dende outra rede horas despois—, e o `fetch failed` saltaba por riba do
    reintento, que só coñecía estados HTTP. *Arranxado o mesmo día en `develop`* (chega ao
@@ -362,13 +271,11 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    soa: 48 de 48 rutas iguais, en 559 s, moito máis que a principal. O feed do Concello ten
    agora 4 s e deixa unha liña por lectura. O que queda é ler esas liñas no worker e no
    despregue.*
-
-11. **O que deixou a rolda 25 de `REXISTRO-probas.md`** (1 de outubro de 2026), para
-   decidir e para vixiar:
-   - **Os orzamentos do planificador en `measure:browser`** saíron das medidas desta
-     máquina o 3 de outubro, un día lento: o mesmo código, «chegar antes» en 8,6–9,4 s
-     aquí e en 5,9 s no *runner* o 5. Axustalos ás cifras do *runner* cando a medición
-     semanal lea a versión con «Calculando».
+5. **O zoom do mapa, por riba do seu orzamento no *runner* desde o 28 de setembro.** En
+   «Measure in a browser», os catro pasos de zoom bloquean o fío 733 ms o 21 de setembro
+   (orzamento 900), e 1.106 o 28, 1.118 o 5 de outubro e 1.051 o 6. Tres medidas seguidas:
+   algo entre `425e38a` e `b37164e` en `main` encareceu o zoom. Buscar o commit con
+   `measure:browser` entre eses dous, e ver se un teléfono o nota.
 
 ### Lista para o iPhone
 

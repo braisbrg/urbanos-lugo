@@ -280,6 +280,15 @@ descrición. Catro regras, e o que quedou fóra:
   conectaba. Desde unha conexión doméstica responde en menos dun segundo. Se o rexistro
   amosa que desde os servidores non conecta nunca, o seguinte paso é quitalo de aí.
 
+## O que sae dos pendentes — 6 de outubro de 2026
+
+- **As interurbanas no taboleiro, e con elas os postes na beirarrúa, non se fan.** Era un
+  proxecto de datos enteiro: as liñas da Xunta en GTFS, as coordenadas das paradas tomadas
+  de OpenStreetMap (ODbL), 142 paradas sen poste en OSM e as paradas dobres partidas en
+  dúas, co que cambian os recontos, os QR compartidos, os favoritos e as ligazóns
+  `?parada=`. Ninguén o pediu. Os postes vistos onde os pon OSM vanse movendo un a un
+  (`POLE_SEEN_AT_OSM`, en `tools/lib.ts`), cada un comprobado.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).
