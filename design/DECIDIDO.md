@@ -267,6 +267,19 @@ descrición. Catro regras, e o que quedou fóra:
   mentres busca, e a de actualizar xira en Avisos mentres sincroniza. Rematan coa espera,
   como «Calculando»; quitalos deixaría o oco e a icona sen nada que diga que traballan.
 
+## Overpass e o feed do Concello — 6 de outubro de 2026
+
+- **Overpass ten unha segunda instancia, sen agardar a un terceiro luns.** A de FOSSGIS
+  fallou dous luns seguidos, e o trazado leva dúas semanas sen comprobar. A segunda é
+  `overpass.private.coffee`, escollida entre as públicas sen chave da wiki de OSM: global,
+  sen límite de peticións, e os seus operadores só piden que lles avisen dun uso a grande
+  escala. A outra sen chave é a de VK Maps. Só se lle pregunta cando a primeira non
+  responde despois de tres intentos.
+- **O feed do Concello ten 4 s, e cada lectura déixao escrito.** Lido despois da páxina do
+  operador, os seus 15 s de prazo facían agardar os avisos do operador cando non
+  conectaba. Desde unha conexión doméstica responde en menos dun segundo. Se o rexistro
+  amosa que desde os servidores non conecta nunca, o seguinte paso é quitalo de aí.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

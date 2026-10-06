@@ -2294,3 +2294,46 @@ nos dous temas. No panel: a nota do planificador, os pins, «A miña localizaci�
   e MapLibre; é da biblioteca, e DECIDIDO deixa o mapa fóra das regras do movemento. E «A miña
   localización», pasada a primeira posición, recibe un erro do GPS compartido aos 20 s en vez
   de aos 8 que tiña o mapa; queda así, sen probar nun teléfono.
+
+## Rolda 27: os servidores alleos que non responden — 6 de outubro de 2026
+
+Pedido: que queda por facer despois da 1.2.4. O punto 10 de NOTAS agardaba as respostas do
+luns 5, e cada resposta levou a outra medida.
+
+### Medido
+
+- «Check the sources» do luns 5: Overpass respondeu «504 after 3 tries», e o feed do
+  Concello deu `UND_ERR_CONNECT_TIMEOUT` desde o executor. A última comparación do trazado
+  foi o 21 de setembro («48 on disk, 48 mapped today»).
+- Unha lectura do feed desde unha conexión doméstica: HTTP 200 en 796 ms, con 10
+  elementos e ningún corte nos últimos sete días.
+- O paso «Refresh service notices» do despregue de cada hora, nunha execución de cada dez
+  desde o 4 de setembro: 16 de 21 levaron 11–13 s e 5 levaron 2–3 s. Leuse a saída de
+  cinco delas, rápidas e lentas, e en todas lera ben o operador. Os ~10 s de diferenza
+  cadran co prazo de conexión de Node, pero é unha dedución, porque o paso non dicía nada
+  do Concello.
+- O worker, en dúas actualizacións forzadas: 15,9 e 16,1 s, con 1 aviso do operador e 0 do
+  Concello. Cadra co prazo de 15 s do feed máis a páxina do operador.
+- Unha conclusión retirada no camiño: que os avisos do Concello case nunca chegaban á app
+  publicada, deducida só da copia de cada hora. A app pregúntalle primeiro ao worker
+  (`apiUrl('alerts')`), e a copia é a reserva aos 2 s.
+- A segunda instancia de Overpass, probada a man e soa (`checkOsmGeometry.ts` con
+  private.coffee como única): 48 rutas no disco, 48 no mapa, todas coa mesma forma, e o
+  percorrido polas vías pechadas sen cambios. As dúas consultas levaron 559 s.
+
+### Feito (1.2.5)
+
+- `tools/osm.ts`: se overpass-api.de non responde tras tres intentos, a mesma consulta vai a
+  overpass.private.coffee. DATA.md di cal se usa, por que e cantas peticións son.
+- `alertSyncService.ts`: o feed do Concello ten 4 s en vez de 15, e cada lectura escribe
+  unha liña co que tardou e, se falla, o motivo. Cambiaron tamén o README, PRIVACY (a liña
+  non leva nada da petición) e o comentario de `useServiceAlerts.ts`.
+- Dous checks, 215 en total. Probáronse contra o seu fallo de volta (o prazo outra vez a
+  15 s, a liña quitada e a segunda instancia quitada), e fallan os tres.
+
+### Queda
+
+- Ler as liñas novas no despregue de cada hora (GitHub) e no worker (o panel de Deno). Se
+  desde os servidores o feed non conecta nunca, quitalo de aí (DECIDIDO).
+- «Check the sources» lanzado unha vez a man tras a 1.2.5, para ver a segunda instancia e
+  o feed desde o executor sen agardar ao luns.

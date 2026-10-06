@@ -349,6 +349,19 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    403 repetido sería un bloqueo aos enderezos de nube, e esa metade tería que correr a
    man; un tempo esgotado, cousa dun día. Un espello de Overpass, só se a caída se repite,
    e decídeo o dono: sería outro servidor alleo.
+   *O luns 5 de outubro respondeu ás dúas preguntas, e as dúas seguían abertas.
+   Overpass respondeu 504 tres veces, e o trazado leva sen comprobarse desde o 21 de
+   setembro. Desde o executor, o feed do Concello esgotou o tempo ao conectar
+   (`UND_ERR_CONNECT_TIMEOUT`); desde unha conexión doméstica responde en 0,8 s. O
+   despregue de cada hora e o worker len ese mesmo feed. No despregue, nunha mostra de 21,
+   o paso de avisos levou 11–13 s en 16 e 2–3 s nos outros 5. No worker, dúas
+   actualizacións forzadas levaron 15,9 e 16,1 s. As dúas cousas son deducións a partir
+   das duracións, porque ningún rexistro dicía o motivo.*
+   *Feito o 6 de outubro na 1.2.5, por decisión do dono. Cando a instancia de FOSSGIS non
+   responde, `tools/osm.ts` pregúntalle á de private.coffee. Comprobouse a man contra ela
+   soa: 48 de 48 rutas iguais, en 559 s, moito máis que a principal. O feed do Concello ten
+   agora 4 s e deixa unha liña por lectura. O que queda é ler esas liñas no worker e no
+   despregue.*
 
 11. **O que deixou a rolda 25 de `REXISTRO-probas.md`** (1 de outubro de 2026), para
    decidir e para vixiar:
