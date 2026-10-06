@@ -560,11 +560,15 @@ async function planner(browser: Browser): Promise<void> {
     // compositor keeps them bouncing through the plan (116 distinct frames in 5 s of it), and
     // at 6x the throttled thread pays 1-3 s for that; with reduced motion, 9.2-10.0 s. On 30
     // September the same machine planned "arrive by" in 5.0-6.4 s, and 12.4 before that.
+    // That was a slow day here, and the guards went to 1.3 and 13 s on it. The weekly runner
+    // is the reference (measure.yml): leaving now 648 ms before the dots (5 Oct) and 540 ms
+    // with them (6 Oct); arriving by 5.9 s and 7.0 s. The guards sit above that, at 1 and 9 s;
+    // a run here on a slow day can go over them, and the runner's is the one that is read.
     budget('tap to «Calculando» on screen', tapFrame, 200);
     if (!(await answerAt())) {
       failures++;
       report('tap to the painted answer', 'never', '<-- the button was still busy after 16 s');
-    } else budget('tap to the painted answer', answered, mode === 'Agora' ? 1300 : 13000);
+    } else budget('tap to the painted answer', answered, mode === 'Agora' ? 1000 : 9000);
     report('main thread blocked', `${blockingMs(probe).toFixed(0)} ms`, `longest task ${longest(probe)}`);
     await page.close();
   }
