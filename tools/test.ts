@@ -1685,11 +1685,15 @@ await okAsync('a failed read of the operator is not held for half an hour', asyn
   // A failure was cached like an answer: one timeout told every reader for thirty minutes
   // that the page could not be read. A failure lasts the outbound cooldown; an answer, the half hour.
   const realFetch = globalThis.fetch;
+  const realLog = console.log;
   const down = (() => Promise.reject(new Error('offline'))) as typeof fetch;
   const up = (async () => new Response('<html><body></body></html>', { status: 200 })) as typeof fetch;
   // An hour past whatever the previous check left in the module's cache, so it is expired
   // whichever way it went.
   const t0 = Date.now() + 60 * 60_000;
+  // `up` answers the council's feed too, and the read's line went into every deploy log
+  // ahead of the real one: "council feed read in 0 ms" where the real read had failed.
+  console.log = () => {};
   try {
     globalThis.fetch = down;
     assert((await syncOfficialAlerts(false, t0)).status === 'unreachable', 'the operator was down and the sync did not say so');
@@ -1700,6 +1704,7 @@ await okAsync('a failed read of the operator is not held for half an hour', asyn
     assert((await syncOfficialAlerts(false, t0 + 122_000)).status !== 'unreachable', 'a minute-old answer was thrown away for a failure');
   } finally {
     globalThis.fetch = realFetch;
+    console.log = realLog;
   }
 });
 
