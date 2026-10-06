@@ -1,7 +1,7 @@
 import { ChevronRight, X } from 'lucide-react';
 import { useDialog } from '../hooks/useDialog';
 import { tabLink } from '../hooks/useTabRoute';
-import { useT } from '../i18n';
+import { useLang, useT } from '../i18n';
 import { asideSections, type Tab } from './navSections';
 import { REPO_URL } from '../project';
 import { Settings, type SettingsProps } from './ui/Settings';
@@ -19,6 +19,7 @@ interface MenuDrawerProps extends SettingsProps {
  */
 export function MenuDrawer({ open, onClose, onOpenTab, alertCount, ...settings }: MenuDrawerProps) {
   const t = useT();
+  const lang = useLang();
   const dialogRef = useDialog(open, onClose);
   if (!open) return null;
 
@@ -39,10 +40,14 @@ export function MenuDrawer({ open, onClose, onOpenTab, alertCount, ...settings }
             // The count is part of the name, with a pause: read from the markup it came out as "Avisos do servizo1".
             <a
               key={id}
-              {...tabLink(id, (tab) => {
-                onOpenTab(tab);
-                onClose();
-              })}
+              {...tabLink(
+                id,
+                (tab) => {
+                  onOpenTab(tab);
+                  onClose();
+                },
+                lang,
+              )}
               aria-label={badge > 0 ? `${label} (${badge})` : undefined}
               className="flex min-h-14 items-center gap-4 rounded-card px-cap-3 py-2 text-left"
             >

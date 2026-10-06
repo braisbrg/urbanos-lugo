@@ -351,7 +351,6 @@ export const gl = {
     layerStops: 'Paradas',
     layerBuses: 'Buses',
     layerRoutes: 'Trazados',
-    documentTitle: 'Urbanos de Lugo | Bus urbano: liñas, horarios e paradas',
     layers: 'Capas visibles',
     linesList: 'Escoller liñas',
     linesPicked: (count: number) => (count === 1 ? '1 escollida' : `${count} escollidas`),

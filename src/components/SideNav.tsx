@@ -1,6 +1,6 @@
 import { asideSections, navSections, type Tab } from './navSections';
 import { tabLink } from '../hooks/useTabRoute';
-import { useT } from '../i18n';
+import { useLang, useT } from '../i18n';
 import { Settings, type SettingsProps } from './ui/Settings';
 
 interface SideNavProps extends SettingsProps {
@@ -20,6 +20,7 @@ const row = (on: boolean) => `flex h-11 items-center gap-3 rounded-control px-3 
  */
 export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = false, ...settings }: SideNavProps) {
   const t = useT();
+  const lang = useLang();
   return (
     // A landmark, so a screen reader moving by landmark does not meet a rail with holes in it.
     <aside aria-label={t.nav.appName} className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
@@ -31,7 +32,7 @@ export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = fals
         {navSections(t).map(({ id, Icon, label }) => {
           const on = activeTab === id;
           return (
-            <a key={id} {...tabLink(id, setActiveTab)} aria-current={on ? 'page' : undefined} className={row(on)}>
+            <a key={id} {...tabLink(id, setActiveTab, lang)} aria-current={on ? 'page' : undefined} className={row(on)}>
               <Icon className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
               <span className="flex-1">{label}</span>
               {tripActive && id === 'plan' && (
@@ -47,7 +48,7 @@ export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = fals
 
       <div className="mt-5 flex flex-col gap-0.5 border-t border-line px-2.5 pt-4">
         {asideSections(t, alertCount).map(({ id, Icon, label, badge }) => (
-          <a key={id} {...tabLink(id, setActiveTab)} aria-current={activeTab === id ? 'page' : undefined} aria-label={badge > 0 ? `${label} (${badge})` : undefined} className={row(activeTab === id)}>
+          <a key={id} {...tabLink(id, setActiveTab, lang)} aria-current={activeTab === id ? 'page' : undefined} aria-label={badge > 0 ? `${label} (${badge})` : undefined} className={row(activeTab === id)}>
             <Icon className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1">{label}</span>
             {badge > 0 && <span className="tnum rounded-control bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">{badge}</span>}

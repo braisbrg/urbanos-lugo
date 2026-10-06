@@ -1,4 +1,4 @@
-import { useT } from '../i18n';
+import { useLang, useT } from '../i18n';
 import { navSections, type Tab } from './navSections';
 import { tabLink } from '../hooks/useTabRoute';
 
@@ -15,6 +15,7 @@ interface BottomNavProps {
  */
 export function BottomNav({ activeTab, setActiveTab, tripActive = false }: BottomNavProps) {
   const t = useT();
+  const lang = useLang();
   const items = navSections(t);
   // -1 on the two screens the bar does not list (notices, fares): the mark hides.
   const current = items.findIndex((item) => item.id === activeTab);
@@ -31,7 +32,7 @@ export function BottomNav({ activeTab, setActiveTab, tripActive = false }: Botto
         return (
           <a
             key={id}
-            {...tabLink(id, setActiveTab)}
+            {...tabLink(id, setActiveTab, lang)}
             aria-current={on ? 'page' : undefined}
             className={`flex h-[60px] flex-1 flex-col items-center justify-center gap-1 transition-colors ${on ? 'text-accent' : 'text-ink-3'}`}
           >

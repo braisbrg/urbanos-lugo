@@ -16,13 +16,14 @@ import { MenuDrawer } from './components/MenuDrawer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useTripCompanion } from './hooks/useTripCompanion';
 import { useFavourites, useRecentStops } from './hooks/useStoredList';
-import { useTabRoute } from './hooks/useTabRoute';
+import { langFromLocation, useTabRoute } from './hooks/useTabRoute';
 import { useServiceAlerts } from './hooks/useServiceAlerts';
 import { useTheme } from './hooks/useTheme';
 import { useClock } from './hooks/useClock';
-import { Lang, LangContext, isLang, translations } from './i18n';
+import { Lang, LangContext, translations } from './i18n';
 import { BUS_STOPS, BUS_LINES } from './data/transitData';
-import type { Tab } from './routes';
+import { PATHS, isCrawler, pickLang, type Tab } from './routes';
+import { pageHead } from './seo';
 import { networkAtRest } from './utils/arrivals';
 import { dayWord } from './utils/serviceLabels';
 import { findStop } from './utils/places';
@@ -36,20 +37,17 @@ const InteractiveMap = lazy(() => import('./components/Map/TransitMap').then((m)
 
 const LANG_KEY = 'urbanos-lugo-lang';
 
-/** Remembered, and seeded from the browser when there is no choice on record. */
-function initialLang(): Lang {
-  const stored = readString(LANG_KEY);
-  if (isLang(stored)) return stored;
-  const preferred = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'gl';
-  return isLang(preferred) ? preferred : 'gl';
-}
+/** The address's language if it names one; else remembered, else the browser's (routes.ts says why a crawler gets Galician). */
+const initialLang = (): Lang =>
+  pickLang({ address: langFromLocation(), crawler: isCrawler(navigator.userAgent), stored: readString(LANG_KEY), browser: navigator.language });
 
 const stopIds = new Set(BUS_STOPS.map((s) => s.id));
 const lineIds = new Set(BUS_LINES.map((l) => l.id));
 
 export default function App() {
-  // The open tab lives in the address bar, so the back gesture moves between screens.
-  const [activeTab, setActiveTab] = useTabRoute('stops');
+  const [lang, setLang] = useState<Lang>(initialLang);
+  // The open tab lives in the address bar, with the language, so the back gesture moves between screens.
+  const [activeTab, setActiveTab] = useTabRoute('stops', lang);
   // The board needs a stop from the first render, so it opens on the busiest interchange.
   const [selectedStop, setSelectedStop] = useState<BusStop>(() => [...BUS_STOPS].sort((a, b) => b.lines.length - a.lines.length)[0]);
   /** The map must not draw that default as chosen: a big blue dot on a stop nobody picked. */
@@ -86,7 +84,6 @@ export default function App() {
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [theme, setTheme] = useTheme();
-  const [lang, setLang] = useState<Lang>(initialLang);
   const t = translations(lang);
 
   // The "no service" banner comes from the runs the boards read: no bus on the road, and the next one's day and time.
@@ -103,12 +100,14 @@ export default function App() {
 
   const screenTitle = ({ stops: t.nav.stops, lines: t.nav.lines, map: t.nav.map, plan: t.nav.plan, info: t.menu.alerts, fares: t.menu.fares } satisfies Record<Tab, string>)[activeTab];
 
-  // index.html ships Galician for the crawler; once the app knows who is reading, the page and the tab title say so.
+  // Each copy of index.html ships its language's head; once the app knows who is reading, the
+  // page and the tab title say so, from the same table, because a search engine takes the
+  // title the running page sets. The stops tab is the root's screen and has the root's title.
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = activeTab === 'stops' ? t.map.documentTitle : `${screenTitle} · ${t.nav.appName}`;
+    document.title = pageHead(activeTab === 'stops' ? '' : PATHS[activeTab], lang).title;
     writeString(LANG_KEY, lang);
-  }, [lang, t, activeTab, screenTitle]);
+  }, [lang, activeTab]);
 
   const openLine = (line: BusLine) => {
     setSelectedLine(line);

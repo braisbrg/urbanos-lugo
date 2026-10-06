@@ -1270,6 +1270,26 @@ Os **nomes propios non se traducen**. "Rda. Muralla 56" é un enderezo de Lugo l
 no idioma que se lea, e quen vén de fóra ten que casar o que pon a pantalla co que pon
 o poste e co que di o condutor.
 
+### Un enderezo por idioma
+
+O galego vive nos enderezos de sempre (`/urbanos-lugo/`, `/urbanos-lugo/linhas/`…), o
+castelán en `/es/…` e o inglés en `/en/…`, cada un coas súas palabras (`/es/lineas/`,
+`/en/lines/`, `/en/stops/`; `SLUGS` en `src/routes.ts`). Unha palabra doutro idioma
+tamén abre a pestana, e a app reescribe o enderezo. Cada copia leva o `lang`, o título e a
+descrición no seu idioma, a súa canónica e as outras dúas como alternativas (`hreflang`,
+co galego como `x-default`), e `sitemap.xml` lista as dezaoito. Así un buscador pode
+amosar a cada quen o resultado no idioma en que buscou. Antes había un só enderezo:
+Google lía a páxina cun navegador en inglés, a app seguía o navegador, e o resultado saía
+cun título en inglés sobre unha descrición en galego.
+
+O enderezo decide o idioma: unha ligazón compartida ábrese no idioma en que se copiou, e
+cambiar de idioma no menú cambia o enderezo sen engadir un paso ao historial. Nun enderezo
+sen prefixo vale a última elección, despois o idioma do navegador, despois o galego; un
+buscador le sempre galego aí, porque non ten elección gardada e o seu navegador di inglés.
+O título da pestana sae da mesma táboa ca o das copias (`src/seo.ts`), porque un buscador
+toma o título que pon a páxina ao correr. As copias en castelán e inglés non van na
+precaché: sen rede, a navegación cae en `index.html` e a app le o idioma do enderezo.
+
 ### Como está feito
 
 Un dicionario por idioma en `src/i18n/`, sen librería. O galego é a fonte e os outros
@@ -1514,7 +1534,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-215 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+216 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

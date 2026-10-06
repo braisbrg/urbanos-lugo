@@ -7,7 +7,8 @@ import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { CSP_META } from './src/security/csp';
 import { THEME_INIT_SOURCE } from './src/security/themeInit';
-import { SITE_PATHS, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
+import { SITE_LANGS, SITE_PATHS, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from './src/seo';
+import { pathFor } from './src/routes';
 
 // GitHub Pages project sites live under /<repo>/, so every asset URL needs that prefix.
 // Set BASE_PATH in the workflow; locally and on a root domain it stays '/'.
@@ -56,9 +57,11 @@ const emitCompressedAssets: Plugin = {
  * A real page at every tab's address, and 404.html behind them. Pages serves 404.html for
  * any path it does not have, which renders the app but with a 404 status: crawlers drop a
  * listed URL that answers 404, and the apps a stop link is pasted into skip the preview.
- * One copy per tab, each with its own title and canonical (seven identical heads read as
- * one page listed seven times), and 404.html still catches a mistyped path. Runs before
- * emit-compressed-assets on purpose, so the copies get their .br and .gz too.
+ * One copy per tab and per language, each with its own title, canonical and alternates
+ * (seven identical heads read as one page listed seven times), and 404.html still catches
+ * a mistyped path. The root is index.html itself, re-headed in place to carry its
+ * alternates too. Runs before emit-compressed-assets on purpose, so the copies get their
+ * .br and .gz too.
  */
 const emitSpaFallback: Plugin = {
   name: 'emit-spa-fallback',
@@ -68,11 +71,12 @@ const emitSpaFallback: Plugin = {
     if (!existsSync(built)) return;
     copyFileSync(built, path.resolve(outDir, '404.html'));
     const html = readFileSync(built, 'utf8');
-    for (const route of SITE_PATHS) {
-      if (!route) continue; // the root is index.html itself
-      const dir = path.resolve(outDir, route);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(path.join(dir, 'index.html'), pageHtml(html, route, site));
+    for (const lang of SITE_LANGS) {
+      for (const route of SITE_PATHS) {
+        const dir = path.resolve(outDir, pathFor(lang, route));
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(path.join(dir, 'index.html'), pageHtml(html, route, site, lang));
+      }
     }
   },
 };
@@ -193,6 +197,9 @@ export default defineConfig({
         // The typeface is served from this origin, so it is precached with everything else;
         // json is the notices snapshot, public/alerts.json, revisioned so a refresh moves only it.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
+        // The Spanish and English copies of each page are for crawlers and first loads; offline,
+        // a navigation falls back to index.html and the app reads the language from the address.
+        globIgnores: ['es/**', 'en/**'],
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/\/api\//],
         runtimeCaching: [

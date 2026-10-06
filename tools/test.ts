@@ -15,7 +15,7 @@ import { THEME_INIT_SOURCE, THEME_STORAGE_KEY } from '../src/security/themeInit'
 import { createHash } from 'node:crypto';
 import { buildSync } from 'esbuild';
 import { REPO_URL } from '../src/project';
-import { ROOT_HEAD, SITE_PATHS, canonicalUrl, pageHead, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
+import { ROOT_HEAD, SITE_LANGS, SITE_PATHS, canonicalUrl, pageHead, pageHtml, robotsTxt, siteUrl, sitemapXml, structuredData } from '../src/seo';
 import { CACHE_TTL_MS as ALERTS_CACHE_MS, MIN_OUTBOUND_INTERVAL_MS as ALERTS_MIN_OUTBOUND_MS, extractAlertsFromHtml, extractConcelloNotices } from '../src/services/alertSyncService';
 import { clockDriftFromTimetable, lugoOffsetByRule } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
@@ -30,7 +30,7 @@ import { RECENT_ROUTES } from '../src/hooks/useStoredList';
 import { SNAPSHOT_AFTER_MS } from '../src/hooks/useServiceAlerts';
 import { plainText } from '../src/utils/html';
 import { STORAGE_KEYS, readJson, readString, writeJson, writeString } from '../src/utils/storage';
-import { PATHS } from '../src/routes';
+import { LANG_PREFIX, PATHS, SLUGS, isCrawler, parsePath, pathFor, pickLang } from '../src/routes';
 import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
 import { routeOnFoot } from '../src/utils/walkRouter';
 import { metresBetween } from '../src/utils/geo';
@@ -3006,8 +3006,10 @@ ok('the structured data does not pass this off as the operator', () => {
   assert(canonicalUrl(site, 'paradas') === site, `the stops tab's canonical is ${canonicalUrl(site, 'paradas')}, not the root`);
   assert(canonicalUrl(site, 'linhas') === `${site}linhas/`, 'a tab that is its own screen lost its canonical');
   const full = sitemapXml(site);
-  assert(!full.includes(`${site}paradas/`), 'the sitemap still lists /paradas/, which is the root under another name');
-  assert((full.match(/<loc>/g) ?? []).length === 6, `the sitemap has ${(full.match(/<loc>/g) ?? []).length} entries, expected 6`);
+  assert(!/paradas\//.test(full), 'the sitemap still lists a /paradas/, which is its language root under another name');
+  // Six screens in each of three languages, so a search can return the one in the searcher's.
+  assert((full.match(/<loc>/g) ?? []).length === 18, `the sitemap has ${(full.match(/<loc>/g) ?? []).length} entries, expected 18`);
+  for (const url of [site, `${site}es/`, `${site}en/`, `${site}en/lines/`, `${site}es/lineas/`]) assert(full.includes(`<loc>${url}</loc>`), `the sitemap is missing ${url}`);
 });
 
 ok('every tab page has its own title, description and canonical', () => {
@@ -3019,9 +3021,11 @@ ok('every tab page has its own title, description and canonical', () => {
   assert(html.includes(`<title>${ROOT_HEAD.title}</title>`), 'index.html <title> is not ROOT_HEAD.title');
   assert(html.includes(`<meta property="og:title" content="${ROOT_HEAD.title}"`), 'og:title is not ROOT_HEAD.title');
   assert(html.includes(`content="${ROOT_HEAD.description}"`), 'the meta description is not ROOT_HEAD.description');
-  // The app's own title for the home screen, in Galician, is the same line: a tab strip
-  // should read the same before and after the bundle arrives.
-  assert(translations('gl').map.documentTitle === ROOT_HEAD.title, 'gl documentTitle drifted from ROOT_HEAD.title');
+  // The app's own title is the same line, from the same table: a tab strip should read the
+  // same before and after the bundle arrives, and a search engine takes the title the running
+  // page sets. A dictionary of its own once gave Google "Lugo city bus" for a Galician page.
+  assert(pageHead('', 'gl') === ROOT_HEAD, 'ROOT_HEAD is not the Galician root head');
+  assert(/document\.title = pageHead\(activeTab === 'stops' \? '' : PATHS\[activeTab\], lang\)\.title/.test(read('src/App.tsx')), 'the app no longer titles the page from the heads the copies carry');
   // A crawler that does not run the app sees no heading unless one is in the document; it
   // is extracted and compared, not spliced into a RegExp, because the title carries a "|".
   const staticH1 = html.match(/<div id="root"><h1[^>]*>([^<]*)<\/h1><\/div>/)?.[1];
@@ -3030,29 +3034,38 @@ ok('every tab page has its own title, description and canonical', () => {
   // dropped it would end the verification without anything on screen changing.
   assert(/<meta name="google-site-verification" content="[\w-]{20,}"/.test(html), 'index.html lost the Search Console verification tag');
 
-  const seen = new Set<string>();
-  for (const route of SITE_PATHS) {
-    const head = pageHead(route);
-    // "bus" is the word people search; "non oficial" is the word they are owed. 155 is
-    // where a result cuts the description, and 60 the title.
-    assert(/\bbus\b/i.test(head.title), `"${head.title}" does not say bus`);
-    assert(head.title.length <= 60, `"${head.title}" is ${head.title.length} characters; 60 is where a result cuts it`);
-    assert(/^Non oficial\./.test(head.description), `the description for "${route}" does not open with "Non oficial."`);
-    assert(head.description.length <= 155, `the description for "${route}" is ${head.description.length} characters; 155 is the cut`);
-    assert(!/tempo real|en vivo|GPS en directo/i.test(head.title + head.description), `the head for "${route}" promises live data`);
-    assert(!seen.has(head.title), `two pages share the title "${head.title}"`);
-    seen.add(head.title);
+  // "bus" is the word people search; "not official" is what they are owed, in their language.
+  // 155 is where a result cuts the description, and 60 the title.
+  const OPENER = { gl: /^Non oficial\./, es: /^No oficial\./, en: /^Unofficial\./ };
+  const withCanonical = html.replace('<meta name="theme-color"', `<link rel="canonical" href="${site}" />\n    <meta name="theme-color"`);
+  for (const lang of SITE_LANGS) {
+    const seen = new Set<string>();
+    for (const route of SITE_PATHS) {
+      const head = pageHead(route, lang);
+      const where = `${lang} ${route || 'root'}`;
+      assert(/\bbus\b/i.test(head.title), `"${head.title}" does not say bus`);
+      assert(head.title.length <= 60, `"${head.title}" is ${head.title.length} characters; 60 is where a result cuts it`);
+      assert(OPENER[lang].test(head.description), `the ${where} description does not open by saying it is not official`);
+      assert(head.description.length <= 155, `the ${where} description is ${head.description.length} characters; 155 is the cut`);
+      assert(!/tempo real|tiempo real|real[- ]time|en vivo|en directo|\blive\b/i.test(head.title + head.description), `the ${where} head promises live data`);
+      assert(!seen.has(head.title), `two ${lang} pages share the title "${head.title}"`);
+      seen.add(head.title);
 
-    // Injected the way the build does it, on a page carrying the root canonical.
-    const withCanonical = html.replace('<meta name="theme-color"', `<link rel="canonical" href="${site}" />\n    <meta name="theme-color"`);
-    const page = pageHtml(withCanonical, route, site);
-    assert(page.includes(`<title>${head.title}</title>`), `the ${route || 'root'} page did not get its title`);
-    assert(page.includes(`<meta name="description" content="${head.description}"`), `the ${route || 'root'} page did not get its description`);
-    assert(page.includes(`<meta property="og:title" content="${head.title}"`), `the ${route || 'root'} page did not get its og:title`);
-    assert(page.includes(`>${head.title}</h1>`), `the ${route || 'root'} page did not get its own <h1>`);
-    // Its own address, except the stops tab, which is the root's screen and says so.
-    assert(page.includes(`<link rel="canonical" href="${canonicalUrl(site, route)}" />`), `the ${route || 'root'} page canonical is not ${canonicalUrl(site, route)}`);
-    assert((page.match(/rel="canonical"/g) ?? []).length === 1, `the ${route || 'root'} page has more than one canonical`);
+      // Injected the way the build does it, on a page carrying the root canonical.
+      const page = pageHtml(withCanonical, route, site, lang);
+      assert(page.includes(`<html lang="${lang}"`), `the ${where} page does not say its language`);
+      assert(page.includes(`<title>${head.title}</title>`), `the ${where} page did not get its title`);
+      assert(page.includes(`<meta name="description" content="${head.description}"`), `the ${where} page did not get its description`);
+      assert(page.includes(`<meta property="og:title" content="${head.title}"`), `the ${where} page did not get its og:title`);
+      assert(page.includes(`>${head.title}</h1>`), `the ${where} page did not get its own <h1>`);
+      assert(page.includes(`<meta property="og:locale" content="${{ gl: 'gl_ES', es: 'es_ES', en: 'en_GB' }[lang]}" />`), `the ${where} page names another locale`);
+      // Its own address, except the stops tab, which is its language root's screen and says so.
+      assert(page.includes(`<link rel="canonical" href="${canonicalUrl(site, route, lang)}" />`), `the ${where} page canonical is not ${canonicalUrl(site, route, lang)}`);
+      assert((page.match(/rel="canonical"/g) ?? []).length === 1, `the ${where} page has more than one canonical`);
+      // And the same screen in the other two, which is what lets a search show each reader theirs.
+      for (const other of SITE_LANGS) assert(page.includes(`<link rel="alternate" hreflang="${other}" href="${canonicalUrl(site, route, other)}" />`), `the ${where} page does not name its ${other} version`);
+      assert(page.includes(`<link rel="alternate" hreflang="x-default" href="${canonicalUrl(site, route, 'gl')}" />`), `the ${where} page has no x-default`);
+    }
   }
 
   // The preview image is injected with the canonical, absolute, and is a file that ships.
@@ -3060,14 +3073,54 @@ ok('every tab page has its own title, description and canonical', () => {
   assert(/og:image" content="\$\{site\}icon-512\.png"/.test(vite), 'the build no longer injects an absolute og:image');
   assert(existsSync(join(root, 'public/icon-512.png')), 'public/icon-512.png is gone, so og:image points at nothing');
 
-  // The tabs are links, so a crawler can walk from any copy to the other six, and the
-  // address they carry is the one the build writes, slash included.
+  // The tabs are links, so a crawler can walk from any copy to the other six, in the language
+  // it is reading, and the address they carry is the one the build writes, slash included.
   for (const file of ['src/components/BottomNav.tsx', 'src/components/SideNav.tsx', 'src/components/MenuDrawer.tsx']) {
     const source = read(file);
     assert(/<a\s[^>]*\{\.\.\.tabLink\(/.test(source), `${file} no longer renders the tabs as links`);
+    assert(/tabLink\([\s\S]*?,\s*lang,?\s*\)/.test(source) && /const lang = useLang\(\)/.test(source), `${file} builds its tab links without the language`);
   }
-  const hook = read('src/hooks/useTabRoute.ts');
-  assert(/PATHS\[tab\]\}\/\$\{window\.location\.search\}/.test(hook), 'urlForTab lost the trailing slash, so every shared link 301s again');
+  assert(pathFor('gl', 'linhas') === 'linhas/' && pathFor('es', 'linhas') === 'es/lineas/' && pathFor('en', 'linhas') === 'en/lines/' && pathFor('en', '') === 'en/' && pathFor('gl', '') === '', 'an address lost its trailing slash, so every shared link 301s again');
+  assert(/\$\{BASE\}\$\{pathFor\(lang, PATHS\[tab\]\)\}\$\{window\.location\.search\}/.test(read('src/hooks/useTabRoute.ts')), 'urlForTab no longer builds the address from pathFor');
+});
+
+ok('an address names its language, and a search engine reads a bare one in Galician', () => {
+  // Google rendered the Galician page with a browser that says English, the app followed the
+  // browser, and the result carried an English title over a Galician description. Each
+  // language now has its own address, and the address decides.
+  assert.deepStrictEqual(Object.keys(LANG_PREFIX), [...LANGS], 'the languages with addresses are not the languages the app speaks');
+  assert.deepStrictEqual(parsePath(''), { lang: null, tab: null }, 'the bare root names a language or a tab');
+  assert.deepStrictEqual(parsePath('linhas/'), { lang: null, tab: 'lines' }, '/linhas/ is not the lines tab in the bare language');
+  assert.deepStrictEqual(parsePath('es/'), { lang: 'es', tab: null }, '/es/ is not the Spanish root');
+  assert.deepStrictEqual(parsePath('EN/Lines/'), { lang: 'en', tab: 'lines' }, '/en/lines/ is not the lines in English');
+  assert.deepStrictEqual(parsePath('es/lineas/'), { lang: 'es', tab: 'lines' }, '/es/lineas/ is not the lines in Spanish');
+  // A tab's word from another language still opens it, and the router rewrites the address.
+  assert.deepStrictEqual(parsePath('en/linhas/'), { lang: 'en', tab: 'lines' }, '/en/linhas/ does not open the lines');
+  assert.deepStrictEqual(parsePath('gl/linhas/'), { lang: null, tab: null }, 'Galician has no prefix, so /gl/ is not an address');
+  // Every word names one tab, in every language, and none is a language prefix.
+  const owner = new Map<string, string>();
+  for (const [lang, words] of Object.entries(SLUGS)) {
+    for (const [tab, word] of Object.entries(words)) {
+      assert(!Object.values(LANG_PREFIX).includes(word as never) && /^[a-z]+$/.test(word), `${lang}'s word for ${tab}, "${word}", is a prefix or not a plain word`);
+      assert((owner.get(word) ?? tab) === tab, `"${word}" names both ${owner.get(word)} and ${tab}`);
+      owner.set(word, tab);
+    }
+  }
+  assert(/window\.location\.pathname !== `\$\{BASE\}\$\{pathFor\(lang, PATHS\[tab\]\)\}`/.test(read('src/hooks/useTabRoute.ts')), 'the router no longer rewrites an address that is not in its language\'s words');
+  const visit = { address: null, crawler: false, stored: null, browser: 'en-US' } as const;
+  assert(pickLang(visit) === 'en', 'a reader with an English browser and no choice on record does not get English');
+  assert(pickLang({ ...visit, crawler: true }) === 'gl', 'a crawler at a bare address is not read Galician');
+  assert(pickLang({ ...visit, crawler: true, address: 'es' }) === 'es', 'a crawler at /es/ is not read Spanish');
+  assert(pickLang({ ...visit, stored: 'gl', address: 'en' }) === 'en', 'a shared /en/ link opens in the language on record instead');
+  assert(pickLang({ ...visit, stored: 'es' }) === 'es', 'the choice on record no longer beats the browser at a bare address');
+  assert(pickLang({ ...visit, stored: 'constructor', browser: 'fr-FR' }) === 'gl', 'a stored value that is no language, or a browser in none of the three, does not fall back to Galician');
+  const googlebot = 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+  assert(isCrawler(googlebot) && isCrawler('Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'), 'Googlebot or Bingbot is not taken for a crawler');
+  assert(!isCrawler('Mozilla/5.0 (Linux; Android 13; CUBOT KingKong 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36'), 'a phone whose make ends in "bot" is taken for a crawler');
+  const app = read('src/App.tsx');
+  assert(/pickLang\(\{ address: langFromLocation\(\), crawler: isCrawler\(navigator\.userAgent\)/.test(app), 'the app no longer picks its language from the address first');
+  assert(/useTabRoute\('stops', lang\)/.test(app), 'the address no longer follows the language');
+  assert(/SITE_LANGS/.test(read('vite.config.ts')), 'the build no longer writes a copy of each page per language');
 });
 
 ok('every tab has a path, and the sitemap lists exactly those', () => {
@@ -4382,6 +4435,10 @@ ok('the three front doors say the same true things', () => {
   }
   const gl = read('README.md');
   assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
+  // And each opens the app in its own language, now that each language has an address.
+  for (const [door, url] of [['README.md', 'https://braisbrg.github.io/urbanos-lugo/'], ['README.es.md', 'https://braisbrg.github.io/urbanos-lugo/es/'], ['README.en.md', 'https://braisbrg.github.io/urbanos-lugo/en/']]) {
+    assert(read(door).split('\n').slice(0, 4).join('\n').includes(`](${url})`), `${door} does not open the app at ${url}`);
+  }
 });
 
 ok('the surfaces seen before the README say "non oficial" first', () => {
