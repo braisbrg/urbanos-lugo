@@ -1703,6 +1703,40 @@ await okAsync('a failed read of the operator is not held for half an hour', asyn
   }
 });
 
+await okAsync('the council’s feed cannot hold the operator’s notices back, and says how its read went', async () => {
+  // Read after the operator's page and allowed 15 s, a feed that would not connect held the
+  // operator's notices back with it: the worker took 16 s to answer on 6 October 2026. And
+  // the failed read became an empty list without a word, the same as a feed with nothing in it.
+  const realFetch = globalThis.fetch;
+  const realTimeout = AbortSignal.timeout;
+  const realWarn = console.warn;
+  const deadlines = new Map<AbortSignal, number>();
+  const warned: string[] = [];
+  let allowed = Infinity;
+  AbortSignal.timeout = (ms: number) => {
+    const signal = realTimeout.call(AbortSignal, ms);
+    deadlines.set(signal, ms);
+    return signal;
+  };
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    if (!url.includes('concellodelugo.gal')) return new Response('<html><body></body></html>', { status: 200 });
+    allowed = deadlines.get(init?.signal as AbortSignal) ?? Infinity;
+    throw new TypeError('fetch failed', { cause: { code: 'UND_ERR_CONNECT_TIMEOUT' } });
+  }) as typeof fetch;
+  console.warn = (line: string) => void warned.push(line);
+  try {
+    // Two hours ahead, past whatever the check above left in the module's cache.
+    const result = await syncOfficialAlerts(true, Date.now() + 2 * 60 * 60_000);
+    assert(result.status !== 'unreachable', 'a council feed that would not connect took the operator’s answer down with it');
+    assert(allowed <= 5_000, `the council’s feed may hold the operator’s notices back ${allowed} ms`);
+    assert(warned.some((line) => line.includes('council feed') && line.includes('UND_ERR_CONNECT_TIMEOUT')), `a failed council read left no line: ${warned.join(' | ') || 'nothing warned'}`);
+  } finally {
+    globalThis.fetch = realFetch;
+    AbortSignal.timeout = realTimeout;
+    console.warn = realWarn;
+  }
+});
+
 ok('no view renders Galician or Spanish text of its own', () => {
   // HORARIO OFICIAL sat in the markup as a literal, so an English reader saw it too, and no
   // grep over the dictionary could see it. Place names are exempt: they arrive as expressions.
@@ -1852,6 +1886,31 @@ await okAsync('an Overpass that cannot be reached is no answer, not a crash', as
   try {
     assert((await overpass('[out:json];', 1)) === null, 'a connection that never opened escaped overpass() instead of coming back as no answer');
     assert(warned.some((line) => line.includes('ETIMEDOUT')), `the reason never reached the log: ${warned.join(' | ') || 'nothing warned'}`);
+  } finally {
+    globalThis.fetch = realFetch;
+    console.warn = realWarn;
+  }
+});
+
+await okAsync('when Overpass will not answer, a second instance is asked the same question', async () => {
+  // FOSSGIS's instance refused connections on 28 September 2026 and answered 504 on
+  // 5 October. With nowhere else to ask, the weekly check went two Mondays without
+  // comparing a single route.
+  const realFetch = globalThis.fetch;
+  const realWarn = console.warn;
+  const asked: { host: string; body: string }[] = [];
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    const host = new URL(url).host;
+    asked.push({ host, body: String(init?.body) });
+    return host === 'overpass-api.de' ? new Response('', { status: 504 }) : new Response('{"elements":[]}', { status: 200 });
+  }) as typeof fetch;
+  console.warn = () => {};
+  try {
+    const json = await overpass('[out:json];', 1);
+    assert(Array.isArray(json?.elements), 'the second instance answered and overpass() still came back with nothing');
+    const hosts = asked.map((a) => a.host);
+    assert(hosts.length === 2 && hosts[0] === 'overpass-api.de' && hosts[1] !== hosts[0], `asked ${hosts.join(', ')}: FOSSGIS first, then one other`);
+    assert(asked[0].body === asked[1].body, 'the second instance was asked a different question');
   } finally {
     globalThis.fetch = realFetch;
     console.warn = realWarn;

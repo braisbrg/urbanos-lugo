@@ -50,23 +50,30 @@ export function pathMeters(path: [number, number][]): number {
 }
 
 /**
+ * FOSSGIS's instance first. The weekly check found it refusing connections on 28 September
+ * 2026 and answering 504 on 5 October, so the route geometry went unchecked two Mondays
+ * running. When it will not answer, the same query goes to private.coffee's instance
+ * (global, no key, no request limit; the operators ask to be told only of large-scale use).
+ */
+const OVERPASS_ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+
+/**
  * Overpass is a free shared service and answers 429/504 under load; give it a second go.
  * A connection that never opens is the same "would not answer", not an exception: thrown,
  * it went straight past the retry and failed the weekly check written to shrug this off.
  */
 export async function overpass(query: string, attempts = 3): Promise<any | null> {
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'UrbanosLugoOpenData/1.0' },
-    }).catch((err: Error & { cause?: { code?: string } }) => `unreachable (${err.cause?.code ?? err.message})`);
-    if (typeof res !== 'string' && res.ok) return res.json();
-    if (attempt === attempts) {
-      console.warn(`  ! Overpass ${typeof res === 'string' ? res : `answered ${res.status}`} after ${attempts} tries`);
-      return null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(query),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'UrbanosLugoOpenData/1.0' },
+      }).catch((err: Error & { cause?: { code?: string } }) => `unreachable (${err.cause?.code ?? err.message})`);
+      if (typeof res !== 'string' && res.ok) return res.json();
+      if (attempt === attempts) console.warn(`  ! ${new URL(endpoint).host} ${typeof res === 'string' ? res : `answered ${res.status}`} after ${attempts} tries`);
+      else await sleep(attempt * 20_000);
     }
-    await sleep(attempt * 20_000);
   }
   return null;
 }

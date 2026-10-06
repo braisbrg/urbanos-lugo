@@ -130,13 +130,26 @@ export function extractConcelloNotices(xml: string): ServiceAlert[] {
   return notices;
 }
 
-/** Best effort: the operator's notices are the ones that matter, and nothing here may take them down. */
+/**
+ * Best effort: the operator's notices are the ones that matter, and nothing here may take
+ * them down or hold them back. Read after them, the feed held them back for its whole
+ * deadline when it would not connect: the worker took 16 s to answer on 6 October 2026,
+ * close to the 15 s the feed was then allowed plus the operator's page, and on 5 October a
+ * GitHub runner's read had timed out connecting. From a home connection it answers in under a second, so four
+ * seconds is room enough. Every read leaves one line saying how it went, so whether a
+ * server can reach the feed is something its log says rather than something inferred.
+ */
 async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
+  const started = Date.now();
   try {
-    const res = await fetch(CONCELLO_FEED_URL, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(15_000) });
-    if (!res.ok) return [];
-    return extractConcelloNotices(await readCapped(res)).sort((a, b) => b.date.localeCompare(a.date));
-  } catch {
+    const res = await fetch(CONCELLO_FEED_URL, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(4_000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const notices = extractConcelloNotices(await readCapped(res)).sort((a, b) => b.date.localeCompare(a.date));
+    console.log(`council feed read in ${Date.now() - started} ms, ${notices.length} notice(s) kept`);
+    return notices;
+  } catch (err) {
+    const { cause, message } = err as Error & { cause?: { code?: string } };
+    console.warn(`council feed not read after ${Date.now() - started} ms (${cause?.code ?? message})`);
     return [];
   }
 }

@@ -72,7 +72,7 @@ export function useServiceAlerts(): ServiceAlerts {
       if (force && (cooldown > 0 || isSyncing)) return;
       setIsSyncing(true);
       try {
-        // Thirty seconds is past the server's honest worst case (6 s for buslugo plus 15 s
+        // Thirty seconds is past the server's honest worst case (6 s for buslugo plus 4 s
         // for the feed). Optional call: AbortSignal.timeout is Safari 16 and the app still
         // works on 15.4, where undefined means what the line meant before it existed.
         const res = await fetch(apiUrl(`alerts${force ? '?refresh=true' : ''}`), { signal: AbortSignal.timeout?.(30_000) });

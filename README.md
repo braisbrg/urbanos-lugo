@@ -424,7 +424,10 @@ cambia, queda o titular da campá, como antes.
 A consulta faise **desde o servidor** (o navegador non pode por CORS), contra buslugo.com e
 o feed de tráfico do Concello. Se non hai servidor —ou non responde— úsase a copia que
 deixou a tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por
-actual.
+actual. O feed do Concello lese despois da páxina do operador e ten catro segundos, non
+quince. O 6 de outubro de 2026 o servidor tardou 16 s en responder porque o feed non
+conectaba e os avisos do operador agardaban por el. Cada lectura deixa unha liña no
+rexistro do servidor, co que tardou e, se falla, o motivo.
 
 **Tarifas** (`/tarifas`) leva os títulos de transporte tal e como os publica o operador,
 **cada un coa súa fonte enlazada**: billete ordinario, bono ordinario e bono social da
@@ -1511,7 +1514,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-213 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+215 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

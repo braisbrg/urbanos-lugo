@@ -110,10 +110,16 @@ REQUIRED" across the tiles of its keyless basemaps.
 ## Overpass API — how the OpenStreetMap data is actually fetched
 
 `overpass-api.de` answers the two queries behind the route relations and the stop
-amenities. The data is OSM's, so the section above governs it; what is worth stating here
-is the load. `pnpm data:osm` and `pnpm data:amenities` are run by hand and their answers
-are committed, so a rebuild costs nothing; the weekly check in `.github/workflows/`
-sends **two requests a week**. Nothing in the browser ever calls it.
+amenities. Every query in `tools/osm.ts` (the routes, which the weekly check also asks
+for, the walking network and the landmarks) has a second instance to go to. When the
+first will not answer after three tries, as happened on two Mondays running, 28 September
+and 5 October 2026, the same query goes to `overpass.private.coffee`. That instance is
+global and needs no key, has no request limit, and its operators ask only to be told of
+large-scale use. Both serve OSM's data, so the section above governs it; what is worth
+stating here is the load. `pnpm data:osm` and `pnpm data:amenities` are run by hand and
+their answers are committed, so a rebuild costs nothing; the weekly check in
+`.github/workflows/` sends **two requests a week**, to the second instance only when the
+first will not answer. Nothing in the browser ever calls either.
 
 ## Routing — two public services, used differently
 

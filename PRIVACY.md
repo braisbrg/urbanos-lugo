@@ -111,6 +111,8 @@ sweeps; nothing is written to disk, and restarting the process forgets it. Nothi
 about a request is recorded — there is no access log in this project. A request that fails
 with an error inside the server writes its method and path, never its query, to the
 server's error output, so the fault can be found; a planned trip's query is what you typed.
+When the server reads the council's traffic feed, it writes one line saying whether the feed
+answered and how long it took. That line carries nothing of the request that caused it.
 
 Whoever hosts it may of course be keeping their own logs. GitHub Pages does, and so does
 Deno Deploy where the API is configured; that is between you and them, and their policies
