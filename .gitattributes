@@ -1,6 +1,8 @@
 # One line ending in the repository, whatever each machine checks out with.
 # Mixed CRLF and LF inside a single file cost us a bad afternoon.
-* text=auto
+# And LF in every working copy too: Git for Windows sets core.autocrlf=true for the whole
+# system, so each checkout, merge and new worktree wrote CRLF and pnpm test failed on that.
+* text=auto eol=lf
 
 *.png binary
 *.svg text

@@ -201,10 +201,11 @@ there until you have looked.
   delete**, committed or not. Uncommitted work you did not make is another session's
   finished or half-finished work until it says otherwise.
 - **A long or wide change goes in its own worktree** while another session is active in
-  the main tree: `git worktree add -b <topic> ../<repo>-<topic> develop`. On a machine
-  with `core.autocrlf=true` it checks out CRLF and `pnpm test` fails on that alone:
-  `git ls-files -z | grep -zvE '\.(png|ico|woff2?|webp|jpg)$' | xargs -0 sed -i 's/\r$//'`,
-  then `git add --renormalize .` and `pnpm install --offline`. Run its server on a port
+  the main tree: `git worktree add -b <topic> ../<repo>-<topic> develop`, then
+  `pnpm install --offline`. `.gitattributes` pins LF in every working copy, so it checks
+  out as the repository stores it whatever `core.autocrlf` says; a file still on disk as
+  CRLF from before that (`git ls-files --eol | grep w/crlf`) is fixed by checking it out
+  again. Run its server on a port
   nobody else uses — 3001 (`pnpm dev`) and 3002 (the browser tools' default) are the
   shared ones; the tools take `BASE=http://localhost:<port>`. Bring the branch back by
   rebasing onto whatever `develop` has become, and run the four gates on the result.
