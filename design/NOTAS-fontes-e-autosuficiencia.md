@@ -288,6 +288,22 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    soa: 48 de 48 rutas iguais, en 559 s, moito máis que a principal. O feed do Concello ten
    agora 4 s e deixa unha liña por lectura. O que queda é ler esas liñas no worker e no
    despregue.*
+5. **Unha organización de GitHub para que a app teña nome e icona nos buscadores**, cando
+   todo estea estable. Google toma o nome do sitio e a icona da raíz do dominio, e
+   `braisbrg.github.io/` dá 404: por iso o resultado di «GitHub Pages documentation» cun
+   globo. Os sitios en subcartafol non poden ter nome propio; un subdominio si, e
+   `github.io` está na lista de sufixos públicos, así que `urbanos-lugo.github.io` conta
+   como sitio propio, gratis. O nome `urbanos-lugo` estaba libre o 6 de outubro. O dono:
+   crear a organización (plan gratuíto), transferirlle o repositorio e renomealo a
+   `urbanos-lugo.github.io` (con outro nome quedaría outra vez nun subcartafol); comprobar
+   que seguen o segredo e o ambiente de Deno, `API_ORIGIN` e as regras das ramas; poñer
+   `ALLOWED_ORIGIN` do worker a `https://urbanos-lugo.github.io`; dar de alta o sitio en
+   Search Console e Bing. O código: que o despregue entenda que un repositorio
+   `*.github.io` vive na raíz, os datos estruturados `WebSite` co nome, as tres portadas
+   e os checks que levan o enderezo. E o enderezo vello, cun repositorio pequeno
+   `braisbrg/urbanos-lugo`: páxinas que redirixan a cada pestana e idioma, un *service
+   worker* que se desinstale para liberar a app instalada, e os favoritos e as paradas
+   recentes levados no fragmento da ligazón, porque se gardan por orixe e se perderían.
 
 ### Lista para o iPhone
 
