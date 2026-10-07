@@ -37,6 +37,8 @@ interface PlaceFieldProps {
   onChange: (value: string) => void;
   onFocus: () => void;
   onPick: (name: string) => void;
+  /** The focus went somewhere outside this field and its rows. */
+  onLeave: () => void;
   /** The origin's GPS button, or the destination's clear button. */
   trailing: { kind: 'gps'; locating: boolean; onClick: () => void } | { kind: 'clear'; onClick: () => void } | null;
 }
@@ -46,11 +48,19 @@ interface PlaceFieldProps {
  * control that fills or empties it, and the rows that open under it. The label is for a
  * screen reader; the placeholder already carries "street, place or stop".
  */
-export function PlaceField({ id, role, value, display, placeholder, label, suggestions, open, onChange, onFocus, onPick, trailing }: PlaceFieldProps) {
+export function PlaceField({ id, role, value, display, placeholder, label, suggestions, open, onChange, onFocus, onPick, onLeave, trailing }: PlaceFieldProps) {
   const t = useT();
   const first = role === 'origin';
   return (
-    <div className="relative">
+    // The rows go when the Tab key takes the focus past them: left open, they lay over the
+    // time and the calculate button, and the focus went on behind them (WCAG 2.4.11). Only a
+    // focus that went somewhere: a tap on a row in Safari takes it nowhere, and the row stays.
+    <div
+      className="relative"
+      onBlur={(event) => {
+        if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) onLeave();
+      }}
+    >
       <label htmlFor={id} className="sr-only">
         {label}
       </label>

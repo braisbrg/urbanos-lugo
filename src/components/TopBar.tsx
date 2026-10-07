@@ -55,17 +55,24 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLElement>(null);
 
-  // Tapping anywhere else puts the results away — on a phone there is no Escape key.
+  // Tapping anywhere else puts the results away, and so does Escape. The tap counts when the
+  // finger lifts (WCAG 2.5.2): on the way down it was an action nobody could take back by
+  // sliding off. Escape because the list comes back each time the field takes the focus,
+  // over whatever is under it, and a reader has to be able to put it away without moving
+  // (1.4.13).
   useEffect(() => {
     if (!open) return;
     const away = (event: Event) => {
       if (boxRef.current && !boxRef.current.contains(event.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', away);
-    document.addEventListener('touchstart', away);
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('click', away);
+    document.addEventListener('keydown', escape);
     return () => {
-      document.removeEventListener('mousedown', away);
-      document.removeEventListener('touchstart', away);
+      document.removeEventListener('click', away);
+      document.removeEventListener('keydown', escape);
     };
   }, [open]);
 
@@ -81,8 +88,17 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
   };
 
   return (
-    // A landmark, so a screen reader moving by landmark does not skip the search band.
-    <header ref={boxRef} className="relative border-b border-line bg-bg px-cap-3.5 py-3 lg:px-6">
+    // A landmark, so a screen reader moving by landmark does not skip the search band. When the
+    // Tab key takes the focus out of it the results go too: left open, they lay over the next
+    // controls on the page and the focus went behind them (2.4.11). Only a focus that went
+    // somewhere: a tap on a row in Safari takes it nowhere, and the row has to stay to be tapped.
+    <header
+      ref={boxRef}
+      onBlur={(event) => {
+        if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+      className="relative border-b border-line bg-bg px-cap-3.5 py-3 lg:px-6"
+    >
       <div className="flex items-center gap-2">
         {/* The buttons in the bar are sized in px like the bar itself: in rem they doubled with
             the type inside a 46 px bar, and at 200% the QR button was pushed half out of it.

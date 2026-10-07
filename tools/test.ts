@@ -5654,6 +5654,22 @@ ok('every focusable thing shows its focus, in forced colours too', () => {
   }
 });
 
+ok('a list laid over the page goes on Escape, on a lifted tap outside, and when the focus leaves it', () => {
+  // The search results came back over the page each time the field took the focus, with no
+  // Escape (1.4.13), and stayed when Tab moved on, so the next controls took the focus behind
+  // them (2.4.11); the planner's suggestions did the same over the time and the calculate
+  // button. Both closed on mousedown and touchstart, an action on the way down (2.5.2).
+  for (const file of sourcesUnder('src')) {
+    const code = readFileSync(file, 'utf8').replace(/^\s*\/\/.*$/gm, '');
+    assert(!/addEventListener\('(mousedown|touchstart|pointerdown)'|on(MouseDown|TouchStart|PointerDown)=/.test(code), `${relative(file)} acts on the way down of a tap (2.5.2)`);
+  }
+  const bar = read('src/components/TopBar.tsx');
+  assert(/document\.addEventListener\('click', away\)/.test(bar) && /event\.key === 'Escape'\) setOpen\(false\)/.test(bar), 'the search results no longer go on a tap outside and on Escape');
+  const leaves = /onBlur=\{\(event\) => \{\s*if \(event\.relatedTarget instanceof Node && !event\.currentTarget\.contains\(event\.relatedTarget\)\) (setOpen\(false\)|onLeave\(\));/;
+  assert(leaves.test(bar), 'the search results stay over the page when the focus leaves them');
+  assert(leaves.test(read('src/components/planner/PlaceField.tsx')) && /onLeave: \(\) => setActiveInput/.test(read('src/components/RoutePlannerView.tsx')), 'the planner’s suggestions stay over the form when the focus leaves the field');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

@@ -82,8 +82,9 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const [recentRoutes, rememberRoute, clearRecentRoutes] = useRecentRoutes();
   const [{ formOpen, asked, answered }, ask] = useReducer(asking, { formOpen: true, asked: false, answered: 0 });
 
-  // Close the autocomplete when the click lands anywhere outside the two fields. mousedown +
-  // touchstart rather than pointerdown: pointer events are not emitted by every input path.
+  // Close the autocomplete when a click lands anywhere outside the two fields: on the click,
+  // when the finger lifts, rather than on mousedown and touchstart (WCAG 2.5.2), and every
+  // input path emits one.
   const formRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!activeInput) return;
@@ -93,12 +94,10 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setActiveInput(null);
     };
-    document.addEventListener('mousedown', onOutside);
-    document.addEventListener('touchstart', onOutside);
+    document.addEventListener('click', onOutside);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onOutside);
-      document.removeEventListener('touchstart', onOutside);
+      document.removeEventListener('click', onOutside);
       document.removeEventListener('keydown', onKey);
     };
   }, [activeInput]);
@@ -311,6 +310,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
       setSuggestions(suggestionsFor(value));
     },
     onPick: pick(role),
+    onLeave: () => setActiveInput((current) => (current === role ? null : current)),
   });
 
   /** "Vou nesta": not for a walk, nor once the service is over; at headline size within ten minutes of the bus. */
