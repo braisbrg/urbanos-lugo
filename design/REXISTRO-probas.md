@@ -2407,3 +2407,60 @@ GitHub pasa `ubuntu-latest` entre o 19 de outubro e o 19 de novembro.
   lista do iPhone xa mira se o mapa vai fluído. Chegou a prepararse unha comparación A/B
   no propio *runner*, e descartouse sen lanzala.
 - O orzamento do zoom segue en 900 ms.
+
+## Rolda 29: as follas de OWASP — 6 e 7 de outubro de 2026
+
+Pedido: repasar as *Cheat Sheets* de OWASP por se algunha serve aquí. Das 130 que hai,
+contrastáronse coa web, o servidor, o worker, os workflows e a configuración de GitHub as
+que tocan esta arquitectura, unhas vinte e cinco: cabeceras, CSP, XSS no DOM, HTML5, caché
+web, terceiros, SSRF, denegación de servizo, REST, Node.js, GitHub Actions, npm, cadea de
+subministración, segredos e *subdomain takeover*.
+
+### Medido
+
+- `pnpm audit --prod` deu unha crítica: `proxy-addr` 2.0.7 (GHSA-jqcg-44mw-7w3h), que
+  Dependabot non tiña en ningún estado. Só se alcanza con `trust proxy`, que `server.ts`
+  non pon.
+- O servidor construído mandaba `X-Powered-By: Express`, e non mandaba nin
+  `Cross-Origin-Opener-Policy` nin `Cross-Origin-Resource-Policy`. Un POST á API dá 404 e
+  non 405.
+- As tres lecturas de fóra seguían as redireccións. A man, cunha petición a cada host,
+  ningún redirixe hoxe.
+- No navegador, a copia de cada hora líase con forma, pero a resposta en vivo dos avisos e
+  os minutos do operador ían á pantalla tal como chegaban, e a ligazón do feed do Concello
+  non se miraba en ningún sitio.
+- GitHub, pola API: o `GITHUB_TOKEN` en só lectura por defecto, CodeQL tamén cos
+  workflows, escaneo de segredos con bloqueo ao subir, e alertas e actualizacións de
+  Dependabot. Había 0 alertas abertas en cada un.
+- Xa cumprían:
+  - na web, a CSP sen `unsafe-eval`, todas as ligazóns externas con `noopener`, a
+    localización só ao premer, o QR sen redireccións, `localStorage` validado ao ler, e nin
+    `postMessage` nin `eval`;
+  - no worker, só GET e CORS cunha soa orixe;
+  - nos workflows, as accións fixadas por SHA, os permisos mínimos, ningún
+    `pull_request_target` e o token de Deno no seu *environment*;
+  - na instalación, o lockfile conxelado e os scripts de instalación bloqueados.
+
+### Feito (`c9841a9`)
+
+- `proxy-addr` 2.0.8, dentro do rango que pide express. `pnpm audit` queda limpo.
+- O que manda a API pásase pola mesma lectura ca a copia, aviso por aviso, e os minutos do
+  operador por `readOperatorTimes`. A ligazón do feed do Concello pasa no servidor pola
+  mesma lista de sitios.
+- `server.ts` xa non manda `X-Powered-By`, e manda COOP e CORP `same-origin`. Comprobado
+  co servidor en marcha, na páxina e na API. No navegador, Avisos e os minutos do QR
+  píntanse igual ca antes.
+- As tres lecturas de fóra rexeitan as redireccións.
+- CSP con `base-uri 'none'`.
+- SECURITY.md conta que facer co enderezo do worker se un día se borra o proxecto de Deno.
+- Unha comprobación nova e asercións en dúas existentes. Cada unha, probada contra o seu
+  fallo de volta.
+
+### Mirado e deixado
+
+- COEP bloquearía as teselas ráster. Trusted Types non compensa: os globos de Leaflet son
+  HTML que xa se escapa.
+- Un guión contra marcos en Pages non fai falta, porque a app non ten accións sensibles.
+- Harden-Runner, CODEOWNERS e a aprobación de despregues engaden fricción para un proxecto
+  dunha persoa. A espera de Dependabot xa estaba decidida.
+- zizmor sobra: CodeQL xa le os workflows. E 405 en vez de 404 é cosmético.
