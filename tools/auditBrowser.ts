@@ -84,9 +84,10 @@ const KINDS = {
   reach: 'state not reached',
   size: 'house bar: text under 12 px',
   target44: 'house bar: target under 44 px',
+  room: 'house bar: under 48 px left between the bars',
 } as const;
 type Kind = keyof typeof KINDS;
-const HOUSE: Kind[] = ['size', 'target44'];
+const HOUSE: Kind[] = ['size', 'target44', 'room'];
 
 interface Finding {
   kind: Kind;
@@ -1032,7 +1033,8 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
       await mouse(page, 'mouseReleased', box.x, box.y);
     }
     try {
-      await page.waitFor(`document.querySelector('.leaflet-container [role=dialog]')`, 5000);
+      // The sheet is drawn beside Leaflet's container, inside the map's card, not inside the map.
+      await page.waitFor(`document.querySelector('[role=dialog][aria-modal=true]')`, 5000);
       await sleep(500);
     } catch {
       findings.push({ kind: 'reach', where: label(state), detail: 'the stop sheet never opened' });
@@ -1066,20 +1068,29 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
   await page.send('Emulation.setDeviceMetricsOverride', { ...metrics, width: 320 });
   await sleep(350);
   first.findings.push(...layoutFindings(await page.call<Layout>(LAYOUT, 'reflow'), '1.4.10', 'at 320 px wide'));
+  // 1.4.4 is met through the browser's own zoom, and 200 % on a desktop is the page drawn
+  // 640 px wide at twice the pixels. A phone is different: its "larger text" setting scales
+  // the type and leaves the layout's width alone, so there the text alone goes to 200 %.
+  if (pass.desktop) {
+    await page.send('Emulation.setDeviceMetricsOverride', { ...metrics, width: metrics.width / 2, height: metrics.height / 2, deviceScaleFactor: 2 });
+    await sleep(350);
+    first.findings.push(...layoutFindings(await page.call<Layout>(LAYOUT, 'zoom200'), '1.4.4', 'zoomed to 200 %'));
+  }
   await page.send('Emulation.setDeviceMetricsOverride', metrics);
   await sleep(300);
-  first.findings.push(...layoutFindings(await page.call<Layout>(LAYOUT, 'text200'), '1.4.4', 'with the text at 200 %'));
+  if (!pass.desktop) first.findings.push(...layoutFindings(await page.call<Layout>(LAYOUT, 'text200'), '1.4.4', 'with the text at 200 %'));
   first.findings.push(...layoutFindings(await page.call<Layout>(LAYOUT, 'spacing'), '1.4.12', 'with the text-spacing overrides'));
   if (pass.deep) {
-    // 1.3.4 and the other half of 1.4.10: a phone turned sideways, and a desktop at 400 %
-    // on a 1024 px tall screen, which is 320 by 256 CSS pixels.
+    // 1.3.4: a phone turned sideways. And a desktop at 400 % on a 1024 px tall screen, 320 by
+    // 256 CSS pixels: 1.4.10 asks 320 px of width of content that scrolls down, and nothing of
+    // its height, so what the bars leave of the screen is this project's measure, not WCAG's.
     const turned = pass.desktop ? { ...DESKTOP, width: 320, height: 256 } : { ...PHONE, width: PHONE.height, height: PHONE.width };
     await page.send('Emulation.setDeviceMetricsOverride', turned);
     await sleep(400);
     const got = await page.call<Layout>(LAYOUT, 'turned');
     const condition = pass.desktop ? 'at 320 by 256' : 'turned sideways';
     first.findings.push(...layoutFindings({ ...got, cut: [] }, pass.desktop ? '1.4.10' : '1.3.4', condition));
-    if (got.mainHeight < 48) first.findings.push({ kind: 'overflow', where: 'main', detail: `1.4.10: ${condition}, the bars leave the screen ${got.mainHeight} px` });
+    if (got.mainHeight < 48) first.findings.push({ kind: 'room', where: 'main', detail: `${condition}, the bars leave the screen ${got.mainHeight} px` });
     await page.send('Emulation.setDeviceMetricsOverride', metrics);
     await sleep(350);
     await page.evaluate(SETTLE);
@@ -1448,7 +1459,7 @@ await withBrowser(async (browser) => {
   console.log(`  ${results.length} state-theme measurements over ${new Set(results.map((r) => r.pass + r.state)).size} states and ${PASSES.length} passes, in ${Math.round((Date.now() - started) / 1000)} s`);
   console.log(`  ${results.reduce((s, r) => s + r.measured, 0)} texts measured, ${results.reduce((s, r) => s + r.named, 0)} controls named`);
   console.log(`  WCAG 2.2 A/AA: ${gated.length} finding${gated.length === 1 ? '' : 's'}${gated.length ? ` (${(Object.keys(KINDS) as Kind[]).filter((k) => !HOUSE.includes(k)).map((k) => [k, gated.filter((f) => f.kind === k).length] as const).filter(([, n]) => n).map(([k, n]) => `${k} ${n}`).join(', ')})` : ''}`);
-  console.log(`  house bar: under 12 px ${all.filter((f) => f.kind === 'size').length}, under 44 px ${all.filter((f) => f.kind === 'target44').length}`);
+  console.log(`  house bar: under 12 px ${all.filter((f) => f.kind === 'size').length}, under 44 px ${all.filter((f) => f.kind === 'target44').length}, under 48 px between the bars ${all.filter((f) => f.kind === 'room').length}`);
   if (gated.length) process.exitCode = 1;
 });
 // Under CI a run that could not start is a failure: the gate would otherwise pass by not looking.
