@@ -45,6 +45,7 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
     setMap(instance);
+    const unhover = hoverableTooltips(instance);
 
     // The container is often 0 px tall on first paint (tab switch, flex layout).
     const observer =
@@ -57,6 +58,7 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
     observer?.observe(el);
     return () => {
       observer?.disconnect();
+      unhover();
       instance.remove();
       setMap(null);
     };
@@ -86,6 +88,52 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
   }, [map, containerRef, region, t]);
 
   return map;
+}
+
+/** How long a hover label waits for the pointer to cross from its marker onto it. */
+export const HOVER_GRACE_MS = 300;
+
+type TooltipOwner = L.Layer & { closeTooltip(): unknown; hoverable?: true };
+
+/**
+ * WCAG 1.4.13 for every label a map shows on hover: a stop's name, a line on a route, a walk.
+ * Leaflet closes one the moment the pointer leaves its marker, so a reader who magnifies the
+ * screen could never move onto it to read it, and it had no key to put it away. Here the
+ * close waits HOVER_GRACE_MS, the label takes the pointer and holds itself open while it is
+ * under it, and Escape closes the one that is open without the pointer moving.
+ * `_source` is Leaflet's own name for the layer a tooltip belongs to (1.9).
+ */
+function hoverableTooltips(map: L.Map): () => void {
+  let open: L.Tooltip | null = null;
+  map.on('tooltipopen', (event) => {
+    const tooltip = (event as L.TooltipEvent).tooltip;
+    open = tooltip;
+    const owner = (tooltip as unknown as { _source?: TooltipOwner })._source;
+    const label = tooltip.getElement();
+    if (!owner || !label || tooltip.options.permanent) return;
+    label.style.pointerEvents = 'auto';
+    if (owner.hoverable) return;
+    owner.hoverable = true;
+    let leaving = 0;
+    const leave = () => {
+      window.clearTimeout(leaving);
+      leaving = window.setTimeout(() => owner.closeTooltip(), HOVER_GRACE_MS);
+    };
+    const stay = () => window.clearTimeout(leaving);
+    owner.off('mouseout', owner.closeTooltip);
+    owner.on('mouseout', leave);
+    owner.on('mouseover', stay);
+    label.addEventListener('mouseenter', stay);
+    label.addEventListener('mouseleave', leave);
+  });
+  map.on('tooltipclose', (event) => {
+    if ((event as L.TooltipEvent).tooltip === open) open = null;
+  });
+  const escape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && open) map.closeTooltip(open);
+  };
+  document.addEventListener('keydown', escape);
+  return () => document.removeEventListener('keydown', escape);
 }
 
 /** The map's zoom, read at the end of each gesture: fractional, since the basemap lets the map settle at any zoom. */

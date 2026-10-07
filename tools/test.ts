@@ -5745,6 +5745,19 @@ ok('no words are cut off where 320 px, 200 % text or a reader’s text spacing n
   assert(/cut by a line clamp/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer looks for text cut by a line clamp');
 });
 
+ok('a label a map shows on hover stays while the pointer moves onto it, and goes on Escape', () => {
+  // 1.4.13. Leaflet closed a stop's name the moment the pointer left the dot, so a reader
+  // who magnifies the screen could never move onto it to read it, and there was no key to put
+  // it away. Every map is built in useLeafletMap, so the one change covers the three.
+  const hook = read('src/hooks/useLeafletMap.ts');
+  assert(/const unhover = hoverableTooltips\(instance\);/.test(hook) && /unhover\(\);/.test(hook), 'the maps no longer make their hover labels hoverable');
+  assert(/owner\.off\('mouseout', owner\.closeTooltip\)/.test(hook) && /owner\.on\('mouseout', leave\)/.test(hook) && /label\.addEventListener\('mouseenter', stay\)/.test(hook) && /label\.style\.pointerEvents = 'auto'/.test(hook), 'a hover label closes again as the pointer leaves its marker for it');
+  const grace = Number(/export const HOVER_GRACE_MS = (\d+);/.exec(hook)?.[1]);
+  assert(grace >= 150 && grace <= 1000, `a hover label waits ${grace} ms for the pointer: too short to cross to it, or long enough to be in the way`);
+  assert(/event\.key === 'Escape' && open\) map\.closeTooltip\(open\)/.test(hook), 'Escape no longer puts a hover label away');
+  assert(/1\.4\.13: Escape does not put the hover label away/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer tries the map’s hover labels');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera
