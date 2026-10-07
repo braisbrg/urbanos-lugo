@@ -49,6 +49,7 @@ export const en: Dict = {
     clear: 'Clear',
     none: 'Nothing matches that search.',
     places: 'Places',
+    screens: 'Screens',
     nearestStop: (stop: string, metres: number) => `${stop} · ${metres} m walk`,
   },
 

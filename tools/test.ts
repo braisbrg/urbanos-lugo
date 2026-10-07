@@ -5833,6 +5833,19 @@ ok('the planner says which destination is chosen, and reads "to" where the eye s
   assert(/aria-hidden="true">\s*→\s*<\/span>\s*<span className="sr-only">\{t\.planner\.toSr\}<\/span>/.test(planner), 'a recent route’s two places run together for a screen reader again');
 });
 
+ok('every screen can be reached a second way: the search box finds it by its name', () => {
+  // 2.4.5. The stops, the lines, the map and the planner were reached from the navigation and
+  // from the search and the links between screens; the notices and the fares from the
+  // navigation alone. The search box finds every screen by its name, in each language.
+  const bar = read('src/components/TopBar.tsx');
+  assert(/\[\.\.\.navSections\(t\), \.\.\.asideSections\(t, 0\)\]\.filter\(\(s\) => matchesQuery\(s\.label, dq\)\)/.test(bar) && /onClick=\{choose\(\(\) => onOpenTab\(id\)\)\}/.test(bar), 'the search box no longer finds the screens');
+  assert(/onOpenTab=\{goToTab\}/.test(read('src/App.tsx')), 'a screen found in the search box no longer opens');
+  for (const lang of LANGS) {
+    const t = translations(lang);
+    for (const label of [t.nav.stops, t.nav.lines, t.nav.map, t.nav.plan, t.menu.alerts, t.menu.fares]) assert(matchesQuery(label, label.split(' ')[0]), `${lang}: "${label}" is not found by its first word`);
+  }
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

@@ -38,6 +38,7 @@ export const es: Dict = {
     clear: 'Limpiar',
     none: 'Nada coincide con esa búsqueda.',
     places: 'Sitios',
+    screens: 'Pantallas',
     nearestStop: (stop: string, metres: number) => `${stop} · a ${metres} m a pie`,
   },
 

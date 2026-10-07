@@ -1,11 +1,12 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Landmark, MapPin, Menu, QrCode, Search, Star, X } from 'lucide-react';
 import { BUS_LINES, poleCode } from '../data/transitData';
-import { MAX_QUERY_LENGTH, calculateRelevanceScore } from '../utils/searchUtils';
+import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery } from '../utils/searchUtils';
 import { getNearestStopToCoords, rankLandmarks, rankStops } from '../utils/places';
 import { BusLine, BusStop } from '../types';
 import { useT } from '../i18n';
 import { LineBadge } from './ui/LineBadge';
+import { asideSections, navSections, type Tab } from './navSections';
 
 interface TopBarProps {
   onSelectStop: (stop: BusStop) => void;
@@ -18,6 +19,8 @@ interface TopBarProps {
   onOpenMenu: () => void;
   /** Notices in force, on the button that hides them: the drawer's badge is behind it. */
   alertCount: number;
+  /** A screen asked for by name. */
+  onOpenTab: (tab: Tab) => void;
 }
 
 /** The rows the box offers for a query: the best six stops, four lines and three places (each with the stop that serves it and the walk to it). */
@@ -49,7 +52,7 @@ const Row = ({ onClick, children }: { onClick: () => void; children: ReactNode }
  * One field for stops, lines and streets, with the QR scanner attached to it: standing at
  * a pole, scanning the sticker is the shortest path from "I am here" to "these are my times".
  */
-export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScanner, onOpenFavorites, savedCount, onOpenMenu, alertCount }: TopBarProps) {
+export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScanner, onOpenFavorites, savedCount, onOpenMenu, alertCount, onOpenTab }: TopBarProps) {
   const t = useT();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -80,6 +83,9 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
   // The letter paints before the list does: the rows are built from a deferred copy of the query, at low priority.
   const dq = useDeferredValue(q);
   const { stops, lines, places } = useMemo(() => searchAll(dq), [dq]);
+  // The screens too, by their names: the notices and the fares were reached by the navigation
+  // alone, and a set of pages needs a second way to each (WCAG 2.4.5).
+  const screens = useMemo(() => (dq ? [...navSections(t), ...asideSections(t, 0)].filter((s) => matchesQuery(s.label, dq)) : []), [dq, t]);
   const settled = dq === q;
   const choose = (act: () => void) => () => {
     act();
@@ -150,13 +156,13 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
       {/* What the rows hold, for the ear: the kinds present, or the "nothing matches" sentence, once the rows are current. */}
       <span role="status" className="sr-only">
         {open && q.length > 0 && settled
-          ? [stops.length && t.search.stops, lines.length && t.search.lines, places.length && t.search.places].filter((kind): kind is string => typeof kind === 'string').join(', ') || t.search.none
+          ? [stops.length && t.search.stops, lines.length && t.search.lines, places.length && t.search.places, screens.length && t.search.screens].filter((kind): kind is string => typeof kind === 'string').join(', ') || t.search.none
           : ''}
       </span>
 
       {open && q.length > 0 && (
         <div className="anim-drop absolute inset-x-3.5 top-full z-[1300] mt-1 max-h-[60vh] overflow-y-auto rounded-card border border-edge bg-bg shadow-md">
-          {settled && stops.length === 0 && lines.length === 0 && places.length === 0 && <p className="px-4 py-4 text-body text-ink-3">{t.search.none}</p>}
+          {settled && stops.length === 0 && lines.length === 0 && places.length === 0 && screens.length === 0 && <p className="px-4 py-4 text-body text-ink-3">{t.search.none}</p>}
 
           {stops.length > 0 && <Heading>{t.search.stops}</Heading>}
           {stops.map((stop) => (
@@ -190,6 +196,14 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
                 <span className="block break-words text-emph font-semibold">{lm.name}</span>
                 <span className="block text-label text-ink-3">{t.search.nearestStop(stop.name, walkMeters)}</span>
               </span>
+            </Row>
+          ))}
+
+          {screens.length > 0 && <Heading>{t.search.screens}</Heading>}
+          {screens.map(({ id, Icon, label }) => (
+            <Row key={id} onClick={choose(() => onOpenTab(id))}>
+              <Icon className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+              <span className="min-w-0 flex-1 break-words text-emph font-semibold">{label}</span>
             </Row>
           ))}
         </div>

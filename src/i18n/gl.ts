@@ -52,6 +52,8 @@ export const gl = {
     clear: 'Limpar',
     none: 'Nada coincide con esa busca.',
     places: 'Sitios',
+    /** The app's own screens, found by their names. */
+    screens: 'Pantallas',
     /** A place is not a stop, so the row says which stop serves it and how far it is. */
     nearestStop: (stop: string, metres: number) => `${stop} · a ${metres} m a pé`,
   },

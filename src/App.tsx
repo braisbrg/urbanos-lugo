@@ -181,6 +181,7 @@ export default function App() {
             }}
             onOpenQrScanner={() => setIsQrModalOpen(true)}
             onOpenMenu={() => setIsMenuOpen(true)}
+            onOpenTab={goToTab}
             alertCount={alerts.announcedIncidents}
           />
 
