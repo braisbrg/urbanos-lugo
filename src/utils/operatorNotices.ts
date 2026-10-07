@@ -1,5 +1,13 @@
 import type { BusLine, NoticeSection, ServiceAlert } from '../types';
 
+/**
+ * The language the notices are written in, whatever the reader's is: buslugo.com writes in
+ * Spanish, and the council's feed is read from its Spanish edition (/es/, alertSyncService).
+ * Quoted on screen inside a Galician or English page, they carry it as `lang`, or a screen
+ * reader reads Spanish with a Galician or English voice (WCAG 3.1.2).
+ */
+export const NOTICE_LANG = 'es';
+
 /** The sites a notice may link to, over HTTPS: the operator's and the council's, subdomains included. */
 const NOTICE_HOSTS = ['buslugo.com', 'concellodelugo.gal'];
 

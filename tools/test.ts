@@ -5804,6 +5804,18 @@ ok('the ride screen keeps its stop names whole, its bar on the screen, and the f
   assert(/<main id="contido" className="[^"]*has-\[\.trip-bar\]:scroll-pb-20/.test(read('src/App.tsx')), 'the focus can go behind the ride’s bar again');
 });
 
+ok('a notice quoted from the operator or the council says the language it is written in', () => {
+  // 3.1.2. Both write in Spanish (the council's feed is its /es/ edition), and their words are
+  // quoted inside Galician and English pages with no lang: a screen reader read them with a
+  // Galician or an English voice. Every place the quoted text reaches the screen carries it.
+  assert(/const CONCELLO_FEED_URL = 'https:\/\/concellodelugo\.gal\/es\//.test(read('src/services/alertSyncService.ts')) && /export const NOTICE_LANG = 'es';/.test(read('src/utils/operatorNotices.ts')), 'the notices are read in a language NOTICE_LANG does not say');
+  const view = read('src/components/AlertsView.tsx');
+  assert(/const quoted = source \? NOTICE_LANG : undefined;/.test(view) && (view.match(/lang=\{quoted\}/g) ?? []).length === 3 && (view.match(/lang=\{NOTICE_LANG\}/g) ?? []).length === 2, 'a quoted notice on the notices screen lost its language');
+  assert(/\{noticeDays && <p lang=\{NOTICE_LANG\}>\{noticeDays\}<\/p>\}/.test(read('src/components/StopArrivalsView.tsx')), 'the board’s notice strip quotes the operator without its language');
+  const lines = read('src/components/LinesView.tsx');
+  assert(/<span lang=\{NOTICE_LANG\}>\{alert\.description\}<\/span>/.test(lines) && /<p key=\{j\} lang=\{NOTICE_LANG\}/.test(lines), 'the line page quotes the operator without its language');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { ArrowLeft, Bus, Calendar, ChevronDown, ChevronRight, Clock, MapPin, Route, Star, TriangleAlert } from 'lucide-react';
 import { useLang, useT } from '../i18n';
 import { BusLine, BusStop, ServiceAlert } from '../types';
-import { namesLine } from '../utils/operatorNotices';
+import { NOTICE_LANG, namesLine } from '../utils/operatorNotices';
 import { changesNow, runsUntil, type NoticeChanges } from '../utils/noticeChanges';
 import { BUS_LINES, BUS_STOPS, poleCode, stopById } from '../data/transitData';
 import { getScheduledBuses } from '../utils/vehicles';
@@ -321,13 +321,17 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                     <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
                     <span className="min-w-0 flex-1">
                       {t.lines.operatorNotice}
-                      {alert.description !== alert.title && `. ${alert.description}`}
+                      {alert.description !== alert.title && (
+                        <>
+                          . <span lang={NOTICE_LANG}>{alert.description}</span>
+                        </>
+                      )}
                     </span>
                     <ChevronDown className="disclosure-chevron mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
                   </summary>
                   <div className="px-3 pb-1 pl-[34px]">
                     {section.paragraphs.map((paragraph, j) => (
-                      <p key={j} className="mt-1 first:mt-0">
+                      <p key={j} lang={NOTICE_LANG} className="mt-1 first:mt-0">
                         {paragraph}
                       </p>
                     ))}

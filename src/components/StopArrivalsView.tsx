@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { ArrowLeft, Bell, Check, ChevronDown, Clock, Map as MapIcon, Share2, TriangleAlert } from 'lucide-react';
 import { BusStop, BusLine, ServiceAlert, StopArrival } from '../types';
-import { namesLine } from '../utils/operatorNotices';
+import { NOTICE_LANG, namesLine } from '../utils/operatorNotices';
 import { changesNow, closedAt, pastTimetable, runsUntil, type NoticeChanges } from '../utils/noticeChanges';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { lineById, poleCode } from '../data/transitData';
@@ -377,7 +377,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
             <ChevronDown className="disclosure-chevron mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
           </summary>
           <div className="px-3 pb-1 pl-[34px]">
-            {noticeDays && <p>{noticeDays}</p>}
+            {noticeDays && <p lang={NOTICE_LANG}>{noticeDays}</p>}
             {lateLater.map((l) => (
               <p key={l.line} className="mt-1">
                 {t.arrivals.noticeRunsUntil(l.line, l.time, l.to)}

@@ -3,6 +3,7 @@ import { AlertTriangle, HelpCircle, Newspaper, RefreshCw, CheckCircle2, Clock } 
 import { LOCALE, useLang, useT } from '../i18n';
 import { ServiceAlert } from '../types';
 import { isSnapshotStale } from '../utils/snapshotAge';
+import { NOTICE_LANG } from '../utils/operatorNotices';
 import type { ServiceAlerts } from '../hooks/useServiceAlerts';
 
 interface AlertsViewProps {
@@ -57,6 +58,8 @@ function LinesAffected({ lines }: { lines: string[] }) {
 function AlertCard({ alert, when, source }: { alert: ServiceAlert; when: string; source?: string }) {
   const t = useT();
   const warning = alert.severity === 'warning';
+  /** A notice with a source was read off somebody else's site, in their words. */
+  const quoted = source ? NOTICE_LANG : undefined;
   return (
     <div className={`py-5 px-cap-5 rounded-card border transition-all ${warning ? 'bg-warn/60 border-warn' : 'bg-surface/60 border-edge'}`}>
       {source && <span className="text-label font-bold uppercase tracking-wider text-ink-3">{source}</span>}
@@ -68,12 +71,19 @@ function AlertCard({ alert, when, source }: { alert: ServiceAlert; when: string;
           <LinesAffected lines={alert.linesAffected || []} />
         </div>
       </div>
-      <h3 className="break-words font-bold text-ink text-body">{alert.title}</h3>
+      {/* A quoted notice keeps the language it was written in (NOTICE_LANG); the ones this app wrote are the reader's. */}
+      <h3 lang={quoted} className="break-words font-bold text-ink text-body">
+        {alert.title}
+      </h3>
       {/* The operator posts a notice as one line, so the title and the description are the same words. */}
-      {alert.description !== alert.title && <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{alert.description}</p>}
+      {alert.description !== alert.title && (
+        <p lang={quoted} className="text-label text-ink-2 mt-1.5 leading-relaxed">
+          {alert.description}
+        </p>
+      )}
       {/* A notice the operator wrote out line by line, read off its home page: each part in its words, its heading naming the line. */}
       {alert.sections?.map((section, i) => (
-        <div key={i} className="mt-3 border-t border-line pt-3">
+        <div key={i} lang={quoted} className="mt-3 border-t border-line pt-3">
           <h4 className="break-words text-label font-semibold text-ink">{section.heading}</h4>
           {section.paragraphs.map((paragraph, j) => (
             <p key={j} className="mt-1 text-label leading-relaxed text-ink-2">
@@ -233,8 +243,14 @@ export function AlertsView({ alerts }: AlertsViewProps) {
             {councilNews.map((item) => (
               <li key={item.id} className="p-4 sm:p-5">
                 <span className="text-label font-bold uppercase tracking-wider text-ink-3">{formatInstant(item.date, locale)}</span>
-                <h3 className="mt-1 font-bold text-ink text-body">{item.title}</h3>
-                {item.description !== item.title && <p className="text-label text-ink-2 mt-1.5 leading-relaxed">{item.description}</p>}
+                <h3 lang={NOTICE_LANG} className="mt-1 font-bold text-ink text-body">
+                  {item.title}
+                </h3>
+                {item.description !== item.title && (
+                  <p lang={NOTICE_LANG} className="text-label text-ink-2 mt-1.5 leading-relaxed">
+                    {item.description}
+                  </p>
+                )}
                 {item.link && (
                   <a href={item.link} target="_blank" rel="noopener noreferrer" className={`${external} mt-1`}>
                     {t.fares.readInFull}
