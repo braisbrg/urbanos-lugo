@@ -1158,6 +1158,22 @@ ok('the out-of-service banner still fits on two lines', () => {
   assert(/nightBanner\.seeNotices/.test(app) && /sr-only[^>]*>\s*\{t\.nightBanner\.seeNotices\}/.test(app), 'the notices link is no longer the accessible name of the banner row');
 });
 
+ok('a hint that says "press the star" also says the name a screen reader gives it', () => {
+  // WCAG 1.3.3. The three empty states said only "press the star", and the button is named
+  // "Engadir a gardadas": a screen reader reads the name, never the shape, so the
+  // instruction pointed at a control nobody listening could find.
+  for (const lang of LANGS) {
+    const t = translations(lang);
+    for (const [hint, name] of [
+      [t.stopHome.emptyBody, t.arrivals.fav],
+      [t.favourites.noFavoriteStopsHint, t.arrivals.fav],
+      [t.favourites.noFavoriteLinesHint, t.lines.saveLine],
+    ]) {
+      assert(hint.includes(name), `${lang}: "${hint}" points at the star without its name, "${name}"`);
+    }
+  }
+});
+
 ok('no translated string is blank', () => {
   for (const lang of LANGS) {
     const blanks: string[] = [];

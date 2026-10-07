@@ -68,7 +68,7 @@ export const en: Dict = {
     nextLater: 'Next:',
     emptyTitle: 'You have not saved any stops yet.',
     emptyBody:
-      'Search for your stop above, scan the code on the pole, or tap it on the map. Then press the star and it will appear here.',
+      'Search for your stop above, scan the code on the pole, or tap it on the map. Then press the star, “Save this stop”, and it will appear here.',
     orSearchAbove: 'or search above',
     scan: 'Scan the code on the pole',
     denied: 'Could not get your location. Check your browser permissions.',
@@ -351,9 +351,9 @@ export const en: Dict = {
     tabStops: 'Stops',
     tabLines: 'Lines',
     noFavoriteStops: 'You have not added any stops to your favourites yet.',
-    noFavoriteStopsHint: 'Press the star on a stop to save it here.',
+    noFavoriteStopsHint: 'Press the star on a stop, “Save this stop”, to save it here.',
     noFavoriteLines: 'You have not added any lines to your favourites yet.',
-    noFavoriteLinesHint: 'Press the star at the top of a line to save it here.',
+    noFavoriteLinesHint: 'Press the star at the top of a line, “Save this line”, to save it here.',
     remove: 'Remove from favourites',
   },
 

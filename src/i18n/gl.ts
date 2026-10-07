@@ -73,7 +73,7 @@ export const gl = {
     nextLater: 'A seguinte:',
     emptyTitle: 'Aínda non gardaches ningunha parada.',
     emptyBody:
-      'Busca a túa parada arriba, escanea o código do poste ou tócaa no mapa. Despois preme a estrela e aparecerá aquí.',
+      'Busca a túa parada arriba, escanea o código do poste ou tócaa no mapa. Despois preme a estrela, «Engadir a gardadas», e aparecerá aquí.',
     orSearchAbove: 'ou busca arriba',
     scan: 'Escanear código do poste',
     denied: 'Non se puido acceder á localización. Revisa os permisos do navegador.',
@@ -386,9 +386,9 @@ export const gl = {
     tabStops: 'Paradas',
     tabLines: 'Liñas',
     noFavoriteStops: 'Aínda non engadiches paradas aos teus favoritos.',
-    noFavoriteStopsHint: 'Preme na estrela dunha parada para gardala aquí.',
+    noFavoriteStopsHint: 'Preme na estrela dunha parada, «Engadir a gardadas», para gardala aquí.',
     noFavoriteLines: 'Aínda non engadiches liñas ás túas favoritas.',
-    noFavoriteLinesHint: 'Preme na estrela da cabeceira dunha liña para gardala aquí.',
+    noFavoriteLinesHint: 'Preme na estrela da cabeceira dunha liña, «Gardar liña en favoritos», para gardala aquí.',
     remove: 'Eliminar de favoritos',
   },
 

@@ -57,7 +57,7 @@ export const es: Dict = {
     nextLater: 'La siguiente:',
     emptyTitle: 'Todavía no has guardado ninguna parada.',
     emptyBody:
-      'Busca tu parada arriba, escanea el código del poste o tócala en el mapa. Después pulsa la estrella y aparecerá aquí.',
+      'Busca tu parada arriba, escanea el código del poste o tócala en el mapa. Después pulsa la estrella, «Añadir a guardadas», y aparecerá aquí.',
     orSearchAbove: 'o busca arriba',
     scan: 'Escanear código del poste',
     denied: 'No se pudo acceder a la ubicación. Revisa los permisos del navegador.',
@@ -340,9 +340,9 @@ export const es: Dict = {
     tabStops: 'Paradas',
     tabLines: 'Líneas',
     noFavoriteStops: 'Todavía no has añadido paradas a tus favoritos.',
-    noFavoriteStopsHint: 'Pulsa la estrella de una parada para guardarla aquí.',
+    noFavoriteStopsHint: 'Pulsa la estrella de una parada, «Añadir a guardadas», para guardarla aquí.',
     noFavoriteLines: 'Todavía no has añadido líneas a tus favoritas.',
-    noFavoriteLinesHint: 'Pulsa la estrella de la cabecera de una línea para guardarla aquí.',
+    noFavoriteLinesHint: 'Pulsa la estrella de la cabecera de una línea, «Guardar línea en favoritos», para guardarla aquí.',
     remove: 'Eliminar de favoritos',
   },
 
