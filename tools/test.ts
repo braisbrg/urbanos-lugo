@@ -5778,6 +5778,17 @@ ok('the buses on the map are not Tab stops, and a screen reader still finds them
   assert(/setAttribute\('role', 'img'\)/.test(buses) && /setAttribute\('aria-label', label\)/.test(buses) && (buses.match(/\bname\((existing|marker), label\)/g) ?? []).length === 2, 'a bus on the map lost its name, or its name is not set again when its icon is rebuilt');
 });
 
+ok('in forced colours a pressed control, the current tab and the current line still look it', () => {
+  // Windows' contrast themes repaint fills and tints in the system's few colours, and those
+  // three said "this one" with a fill or a tint alone. audit:browser emulates the mode and
+  // compares each pressed or current control with a neighbour.
+  const css = read('src/index.css');
+  const block = css.slice(css.indexOf('@media (forced-colors: active)'), css.indexOf('@media (prefers-reduced-motion: reduce)'));
+  assert(/\[aria-pressed='true'\],\s*\[aria-current\]:not\(\[aria-current='false'\]\) \{\s*outline: 2px solid Highlight;/.test(block), 'a pressed or current control looks like its neighbours in forced colours again');
+  assert(/:focus-visible \{\s*outline: 4px double Highlight;/.test(block), 'in forced colours a pressed control with the focus shows one of the two, not both');
+  assert(/name: 'forced', desktop: false/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer looks at forced colours');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera
