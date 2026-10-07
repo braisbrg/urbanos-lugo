@@ -327,9 +327,18 @@ const PROBE = `async function (expectLang) {
       return (el.getAttribute('title') || el.getAttribute('placeholder') || '').trim();
     }
     const inner = [...el.querySelectorAll('img[alt], [aria-label]')]
+      .filter((n) => !n.closest('[aria-hidden="true"]'))
       .map((n) => (n.getAttribute('alt') || n.getAttribute('aria-label') || '').trim())
       .join(' ');
-    return ((el.textContent || '') + ' ' + inner + ' ' + (el.getAttribute('title') || '')).trim();
+    // The words a screen reader gets, so without what is hidden from it: the menu button with
+    // its label taken off still "had a name" here, the count in its badge, which is aria-hidden.
+    let words = '';
+    const walk = (n) => {
+      if (n.nodeType === 3) words += n.textContent;
+      else if (n.nodeType === 1 && n.getAttribute('aria-hidden') !== 'true') for (const c of n.childNodes) walk(c);
+    };
+    walk(el);
+    return (words + ' ' + inner + ' ' + (el.getAttribute('title') || '')).trim();
   };
 
   /** The words a control shows: everything rendered inside it, screen-reader text left out. */
