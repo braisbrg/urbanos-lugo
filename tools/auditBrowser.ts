@@ -372,7 +372,8 @@ const PROBE = `async function (expectLang) {
   let named = 0;
   let tightest = { ratio: Infinity, where: '', detail: '' };
 
-  const onCanvas = (el) => !!el.closest('.leaflet-container') && !el.closest('.leaflet-control-container');
+  // The map's picture is not measured; its controls and a popup laid over it are.
+  const onCanvas = (el) => !!el.closest('.leaflet-container') && !el.closest('.leaflet-control-container, .leaflet-popup');
   // Visually hidden until focused, so its 1x1 box is the point rather than a defect.
   const offscreen = (el) => !!el.closest('.sr-only');
   const targets = [];
@@ -438,7 +439,9 @@ const PROBE = `async function (expectLang) {
       // "click 7" said to voice control finds nothing on a chip that reads 7.
       if ((el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) && !/^(input|select|textarea)$/.test(tag)) {
         const shown = shownWords(el);
-        const name = words(nameOf(el));
+        // Bracketed words out of the name first, as axe does: "Avisos (1)" does not contain the
+        // 1 a badge shows, for a checker or for voice control software that reads it the same way.
+        const name = words(nameOf(el).replace(/\\([^()]*\\)/g, ' '));
         if (shown && !(' ' + name + ' ').includes(' ' + shown + ' ')) push('label', el, 'shows "' + shown + '" but is named "' + name + '"');
       }
     }
@@ -613,8 +616,14 @@ async function press(page: Session, key: string, code: number, modifiers = 0): P
 const RECORD = `function () {
   ${HELPERS}
   // Nothing focused while the "before" is taken: a control the setup had just pressed still
-  // wore its ring, and compared with itself it showed no change.
-  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+  // wore its ring, and compared with itself it showed no change. Not blur(): a time field keeps
+  // the focus in its hour part and wore the ring through it. The focus goes to a stand-in at
+  // the top of the page, which is then taken out, so the first Tab starts from the top.
+  const standIn = document.createElement('span');
+  standIn.tabIndex = -1;
+  document.body.prepend(standIn);
+  standIn.focus({ preventScroll: true });
+  standIn.remove();
   for (const an of document.getAnimations()) { try { an.finish(); } catch (e) {} }
   const modal = document.querySelector('[role=dialog][aria-modal=true]');
   const scope = modal || document;
@@ -771,8 +780,8 @@ interface State {
   dialog?: boolean;
   /** In the page, after the probes: what this state has to announce. Returns the failures. */
   expect?: string;
-  /** After the setup, a real tap at the centre of the map, which Leaflet answers and a scripted click does not. */
-  tapMapCentre?: boolean;
+  /** After the setup, a real tap -- at the centre of the map, or on a bus -- which Leaflet answers and a scripted click does not. */
+  tap?: 'mapCentre' | 'bus';
 }
 
 const savedBoard = `const card = document.querySelector('main ul li button');
@@ -870,6 +879,15 @@ const STATES: State[] = [
     setup: `const b = [...document.querySelectorAll('button[aria-pressed]')].find((x) => x.textContent.trim() === T.buses);
       if (!b) return 'no buses layer button'; b.click(); await pause(900); return true;`,
   },
+  // A bus tapped: its popup, with the line, the next stop and the sentence that says the
+  // position is the timetable's, and a button to the line.
+  {
+    screen: 'mapa',
+    name: 'bus aberto',
+    setup: `const b = [...document.querySelectorAll('button[aria-pressed]')].find((x) => x.textContent.trim() === T.buses);
+      if (!b) return 'no buses layer button'; b.click(); await pause(1500); return true;`,
+    tap: 'bus',
+  },
   { screen: 'mapa', name: 'filtros', phoneOnly: true, dialog: true, setup: `if (!press(seeText(T.controls))) return 'no controls button'; await pause(600); return true;` },
   // A stop opened on the map: the board sends the map to its stop, which is then at the
   // centre, and a click there on Leaflet's canvas is what a tap on the stop is.
@@ -879,7 +897,7 @@ const STATES: State[] = [
     stored: REGULAR,
     dialog: true,
     setup: `${savedBoard} if (!press(byLabel(T.onMap))) return 'no map button'; await pause(2500); return true;`,
-    tapMapCentre: true,
+    tap: 'mapCentre',
   },
   { screen: 'ruta', name: 'baleiro' },
   {
@@ -1023,9 +1041,16 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
     if (got !== true) findings.push({ kind: 'reach', where: label(state), detail: String(got) });
     await sleep(500);
   }
-  if (state.tapMapCentre && !findings.length) {
+  if (state.tap && !findings.length) {
+    // The centre of the map, where the stop the board sent it to sits; or the middle of a bus
+    // that is wholly on the map and not under one of the buttons that float on it.
     const box = await page.evaluate<{ x: number; y: number } | null>(
-      `(() => { const m = [...document.querySelectorAll('.leaflet-container')].find((e) => e.getBoundingClientRect().width > 300); if (!m) return null; const b = m.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; })()`,
+      state.tap === 'mapCentre'
+        ? `(() => { const m = [...document.querySelectorAll('.leaflet-container')].find((e) => e.getBoundingClientRect().width > 300); if (!m) return null; const b = m.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; })()`
+        : `(() => { const m = [...document.querySelectorAll('.leaflet-container')].find((e) => e.getBoundingClientRect().width > 300); if (!m) return null; const mb = m.getBoundingClientRect();
+             for (const bus of document.querySelectorAll('.custom-bus-marker')) { const b = bus.getBoundingClientRect(); const x = b.left + b.width / 2, y = b.top + b.height / 2;
+               if (b.left > mb.left + 60 && b.right < mb.right - 60 && b.top > mb.top + 80 && b.bottom < mb.bottom - 80) { const hit = document.elementFromPoint(x, y); if (hit && bus.contains(hit)) return { x, y }; } }
+             return null; })()`,
     );
     if (box) {
       await mouse(page, 'mouseMoved', box.x, box.y);
@@ -1033,11 +1058,11 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
       await mouse(page, 'mouseReleased', box.x, box.y);
     }
     try {
-      // The sheet is drawn beside Leaflet's container, inside the map's card, not inside the map.
-      await page.waitFor(`document.querySelector('[role=dialog][aria-modal=true]')`, 5000);
+      // The stop sheet is drawn beside Leaflet's container, inside the map's card, not inside the map.
+      await page.waitFor(state.tap === 'mapCentre' ? `document.querySelector('[role=dialog][aria-modal=true]')` : `document.querySelector('.leaflet-popup')`, 5000);
       await sleep(500);
     } catch {
-      findings.push({ kind: 'reach', where: label(state), detail: 'the stop sheet never opened' });
+      findings.push({ kind: 'reach', where: label(state), detail: state.tap === 'mapCentre' ? 'the stop sheet never opened' : box ? 'the bus popup never opened' : 'no bus wholly on the map to tap' });
     }
   }
 
@@ -1204,8 +1229,10 @@ async function forced(browser: Browser): Promise<Finding[]> {
       const out = [];
       const on = [...document.querySelectorAll('[aria-pressed="true"], [aria-current]:not([aria-current="false"])')].filter((e) => e.getClientRects().length);
       for (const el of on) {
-        const peers = [...el.parentElement.parentElement.querySelectorAll(el.hasAttribute('aria-pressed') ? '[aria-pressed="false"]' : 'a, button')].filter((p) => p !== el && !p.matches('[aria-current]:not([aria-current="false"])') && p.getClientRects().length && p.tagName === el.tagName);
-        const peer = peers[0];
+        // Its own kind: a sibling first, then one under the grandparent, never another pressed or
+        // current one (the current line card was compared with the pressed "Todas" filter).
+        const kind = (p) => p !== el && p.tagName === el.tagName && p.getClientRects().length && !p.matches('[aria-pressed="true"], [aria-current]:not([aria-current="false"])') && p.hasAttribute('aria-pressed') === el.hasAttribute('aria-pressed');
+        const peer = [...el.parentElement.children].find(kind) || [...el.parentElement.parentElement.querySelectorAll(el.tagName)].find(kind);
         if (peer && sig(peer) === sig(el)) out.push(el.tagName.toLowerCase() + ' "' + (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30) + '" looks like "' + (peer.getAttribute('aria-label') || peer.textContent || '').trim().slice(0, 30) + '"');
       }
       return out;
