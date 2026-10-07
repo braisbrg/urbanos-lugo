@@ -746,10 +746,11 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
   for (let i = 0; i < count * 2 + 20 && (reached.size < count || i < count); i++) {
     await press(page, 'Tab', 9);
     await sleep(60);
-    let got = await page.call<{ at: number; where: string; issues: string[] }>(CHECK);
+    let got = await page.call<{ at: number; where: string; issues: string[]; map: boolean }>(CHECK);
     // A marker taking the focus pans the map to itself, in a quarter of a second of Leaflet's
-    // own animation: judged before that, every bus off the edge read as hidden.
-    if (got.issues.some((i) => i.startsWith('2.4.11')) && got.where.includes('leaflet')) {
+    // own animation: judged before that, every bus off the edge read as hidden. The same wait
+    // for what is inside a map's popup, which the map pans into view as the focus goes in.
+    if (got.issues.some((i) => i.startsWith('2.4.11')) && got.map) {
       await sleep(600);
       got = await page.call(CHECK);
     }
@@ -764,7 +765,7 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
       const { nodeId } = await page.send<{ nodeId: number }>('DOM.requestNode', { objectId: result.objectId });
       await page.send('CSS.enable');
       await page.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['focus', 'focus-visible'] });
-      const forced = await page.call<{ at: number; where: string; issues: string[] }>(CHECK);
+      const forced = await page.call<{ at: number; where: string; issues: string[]; map: boolean }>(CHECK);
       await page.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] });
       got = { ...forced, issues: forced.issues.filter((i) => !i.startsWith('2.4.7')).concat(forced.issues.some((i) => i.startsWith('2.4.7')) ? [`2.4.7: nothing visible changes even with :focus-visible forced on it`] : []) };
     }
@@ -1201,6 +1202,17 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
     if (got.mainHeight < 48) first.findings.push({ kind: 'room', where: 'main', detail: `${condition}, the bars leave the screen ${got.mainHeight} px` });
     await page.send('Emulation.setDeviceMetricsOverride', metrics);
     await sleep(350);
+    if (state.tap === 'bus') {
+      // A popup half off the map: focusing its close button scrolled the map's own box, Leaflet
+      // put the scroll back, and the button stayed past the edge of the screen -- once in five
+      // runs, wherever the bus had left it. Three of the map's own arrow keys put it there every
+      // time: 240 px, with a pause after each, since Leaflet drops a key while it is still panning.
+      await page.evaluate(`document.querySelector('.leaflet-container').focus()`);
+      for (let i = 0; i < 3; i++) {
+        await press(page, 'ArrowLeft', 37);
+        await sleep(400);
+      }
+    }
     await page.evaluate(SETTLE);
     const tab = await traverse(page, !!state.dialog);
     first.findings.push(...tab.findings);

@@ -5929,6 +5929,19 @@ ok('the map is read and tabbed in the order it is drawn, and the tab bar hides n
   assert(/which the focus reached before it, in the same column/.test(audit), 'the browser audit no longer compares the Tab order with where things are drawn');
 });
 
+ok('a map popup the keyboard goes into is brought inside the map first', () => {
+  // 2.4.11: a popup half off the map, and the focus reached its close button past the edge of
+  // the screen: the browser scrolled the map's box to it and Leaflet scrolled it back. Measured
+  // scrolled, the first fix panned the wrong way. Only for the keyboard: a pressed button must
+  // not slide from under a finger.
+  const hook = read('src/hooks/useLeafletMap.ts');
+  assert(/instance\.on\('popupopen', popupInViewOnFocus\)/.test(hook) && /addEventListener\('focusin'/.test(hook) && /map\.panBy\(\[dx, dy\]/.test(hook), 'a popup the keyboard enters is no longer brought into view');
+  assert(/focus\.target\.matches\(':focus-visible'\)\) return;/.test(hook), 'the popup pans under a pointer’s press too');
+  assert(/inViewOnFocus\.has\(el\)/.test(hook), 'each opening of a bound popup adds another focus listener, and another pan');
+  assert(/seen\.left \+ container\.scrollLeft/.test(hook) && /seen\.top \+ container\.scrollTop/.test(hook), 'the popup is measured with the map’s box scrolled to the focus, and panned the wrong way');
+  assert(/Three of the map's own arrow keys/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer moves the map before the keyboard reaches a bus popup');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

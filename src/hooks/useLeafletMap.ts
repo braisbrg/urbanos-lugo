@@ -53,6 +53,7 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
     // time a popup opens.
     instance.on('popupopen', (event) => (event as L.PopupEvent).popup.getElement()?.querySelector('.leaflet-popup-close-button')?.setAttribute('aria-label', closeLabel.current));
     const unpan = panOnClick(instance);
+    instance.on('popupopen', popupInViewOnFocus);
 
     // The container is often 0 px tall on first paint (tab switch, flex layout).
     const observer =
@@ -172,6 +173,41 @@ function panOnClick(map: L.Map): () => void {
     map.off('click', onClick);
     map.off('dblclick', onDouble);
   };
+}
+
+/**
+ * WCAG 2.4.11: a popup the keyboard goes into is brought inside the map first. Leaflet pans a
+ * popup into view as it opens or moves, and not when the map moved under it; then the focus
+ * reached a close button past the edge of the screen, and the browser's scroll to it was put
+ * back by Leaflet. The popup's own padding; unanimated under reduced motion.
+ */
+const inViewOnFocus = new WeakSet<HTMLElement>();
+function popupInViewOnFocus(event: L.LeafletEvent): void {
+  const map = event.target as L.Map;
+  const popup = (event as L.PopupEvent).popup;
+  const el = popup.getElement();
+  // A bound popup keeps its element from one opening to the next: one listener, or each opening adds another pan.
+  if (!el || inViewOnFocus.has(el)) return;
+  inViewOnFocus.add(el);
+  el.addEventListener('focusin', (focus) => {
+    // The keyboard's focus only: a button a pointer is pressing would slide out from under the press.
+    if (!(focus.target instanceof Element) || !focus.target.matches(':focus-visible')) return;
+    // Measured as if the map's own box had not scrolled: focusing a control half out of it
+    // scrolls it into view, which Leaflet undoes at the next scroll event, and measured
+    // scrolled the popup read as past the left edge and was panned further off the right.
+    const container = map.getContainer();
+    const frame = container.getBoundingClientRect();
+    const seen = el.getBoundingClientRect();
+    const box = { left: seen.left + container.scrollLeft, right: seen.right + container.scrollLeft, top: seen.top + container.scrollTop, bottom: seen.bottom + container.scrollTop };
+    const { autoPanPadding, autoPanPaddingTopLeft, autoPanPaddingBottomRight } = popup.options;
+    const topLeft = L.point(autoPanPaddingTopLeft ?? autoPanPadding ?? [5, 5]);
+    const bottomRight = L.point(autoPanPaddingBottomRight ?? autoPanPadding ?? [5, 5]);
+    let dx = Math.max(0, box.right + bottomRight.x - frame.right);
+    if (box.left - dx - topLeft.x < frame.left) dx = box.left - topLeft.x - frame.left;
+    let dy = Math.max(0, box.bottom + bottomRight.y - frame.bottom);
+    if (box.top - dy - topLeft.y < frame.top) dy = box.top - topLeft.y - frame.top;
+    if (dx || dy) map.panBy([dx, dy], { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches });
+  });
 }
 
 /** The map's zoom, read at the end of each gesture: fractional, since the basemap lets the map settle at any zoom. */
