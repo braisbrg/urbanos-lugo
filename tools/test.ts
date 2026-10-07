@@ -2622,7 +2622,13 @@ ok('the gates run on every push and proposal, offline, and only the schedule rea
   assert.deepStrictEqual(runs(ci), [
     'pnpm install --frozen-lockfile', 'pnpm run lint', 'pnpm test', 'pnpm run check:deep',
     'pnpm run data:build && git diff --exit-code --stat -- src/data', 'pnpm run build', 'pnpm test',
-  ], 'ci.yml no longer runs the gates, the dataset rebuild and the suite against the build, in that order');
+    'PORT=3002 node dist-server/server.cjs > server.log 2>&1 &\nfor i in $(seq 1 30); do curl -sf http://localhost:3002/ > /dev/null && break; sleep 1; done\npnpm run audit:browser',
+  ], 'ci.yml no longer runs the gates, the dataset rebuild, the suite against the build and the browser audit, in that order');
+  // The audit is a gate only if a finding fails it and a run that never started fails it too.
+  const audit = read('tools/auditBrowser.ts');
+  assert(/if \(gated\.length\) process\.exitCode = 1;/.test(audit) && /if \(!ran && process\.env\.CI\) process\.exitCode = 1;/.test(audit), 'the browser audit passes CI with findings, or without running');
+  // And it reads nobody's site: every request to another host is refused, and the API answered from fixtures.
+  assert(/if \(url\.host !== audited\) return void page\.send\('Fetch\.failRequest'/.test(audit) && /await page\.send\('Network\.setBypassServiceWorker', \{ bypass: true \}\)/.test(audit), 'the browser audit can reach another host from CI');
   assert(/pull_request:\s*\n\s*branches: \[main, develop\]/.test(ci) && /push:\s*\n\s*branches-ignore: \[main\]/.test(ci), 'ci.yml no longer runs on every proposal to main and develop and every push but main');
   // What makes "nothing merges without them" true is a ruleset on GitHub that main requires
   // the job called checks; the weekly job asks GitHub that it still does. A renamed job is

@@ -8,7 +8,7 @@ name: Checks
 # whether a version bump still builds and still agrees with the operator's data.
 #
 # Deliberately not the deployment: a pull request must never publish. This runs the four
-# gates CLAUDE.md names, and two more steps that need their output, and stops there;
+# gates CLAUDE.md names, and three more steps that need their output, and stops there;
 # tools/test.ts holds this list and the order, so a step dropped here fails the suite.
 on:
   pull_request:
@@ -78,3 +78,19 @@ jobs:
       # before the entry chunk -- skip without it, so in CI they had never run.
       - name: The suite, against the build
         run: pnpm test
+
+      # WCAG 2.2 A and AA, state by state, in a browser: audit:browser against the built
+      # server, on a phone and a desktop, in three languages and both themes. It ran weekly
+      # in measure.yml and a failure there was a report; here it is a gate, so a change that
+      # takes a name off a button or a word off the screen does not reach main.
+      #
+      # Offline like the rest, by construction: the page's clock is pinned, the two API
+      # answers are fixtures and every request to another host is refused at the browser, so
+      # the server is never asked to read buslugo.com or the council's feed and no map tile
+      # is fetched. The image ships Google Chrome, where tools/cdp.ts looks; with CI set, a
+      # run that cannot start fails, so the gate cannot pass by not looking.
+      - name: Accessibility, in a browser
+        run: |
+          PORT=3002 node dist-server/server.cjs > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3002/ > /dev/null && break; sleep 1; done
+          pnpm run audit:browser

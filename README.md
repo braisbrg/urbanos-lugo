@@ -783,7 +783,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── deploy-worker.yml           publica a API en Deno Deploy, se hai token
 │   ├── check-source.yml            luns: reconcile + xeometría + tarifas + analizadores
 │   ├── measure.yml                 luns: measure:browser, audit:browser e stress:network, como artefacto
-│   └── ci.yml                      en cada push: lint, test, check:deep e build
+│   └── ci.yml                      en cada push: lint, test, check:deep, build e audit:browser
 ├── worker/                         a API que Pages non pode servir (opcional)
 ├── design/                         artboards do redeseño (.dc.html), canvas.json, e as notas: o que se decidiu
 │                                   (DECIDIDO.md), o rexistro de probas, a auditoría SEO e as notas de fontes
@@ -1788,8 +1788,11 @@ le como «non hai incidencias»— máis dos dous segundos que o *hook* concede 
 a copia gardada coa súa data (medido: 2.100 ms coa API colgada, 130 con erro; antes
 agardaba os 30 s do prazo), unha resposta tardía substitúe esa copia (a 4.100 ms), e sen
 rede o *service worker* devolve a última resposta que viu (55 ms) e o taboleiro sae da
-caché (130–145 ms). Ningún dos tres é unha porta de CI: os orzamentos son relativos á
-máquina. `.github/workflows/measure.yml` execútaos os luns e garda a saída como artefacto,
+caché (130–145 ms). `measure:browser` e `stress:network` non son portas de CI: os orzamentos
+son relativos á máquina. `audit:browser` si o é desde a rolda 30: o que mide non depende da
+máquina, e corre en cada push despois da build, sen rede ningunha (as outras orixes
+rexeitadas, a API con fixtures, o reloxo fixado). `.github/workflows/measure.yml` execútaos
+os tres os luns e garda a saída como artefacto,
 para que unha regresión coma a do mapa —catro veces o orzamento durante días— non dependa
 de que alguén se lembre.
 

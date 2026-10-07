@@ -26,8 +26,10 @@ Tailwind 4 + MapLibre, TypeScript throughout, pnpm, Node >= 22.
 leftovers; CI installs with `--frozen-lockfile` from `pnpm-lock.yaml`.
 
 **The four gates.** `.github/workflows/ci.yml` runs these on every push but main's; it
-also rebuilds the dataset, which must change nothing, and runs the suite again against
-the build, and `pnpm test` holds that list. Nothing reaches main without them: a GitHub
+also rebuilds the dataset, which must change nothing, runs the suite again against
+the build, and audits the built app in a browser against WCAG 2.2 A and AA
+(`audit:browser`, offline: other hosts refused, API fixtures, clock pinned), and
+`pnpm test` holds that list. Nothing reaches main without them: a GitHub
 ruleset lets main take only a commit whose `checks` job passed (push develop, wait for its
 green, then main), neither branch takes a force-push or a deletion, and `check-source.yml`
 asks GitHub every Monday that this still holds. A change is not done until all four are
@@ -52,7 +54,8 @@ Offline, cheap, safe to run any time: `pnpm run data:build` (reshape `data/` int
 `pnpm run measure:engine`, `pnpm run measure:parsers`, `pnpm run validate:times`,
 `pnpm run diagrams`. With a built server on 3002 (`pnpm build && PORT=3002 pnpm start`):
 `pnpm run measure:browser` and `pnpm run audit:browser`, which `.github/workflows/measure.yml`
-also runs weekly and keeps as an artifact.
+also runs weekly and keeps as an artifact (`audit:browser` is a CI gate too, see above;
+`AUDIT_STATES` / `AUDIT_PASSES` narrow a run, e.g. `AUDIT_STATES=ruta/hora`).
 
 Hit somebody else's server — see the network block before running any of these:
 `pnpm run data:fetch`, `pnpm run data:osm`, `pnpm run data:amenities`,
