@@ -5758,6 +5758,17 @@ ok('a label a map shows on hover stays while the pointer moves onto it, and goes
   assert(/1\.4\.13: Escape does not put the hover label away/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer tries the map’s hover labels');
 });
 
+ok('a map moves without a drag: a tap brings that spot to the centre', () => {
+  // 2.5.7. The view moved only by dragging, a gesture some hands cannot make. A single tap on
+  // the map pans there; a stop's tap is the stop's, and a double click still zooms.
+  const hook = read('src/hooks/useLeafletMap.ts');
+  assert(/const unpan = panOnClick\(instance\);/.test(hook) && /unpan\(\);/.test(hook), 'the maps no longer pan on a tap');
+  assert(/map\.on\('click', onClick\)/.test(hook) && /map\.panTo\(event\.latlng/.test(hook), 'a tap on the map no longer brings that spot to the centre');
+  assert(/if \(original\?\._stopClaimed\) return;/.test(hook) && /map\.on\('dblclick', onDouble\)/.test(hook), 'a tap on a stop, or a double click, pans the map too');
+  assert(/animate: !window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches/.test(hook), 'the pan animates under reduced motion');
+  assert(/2\.5\.7: a click on the map does not move it/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer tries to move the map without a drag');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

@@ -46,6 +46,7 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
     setMap(instance);
     const unhover = hoverableTooltips(instance);
+    const unpan = panOnClick(instance);
 
     // The container is often 0 px tall on first paint (tab switch, flex layout).
     const observer =
@@ -59,6 +60,7 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
     return () => {
       observer?.disconnect();
       unhover();
+      unpan();
       instance.remove();
       setMap(null);
     };
@@ -134,6 +136,36 @@ function hoverableTooltips(map: L.Map): () => void {
   };
   document.addEventListener('keydown', escape);
   return () => document.removeEventListener('keydown', escape);
+}
+
+/** Long enough for the second click of a double click, which zooms, to cancel the pan of the first. */
+export const PAN_AFTER_CLICK_MS = 300;
+
+/**
+ * WCAG 2.5.7: the map moved only by dragging it, and a drag is the one gesture some hands
+ * cannot make. A single click or tap on the map now brings that spot to the centre, so the
+ * view goes anywhere one tap at a time. Not when the tap was a stop's (the stop layer marks
+ * the event as claimed, for the same reason the route layer reads it), and not for the first
+ * click of a double click, which zooms there. Unanimated under reduced motion.
+ */
+function panOnClick(map: L.Map): () => void {
+  let pending = 0;
+  const onClick = (event: L.LeafletMouseEvent) => {
+    window.clearTimeout(pending);
+    const original = event.originalEvent as MouseEvent & { _stopClaimed?: boolean };
+    pending = window.setTimeout(() => {
+      if (original?._stopClaimed) return;
+      map.panTo(event.latlng, { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches });
+    }, PAN_AFTER_CLICK_MS);
+  };
+  const onDouble = () => window.clearTimeout(pending);
+  map.on('click', onClick);
+  map.on('dblclick', onDouble);
+  return () => {
+    window.clearTimeout(pending);
+    map.off('click', onClick);
+    map.off('dblclick', onDouble);
+  };
 }
 
 /** The map's zoom, read at the end of each gesture: fractional, since the basemap lets the map settle at any zoom. */
