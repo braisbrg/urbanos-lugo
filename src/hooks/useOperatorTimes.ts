@@ -1,6 +1,21 @@
 import { useEffect, useState } from 'react';
-import type { OperatorTimes } from '../services/operatorTimes';
+import type { OperatorDeparture, OperatorTimes } from '../services/operatorTimes';
 import { apiUrl } from '../services/apiUrl';
+
+/**
+ * The server's answer, narrowed rather than cast: only departures with a line, a corridor
+ * and a number of minutes reach the board. Cast, a malformed answer reached React as sent,
+ * and an object where a string was expected takes the whole board down.
+ */
+export function readOperatorTimes(raw: unknown): OperatorTimes | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (!Array.isArray(r.departures)) return null;
+  const departures = r.departures.filter(
+    (d): d is OperatorDeparture => !!d && typeof d === 'object' && typeof d.line === 'string' && typeof d.towards === 'string' && Number.isFinite(d.minutes),
+  );
+  return { code: typeof r.code === 'string' ? r.code : '', departures, fetchedAt: typeof r.fetchedAt === 'string' ? r.fetchedAt : '' };
+}
 
 /**
  * What the operator says is coming at this stop, when there is a server to ask (the
@@ -24,7 +39,7 @@ export function useOperatorTimes(code: string | undefined): OperatorTimes | null
         // A 404 is permanent (static build, or a stop with no code on their site); a 502 is the operator being unreadable now.
         if (res.status === 404) clearInterval(timer);
         if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as OperatorTimes;
+        const data = readOperatorTimes(await res.json());
         if (current) setTimes(data);
       } catch {
         if (current) setTimes(null);

@@ -35,7 +35,8 @@ export const THEME_INIT_HASH = `sha256-${createHash('sha256').update(THEME_INIT_
 
 const DIRECTIVES = [
   "default-src 'self'",
-  "base-uri 'self'",
+  // No page here has a <base>, so none may be added: an injected one would re-root every relative URL.
+  "base-uri 'none'",
   "object-src 'none'",
   "form-action 'self'",
   `script-src 'self' '${THEME_INIT_HASH}'`,

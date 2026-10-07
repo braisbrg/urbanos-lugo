@@ -27,7 +27,9 @@ import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
 import { STALE_AFTER_MS, isSnapshotStale } from '../src/utils/snapshotAge';
 import { MAX_PER_WINDOW, MAX_PLANS_PER_WINDOW, rateLimit } from '../src/security/rateLimit';
 import { RECENT_ROUTES } from '../src/hooks/useStoredList';
-import { SNAPSHOT_AFTER_MS } from '../src/hooks/useServiceAlerts';
+import { SNAPSHOT_AFTER_MS, readSnapshot } from '../src/hooks/useServiceAlerts';
+import { readOperatorTimes } from '../src/hooks/useOperatorTimes';
+import { noticeLink } from '../src/utils/operatorNotices';
 import { plainText } from '../src/utils/html';
 import { STORAGE_KEYS, readJson, readString, writeJson, writeString } from '../src/utils/storage';
 import { LANG_PREFIX, PATHS, SLUGS, isCrawler, parsePath, pathFor, pickLang } from '../src/routes';
@@ -1759,6 +1761,39 @@ await okAsync('the council’s feed cannot hold the operator’s notices back, a
     AbortSignal.timeout = realTimeout;
     console.warn = realWarn;
   }
+});
+
+ok('what the API sends is read, not trusted: text as text, and links only to the two notice sites', () => {
+  // The snapshot was narrowed but the live answer went to the screen as sent, and so did the
+  // operator's minutes: a malformed answer could take a screen down, and any link was
+  // followed. The council feed's own <link> was relayed unread on the server too.
+  for (const good of ['https://buslugo.com/', 'https://buslugo.com/aviso', 'https://www.concellodelugo.gal/es/x']) assert(noticeLink(good) === good, `${good} was refused`);
+  for (const bad of ['http://buslugo.com/', 'javascript:alert(1)', 'https://buslugo.com.example.net/', 'https://evilbuslugo.com/', 'data:text/html,x', '//buslugo.com/x', 7]) {
+    assert(noticeLink(bad) === undefined, `${String(bad)} was let through as a notice link`);
+  }
+  const hostile = readSnapshot({
+    status: 'active_incidents',
+    lastSyncTime: 5,
+    message: { a: 1 },
+    alerts: [null, 'x', { title: { html: 1 }, linesAffected: '1.1', sections: [{ heading: 3, paragraphs: 'p' }, 'x'], link: 'https://example.net/', severity: 'boom', source: 'someone' }],
+  });
+  assert(hostile.alerts.length === 1 && hostile.lastSyncTime === '' && hostile.message === '', 'a malformed answer was not narrowed');
+  const [notice] = hostile.alerts;
+  assert(notice.title === '' && notice.linesAffected.length === 0 && notice.link === undefined && notice.severity === 'info' && notice.source === undefined, `a hostile notice came through: ${JSON.stringify(notice)}`);
+  assert(notice.sections?.length === 1 && notice.sections[0].heading === '' && notice.sections[0].paragraphs.length === 0, 'a hostile section came through');
+  assert(readSnapshot('nonsense').status === 'operational_normal' && readSnapshot(null).alerts.length === 0, 'an answer that is not an object was not narrowed');
+
+  const day = new Date().toUTCString();
+  const feed = (link: string) => `<rss><channel><item><title>Corte de tráfico na rúa</title><pubDate>${day}</pubDate><link>${link}</link></item></channel></rss>`;
+  assert(extractConcelloNotices(feed('https://concellodelugo.gal/es/noticia'))[0]?.link === 'https://concellodelugo.gal/es/noticia', 'the council feed lost its own link');
+  assert(extractConcelloNotices(feed('https://example.net/'))[0]?.link === undefined, 'the council feed relayed a link to another site');
+
+  const times = readOperatorTimes({ code: 'Zjge', fetchedAt: 'x', departures: [{ line: '6', towards: 'Ronda', minutes: 8 }, { line: { x: 1 }, towards: 'a', minutes: 1 }, { line: '7', towards: 'b', minutes: 'soon' }, null] });
+  assert(times?.departures.length === 1 && times.departures[0].line === '6', `malformed departures reached the board: ${JSON.stringify(times)}`);
+  assert(readOperatorTimes({ departures: 'none' }) === null && readOperatorTimes('x') === null, 'an answer with no list of departures was not refused');
+  // And the two hooks read what they fetch through these, rather than casting it.
+  assert(/setData\(readSnapshot\(await res\.json\(\)\)\)/.test(read('src/hooks/useServiceAlerts.ts')), 'the live notices answer reaches the screen unread again');
+  assert(/readOperatorTimes\(await res\.json\(\)\)/.test(read('src/hooks/useOperatorTimes.ts')), 'the operator’s minutes reach the board unread again');
 });
 
 ok('no view renders Galician or Spanish text of its own', () => {
@@ -3990,7 +4025,12 @@ ok('every request to somebody else’s server has a deadline, and the server kee
       // A server reading somebody else's site says who it is (DATA.md: "identifies itself in
       // its User-Agent"); a browser cannot set one, and asks only our own API.
       const isServerSide = file.split(sep).includes('services') && !/apiUrl\(/.test(call);
-      if (isServerSide) assert(/'User-Agent': \w+/.test(call), `${relative(file)}: a request to somebody else's site that does not say who is asking: ${call.slice(0, 90)}`);
+      if (isServerSide) {
+        assert(/'User-Agent': \w+/.test(call), `${relative(file)}: a request to somebody else's site that does not say who is asking: ${call.slice(0, 90)}`);
+        // Every host read here is fixed, and a redirect from one was followed wherever it
+        // pointed (OWASP's SSRF sheet: an allowlist means nothing to a client that follows).
+        assert(/redirect: 'error'/.test(call), `${relative(file)}: a request to somebody else's site that follows redirects: ${call.slice(0, 90)}`);
+      }
       // And in the browser the deadline is asked for only where it exists: Safari 16 has none.
       else assert(/AbortSignal\.timeout\?\.\(/.test(call), `${relative(file)}: AbortSignal.timeout is called in the browser without asking whether it exists`);
     }
@@ -4009,6 +4049,10 @@ ok('every request to somebody else’s server has a deadline, and the server kee
     "res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(self), screen-wake-lock=(self), microphone=()')",
     "res.setHeader('Cache-Control', 'no-store')",
     "express.json({ limit: '32kb' })",
+    // Express sent X-Powered-By: Express on every response, and neither of these was sent.
+    "app.disable('x-powered-by')",
+    "res.setHeader('Cross-Origin-Opener-Policy', 'same-origin')",
+    "res.setHeader('Cross-Origin-Resource-Policy', 'same-origin')",
   ]) {
     assert(server.includes(header), `server.ts no longer has ${header}`);
   }

@@ -22,7 +22,8 @@ So the interesting surface is small:
   `worker/index.ts`, which answers the same two endpoints for the static site when one is
   configured. Both read outside sources on the browser's behalf, because CORS stops the
   browser doing it: buslugo.com, the council's traffic feed, and the operator's own stop
-  page behind the QR stickers. Every one of those reads is capped at 512 KB and timed out;
+  page behind the QR stickers. Every one of those reads goes to a fixed host, follows no
+  redirect, and is capped at 512 KB and timed out;
   buslugo.com and the feed are read at most once a minute, and the stop page at most 120
   times a minute, per server process or worker instance, however many people ask. Anything
   that gets either of them to read a file, run a command, hammer an outside host, or spend
@@ -33,6 +34,16 @@ So the interesting surface is small:
 - **The build and its dependencies.** A postinstall script that runs when it should not,
   or anything that could get code into the published artefact through the workflow in
   `.github/workflows/`.
+
+## The worker's address
+
+The static site trusts one origin besides its own: the worker's, `API_ORIGIN`, which the
+Content Security Policy admits and the app asks for notices and the operator's minutes.
+What comes back is narrowed in the browser before anything is drawn: text as text, and
+links only to buslugo.com or concellodelugo.gal. A hostile answer can be wrong about a
+notice, but it cannot run script, break the screen or send anyone elsewhere. If the Deno
+project or its organization is ever deleted, rebuild the site without `API_ORIGIN` first:
+someone else could register the name that was freed, and the site would go on asking it.
 
 ## What is not a vulnerability here
 

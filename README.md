@@ -1172,8 +1172,13 @@ seu pai, que é xusto como un arranxo de seguridade se converte nunha caída.
 O servidor normaliza todo o que chega pola query string (`?q[]=a` facía caer o endpoint
 cun volcado de pila), devolve JSON en caso de erro en lugar da páxina de erro de Express,
 limita o corpo das peticións a 32 KB e envía `X-Content-Type-Options`, `X-Frame-Options`,
-`Referrer-Policy` e `Permissions-Policy`. Os nomes que se interpolan en HTML nos globos
-do mapa escápanse.
+`Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy` e
+`Cross-Origin-Resource-Policy`, e xa non `X-Powered-By`. Os nomes que se interpolan en HTML
+nos globos do mapa escápanse. As lecturas de buslugo.com, do feed do Concello e da páxina
+do poste non seguen redireccións. No navegador, o que chega da API pásase pola mesma
+lectura ca a copia de cada hora: texto onde se espera texto, e ligazóns só a buslugo.com e
+concellodelugo.gal. Unha API comprometida pode equivocarse nos avisos, pero non romper a
+pantalla nin levar a outro sitio.
 
 ### Accesibilidade
 
@@ -1534,7 +1539,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-216 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+217 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

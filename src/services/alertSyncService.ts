@@ -5,6 +5,7 @@
  */
 import { readCapped } from './readCapped';
 import { asciiLower, plainText } from '../utils/html';
+import { noticeLink } from '../utils/operatorNotices';
 import { NoticeSection, ServiceAlert } from '../types';
 import { REPO_URL } from '../project';
 
@@ -124,7 +125,7 @@ export function extractConcelloNotices(xml: string): ServiceAlert[] {
       description: body.length > CONCELLO_EXCERPT ? `${body.slice(0, CONCELLO_EXCERPT - 1)}…` : body,
       active: true,
       source: 'concello',
-      link: field('link') || undefined,
+      link: noticeLink(field('link')),
     });
   }
   return notices;
@@ -142,7 +143,7 @@ export function extractConcelloNotices(xml: string): ServiceAlert[] {
 async function fetchConcelloNotices(): Promise<ServiceAlert[]> {
   const started = Date.now();
   try {
-    const res = await fetch(CONCELLO_FEED_URL, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(4_000) });
+    const res = await fetch(CONCELLO_FEED_URL, { headers: { 'User-Agent': USER_AGENT }, redirect: 'error', signal: AbortSignal.timeout(4_000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const notices = extractConcelloNotices(await readCapped(res)).sort((a, b) => b.date.localeCompare(a.date));
     console.log(`council feed read in ${Date.now() - started} ms, ${notices.length} notice(s) kept`);
@@ -334,6 +335,8 @@ async function fetchAlerts(now: number): Promise<AlertSyncResult> {
     const response = await fetch(`${OPERATOR_URL}/`, {
       signal: AbortSignal.timeout(6000),
       headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+      // Every host read here is fixed: a redirect elsewhere is a failed read, not a new destination.
+      redirect: 'error',
     });
     if (response.ok) {
       const operatorAlerts = extractAlertsFromHtml(await readCapped(response)).map((a) => ({ ...a, source: 'operator' as const }));

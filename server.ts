@@ -40,6 +40,8 @@ async function startServer() {
   const app = express();
   // A URL path is case-sensitive per RFC 3986; without this /api/PLAN reached the planner past the rate limiter's lower-case check.
   app.set('case sensitive routing', true);
+  // Express names itself in every response unless told not to: a version to look up, for nothing.
+  app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
 
   app.use((req, res, next) => {
@@ -49,6 +51,10 @@ async function startServer() {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(self), screen-wake-lock=(self), microphone=()');
+    // A window this site opens, or that opens it, gets no handle on the other; and no other
+    // site may load these files as its own. Nothing here is meant to be embedded elsewhere.
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
     if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
     next();
   });

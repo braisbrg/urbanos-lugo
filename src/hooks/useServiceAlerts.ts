@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AlertSyncResult } from '../services/alertSyncService';
+import type { ServiceAlert } from '../types';
 import { isSnapshotStale } from '../utils/snapshotAge';
+import { readNotice } from '../utils/operatorNotices';
 import { apiUrl } from '../services/apiUrl';
 
 /**
@@ -15,15 +17,21 @@ export const SNAPSHOT_AFTER_MS = 2000;
 /** What public/alerts.json holds: the sync result plus the time the job took it. */
 type Snapshot = AlertSyncResult & { fetchedAt?: string };
 
-/** The snapshot, narrowed at the one boundary rather than cast: parsed JSON says nothing about `status`. */
-function readSnapshot(raw: Partial<Snapshot> & { status?: string }): Snapshot {
+/**
+ * An answer about notices, the snapshot's or the server's, narrowed at the one boundary
+ * rather than cast: parsed JSON says nothing about its shape, and each notice goes through
+ * readNotice. Only the snapshot was read this way; the live answer went to the screen as sent.
+ */
+export function readSnapshot(raw: unknown): Snapshot {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const text = (value: unknown) => (typeof value === 'string' ? value : '');
   return {
-    lastSyncTime: '',
-    sourceUrl: '',
-    message: '',
-    ...raw,
-    status: raw.status === 'active_incidents' ? 'active_incidents' : raw.status === 'unreachable' ? 'unreachable' : 'operational_normal',
-    alerts: (raw.alerts ?? []) as AlertSyncResult['alerts'],
+    lastSyncTime: text(r.lastSyncTime),
+    sourceUrl: text(r.sourceUrl),
+    message: text(r.message),
+    fetchedAt: typeof r.fetchedAt === 'string' ? r.fetchedAt : undefined,
+    status: r.status === 'active_incidents' ? 'active_incidents' : r.status === 'unreachable' ? 'unreachable' : 'operational_normal',
+    alerts: Array.isArray(r.alerts) ? r.alerts.map(readNotice).filter((a): a is ServiceAlert => a !== null) : [],
   };
 }
 
@@ -77,7 +85,7 @@ export function useServiceAlerts(): ServiceAlerts {
         // works on 15.4, where undefined means what the line meant before it existed.
         const res = await fetch(apiUrl(`alerts${force ? '?refresh=true' : ''}`), { signal: AbortSignal.timeout?.(30_000) });
         if (!res.ok) throw new Error(String(res.status));
-        setData(await res.json());
+        setData(readSnapshot(await res.json()));
         setSnapshotAt(null);
       } catch {
         // No server (static hosting) or it is down: the dated snapshot, never passed off as live.
