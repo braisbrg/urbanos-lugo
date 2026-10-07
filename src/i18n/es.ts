@@ -441,6 +441,9 @@ export const es: Dict = {
     estimatedHint: 'Hora estimada desde la salida de cabecera y el tiempo de recorrido medido.',
     derivedDepartures: '~ Salida que el operador no imprime: sale de la frecuencia que publica o del tiempo hasta el primer punto con horario.',
     estimatedSr: 'hora estimada',
+    previousRun: 'Expedición anterior',
+    nextRun: 'Expedición siguiente',
+    savedSr: 'guardada',
     busScheduledHere: 'Según el horario, el bus estaría llegando aquí',
   },
 

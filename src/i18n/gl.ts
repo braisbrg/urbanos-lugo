@@ -486,6 +486,10 @@ export const gl = {
     estimatedHint: 'Hora estimada desde a saída de cabeceira e o tempo de percorrido medido.',
     derivedDepartures: '~ Saída que o operador non imprime: sae da frecuencia que publica ou do tempo ata o primeiro punto con horario.',
     estimatedSr: 'hora estimada',
+    /** The run navigator's two arrows, and the star that marks a saved line in the list, for a screen reader. */
+    previousRun: 'Expedición anterior',
+    nextRun: 'Expedición seguinte',
+    savedSr: 'gardada',
     busScheduledHere: 'Segundo o horario, o bus estaría chegando aquí',
   },
 

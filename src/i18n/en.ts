@@ -452,6 +452,9 @@ export const en: Dict = {
     estimatedHint: 'Estimated from the departure at the terminus plus the measured driving time.',
     derivedDepartures: '~ Not printed by the operator: worked out from its stated frequency or from the running time to the first timed stop.',
     estimatedSr: 'estimated time',
+    previousRun: 'Previous run',
+    nextRun: 'Next run',
+    savedSr: 'saved',
     busScheduledHere: 'On the timetable, the bus would be reaching this stop now',
   },
 

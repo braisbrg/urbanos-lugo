@@ -5693,6 +5693,21 @@ ok('a check of the notices that the reader asked for says it is checking, and wh
   }
 });
 
+ok('the line page names its arrows, says which run is on show, and names a stop by what it shows', () => {
+  // The run navigator's two buttons were read as "left arrow" and "right arrow" (4.1.2); the
+  // departure on show was filled in and said nothing; a stop row carried a label with its name
+  // and time only, so origin, destination, zone, code, "passed" and the bus the timetable puts
+  // there never reached a screen reader (1.3.1) and "click Orixe" found nothing (2.5.3); and a
+  // saved line was a star an icon cannot say.
+  const lines = read('src/components/LinesView.tsx');
+  assert(/aria-label=\{t\.lines\.previousRun\}/.test(lines) && /aria-label=\{t\.lines\.nextRun\}/.test(lines), 'the run arrows are read out as arrows again');
+  assert(/aria-pressed=\{idx === runIndex\}/.test(lines), 'the departure on show is no longer said to be the one pressed');
+  const at = lines.indexOf('role="button"');
+  assert(at > 0 && !/aria-label=/.test(lines.slice(at, lines.indexOf('className=', at))), 'a stop row is named apart from what it shows again');
+  assert(/<span className="sr-only">, \{t\.lines\.estimatedSr\}<\/span>/.test(lines), 'a stop row no longer says its worked-out time is estimated');
+  assert(/<span className="sr-only">\{t\.lines\.savedSr\}<\/span>/.test(lines), 'a saved line is a star that says nothing to a screen reader again');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

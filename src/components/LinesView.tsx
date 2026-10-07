@@ -179,7 +179,13 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                             –
                           </span>
                           <span className="line-clamp-3 break-words">{parts[parts.length - 1]}</span>
-                          {favoriteLineIds.includes(line.id) && <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0 self-center" />}
+                          {/* The star is the only sign the line is saved, and an icon says nothing to a screen reader. */}
+                          {favoriteLineIds.includes(line.id) && (
+                            <>
+                              <Star className="w-3.5 h-3.5 fill-current text-warn-ink shrink-0 self-center" aria-hidden="true" />
+                              <span className="sr-only">{t.lines.savedSr}</span>
+                            </>
+                          )}
                         </div>
                         {/* Wrapping: at 200% text the frequency and the running-bus badge, both shrink-0, ran 42 px past a 390 px phone and made the page scroll sideways. */}
                         <div className="text-label text-ink-2 mt-0.5 flex min-w-0 flex-wrap items-center gap-2">
@@ -358,6 +364,8 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                   onClick={() => setPickedRunIndex(idx)}
                   title={t.lines.viewRunAt(time)}
                   aria-label={guessed ? `${t.lines.viewRunAt(time)}, ${t.lines.estimatedSr}` : t.lines.viewRunAt(time)}
+                  // The run on show is the one filled in: said as well as drawn.
+                  aria-pressed={idx === runIndex}
                   className={`tnum flex h-11 items-center justify-center rounded-[7px] border px-2.5 text-label font-semibold ${idx === runIndex ? 'border-ink bg-ink text-bg' : 'border-edge text-ink-2'}`}
                 >
                   {guessed && <span>~</span>}
@@ -393,7 +401,8 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
               // Narrower than 16rem, the times go on top and the arrows under them: squeezed between
               // the two at 200% text, they pushed the right arrow 118 px off the screen.
               <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-control bg-surface border border-edge">
-                <button onClick={() => setPickedRunIndex(Math.max(0, runIndex - 1))} disabled={runIndex === 0} className="order-2 @min-[16rem]:order-none flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
+                {/* Named: an arrow on its own was read out as "left arrow", which says where it points and not what it does. */}
+                <button onClick={() => setPickedRunIndex(Math.max(0, runIndex - 1))} disabled={runIndex === 0} aria-label={t.lines.previousRun} title={t.lines.previousRun} className="order-2 @min-[16rem]:order-none flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
                   &larr;
                 </button>
                 <div className="order-1 basis-full text-center leading-tight @min-[16rem]:order-none @min-[16rem]:basis-0 @min-[16rem]:flex-1">
@@ -414,7 +423,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                     )}
                   </div>
                 </div>
-                <button onClick={() => setPickedRunIndex(Math.min(runs.length - 1, runIndex + 1))} disabled={runIndex >= runs.length - 1} className="order-3 @min-[16rem]:order-none flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
+                <button onClick={() => setPickedRunIndex(Math.min(runs.length - 1, runIndex + 1))} disabled={runIndex >= runs.length - 1} aria-label={t.lines.nextRun} title={t.lines.nextRun} className="order-3 @min-[16rem]:order-none flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-edge bg-bg text-body font-semibold text-ink-2 disabled:opacity-40">
                   &rarr;
                 </button>
               </div>
@@ -448,7 +457,11 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                         onSelectStop(stop);
                       }
                     }}
-                    aria-label={`${stop.name}. ${passingMinutes === undefined ? t.lines.noService : formatMinutes(passingMinutes)}${passingMinutes !== undefined && derived(shownRun, idx) ? `, ${t.lines.estimatedSr}` : ''}`}
+                    // Named by what it shows, not by a label beside it: the label said the name and
+                    // the time, and left out origin, destination, zone, code, "passed" and the bus
+                    // the timetable puts here, which a screen reader then never heard (1.3.1), and
+                    // "click Orixe" found nothing (2.5.3). The one word the eye gets from a tilde
+                    // is written out after the time.
                     className="relative group cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent rounded-control"
                   >
                     <div
@@ -509,6 +522,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                                 {relativeMinutes} min ({formatMinutes(passingMinutes)})
                               </span>
                             )}
+                            {passingMinutes !== undefined && derived(shownRun, idx) && <span className="sr-only">, {t.lines.estimatedSr}</span>}
                           </span>
                         </div>
                       </div>
