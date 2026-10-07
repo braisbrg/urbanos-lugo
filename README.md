@@ -774,7 +774,7 @@ non serven CORS— e a app segue funcionando sen el: iso é o despregue en GitHu
 │   ├── importFonts.ts              baixa a tipografía e escribe os @font-face
 │   ├── stress*.ts                  carga e disparates: parsers, motor, HTTP, rede morta ou
 │   │                               lenta no navegador, planificador e invariantes
-│   ├── auditBrowser.ts             contraste, tamaños, obxectivos e consola, por pantalla e tema
+│   ├── auditBrowser.ts             WCAG 2.2 A e AA estado por estado: axe-core, sondas propias e Tab
 │   ├── fullAudit.ts                informe de calidade de datos
 │   ├── lib.ts                      o que cada ferramenta levaba repetido: raíz, JSON, estatísticas
 │   └── test.ts                     comprobacións executables
@@ -1740,30 +1740,41 @@ ao lado, co porqué, e dende o 19 de setembro de 2026 tamén os bytes (260 KB en
 250 antes do primeiro pintado: unha dependencia que engorde o anaco de entrada xa non é
 un número máis nun rexistro que ninguén le) e o desprazamento de deseño acumulado (CLS,
 0,1; medido 0,000 nas dúas visitas).
-`audit:browser` mide, en trece estados e nos dous temas, o contraste de cada texto (as
-cores en `oklch()` resólvense pintándoas nun lenzo, non cunha expresión regular; a
-opacidade herdada desconta, e o texto tecleado e o *placeholder* dun campo mídense polo
-seu pseudoelemento, que antes non se medían), os textos por baixo de 12 px, os obxectivos
-por baixo de 44 px, o nome accesible de cada control (un botón só con icona e sen
-`aria-label` anúnciase como «botón»: 380 controis con nome, 0 sen el), as imaxes sen
-`alt`, o `lang` do documento, que haxa un só `<h1>`, e o desbordamento lateral —do
-documento e de `<main>`, que é onde as pantallas fan scroll: o formulario da ruta chegou a
-medir 553 px máis có teléfono sen que o `scrollWidth` da páxina dixese nada—, e o
-vertical do documento, porque só `<main>` fai scroll e unha páxina máis alta ca a pantalla
-leva as barras con ela (a de liñas medía 1.392 px de máis); todo iso do mesmo
-estado a 320 px de ancho e co texto ao 200%, que é o que fai o axuste «texto máis grande»
-dun móbil (atopou a fila de liñas saíndo 42 px pola dereita a 200%, e o culpable era un
-`sr-only` posicionado fóra da pantalla); co mesmo 200%, o texto que non se ve aínda que a
-páxina non se alargue —cortado cunha elipse, saíndo da súa caixa ou pasado do bordo dentro
-de `<main>`, que recorta—; e o que a consola rexistra en cada carga fresca.
-Despois pulsa teclas de verdade: Tab e Maiús+Tab dan a volta enteira ao menú sen saír del
-(10 controis de 10 visitados, para que a comprobación non poida aprobar por non moverse),
-Escape péchao e devolve o foco ao botón que o abriu, e unha viaxe planificada deixa o
-foco na resposta; e con `prefers-reduced-motion` emulado pregunta que segue animándose
-(nada). Os checks de `test.ts` sobre iso len o código; estes dous len o foco. Ao remate
-abre un Chromium co axuste «non permitir que os sitios garden datos», que fai que ler
-`localStorage` lance un erro, e mira que a app se debuxe igual: con ese axuste a páxina
-quedaba en branco, porque unha lectura se facía fóra do seu `try`. `stress:network` xoga
+`audit:browser` mide a app contra as WCAG 2.2 nos niveis A e AA, estado por estado. Son
+trinta e oito estados —a portada baleira e a dunha persoa con paradas gardadas, a busca con
+e sen resultados, o taboleiro (por hora, por liña, a outra hora e aberto desde o QR), «preto
+de min» con permiso e sen el, o menú, os favoritos, o lector de QR e o seu erro, as liñas, o
+mapa cos buses e coa ficha dunha parada, o planificador baleiro, coas suxestións abertas,
+planificado, a outra hora, sen ruta e sen GPS, a viaxe en curso, os avisos con incidencias,
+sen elas, co servidor caído e sen rede, e a noite—, cada un alcanzado como o alcanza unha
+persoa, nun teléfono e nun escritorio, en galego, castelán e inglés e nos dous temas. O
+reloxo da páxina vai fixado (un martes ás 09:12, e ás 03:00 para a noite), as dúas respostas
+da API son fixtures e calquera petición a outro servidor rexéitase no propio navegador: unha
+execución non le o sitio de ninguén e dá o mesmo a calquera hora. En cada estado corre
+axe-core, todas as regras WCAG 2.0, 2.1 e 2.2 de nivel A e AA, e as sondas da casa: o
+contraste de cada texto (as cores en `oklch()` resólvense pintándoas nun lenzo, a opacidade
+herdada desconta, e o texto tecleado e o *placeholder* dun campo mídense polo seu
+pseudoelemento); o nome accesible de cada control, e que conteña as palabras que amosa
+(2.5.3, que axe deixa fóra); os obxectivos de 24 px ou o seu espazo (2.5.8), e os 44 px que
+son o listón desta casa, que se imprimen sen bloquear; o `lang`, un só `<h1>`, o título, a
+mesma navegación na mesma orde (3.2.3), o que un estado ten que anunciar (4.1.3) e a consola
+en cada carga fresca; o desbordamento lateral e vertical, do documento e de `<main>`, que é
+onde as pantallas fan scroll (o formulario da ruta chegou a medir 553 px máis có teléfono
+sen que o `scrollWidth` da páxina dixese nada, e a lista de liñas alargou a páxina 1.392
+px); e o texto que non se ve —cortado cunha elipse ou cun `line-clamp`, saíndo da súa caixa
+ou pasado do bordo— a 320 px de ancho (1.4.10), co texto ao 200 %, que é o que fai o axuste
+«texto máis grande» dun móbil (1.4.4), e cos espazados de texto de 1.4.12. Despois pulsa Tab
+de verdade por cada estado: o foco ten que verse (2.4.7), o contorno con 3:1 (1.4.11), sen
+quedar enteiro detrás doutra cousa (2.4.11), e chegar a todo o que se pode enfocar sen
+quedar atrapado (2.1.1, 2.1.2); nos diálogos, Tab non sae deles e Escape pecha e devolve o
+foco ao que os abriu. E o que un estado non amosa: os rótulos que o mapa amosa ao pasar o
+rato teñen que quedar baixo o punteiro e irse con Escape (1.4.13), o mapa ten que moverse
+sen arrastrar (2.5.7), un botón premido ten que verse premido coas cores forzadas do sistema,
+con `prefers-reduced-motion` nada segue animándose, e a app ten que debuxarse co axuste «non
+permitir que os sitios garden datos», que fai que ler `localStorage` lance un erro (a páxina
+quedaba en branco, porque unha lectura se facía fóra do seu `try`). Sae con erro ante
+calquera achado WCAG, calquera estado que non alcanzou e calquera comprobación que non
+demostrou nada. `stress:network` xoga
 o outro lado de `stress:http`: non o servidor con carga, senón a pantalla cando a rede é
 o problema, que nunha parada é o normal. Catro formas, coa pila de rede do propio
 navegador: a API non contesta nunca, contesta 500, contesta seis segundos tarde, e non hai
