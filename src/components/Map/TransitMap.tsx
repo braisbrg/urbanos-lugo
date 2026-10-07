@@ -268,6 +268,10 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
               }}
             />
 
+            {/* Two controls cannot wait a viewport away on a phone: which line, and where you are. They ride over the map below `lg`.
+                The lines come before the buses notice drawn under them, so Tab and a screen reader meet the two in the order they are drawn. */}
+            <LineChips listed={listedLines} picked={pickedLineIds} onToggle={handleSelectLine} onAll={() => handlePreset('all')} />
+
             {/* While the buses are drawn, the map says what they are, on the map: the popup that
                 said it is opened by nobody who is only looking. Under the line chips on a phone,
                 and beneath them when those open; one tap takes the buses off again. */}
@@ -281,9 +285,6 @@ export function TransitMap({ selectedStop, focus = 'line', selectedLine, onSelec
                 </p>
               </div>
             )}
-
-            {/* Two controls cannot wait a viewport away on a phone: which line, and where you are. They ride over the map below `lg`. */}
-            <LineChips listed={listedLines} picked={pickedLineIds} onToggle={handleSelectLine} onAll={() => handlePreset('all')} />
 
             {/* Orientation, one thumb's reach from the bottom corner; the zoom control has the other. */}
             <button

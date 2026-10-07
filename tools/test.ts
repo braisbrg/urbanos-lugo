@@ -5910,6 +5910,25 @@ ok('an open dialog leaves the focus where the keyboard put it', () => {
   assert(/2\.4\.3: with nothing pressed, the focus moved by itself/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer waits to see the focus stay put in a dialog');
 });
 
+ok('the map is read and tabbed in the order it is drawn, and the tab bar hides none of its sheet', () => {
+  // 1.3.2 / 2.4.3. On a phone CSS order drew the quick filters first in the map's sheet, and
+  // the focus went down past locate and centre and back up to them; over the map, the buses
+  // notice came before the line chips drawn above it. And 2.4.11: the sheet sat under the tab
+  // bar, which hid its last 67 px and the line rows the focus scrolled there. None of this was
+  // seen: the audit's setup pressed the sheet's own hidden close button, so it never opened.
+  const controls = read('src/components/Map/MapControls.tsx');
+  assert((controls.match(/\border-first\b/g) ?? []).length <= 1, 'the map’s sheet moves a panel with CSS order again, away from where Tab meets it');
+  const map = read('src/components/Map/TransitMap.tsx');
+  assert(map.indexOf('<LineChips') < map.indexOf('busesEstimatedNotice'), 'the buses notice comes before the line chips drawn above it');
+  const z = (source: string, pattern: RegExp) => Number(source.match(pattern)?.[1] ?? NaN);
+  const chips = z(read('src/components/Map/LineChips.tsx'), /absolute inset-x-0 top-0 z-\[(\d+)\]/);
+  assert(chips > z(map, /absolute inset-x-0 top-16 z-\[(\d+)\]/), 'the line chips no longer open over the buses notice that now follows them');
+  assert(z(controls, /fixed inset-x-0 bottom-0 z-\[(\d+)\]/) > z(read('src/components/BottomNav.tsx'), /sticky bottom-0 z-\[(\d+)\]/), 'the tab bar covers the bottom of the map’s sheet again');
+  const audit = read('tools/auditBrowser.ts');
+  assert(/no dialog is open after the setup/.test(audit) && /getComputedStyle\(e\)\.visibility !== 'hidden'/.test(audit), 'a dialog state can pass the audit without its dialog open');
+  assert(/which the focus reached before it, in the same column/.test(audit), 'the browser audit no longer compares the Tab order with where things are drawn');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

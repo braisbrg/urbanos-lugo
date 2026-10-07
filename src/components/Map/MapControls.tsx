@@ -60,13 +60,46 @@ export function MapControls(p: MapControlsProps) {
   ];
   const locateLabel = p.locate.isLocating ? t.map.locating : p.locate.isFollowing ? t.map.stopFollowing : t.map.myLocation;
 
+  // First of the panels on a phone, so the map has its own controls directly under it; second
+  // in the sidebar. Drawn twice, one shown per breakpoint, rather than moved by CSS order: the
+  // order moved what is drawn and not what Tab and a screen reader follow, and on a phone the
+  // focus went down past locate and centre and back up to these (1.3.2, 2.4.3).
+  const quickFilters = (shown: string) => (
+    <div className={`${card} ${shown}`}>
+      <span className={heading}>{t.map.quickFilters}</span>
+      {/* A scrolling row on a phone, where five stacked buttons took 150 px of a sheet; wrapped in the sidebar, where a sideways scroll hides four of five. */}
+      <div className="no-scrollbar flex gap-1.5 overflow-x-auto lg:flex-wrap lg:overflow-x-visible">
+        {presets.map(([preset, label]) => (
+          <button
+            key={preset}
+            onClick={() => p.onPreset(preset)}
+            aria-pressed={p.preset === preset}
+            className={`flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-control px-2.5 py-1.5 text-center text-label font-semibold ${
+              p.preset === preset ? 'bg-accent text-on-accent shadow-xs' : 'border border-edge bg-surface text-ink-2'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {p.preset === 'stop' && p.aroundStop && (
+        <div className="mt-2.5 rounded-control border border-accent bg-accent/10 p-3">
+          <p className="text-label leading-relaxed text-ink">{t.map.aroundStopActive(p.aroundStop.name, AROUND_STOP_RADIUS_M)}</p>
+          <button onClick={() => p.onPreset('all')} className="mt-2 flex h-9 items-center rounded-control border border-edge bg-bg px-3 text-label font-semibold text-ink-2">
+            {t.map.aroundStopClear}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div
       ref={p.sheetRef}
       role={p.sheetOpen ? 'dialog' : undefined}
       aria-modal={p.sheetOpen ? true : undefined}
       aria-label={p.sheetOpen ? t.map.controls : undefined}
-      className={`order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4 fixed inset-x-0 bottom-0 z-[510] max-h-[78dvh] overflow-y-auto rounded-t-2xl border-t border-edge bg-surface p-3.5 shadow-2xl transition-transform duration-200 motion-reduce:transition-none lg:static lg:z-auto lg:max-h-none lg:overflow-visible lg:visible lg:translate-y-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
+      className={`order-2 flex flex-col gap-3.5 lg:order-none lg:col-span-4 fixed inset-x-0 bottom-0 z-[1250] max-h-[78dvh] overflow-y-auto rounded-t-2xl border-t border-edge bg-surface p-3.5 shadow-2xl transition-transform duration-200 motion-reduce:transition-none lg:static lg:z-auto lg:max-h-none lg:overflow-visible lg:visible lg:translate-y-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
         p.sheetOpen ? 'translate-y-0' : 'invisible translate-y-full'
       }`}
     >
@@ -77,6 +110,7 @@ export function MapControls(p: MapControlsProps) {
           <ChevronDown className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
+      {quickFilters('lg:hidden')}
 
       <div className={`${card} p-4`}>
         <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-line">
@@ -119,33 +153,7 @@ export function MapControls(p: MapControlsProps) {
         )}
       </div>
 
-      {/* First of the panels on a phone, so the map has its own controls directly under it. */}
-      <div className={`order-first ${card} lg:order-none`}>
-        <span className={heading}>{t.map.quickFilters}</span>
-        {/* A scrolling row on a phone, where five stacked buttons took 150 px of a sheet; wrapped in the sidebar, where a sideways scroll hides four of five. */}
-        <div className="no-scrollbar flex gap-1.5 overflow-x-auto lg:flex-wrap lg:overflow-x-visible">
-          {presets.map(([preset, label]) => (
-            <button
-              key={preset}
-              onClick={() => p.onPreset(preset)}
-              aria-pressed={p.preset === preset}
-              className={`flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-control px-2.5 py-1.5 text-center text-label font-semibold ${
-                p.preset === preset ? 'bg-accent text-on-accent shadow-xs' : 'border border-edge bg-surface text-ink-2'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {p.preset === 'stop' && p.aroundStop && (
-          <div className="mt-2.5 rounded-control border border-accent bg-accent/10 p-3">
-            <p className="text-label leading-relaxed text-ink">{t.map.aroundStopActive(p.aroundStop.name, AROUND_STOP_RADIUS_M)}</p>
-            <button onClick={() => p.onPreset('all')} className="mt-2 flex h-9 items-center rounded-control border border-edge bg-bg px-3 text-label font-semibold text-ink-2">
-              {t.map.aroundStopClear}
-            </button>
-          </div>
-        )}
-      </div>
+      {quickFilters('hidden lg:block')}
 
       {p.preset === 'nearby' && p.nearbyLines.length > 0 && (
         <div className={card}>
