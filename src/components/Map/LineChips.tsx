@@ -55,8 +55,9 @@ export function LineChips({ listed, picked, onToggle, onAll }: LineChipsProps) {
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          // The count it shows is in its name, so "click 24" said to voice control finds it (2.5.3).
-          aria-label={`${expanded ? t.map.collapseLines : t.map.expandLines} (${listed.length})`}
+          // The count it shows is in its name, so "click 24" said to voice control finds it (2.5.3);
+          // after a colon, since a name's brackets are dropped before it is matched.
+          aria-label={`${expanded ? t.map.collapseLines : t.map.expandLines}: ${listed.length}`}
           title={expanded ? t.map.collapseLines : t.map.expandLines}
           className={`${chip} gap-1 border-edge bg-bg/95 px-3.5 text-label font-bold text-ink-2`}
         >
@@ -74,7 +75,7 @@ export function LineChips({ listed, picked, onToggle, onAll }: LineChipsProps) {
               type="button"
               onClick={() => onToggle(line)}
               aria-pressed={isSelected}
-              aria-label={`${t.lines.lineLabel(line.number)}: ${line.name}`}
+              aria-label={`${t.lines.lineLabel(branch ? `${line.number} ${branch}` : line.number)}: ${line.name}`}
               title={line.name}
               className={`pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-label font-black text-white shadow-sm ${isSelected ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''}`}
               style={{ backgroundColor: line.color }}

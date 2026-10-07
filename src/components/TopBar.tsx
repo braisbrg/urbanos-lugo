@@ -136,7 +136,7 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
         <button
           onClick={onOpenMenu}
           className="relative flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-control border border-edge bg-surface text-ink-2 lg:hidden"
-          aria-label={alertCount > 0 ? `${t.menu.open}. ${t.menu.alerts} (${alertCount})` : t.menu.open}
+          aria-label={alertCount > 0 ? `${t.menu.open}. ${t.menu.alerts}: ${alertCount}` : t.menu.open}
         >
           <Menu className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           {alertCount > 0 && (

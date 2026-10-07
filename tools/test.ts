@@ -5711,14 +5711,19 @@ ok('the line page names its arrows, says which run is on show, and names a stop 
 ok('a control named apart from its words still contains the words it shows', () => {
   // 2.5.3: a voice-control user says what they see. The map's line chips show "7" and were
   // named by the route alone; the chip that unfolds them shows "24" and was named without
-  // it; the notices link read "servizo1" against a name of "servizo (1)". audit:browser
-  // compares every named control with its visible words, in every state.
+  // it; the notices link read "servizo1" against a name of "servizo (1)". And a count in
+  // brackets is no count at all to a checker, which drops a name's brackets before matching
+  // it: the count goes after a colon. audit:browser compares every named control with its
+  // visible words, in every state, and runs axe's rule for the same thing.
   const chips = read('src/components/Map/LineChips.tsx');
-  assert(/aria-label=\{`\$\{t\.lines\.lineLabel\(line\.number\)\}: \$\{line\.name\}`\}/.test(chips), 'a line chip is named without the number it shows again');
-  assert(/aria-label=\{`\$\{expanded \? t\.map\.collapseLines : t\.map\.expandLines\} \(\$\{listed\.length\}\)`\}/.test(chips), 'the unfold chip is named without the count it shows again');
+  assert(/aria-label=\{`\$\{t\.lines\.lineLabel\(branch \? `\$\{line\.number\} \$\{branch\}` : line\.number\)\}: \$\{line\.name\}`\}/.test(chips), 'a line chip is named without the number and the branch it shows again');
+  assert(/aria-label=\{`\$\{expanded \? t\.map\.collapseLines : t\.map\.expandLines\}: \$\{listed\.length\}`\}/.test(chips), 'the unfold chip is named without the count it shows again');
   for (const file of ['MenuDrawer.tsx', 'SideNav.tsx']) {
-    assert(/\{label\}<\/span>\s*(\{\/\*[\s\S]*?\*\/\})?\{' '\}\s*\{badge > 0/.test(read(`src/components/${file}`)), `${file}: the words and the count run together again`);
+    const code = read(`src/components/${file}`);
+    assert(/\{label\}<\/span>\s*(\{\/\*[\s\S]*?\*\/\})?\{' '\}\s*\{badge > 0/.test(code), `${file}: the words and the count run together again`);
+    assert(/aria-label=\{badge > 0 \? `\$\{label\}: \$\{badge\}` : undefined\}/.test(code), `${file}: the count in the name is in brackets again, where a checker drops it`);
   }
+  assert(/`\$\{t\.menu\.open\}\. \$\{t\.menu\.alerts\}: \$\{alertCount\}`/.test(read('src/components/TopBar.tsx')), 'the menu button’s count is in brackets again');
   assert(/push\('label', el, 'shows "'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer compares names with the words controls show');
 });
 

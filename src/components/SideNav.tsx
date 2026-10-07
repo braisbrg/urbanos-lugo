@@ -48,7 +48,7 @@ export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = fals
 
       <div className="mt-5 flex flex-col gap-0.5 border-t border-line px-2.5 pt-4">
         {asideSections(t, alertCount).map(({ id, Icon, label, badge }) => (
-          <a key={id} {...tabLink(id, setActiveTab, lang)} aria-current={activeTab === id ? 'page' : undefined} aria-label={badge > 0 ? `${label} (${badge})` : undefined} className={row(activeTab === id)}>
+          <a key={id} {...tabLink(id, setActiveTab, lang)} aria-current={activeTab === id ? 'page' : undefined} aria-label={badge > 0 ? `${label}: ${badge}` : undefined} className={row(activeTab === id)}>
             <Icon className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1">{label}</span>
             {/* As in the menu: a space between the words and the count, so the text matches the name. */}{' '}
