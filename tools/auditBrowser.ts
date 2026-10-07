@@ -659,6 +659,7 @@ const RECORD = `function () {
   window.__auditSig = new Map(list.map((el) => [el, sig(el)]));
   window.__auditList = list;
   window.__auditSigOf = sig;
+  window.__auditRun = [];
   return { count: list.length, modal: !!modal, visible: document.visibilityState };
 }`;
 
@@ -693,7 +694,38 @@ const CHECK = `function () {
       if (!visible) issues.push('2.4.11: entirely behind ' + (hits[0] ? label(hits[0]) : 'nothing'));
     }
   }
-  return { at: window.__auditList.indexOf(a), where: label(a), issues };
+  // 1.3.2 / 2.4.3: Tab follows the page's order, and CSS order can draw a block above one that
+  // comes before it. The map's sheet on a phone did: the focus went down past locate and centre
+  // and then back up to the filters drawn above them. So a stop must not sit above one reached
+  // before it in the same column, in the page's own coordinates (scrolled boxes put back) --
+  // any one, not only the last: centre is in the other column of its row, and judged against
+  // it alone the climb back to the filters passed. Not judged: what is pinned (fixed, sticky),
+  // which has no place in the flow, and a map's markers, which are placed by geography.
+  const at = window.__auditList.indexOf(a);
+  const pinned = (el) => {
+    if (el.closest('.leaflet-container')) return true;
+    for (let n = el; n && n !== modal && n !== document.body; n = n.parentElement) if (/fixed|sticky/.test(getComputedStyle(n).position)) return true;
+    return false;
+  };
+  let here = null;
+  if (b.width && b.height && !pinned(a)) {
+    let y = b.top, x = b.left;
+    for (let n = a.parentElement; n; n = n.parentElement) { y += n.scrollTop; x += n.scrollLeft; }
+    here = { at, top: y, left: x, right: x + b.width, label: label(a) };
+  }
+  // The run so far: it starts again where the order breaks (a wrap, a stop opened on the way,
+  // something pinned).
+  const run = window.__auditRun;
+  // The same stop judged again, after a wait: judged against the ones before it, not itself.
+  if (at >= 0 && run.length && run[run.length - 1].at === at) run.pop();
+  const last = run[run.length - 1];
+  if (!here || !last || at < 0 || at !== last.at + 1) run.length = 0;
+  else {
+    const over = run.find((s) => here.top < s.top - 8 && here.left < s.right && here.right > s.left);
+    if (over) issues.push('2.4.3: this Tab stop is drawn ' + Math.round(over.top - here.top) + ' px above ' + over.label + ', which the focus reached before it, in the same column');
+  }
+  if (here) run.push(here);
+  return { at, where: label(a), issues, map: !!a.closest('.leaflet-container') };
 }`;
 
 /**
@@ -743,6 +775,7 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
     const missed = await page.evaluate<string[]>(`window.__auditList.filter((el, i) => !(${JSON.stringify([...reached])}).includes(i)).slice(0, 6).map((el) => el.tagName.toLowerCase() + ' "' + ((el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30)) + '"')`);
     findings.push({ kind: 'keyboard', where: missed.join(', '), detail: `2.1.1: Tab reached ${reached.size} of ${count} focusable controls` });
   }
+  if (dialog && !modal) findings.push({ kind: 'reach', where: 'dialog', detail: 'the dialog had closed before the keyboard reached it' });
   if (dialog && modal) {
     // The focus stays where the keyboard put it. Every open dialog put it back on its first
     // control whenever the page behind it re-rendered -- the map's clock, every 3 s -- so it is
@@ -771,9 +804,12 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
 
 /** In the page before every setup: find a control by what it says, type into a field, wait for something. */
 const REACH = `
-  const all = () => [...document.querySelectorAll('button, a, [role=button], summary')];
-  const seeText = (t) => all().find((e) => ((e.textContent || '').trim() + ' ' + (e.getAttribute('aria-label') || '')).toLowerCase().includes(t.toLowerCase()) && e.getClientRects().length);
-  const byLabel = (t) => all().find((e) => (e.getAttribute('aria-label') || '').toLowerCase().startsWith(t.toLowerCase()) && e.getClientRects().length);
+  // Shown, not only laid out: the map's sheet is visibility:hidden while closed and keeps its
+  // boxes, and its own close button, "Pechar filtros e capas", came before the button that
+  // opens it. Pressed instead, it closed a closed sheet, and the sheet was never audited.
+  const all = () => [...document.querySelectorAll('button, a, [role=button], summary')].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');
+  const seeText = (t) => all().find((e) => ((e.textContent || '').trim() + ' ' + (e.getAttribute('aria-label') || '')).toLowerCase().includes(t.toLowerCase()));
+  const byLabel = (t) => all().find((e) => (e.getAttribute('aria-label') || '').toLowerCase().startsWith(t.toLowerCase()));
   /** Opened the way a keyboard opens it: focus on the control, then the activation, so a dialog knows where to give the focus back. */
   const press = (e) => { if (!e) return false; e.focus(); e.click(); return true; };
   const fill = (el, value) => {
@@ -1084,6 +1120,10 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
     if (got !== true) findings.push({ kind: 'reach', where: label(state), detail: String(got) });
     await sleep(500);
   }
+  // A setup that says it opened a dialog and did not leaves the page under the dialog's name,
+  // and every measure of it passes: the map's sheet did, for as long as the state existed.
+  const modalOpen = `!!document.querySelector('[role=dialog][aria-modal=true]')`;
+  if (state.dialog && !state.tap && !findings.length && !(await page.evaluate<boolean>(modalOpen))) findings.push({ kind: 'reach', where: label(state), detail: 'no dialog is open after the setup' });
   if (state.tap && !findings.length) {
     // The centre of the map, where the stop the board sent it to sits; or the middle of a bus
     // that is wholly on the map and not under one of the buttons that float on it.
