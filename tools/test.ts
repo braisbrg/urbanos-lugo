@@ -5929,6 +5929,17 @@ ok('the map is read and tabbed in the order it is drawn, and the tab bar hides n
   assert(/which the focus reached before it, in the same column/.test(audit), 'the browser audit no longer compares the Tab order with where things are drawn');
 });
 
+ok('clearing the recent routes can be undone, and the focus stays on the button', () => {
+  // 3.3.4: "Borrar" deleted the planner's recent routes at a tap, with no confirmation and no
+  // way back; and the button holding the focus went with the list, so the focus fell to the
+  // page (2.4.3). It is one button whose words change, so the focus has somewhere to stay.
+  const planner = read('src/components/RoutePlannerView.tsx');
+  assert(/\{cleared\.length \? t\.planner\.undoClear : t\.stopHome\.clearRecent\}/.test(planner), 'clearing the recent routes has no undo again, or the undo is a second button the focus falls out of');
+  assert(/\[\.\.\.cleared\]\.reverse\(\)\.forEach\(rememberRoute\)/.test(planner), 'undo no longer puts the routes back in their order');
+  assert(/role="status" className="sr-only">\s*\{cleared\.length \? t\.planner\.recentCleared : ''\}/.test(planner), 'clearing the recent routes is not announced');
+  assert(/after clearing the recent routes the focus is not on the way back/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer clears the recent routes');
+});
+
 ok('a map popup the keyboard goes into is brought inside the map first', () => {
   // 2.4.11: a popup half off the map, and the focus reached its close button past the edge of
   // the screen: the browser scrolled the map's box to it and Leaflet scrolled it back. Measured

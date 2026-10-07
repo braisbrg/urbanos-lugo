@@ -196,6 +196,8 @@ export const gl = {
     swap: 'Inverter orixe e destino',
     /** Read where the eye sees the arrow between two places. */
     toSr: 'ata',
+    undoClear: 'Desfacer',
+    recentCleared: 'Borráronse as rutas recentes.',
     departureLabel: 'Saída',
     arrivalLabel: 'Chegada',
     board: 'Sube en',

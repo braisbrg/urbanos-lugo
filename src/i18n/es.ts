@@ -162,6 +162,8 @@ export const es: Dict = {
     noticeOnTrip: (lines: string[]) => `Estos días hay cambios en ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')}, según el aviso del operador`,
     swap: 'Invertir origen y destino',
     toSr: 'hasta',
+    undoClear: 'Deshacer',
+    recentCleared: 'Se borraron las rutas recientes.',
     departureLabel: 'Salida',
     arrivalLabel: 'Llegada',
     board: 'Sube en',

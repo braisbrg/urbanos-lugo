@@ -8,7 +8,7 @@ import { stopById } from '../data/transitData';
 import { resolveLocationQuery, QUICK_DESTINATIONS } from '../utils/places';
 import { dayWord } from '../utils/serviceLabels';
 import { walkHopKey, walkHopsOf, type Hop } from '../services/walkingPath';
-import { useRecentRoutes } from '../hooks/useStoredList';
+import { useRecentRoutes, type RecentRoute } from '../hooks/useStoredList';
 import { useWalkPaths } from '../hooks/useWalkPaths';
 import { useClock } from '../hooks/useClock';
 import { boardingIsNow, type TripPlace } from '../utils/tripProgress';
@@ -80,6 +80,13 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   const [timeValue, setTimeValue] = useState(clockNow);
   const [showMap, setShowMap] = useState(true);
   const [recentRoutes, rememberRoute, clearRecentRoutes] = useRecentRoutes();
+  // What "Borrar" took, until it is undone or a trip is planned (3.3.4): it wiped the list at a
+  // tap, with no way back, and the button holding the focus went with it (2.4.3). The same
+  // button says "Desfacer" now, so the focus stays where it was.
+  const [cleared, setCleared] = useState<RecentRoute[]>([]);
+  useEffect(() => {
+    if (recentRoutes.length) setCleared((was) => (was.length ? [] : was));
+  }, [recentRoutes]);
   const [{ formOpen, asked, answered }, ask] = useReducer(asking, { formOpen: true, asked: false, answered: 0 });
 
   // Close the autocomplete when a click lands anywhere outside the two fields: on the click,
@@ -444,14 +451,27 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
 
             {/* Your own trips first, then everybody's. Folded with the form, and back when the form is. */}
             <div className={`mt-5 space-y-4 border-t border-line pt-4 ${folded ? 'hidden lg:block' : ''}`}>
-              {recentRoutes.length > 0 && (
+              {(recentRoutes.length > 0 || cleared.length > 0) && (
                 <div>
                   <div className="mb-2 flex items-baseline justify-between gap-3">
                     <span className="text-label font-bold uppercase tracking-wider text-ink-2">{t.planner.recentRoutes}</span>
-                    <button type="button" onClick={clearRecentRoutes} className="inline-flex h-11 min-w-11 items-center justify-end text-label font-semibold text-accent underline">
-                      {t.stopHome.clearRecent}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (cleared.length) [...cleared].reverse().forEach(rememberRoute);
+                        else {
+                          setCleared(recentRoutes);
+                          clearRecentRoutes();
+                        }
+                      }}
+                      className="inline-flex h-11 min-w-11 items-center justify-end text-label font-semibold text-accent underline"
+                    >
+                      {cleared.length ? t.planner.undoClear : t.stopHome.clearRecent}
                     </button>
                   </div>
+                  <span role="status" className="sr-only">
+                    {cleared.length ? t.planner.recentCleared : ''}
+                  </span>
                   <div className="flex flex-col">
                     {recentRoutes.map((route, idx) => (
                       <button

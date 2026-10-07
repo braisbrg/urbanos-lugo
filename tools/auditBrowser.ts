@@ -840,6 +840,8 @@ const words = (d: typeof gl) => ({
   depart: d.planner.timeModes.depart,
   gps: d.planner.useMyLocation,
   start: d.companion.start,
+  clearRecent: d.stopHome.clearRecent,
+  undoClear: d.planner.undoClear,
 });
 type Words = ReturnType<typeof words>;
 const DICT: Record<Lang, typeof gl> = { gl, es, en };
@@ -988,6 +990,18 @@ const STATES: State[] = [
     expect: `const s = [...document.querySelectorAll('main [role=status]')].some((n) => n.textContent.trim()); return s ? [] : ['the number of suggestions is not announced'];`,
   },
   { screen: 'ruta', name: 'planificada', setup: `${planned} return true;` },
+  {
+    // 3.3.4 and 2.4.3: "Borrar" wiped the recent routes with no way back, and the button that
+    // had the focus went with the list.
+    screen: 'ruta',
+    name: 'recentes borradas',
+    stored: { 'urbanos-lugo-recent-routes': JSON.stringify([{ from: 'Praza Maior', to: 'HULA' }, { from: 'Estación de autobuses', to: 'Campus' }]) },
+    setup: `if (!press(all().find((b) => b.textContent.trim() === T.clearRecent))) return 'no button to clear the recent routes'; await pause(400); return true;`,
+    expect: `const a = document.activeElement, fails = [];
+      if (!a || a.textContent.trim() !== T.undoClear) fails.push('after clearing the recent routes the focus is not on the way back, but on ' + (a ? a.tagName + ' ' + a.textContent.trim().slice(0, 30) : 'nothing'));
+      if (![...document.querySelectorAll('main [role=status]')].some((n) => n.textContent.trim())) fails.push('clearing the recent routes is not announced');
+      return fails;`,
+  },
   { screen: 'ruta', name: 'hora', setup: `if (!press(seeText(T.depart))) return 'no depart-at mode'; await pause(400); return document.querySelector('main input[type=time]') ? true : 'no time field';` },
   {
     screen: 'ruta',
@@ -1168,7 +1182,7 @@ async function runState(w: Worker, pass: Pass, state: State): Promise<Result[]> 
   const first = results[0];
 
   if (state.expect) {
-    const failed = await page.call<string[]>(`function () {${state.expect}}`);
+    const failed = await page.call<string[]>(`function (T) {${state.expect}}`, words(DICT[pass.lang]));
     for (const f of failed) first.findings.push({ kind: 'status', where: label(state), detail: f });
   }
 

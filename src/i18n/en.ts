@@ -173,6 +173,8 @@ export const en: Dict = {
     noticeOnTrip: (lines: string[]) => `These days ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')} ${lines.length === 1 ? 'has' : 'have'} changes, by the operator’s notice`,
     swap: 'Swap origin and destination',
     toSr: 'to',
+    undoClear: 'Undo',
+    recentCleared: 'Recent routes cleared.',
     departureLabel: 'Depart',
     arrivalLabel: 'Arrive',
     board: 'Get on at',
