@@ -613,17 +613,24 @@ async function press(page: Session, key: string, code: number, modifiers = 0): P
  * box. The comparison afterwards is the whole test of 2.4.7: if nothing the eye can see
  * changed, there is no focus indicator, whatever the style sheet says.
  */
-const RECORD = `function () {
-  ${HELPERS}
-  // Nothing focused while the "before" is taken: a control the setup had just pressed still
-  // wore its ring, and compared with itself it showed no change. Not blur(): a time field keeps
-  // the focus in its hour part and wore the ring through it. The focus goes to a stand-in at
-  // the top of the page, which is then taken out, so the first Tab starts from the top.
+/**
+ * Nothing focused while the "before" is taken: a control the setup had just pressed still
+ * wore its ring, and compared with itself it showed no change. Not blur(): a time field keeps
+ * the focus in its hour part and wore the ring through it. The focus goes to a stand-in at
+ * the top of the page, which is then taken out, so the first Tab starts from the top. Run on
+ * its own, before RECORD and a pause: a list that closes when the focus leaves it closes now,
+ * and its rows are not counted as Tab stops the moment before they are gone.
+ */
+const UNFOCUS = `function () {
   const standIn = document.createElement('span');
   standIn.tabIndex = -1;
   document.body.prepend(standIn);
   standIn.focus({ preventScroll: true });
   standIn.remove();
+}`;
+
+const RECORD = `function () {
+  ${HELPERS}
   for (const an of document.getAnimations()) { try { an.finish(); } catch (e) {} }
   const modal = document.querySelector('[role=dialog][aria-modal=true]');
   const scope = modal || document;
@@ -688,6 +695,8 @@ const CHECK = `function () {
  */
 async function traverse(page: Session, dialog: boolean): Promise<{ findings: Finding[]; reached: number; of: number }> {
   const findings: Finding[] = [];
+  await page.call(UNFOCUS);
+  await sleep(300);
   const { count, modal, visible } = await page.call<{ count: number; modal: boolean; visible: string }>(RECORD);
   if (visible !== 'visible') findings.push({ kind: 'reach', where: 'page', detail: `the page is ${visible}: focus styles and frames are not what a reader gets` });
   const reached = new Set<number>();
