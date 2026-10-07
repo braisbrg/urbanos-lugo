@@ -221,8 +221,11 @@ export default function App() {
               not, and the screen-reader text of each line card (an absolute 1 px box) took its
               place from the page: on the lines tab the page grew 1,392 px taller than the
               screen, scrolled under the bars, and on a desktop a page scrollbar narrowed the
-              bottom bar from 375 to 360 px each time the tab opened. */}
-          <main id="contido" className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+              bottom bar from 375 to 360 px each time the tab opened.
+              Under the ride's bar, which is stuck to its foot, the height of the bar stays free
+              when the focus scrolls something into view: the keep-awake switch took the focus
+              entirely behind it (WCAG 2.4.11). */}
+          <main id="contido" className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto has-[.trip-bar]:scroll-pb-20">
             <ErrorBoundary t={t} resetKey={activeTab}>
               {/* One heading for the page, naming what is on screen: correct in both the one-pane and the two-pane layout. */}
               <h1 className="sr-only">{screenTitle}</h1>

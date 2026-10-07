@@ -206,13 +206,15 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
               const passed = riding && stop.passed;
               const isNext = stop.id === nextStop?.id;
               return (
-                <li key={stop.id} aria-current={isNext ? 'step' : undefined} className={`flex min-h-11 items-center gap-3 px-3 py-2 ${passed ? 'text-ink-3' : 'text-ink'}`}>
+                <li key={stop.id} aria-current={isNext ? 'step' : undefined} className={`flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 ${passed ? 'text-ink-3' : 'text-ink'}`}>
                   {/* The arrow is where the GPS says you are, the one measured thing on this screen, so it is the one thing that pulses. */}
                   <span className={`flex h-4 w-4 shrink-0 items-center justify-center ${isNext ? 'live-dot' : ''}`} aria-hidden="true">
                     {passed ? <Check className="anim-tick-in h-4 w-4 text-official" strokeWidth={2.6} /> : isNext ? <ArrowRight className="anim-drop h-4 w-4 text-accent" strokeWidth={2.6} /> : <span className="h-1.5 w-1.5 rounded-full bg-ink-3" />}
                   </span>
-                  <span className={`min-w-0 flex-1 text-body ${passed ? 'line-through' : 'font-semibold'}`}>{stop.name}</span>
-                  <span className="shrink-0 text-label font-semibold text-ink-2">{stop.isAlighting ? t.companion.alightHere : passed ? t.companion.passed : isNext ? t.companion.next : ''}</span>
+                  {/* The name keeps a floor and "baixas aquí" goes under it when both do not fit: beside it
+                      at 200 % text the name had 100 px and its longest word ran out of the row. */}
+                  <span className={`min-w-[min(6rem,100%)] flex-1 break-words text-body ${passed ? 'line-through' : 'font-semibold'}`}>{stop.name}</span>
+                  <span className="ml-auto shrink-0 text-label font-semibold text-ink-2">{stop.isAlighting ? t.companion.alightHere : passed ? t.companion.passed : isNext ? t.companion.next : ''}</span>
                 </li>
               );
             })}
@@ -220,8 +222,11 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
         </div>
       )}
 
-      {/* Always in reach: the mode ends when the reader says so, never on its own. */}
-      <div className="anim-sheet-up sticky bottom-0 z-10 -mx-3.5 border-t border-line bg-bg/95 px-3.5 py-3 backdrop-blur-sm lg:-mx-6 lg:px-6">
+      {/* Always in reach: the mode ends when the reader says so, never on its own. Edge to edge by
+          the page's own gutter, which stops growing with the type where the phone has no room
+          (px-cap-3.5): in plain rem it grew past it and the bar ran 11 px off the screen at 200 %.
+          `trip-bar`: <main> leaves its height free below whatever takes the focus (App.tsx). */}
+      <div className="trip-bar anim-sheet-up sticky bottom-0 z-10 -mx-[min(0.875rem,4.375vw)] border-t border-line bg-bg/95 px-[min(0.875rem,4.375vw)] py-3 backdrop-blur-sm lg:-mx-6 lg:px-6">
         <button type="button" onClick={companion.finish} className={`flex min-h-12 w-full items-center justify-center rounded-control px-4 text-body font-semibold ${phase === 'walking' ? 'bg-accent text-on-accent' : 'border border-edge bg-bg text-ink'}`}>
           {phase === 'walking' ? t.companion.arrivedDone : t.companion.finish}
         </button>

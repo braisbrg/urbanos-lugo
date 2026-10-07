@@ -5794,6 +5794,16 @@ ok('in forced colours a pressed control, the current tab and the current line st
   assert(/name: 'forced', desktop: false/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer looks at forced colours');
 });
 
+ok('the ride screen keeps its stop names whole, its bar on the screen, and the focus out from under the bar', () => {
+  // At 200 % text a stop's name had 100 px beside "baixas aquí" and its longest word ran out
+  // of the row; the bar at the foot took its side margin in plain rem and ran 11 px off the
+  // screen. And the keep-awake switch took the focus entirely behind that bar (2.4.11).
+  const ride = read('src/components/TripCompanionView.tsx');
+  assert(/min-w-\[min\(6rem,100%\)\] flex-1 break-words text-body \$\{passed/.test(ride) && /flex min-h-11 flex-wrap items-center/.test(ride), 'a stop on the ride is squeezed beside its label again');
+  assert(/trip-bar anim-sheet-up sticky bottom-0 z-10 -mx-\[min\(0\.875rem,4\.375vw\)\][^"]*px-\[min\(0\.875rem,4\.375vw\)\]/.test(ride), 'the ride’s bar grows past the page’s gutter with the type again');
+  assert(/<main id="contido" className="[^"]*has-\[\.trip-bar\]:scroll-pb-20/.test(read('src/App.tsx')), 'the focus can go behind the ride’s bar again');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera
