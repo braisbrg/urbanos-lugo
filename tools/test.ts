@@ -5769,6 +5769,15 @@ ok('a map moves without a drag: a tap brings that spot to the centre', () => {
   assert(/2\.5\.7: a click on the map does not move it/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer tries to move the map without a drag');
 });
 
+ok('the buses on the map are not Tab stops, and a screen reader still finds them', () => {
+  // 2.4.11. Leaflet made every bus a Tab stop, and with the buses on, the focus went to buses
+  // past the edge of the map and under the buttons that float on it. What a bus's popup says
+  // the lines screen says, where the keyboard reaches it; the bus stays an image with a name.
+  const buses = read('src/components/Map/VehicleLayer.tsx');
+  assert(/L\.marker\([^)]*\{[^}]*keyboard: false[^}]*\}\)/.test(buses), 'the buses on the map are Tab stops again');
+  assert(/setAttribute\('role', 'img'\)/.test(buses) && /setAttribute\('aria-label', label\)/.test(buses) && (buses.match(/\bname\((existing|marker), label\)/g) ?? []).length === 2, 'a bus on the map lost its name, or its name is not set again when its icon is rebuilt');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

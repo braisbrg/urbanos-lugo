@@ -51,6 +51,13 @@ function popupNode(bus: ScheduledBus, onOpenLine: (lineId: string) => void, lang
   return node;
 }
 
+/** A bus out of the Tab order is still found by a screen reader moving through the map: an image with its line and destination. */
+function name(marker: L.Marker, label: string): void {
+  const el = marker.getElement();
+  el?.setAttribute('role', 'img');
+  el?.setAttribute('aria-label', label);
+}
+
 export function VehicleLayer({ map, buses, visibleLineIds, showBuses, onOpenLine }: VehicleLayerProps) {
   const lang = useLang();
   const markersRef = useRef<Record<string, L.Marker>>({});
@@ -94,14 +101,17 @@ export function VehicleLayer({ map, buses, visibleLineIds, showBuses, onOpenLine
         const drawn = drawnRef.current[bus.id];
         if (drawn?.icon !== iconKey) {
           existing.setIcon(busIcon(bus));
-          existing.getElement()?.setAttribute('aria-label', label); // setIcon rebuilds the element
+          name(existing, label); // setIcon rebuilds the element
         }
         if (drawn?.popup !== popupKey) existing.setPopupContent(popupNode(bus, onOpenLineRef.current, lang));
       } else {
-        const marker = L.marker([bus.currentLat, bus.currentLng], { icon: busIcon(bus), zIndexOffset: 1000 }).addTo(map);
+        // Out of the Tab order (keyboard: false). Leaflet made each bus a Tab stop, and the
+        // focus went to buses past the edge of the map or under the buttons that float on it
+        // (2.4.11). Their popup says what the lines screen says -- the buses the timetable
+        // has on the road and the stop each is reaching -- which the keyboard reaches there.
+        const marker = L.marker([bus.currentLat, bus.currentLng], { icon: busIcon(bus), zIndexOffset: 1000, keyboard: false }).addTo(map);
         marker.bindPopup(popupNode(bus, onOpenLineRef.current, lang));
-        // Leaflet makes the icon a keyboard-reachable button with no name of its own.
-        marker.getElement()?.setAttribute('aria-label', label);
+        name(marker, label);
         markersRef.current[bus.id] = marker;
       }
       drawnRef.current[bus.id] = { icon: iconKey, popup: popupKey };
