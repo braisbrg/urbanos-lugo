@@ -7,7 +7,7 @@ import { directionLabel } from '../../utils/serviceLabels';
 import { BusDirection, BusLine, BusStop } from '../../types';
 import { stopById } from '../../data/transitData';
 import { metresBetween } from '../../utils/geo';
-import { badgeHtml, popupBox, rowButtonStyle } from './popupHtml';
+import { POPUP_CLEAR_OF_CONTROLS, badgeHtml, popupBox, rowButtonStyle } from './popupHtml';
 
 interface RouteLayerProps {
   map: L.Map | null;
@@ -297,7 +297,7 @@ export function RouteLayer({ map, lines, visibleLineIds, emphasisLineIds = [], s
         .filter((h) => h.d <= HIT_PX)
         .sort((a, b) => a.d - b.d);
       if (!hits.length) return;
-      L.popup({ closeButton: true, className: 'transit-map-popup' })
+      L.popup({ closeButton: true, className: 'transit-map-popup', ...POPUP_CLEAR_OF_CONTROLS })
         .setLatLng(e.latlng)
         .setContent(linesHerePopup(hits, lang, onSelectLineRef.current, onOpenLineRef.current))
         .openOn(map);

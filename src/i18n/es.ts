@@ -321,6 +321,7 @@ export const es: Dict = {
     controls: 'Filtros y capas',
     closeControls: 'Cerrar filtros y capas',
     closeStop: 'Cerrar esta parada',
+    closePopup: 'Cerrar',
     expandLines: 'Ver todas las líneas de una vez',
     collapseLines: 'Mostrar las líneas en una fila',
     geolocationUnavailable: 'La geolocalización no está disponible.',

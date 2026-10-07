@@ -26,6 +26,8 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
   const tilesRef = useRef<BasemapLayer | null>(null);
   const isDark = useIsDark();
   const t = useT();
+  const closeLabel = useRef(t.map.closePopup);
+  closeLabel.current = t.map.closePopup;
   const onResizeRef = useRef(onResize);
   onResizeRef.current = onResize;
 
@@ -46,6 +48,10 @@ export function useLeafletMap(containerRef: RefObject<HTMLDivElement | null>, { 
     tilesRef.current = createBasemap(isDark).addTo(instance) as BasemapLayer;
     setMap(instance);
     const unhover = hoverableTooltips(instance);
+    // Leaflet names a popup's close button once, in English -- "Close popup", read out as such
+    // inside a Galician page (WCAG 3.1.2) -- so it is named again in the reader's language each
+    // time a popup opens.
+    instance.on('popupopen', (event) => (event as L.PopupEvent).popup.getElement()?.querySelector('.leaflet-popup-close-button')?.setAttribute('aria-label', closeLabel.current));
     const unpan = panOnClick(instance);
 
     // The container is often 0 px tall on first paint (tab switch, flex layout).

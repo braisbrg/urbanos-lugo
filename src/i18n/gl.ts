@@ -364,6 +364,8 @@ export const gl = {
     controls: 'Filtros e capas',
     closeControls: 'Pechar filtros e capas',
     closeStop: 'Pechar esta parada',
+    /** The close button of a map popup, which Leaflet names in English. */
+    closePopup: 'Pechar',
     expandLines: 'Ver todas as liñas dunha vez',
     collapseLines: 'Amosar as liñas nunha fila',
     geolocationUnavailable: 'A xeolocalización non está dispoñible.',

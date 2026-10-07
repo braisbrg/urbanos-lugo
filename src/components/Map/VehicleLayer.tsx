@@ -3,7 +3,7 @@ import L from 'leaflet';
 import { translations, useLang, type Lang } from '../../i18n';
 import { escapeHtml } from '../../utils/html';
 import { ScheduledBus } from '../../types';
-import { badgeHtml, popupBox, rowButtonStyle } from './popupHtml';
+import { POPUP_CLEAR_OF_CONTROLS, badgeHtml, popupBox, rowButtonStyle } from './popupHtml';
 
 interface VehicleLayerProps {
   map: L.Map | null;
@@ -110,7 +110,7 @@ export function VehicleLayer({ map, buses, visibleLineIds, showBuses, onOpenLine
         // (2.4.11). Their popup says what the lines screen says -- the buses the timetable
         // has on the road and the stop each is reaching -- which the keyboard reaches there.
         const marker = L.marker([bus.currentLat, bus.currentLng], { icon: busIcon(bus), zIndexOffset: 1000, keyboard: false }).addTo(map);
-        marker.bindPopup(popupNode(bus, onOpenLineRef.current, lang));
+        marker.bindPopup(popupNode(bus, onOpenLineRef.current, lang), POPUP_CLEAR_OF_CONTROLS);
         name(marker, label);
         markersRef.current[bus.id] = marker;
       }

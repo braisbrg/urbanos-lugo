@@ -332,6 +332,7 @@ export const en: Dict = {
     controls: 'Filters and layers',
     closeControls: 'Close filters and layers',
     closeStop: 'Close this stop',
+    closePopup: 'Close',
     expandLines: 'See every line at once',
     collapseLines: 'Show the lines in one row',
     geolocationUnavailable: 'Geolocation is not available.',

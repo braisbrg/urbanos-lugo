@@ -5858,6 +5858,18 @@ ok('the poles on the board’s map are a list too, which a keyboard reaches', ()
   }
 });
 
+ok('a map popup’s close button is readable, named in the reader’s language, and not under the map’s controls', () => {
+  // A bus's popup opened under the notice that floats over the map and its close button was
+  // covered (2.5.8); Leaflet paints that "×" #757575, 4.19:1 on the dark card (1.4.3), and names
+  // it "Close popup" in English inside a Galician page (3.1.2).
+  assert(/\.leaflet-container a\.leaflet-popup-close-button \{\s*color: var\(--c-ink-2\) !important;/.test(read('src/index.css')), 'the popup’s close button is Leaflet’s grey again');
+  assert(/instance\.on\('popupopen', [^\n]*setAttribute\('aria-label', closeLabel\.current\)\)/.test(read('src/hooks/useLeafletMap.ts')), 'a popup’s close button is named in English again');
+  const clear = /autoPanPaddingTopLeft: \[(\d+), (\d+)\]/.exec(read('src/components/Map/popupHtml.ts'));
+  assert(clear && Number(clear[2]) >= 100, 'popups on the network map no longer keep clear of the controls over its top');
+  assert(/bindPopup\(popupNode\(bus, onOpenLineRef\.current, lang\), POPUP_CLEAR_OF_CONTROLS\)/.test(read('src/components/Map/VehicleLayer.tsx')) && /\.\.\.POPUP_CLEAR_OF_CONTROLS/.test(read('src/components/Map/RouteLayer.tsx')) && /POPUP_CLEAR_OF_CONTROLS\)/.test(read('src/components/Map/useFollowMe.ts')), 'a popup on the network map can open under its controls again');
+  for (const lang of LANGS) assert(translations(lang).map.closePopup.trim(), `${lang}: a popup’s close button has no name`);
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

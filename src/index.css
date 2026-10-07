@@ -442,6 +442,14 @@
     background: var(--c-bg) !important;
     color: var(--c-ink) !important;
   }
+  /* And its close button in a fixed grey, #757575: 4.19:1 on the dark card, under the 4.5 its
+     "×" needs. The zoom buttons' ink. */
+  .leaflet-container a.leaflet-popup-close-button {
+    color: var(--c-ink-2) !important;
+  }
+  .leaflet-container a.leaflet-popup-close-button:hover {
+    color: var(--c-ink) !important;
+  }
 
   /* The hover labels on stops and routes never got the same treatment: the two class
      names the layers pass — stop-hover-tooltip and transit-map-tooltip — were never
