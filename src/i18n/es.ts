@@ -147,6 +147,7 @@ export const es: Dict = {
     snapshotNotice: (at: string) =>
       `Esto no se acaba de comprobar: es la copia que dejó la tarea programada el ${at}. Esta versión de la web no tiene servidor que pueda preguntarle al operador ahora mismo, así que un aviso puede ya no estar vigente. Comprueba en buslugo.com si te afecta.`,
     source: 'Fuente oficial:',
+    checked: (count: number) => (count === 0 ? 'Comprobado: el operador no tiene avisos' : count === 1 ? 'Comprobado: 1 aviso del operador' : `Comprobado: ${count} avisos del operador`),
   },
 
   planner: {

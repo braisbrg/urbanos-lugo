@@ -158,6 +158,7 @@ export const en: Dict = {
     snapshotNotice: (at: string) =>
       `This was not just checked: it is the copy a scheduled job committed on ${at}. This build has no server to ask the operator with, so a notice may no longer be current. Check buslugo.com if it affects you.`,
     source: 'Official source:',
+    checked: (count: number) => (count === 0 ? 'Checked: no notices from the operator' : count === 1 ? 'Checked: 1 notice from the operator' : `Checked: ${count} notices from the operator`),
   },
 
   planner: {

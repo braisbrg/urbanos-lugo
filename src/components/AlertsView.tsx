@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AlertTriangle, HelpCircle, Newspaper, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
 import { LOCALE, useLang, useT } from '../i18n';
 import { ServiceAlert } from '../types';
@@ -94,6 +95,8 @@ export function AlertsView({ alerts }: AlertsViewProps) {
   const t = useT();
   const locale = LOCALE[useLang()];
   const { data, snapshotAt, isSyncing, cooldown, refresh } = alerts;
+  /** The reader pressed the button: from then on, what the check found is said, not only drawn. */
+  const [asked, setAsked] = useState(false);
 
   // The operator is talking about its own buses; the council is publishing news about the city.
   const published = data?.alerts || [];
@@ -135,7 +138,10 @@ export function AlertsView({ alerts }: AlertsViewProps) {
           </div>
           <button
             id="sync-alerts-btn"
-            onClick={() => refresh(true)}
+            onClick={() => {
+              setAsked(true);
+              refresh(true);
+            }}
             disabled={isSyncing || cooldown > 0}
             className={`flex h-11 shrink-0 items-center gap-1.5 self-start rounded-control px-4 text-body font-semibold sm:self-auto ${
               cooldown > 0 ? 'cursor-not-allowed border border-edge bg-surface text-ink-3' : 'bg-accent hover:bg-accent text-on-accent disabled:opacity-50'
@@ -144,6 +150,12 @@ export function AlertsView({ alerts }: AlertsViewProps) {
             {isSyncing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : cooldown > 0 ? <Clock className="w-3.5 h-3.5 text-ink-2" /> : <RefreshCw className="w-3.5 h-3.5" />}
             <span>{isSyncing ? t.fares.refreshing : cooldown > 0 ? t.fares.cooldownText(cooldown) : t.fares.refreshBtn}</span>
           </button>
+          {/* The check, for the ear: that it is under way, and what it found. It changed only the
+              button's words and the cards below, which a screen reader is not told about (4.1.3).
+              A copy that came back instead of an answer is said as what it is. */}
+          <span role="status" className="sr-only">
+            {isSyncing ? t.fares.refreshing : asked ? (snapshotAt || unreachable ? t.fares.unknownStatusTitle : t.fares.checked(liveAlerts.length)) : ''}
+          </span>
         </div>
 
         {/* Where these came from when it was not from asking just now: the static build reads the last snapshot, and a stale incident read as current is the worse mistake. */}

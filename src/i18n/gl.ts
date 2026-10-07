@@ -178,6 +178,8 @@ export const gl = {
     snapshotNotice: (at: string) =>
       `Isto non se acaba de comprobar: é a copia que deixou a tarefa programada o ${at}. Esta versión da web non ten servidor que poida preguntarlle ao operador agora mesmo, así que un aviso pode xa non estar vixente. Comproba en buslugo.com se che afecta.`,
     source: 'Fonte oficial:',
+    /** Said, not shown, when a check the reader asked for has answered. */
+    checked: (count: number) => (count === 0 ? 'Comprobado: o operador non ten avisos' : count === 1 ? 'Comprobado: 1 aviso do operador' : `Comprobado: ${count} avisos do operador`),
   },
 
   planner: {

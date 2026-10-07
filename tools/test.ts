@@ -5681,6 +5681,18 @@ ok('the QR code field has a name, and its errors are said and tied to it', () =>
   assert(/<p role="alert"[^>]*>\s*\{cameraError\}/.test(qr), 'a refused camera is said in silence again');
 });
 
+ok('a check of the notices that the reader asked for says it is checking, and what it found', () => {
+  // The button's words changed to "Sincronizando" and the cards below changed, and a screen
+  // reader was told about neither (4.1.3). A live region carries both, after a press only.
+  const view = read('src/components/AlertsView.tsx');
+  assert(/<span role="status" className="sr-only">\s*\{isSyncing \? t\.fares\.refreshing : asked \? \(snapshotAt \|\| unreachable \? t\.fares\.unknownStatusTitle : t\.fares\.checked\(liveAlerts\.length\)\) : ''\}/.test(view), 'checking the notices is said in silence again');
+  assert(/setAsked\(true\);\s*refresh\(true\);/.test(view), 'the result is no longer said after a press');
+  for (const lang of LANGS) {
+    const said = [0, 1, 3].map((n) => translations(lang).fares.checked(n));
+    assert(new Set(said).size === 3 && said.every((s, i) => i === 0 || s.includes(String([0, 1, 3][i]))), `${lang}: the check’s result does not say how many notices: ${said.join(' / ')}`);
+  }
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera
