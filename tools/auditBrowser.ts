@@ -664,7 +664,7 @@ const CHECK = `function () {
   if (modal && !modal.contains(a)) issues.push('2.4.3: focus left the open dialog for ' + label(a));
   const before = window.__auditSig.get(a);
   const now = window.__auditSigOf(a);
-  if (before !== undefined && before === now) issues.push('2.4.7: nothing visible changes when it takes focus');
+  if (before !== undefined && before === now) issues.push('2.4.7: nothing visible changes when it takes focus (' + now.split('#')[0].slice(0, 90) + (a.matches(':focus-visible') ? ', :focus-visible' : ', not :focus-visible') + ')');
   const s = getComputedStyle(a);
   if (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) {
     const got = ratio(rgba(s.outlineColor).slice(0, 3), backdrop(a.parentElement || a));
@@ -711,6 +711,21 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
     if (got.issues.some((i) => i.startsWith('2.4.11')) && got.where.includes('leaflet')) {
       await sleep(600);
       got = await page.call(CHECK);
+    }
+    // Inside a run Chrome sometimes withholds :focus-visible from a Tab into a time field, away
+    // and back again included, where every reproduction outside one, and a screenshot, show it
+    // given and the ring drawn. The question 2.4.7 asks is whether a keyboard focus shows, so
+    // the state is put on the field the way DevTools' "force :focus-visible" does, and compared
+    // again; a control with no focus style still fails.
+    if (got.issues.some((i) => i.includes('not :focus-visible'))) {
+      await page.send('DOM.getDocument', { depth: 0 });
+      const { result } = await page.send<{ result: { objectId: string } }>('Runtime.evaluate', { expression: 'document.activeElement' });
+      const { nodeId } = await page.send<{ nodeId: number }>('DOM.requestNode', { objectId: result.objectId });
+      await page.send('CSS.enable');
+      await page.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['focus', 'focus-visible'] });
+      const forced = await page.call<{ at: number; where: string; issues: string[] }>(CHECK);
+      await page.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] });
+      got = { ...forced, issues: forced.issues.filter((i) => !i.startsWith('2.4.7')).concat(forced.issues.some((i) => i.startsWith('2.4.7')) ? [`2.4.7: nothing visible changes even with :focus-visible forced on it`] : []) };
     }
     if (got.at >= 0) reached.add(got.at);
     for (const issue of got.issues) findings.push({ kind: issue.startsWith('2.4.3') ? 'keyboard' : 'focus', where: got.where, detail: issue });
@@ -1404,7 +1419,12 @@ let ran = false;
 const started = Date.now();
 await withBrowser(async (browser) => {
   ran = true;
-  const jobs = PASSES.flatMap((pass) => STATES.filter((s) => !(pass.desktop && s.phoneOnly) && !(!pass.desktop && s.desktopOnly)).map((state) => ({ pass, state })));
+  // For an edit loop: AUDIT_STATES and AUDIT_PASSES take a pattern for the state ("ruta/hora")
+  // and the pass ("desktop"); the sequences after the states run whatever these say.
+  const only = (pattern: string | undefined, value: string) => !pattern || new RegExp(pattern).test(value);
+  const jobs = PASSES.filter((pass) => only(process.env.AUDIT_PASSES, pass.name)).flatMap((pass) =>
+    STATES.filter((s) => !(pass.desktop && s.phoneOnly) && !(!pass.desktop && s.desktopOnly) && only(process.env.AUDIT_STATES, label(s))).map((state) => ({ pass, state })),
+  );
   const results: Result[] = [];
   let next = 0;
   await Promise.all(
@@ -1449,7 +1469,8 @@ await withBrowser(async (browser) => {
     for (const r of mine) if (r.nav) navs.set(r.nav, [...(navs.get(r.nav) ?? []), r.state]);
     if (navs.size > 1) extra.push({ name: `${pass.name}: navigation`, findings: [{ kind: 'nav', where: pass.name, detail: `the navigation differs between states: ${[...navs.entries()].map(([n, s]) => `"${n}" on ${s.slice(0, 3).join(', ')}`).join(' / ')}` }] });
     const titles = new Map<string, Set<string>>();
-    for (const r of mine) titles.set(r.state.split('/')[0], (titles.get(r.state.split('/')[0]) ?? new Set()).add(r.title));
+    // A state that never drew has no title to share; the reach finding already says so.
+    for (const r of mine) if (r.title) titles.set(r.state.split('/')[0], (titles.get(r.state.split('/')[0]) ?? new Set()).add(r.title));
     const perScreen = [...titles.entries()].map(([screen, set]) => [screen, [...set][0]] as const);
     const shared = perScreen.filter(([, t], i) => perScreen.findIndex(([, u]) => u === t) !== i);
     if (shared.length) extra.push({ name: `${pass.name}: titles`, findings: shared.map(([screen, t]) => ({ kind: 'title' as Kind, where: screen, detail: `2.4.2: "${t}" is the title of another screen too` })) });
