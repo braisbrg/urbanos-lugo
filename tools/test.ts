@@ -5885,6 +5885,15 @@ ok('a bus’s popup is not rebuilt under the keyboard’s focus', () => {
   assert(/popup: holdsFocus \? \(drawnRef\.current\[bus\.id\]\?\.popup \?\? popupKey\) : popupKey/.test(buses), 'a popup skipped under the focus is never rebuilt after');
 });
 
+ok('an open dialog leaves the focus where the keyboard put it', () => {
+  // useDialog listed onClose among its effect's dependencies, and every caller passes a new
+  // arrow on each render: each re-render of the page behind an open dialog -- the map's clock
+  // every 3 s, the app's every minute -- put the focus back on its first control (2.4.3).
+  const hook = read('src/hooks/useDialog.ts');
+  assert(/\}, \[open\]\);/.test(hook) && !/\}, \[open, onClose\]\);/.test(hook) && /onCloseRef\.current\(\);/.test(hook), 'an open dialog takes the focus back to its first control on every re-render again');
+  assert(/2\.4\.3: with nothing pressed, the focus moved by itself/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer waits to see the focus stay put in a dialog');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

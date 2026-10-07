@@ -9,6 +9,13 @@ import { useEffect, useRef } from 'react';
 export function useDialog(open: boolean, onClose: () => void) {
   const containerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<Element | null>(null);
+  // Read through a ref, so the effect below runs when the overlay opens and closes and at no
+  // other time. Its callers pass a new arrow on every render, and with onClose among its
+  // dependencies each re-render of a parent -- the map's clock every 3 s, the app's every
+  // minute, the notices arriving -- tore the overlay's focus down and put it back on its first
+  // control: in the map's stop sheet the keyboard lost its place every three seconds (2.4.3).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -25,7 +32,7 @@ export function useDialog(open: boolean, onClose: () => void) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -48,7 +55,7 @@ export function useDialog(open: boolean, onClose: () => void) {
         (openerRef.current as HTMLElement | null)?.focus?.();
       }
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return containerRef;
 }

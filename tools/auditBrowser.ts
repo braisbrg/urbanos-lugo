@@ -744,6 +744,16 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
     findings.push({ kind: 'keyboard', where: missed.join(', '), detail: `2.1.1: Tab reached ${reached.size} of ${count} focusable controls` });
   }
   if (dialog && modal) {
+    // The focus stays where the keyboard put it. Every open dialog put it back on its first
+    // control whenever the page behind it re-rendered -- the map's clock, every 3 s -- so it is
+    // left on the second control for longer than that tick and must still be there.
+    await press(page, 'Tab', 9);
+    await press(page, 'Tab', 9);
+    const where = `(() => { const a = document.activeElement; return a ? a.tagName + ' ' + (a.getAttribute('aria-label') || a.textContent || '').trim().slice(0, 40) : ''; })()`;
+    const before = await page.evaluate<string>(where);
+    await sleep(3500);
+    const later = await page.evaluate<string>(where);
+    if (later !== before) findings.push({ kind: 'keyboard', where: before, detail: `2.4.3: with nothing pressed, the focus moved by itself to ${later}` });
     await press(page, 'Escape', 27);
     await sleep(400);
     const after = await page.evaluate<string>(
