@@ -5670,6 +5670,17 @@ ok('a list laid over the page goes on Escape, on a lifted tap outside, and when 
   assert(leaves.test(read('src/components/planner/PlaceField.tsx')) && /onLeave: \(\) => setActiveInput/.test(read('src/components/RoutePlannerView.tsx')), 'the planner’s suggestions stay over the form when the focus leaves the field');
 });
 
+ok('the QR code field has a name, and its errors are said and tied to it', () => {
+  // A code nobody knows appeared as a red line under the field in silence (4.1.3), with
+  // nothing on the field to say it was wrong or why (3.3.1), and the field's only name was
+  // the example inside it, gone at the first letter. A refused camera was silent too.
+  const qr = read('src/components/QrScannerModal.tsx');
+  assert(/aria-label=\{t\.qr\.inputLabel\}/.test(qr), 'the code field is named only by the example in it again');
+  assert(/aria-invalid=\{errorMsg \? true : undefined\}/.test(qr) && /aria-describedby=\{errorMsg \? 'qr-manual-error' : undefined\}/.test(qr), 'the code field no longer says it is wrong and why');
+  assert(/<p id="qr-manual-error" role="alert"/.test(qr), 'a code that matches no stop is said in silence again');
+  assert(/<p role="alert"[^>]*>\s*\{cameraError\}/.test(qr), 'a refused camera is said in silence again');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

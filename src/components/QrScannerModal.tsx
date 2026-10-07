@@ -160,7 +160,11 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
           {hasBarcodeDetector ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
           <span>{hasBarcodeDetector ? (isScanning ? t.qr.stopScan : t.qr.scanBtn) : t.qr.noCamera}</span>
         </button>
-        {cameraError && <p className="text-label font-bold text-estimated px-1 mb-2">{cameraError}</p>}
+        {cameraError && (
+          <p role="alert" className="text-label font-bold text-estimated px-1 mb-2">
+            {cameraError}
+          </p>
+        )}
 
         <div className="space-y-3">
           <input
@@ -174,9 +178,18 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
             onKeyDown={(e) => e.key === 'Enter' && lookup()}
             maxLength={MAX_QUERY_LENGTH}
             placeholder={t.qr.placeholder}
+            // A name that stays when the example text goes, and the error said and tied to the
+            // field: it appeared under it in silence, with nothing on the field to say why.
+            aria-label={t.qr.inputLabel}
+            aria-invalid={errorMsg ? true : undefined}
+            aria-describedby={errorMsg ? 'qr-manual-error' : undefined}
             className="min-h-11 w-full rounded-md border border-edge bg-surface px-3.5 py-2.5 text-body font-semibold text-ink placeholder:text-ink-3 focus:bg-bg focus:outline-hidden focus:ring-2 focus:ring-accent"
           />
-          {errorMsg && <p className="text-label font-bold text-warn-ink px-1">{errorMsg}</p>}
+          {errorMsg && (
+            <p id="qr-manual-error" role="alert" className="text-label font-bold text-warn-ink px-1">
+              {errorMsg}
+            </p>
+          )}
           <button onClick={() => lookup()} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-accent py-2.5 text-label font-bold uppercase tracking-wider text-on-accent shadow-xs transition-all hover:bg-accent">
             <span>{t.qr.searchBtn}</span>
             <ArrowRight className="w-4 h-4" />

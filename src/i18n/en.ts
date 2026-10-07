@@ -392,6 +392,7 @@ export const en: Dict = {
     howItWorks:
       'Every Urbanos de Lugo pole carries a unique QR code that opens the departure times for that stop. You can scan it here, or type the printed code.',
     notFound: 'No stop was found with that code.',
+    inputLabel: 'Pole code',
   },
 
   lines: {

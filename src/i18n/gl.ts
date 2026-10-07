@@ -423,6 +423,8 @@ export const gl = {
     howItWorks:
       'Cada poste de Urbanos de Lugo ten un código QR único que abre os tempos de paso desa parada. Podes escanealo aquí ou escribir o código impreso.',
     notFound: 'Non se atopou ningunha parada co código introducido.',
+    /** The code field's name, which stays when the example in it goes. */
+    inputLabel: 'Código do poste',
   },
 
   lines: {

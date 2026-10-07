@@ -381,6 +381,7 @@ export const es: Dict = {
     howItWorks:
       'Cada poste de Urbanos de Lugo tiene un código QR único que abre los tiempos de paso de esa parada. Puedes escanearlo aquí o escribir el código impreso.',
     notFound: 'No se encontró ninguna parada con el código introducido.',
+    inputLabel: 'Código del poste',
   },
 
   lines: {
