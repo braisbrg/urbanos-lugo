@@ -138,7 +138,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.lines.searchLines}
               aria-label={t.lines.searchLines}
-              className="h-11 w-full rounded-control border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3 focus:outline-none"
+              className="h-11 w-full rounded-control border border-edge bg-surface px-3.5 text-body text-ink placeholder:text-ink-3"
             />
 
             {/* No scroll box of its own: on a phone the page scrolls, on a desktop the column
@@ -449,7 +449,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
                       }
                     }}
                     aria-label={`${stop.name}. ${passingMinutes === undefined ? t.lines.noService : formatMinutes(passingMinutes)}${passingMinutes !== undefined && derived(shownRun, idx) ? `, ${t.lines.estimatedSr}` : ''}`}
-                    className="relative group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control"
+                    className="relative group cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent rounded-control"
                   >
                     <div
                       className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 border-white shadow-xs flex items-center justify-center transition-transform group-hover:scale-125 ${

@@ -85,8 +85,10 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
     <header ref={boxRef} className="relative border-b border-line bg-bg px-cap-3.5 py-3 lg:px-6">
       <div className="flex items-center gap-2">
         {/* The buttons in the bar are sized in px like the bar itself: in rem they doubled with
-            the type inside a 46 px bar, and at 200% the QR button was pushed half out of it. */}
-        <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-control border border-edge bg-surface pl-3">
+            the type inside a 46 px bar, and at 200% the QR button was pushed half out of it.
+            The field's focus ring is drawn on this box, the shape the eye takes for the field:
+            the input inside had its outline taken off and nothing in its place. */}
+        <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-control border border-edge bg-surface pl-3 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent">
           <Search className="h-4.5 w-4.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           <input
             id="site-search"
@@ -100,7 +102,7 @@ export function TopBar({ onSelectStop, onSelectLine, onSelectPlace, onOpenQrScan
             maxLength={MAX_QUERY_LENGTH}
             placeholder={t.search.placeholder}
             aria-label={t.search.placeholder}
-            className="h-full min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-3"
+            className="h-full min-w-0 flex-1 bg-transparent text-body text-ink outline-hidden placeholder:text-ink-3"
           />
           {q.length > 0 && (
             <button onClick={choose(() => {})} className="flex h-[44px] w-[44px] shrink-0 items-center justify-center text-ink-3" aria-label={t.search.clear}>

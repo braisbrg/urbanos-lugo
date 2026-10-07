@@ -174,7 +174,7 @@ export function QrScannerModal({ isOpen, onClose, onSelectStop }: QrScannerModal
             onKeyDown={(e) => e.key === 'Enter' && lookup()}
             maxLength={MAX_QUERY_LENGTH}
             placeholder={t.qr.placeholder}
-            className="min-h-11 w-full rounded-md border border-edge bg-surface px-3.5 py-2.5 text-body font-semibold text-ink placeholder:text-ink-3 focus:bg-bg focus:outline-none focus:ring-2 focus:ring-accent"
+            className="min-h-11 w-full rounded-md border border-edge bg-surface px-3.5 py-2.5 text-body font-semibold text-ink placeholder:text-ink-3 focus:bg-bg focus:outline-hidden focus:ring-2 focus:ring-accent"
           />
           {errorMsg && <p className="text-label font-bold text-warn-ink px-1">{errorMsg}</p>}
           <button onClick={() => lookup()} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-accent py-2.5 text-label font-bold uppercase tracking-wider text-on-accent shadow-xs transition-all hover:bg-accent">

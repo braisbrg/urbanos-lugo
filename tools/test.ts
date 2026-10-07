@@ -5639,6 +5639,21 @@ ok('the map’s buses start hidden, and while they are shown the map says they a
   assert(/name: 'buses'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer measures the map with its buses on');
 });
 
+ok('every focusable thing shows its focus, in forced colours too', () => {
+  // WCAG 2.4.7. The two search fields had outline-none and nothing in its place: the focus
+  // rule set 2 px of accent and the utility set the style to none, so the keyboard reached
+  // them invisibly. Three more drew their focus as a box-shadow ring, which forced colours
+  // (Windows' contrast themes) take away; outline-hidden leaves a transparent outline that
+  // those themes paint. audit:browser presses Tab through every state and compares.
+  for (const file of sourcesUnder('src/components')) {
+    const code = readFileSync(file, 'utf8');
+    assert(!/\boutline-none\b/.test(code), `${relative(file)} takes the focus outline off with outline-none`);
+    for (const [cls] of code.matchAll(/className=(?:"[^"]*|\{`[^`]*)\boutline-hidden\b[^"`]*/g)) {
+      assert(/\bring-2\b/.test(cls) || /has-\[input:focus-visible\]:outline-2/.test(code), `${relative(file)} hides the outline with nothing in its place: ${cls.slice(0, 120)}`);
+    }
+  }
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

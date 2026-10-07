@@ -65,7 +65,7 @@ export function PlaceField({ id, role, value, display, placeholder, label, sugge
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
         placeholder={placeholder}
-        className={`anim-fade h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent ${first ? 'focus:rounded-t-xl' : 'focus:rounded-b-xl'}`}
+        className={`anim-fade h-12 w-full bg-transparent pl-11 pr-12 text-body font-semibold text-ink placeholder:text-ink-3 focus:outline-hidden focus:ring-2 focus:ring-accent ${first ? 'focus:rounded-t-xl' : 'focus:rounded-b-xl'}`}
       />
       {trailing?.kind === 'gps' && (
         <button
