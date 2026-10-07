@@ -18,7 +18,7 @@ const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.R
 const MAP_HEIGHT = 'h-[37vh] min-h-[280px] max-h-[420px] lg:min-h-[360px]';
 const TICK_MS = 15_000;
 const label = 'text-label font-bold uppercase tracking-wider text-ink-2';
-const headline = 'mt-1 text-title font-bold leading-tight text-ink';
+const headline = 'mt-1 break-words text-title font-bold leading-tight text-ink';
 
 /**
  * "Vou no bus": the screen for the ride itself, glanced at one-handed on a moving bus. One
@@ -95,7 +95,8 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
             <p className={headline}>{segment?.fromStop?.name}</p>
             {segment?.line && (
               <>
-                <div className="mt-3 flex items-center gap-2.5">
+                {/* Wrapping: at 200 % text the badge, the clock and "in N min" ran past the card. */}
+                <div className="mt-3 flex flex-wrap items-center gap-2.5">
                   <LineBadge number={segment.line.number} color={segment.line.color} size="md" />
                   <span className="sr-only">{t.planner.departureLabel}</span>
                   <span className="tnum text-emph font-semibold text-ink">{times.none ? '—' : formatMinutes(times.departureMinutes)}</span>

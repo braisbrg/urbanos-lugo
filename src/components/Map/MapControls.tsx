@@ -201,9 +201,10 @@ export function MapControls(p: MapControlsProps) {
               <div key={line.id} className={`flex items-stretch gap-1 rounded-control text-label transition-all border bg-surface ${isSelected ? 'border-accent font-bold shadow-xs' : 'border-line text-ink-2'}`}>
                 <button onClick={() => p.onSelectLine(line)} aria-pressed={isSelected} className="flex min-h-11 min-w-0 flex-1 items-center gap-2 p-2.5 text-left">
                   <LineBadge number={line.number} color={line.color} size="sm" />
-                  {/* Two lines rather than one cut: cut, it kept the origin and lost where the line goes,
-                      "Opuesto Piscina Pedreiras - Rúa Mercad..." in the desktop column. */}
-                  <span className="line-clamp-2 min-w-0 break-words">{line.name}</span>
+                  {/* Whole: cut, it kept the origin and lost where the line goes, "Opuesto Piscina
+                      Pedreiras - Rúa Mercad..." in the desktop column; held to two lines it still lost
+                      its end under a reader's text spacing and at 200 %. */}
+                  <span className="min-w-0 break-words">{line.name}</span>
                   {/* The row is a switch, and a tick is what says so. */}
                   {isSelected && <Check className="ml-auto h-4 w-4 shrink-0 text-accent" strokeWidth={3} aria-hidden="true" />}
                 </button>

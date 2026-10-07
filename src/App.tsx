@@ -192,8 +192,9 @@ export default function App() {
               <button onClick={() => setActiveTab('info')} className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left">
                 <Moon className="h-4.5 w-4.5 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  {/* Wraps rather than cuts: the time is the end of the sentence, and with the day
-                      word in it "primeiro bus mañá ás ~06:50" was cut at "~0…". */}
+                  {/* Both lines wrap rather than cut: the time is the end of the sentence, and with the
+                      day word in it "primeiro bus mañá ás ~06:50" was cut at "~0…"; the festivals
+                      line lost half its words at 320 px. */}
                   {runningTonight.length > 0 ? (
                     <>
                       <span className="block text-body font-semibold">{t.nightBanner.extended(runningTonight.map((change) => change.line), latestRun(runningTonight, now)!)}</span>
@@ -202,7 +203,7 @@ export default function App() {
                   ) : (
                     <>
                       <span className="block text-body font-semibold">{t.nightBanner.closed(rest.firstBus, dayWord(lang, rest.daysAhead, now))}</span>
-                      <span className="block truncate text-label text-ink-3">{t.nightBanner.festivals} ›</span>
+                      <span className="block text-label text-ink-3">{t.nightBanner.festivals} ›</span>
                     </>
                   )}
                 </span>

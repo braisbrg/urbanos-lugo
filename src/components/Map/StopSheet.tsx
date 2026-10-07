@@ -52,7 +52,7 @@ export function StopSheet({ stop, onClose, onOpenLine, onShowLinesHere, onOpenFu
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={stop.name} className="anim-sheet-up absolute inset-x-0 bottom-0 z-[520] max-h-[70%] overflow-y-auto rounded-t-2xl border-t border-edge bg-bg shadow-2xl">
       <div className="flex items-start justify-between gap-2 px-3.5 pt-3">
         <div className="min-w-0">
-          <h2 className="truncate text-body font-bold text-ink">{stop.name}</h2>
+          <h2 className="break-words text-body font-bold text-ink">{stop.name}</h2>
           <p className="text-label text-ink-3">
             {code && (
               <>
@@ -84,7 +84,7 @@ export function StopSheet({ stop, onClose, onOpenLine, onShowLinesHere, onOpenFu
                 >
                   <LineBadge number={a.lineNumber} color={a.lineColor} size="sm" className="h-7 min-w-7" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-label font-semibold text-ink-2">{a.destination}</span>
+                    <span className="block break-words text-label font-semibold text-ink-2">{a.destination}</span>
                     <span className="mt-0.5 inline-block">
                       <Provenance precision={a.precision} extra={a.etaTime} title={a.precision === 'published' ? t.arrivals.publishedHint : t.arrivals.estimatedHint} />
                     </span>

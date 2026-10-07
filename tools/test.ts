@@ -5722,6 +5722,29 @@ ok('a control named apart from its words still contains the words it shows', () 
   assert(/push\('label', el, 'shows "'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer compares names with the words controls show');
 });
 
+ok('no words are cut off where 320 px, 200 % text or a reader’s text spacing needs them', () => {
+  // 1.4.10, 1.4.4, 1.4.12. Eight places cut a name or a sentence with an ellipsis or a line
+  // clamp, and each lost words under one of the three: the map's line list and branch names,
+  // a saved line, the night banner, the planner's suggestions and its question, the map's
+  // stop sheet. Three stay, each named here with its reason: the line card's three lines,
+  // which no WCAG condition cut in audit:browser; the first half of a line's name, shown only
+  // on a tablet as a hint beside the whole; and the operator's one-word line label.
+  const allowed: Record<string, string[]> = {
+    'LinesView.tsx': ['<span className="line-clamp-3 break-words">{parts[parts.length - 1]}', '<span className="hidden truncate text-ink-2 font-semibold sm:inline lg:hidden">'],
+    'StopArrivalsView.tsx': ['<span className="min-w-0 flex-1 truncate text-body font-bold text-ink">{operatorLineLabel('],
+  };
+  for (const file of [...sourcesUnder('src/components'), join(root, 'src', 'App.tsx')]) {
+    const code = readFileSync(file, 'utf8');
+    const name = file.split(sep).pop()!;
+    for (const m of code.matchAll(/\b(truncate|line-clamp-\d)\b/g)) {
+      const line = code.slice(code.lastIndexOf('\n', m.index) + 1, code.indexOf('\n', m.index)).trim();
+      if (line.startsWith('//') || line.startsWith('*') || line.startsWith('{/*')) continue;
+      assert((allowed[name] ?? []).some((snippet) => line.includes(snippet)), `${relative(file)} cuts words again: ${line.slice(0, 140)}`);
+    }
+  }
+  assert(/cut by a line clamp/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer looks for text cut by a line clamp');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

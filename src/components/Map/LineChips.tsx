@@ -80,7 +80,8 @@ export function LineChips({ listed, picked, onToggle, onAll }: LineChipsProps) {
               style={{ backgroundColor: line.color }}
             >
               <span>{line.number}</span>
-              {branch && <span className="max-w-28 truncate font-semibold opacity-90">{branch}</span>}
+              {/* Whole: cut to a width, the branch lost its last letters as soon as the reader's spacing grew (1.4.12). */}
+              {branch && <span className="font-semibold opacity-90">{branch}</span>}
             </button>
           );
         })}

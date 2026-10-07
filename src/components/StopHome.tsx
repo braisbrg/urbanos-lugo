@@ -193,12 +193,13 @@ export function StopHome({ favoriteStopIds, favoriteLineIds, onSelectLine, recen
           <ul className="mt-2 flex flex-col gap-1.5">
             {savedLines.map(({ line, stop, next }) => (
               <li key={line.id}>
-                {/* The name in two lines at most, and the minutes under it when the three do not fit:
-                    at 200% text the name was an ellipsis with 26 px of words in front of it. */}
+                {/* The name whole, and the minutes under it when the three do not fit: at 200% text the
+                    name was an ellipsis with 26 px of words in front of it, and held to two lines it
+                    still lost its end at 320 px, at 200 % and under a reader's text spacing. */}
                 <button onClick={() => onSelectLine(line)} style={{ '--line': line.color } as CSSProperties} className="tint tint-edge tint-strong flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-control border px-cap-2.5 py-2 text-left">
                   <LineBadge number={line.number} color={line.color} />
                   <span className="min-w-[min(6rem,100%)] flex-1">
-                    <span className="line-clamp-2 break-words text-body font-semibold">{line.name}</span>
+                    <span className="block break-words text-body font-semibold">{line.name}</span>
                     <span className="block text-label text-ink-2">{stop ? t.stopHome.savedLinesAt(stop.name) : t.stopHome.savedLinesNoStop}</span>
                   </span>
                   {next && (

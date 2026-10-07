@@ -96,9 +96,11 @@ export function PlaceField({ id, role, value, display, placeholder, label, sugge
         <div className="anim-drop absolute left-0 right-0 top-full mt-1 bg-bg border border-edge rounded-control shadow-md z-30 divide-y divide-line max-h-56 overflow-y-auto">
           {suggestions.map((sug) => (
             <button key={sug.id} type="button" onClick={() => onPick(sug.name)} className="w-full p-2.5 text-label hover:bg-surface cursor-pointer flex items-center justify-between gap-2 transition-colors text-left">
-              <div className="flex items-center gap-2 truncate">
+              {/* The name whole, on two lines when it needs them: cut, two poles of one street were
+                  the same row at 320 px and every row an ellipsis at 200 %. */}
+              <div className="flex min-w-0 items-center gap-2">
                 <MapPin className={`w-3.5 h-3.5 shrink-0 ${first ? 'text-accent' : 'text-warn-ink'}`} />
-                <span className="truncate font-bold text-ink" title={sug.name}>
+                <span className="min-w-0 break-words font-bold text-ink">
                   {sug.name}
                 </span>
               </div>

@@ -347,8 +347,10 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
             >
               <Navigation className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
               {/* A floor under the route, in rem: when the text is set large there is no room for
-                  both, and the link goes to the next line instead of the route shrinking to nothing. */}
-              <span title={`${placeLabel(originQuery)} → ${placeLabel(destQuery)}`} className="line-clamp-2 min-w-[min(8rem,100%)] flex-1 break-words text-label font-semibold text-ink">
+                  both, and the link goes to the next line instead of the route shrinking to nothing.
+                  Whole: held to two lines, the destination lost its end at 200 % and under a
+                  reader's text spacing. */}
+              <span className="min-w-[min(8rem,100%)] flex-1 break-words text-label font-semibold text-ink">
                 {placeLabel(originQuery)} → {placeLabel(destQuery)}
               </span>
               <span className="shrink-0 text-label font-semibold text-accent underline">{formOpen ? t.planner.backToAnswer : t.planner.editTrip}</span>
@@ -466,7 +468,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                         className={`flex min-h-11 w-full items-center gap-2 py-1.5 text-left ${idx > 0 ? 'border-t border-t-line' : ''}`}
                       >
                         <Navigation className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-                        <span className="line-clamp-2 min-w-0 flex-1 break-words text-label font-semibold text-ink">
+                        <span className="min-w-0 flex-1 break-words text-label font-semibold text-ink">
                           {placeLabel(route.from)}
                           <span className="px-1 text-ink-3" aria-hidden="true">
                             →
