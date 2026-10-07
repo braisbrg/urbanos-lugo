@@ -470,9 +470,11 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                         <Navigation className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden="true" />
                         <span className="min-w-0 flex-1 break-words text-label font-semibold text-ink">
                           {placeLabel(route.from)}
+                          {/* The arrow says "to" to the eye; hidden, the two places ran together for the ear. */}
                           <span className="px-1 text-ink-3" aria-hidden="true">
                             →
                           </span>
+                          <span className="sr-only">{t.planner.toSr}</span>
                           {placeLabel(route.to)}
                         </span>
                       </button>
@@ -484,20 +486,25 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 <span className="text-label font-bold text-ink-2 uppercase tracking-wider block mb-2">{t.planner.quickDestinations}</span>
                 {/* A rail on a phone, wrapping from sm: the right shape for a shortcut, where you see the one you wanted or you type. */}
                 <div className="-mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-                  {QUICK_DESTINATIONS.map((qp) => (
-                    <button
-                      key={qp.query}
-                      onClick={() => {
-                        setDestQuery(qp.query);
-                        calculate(originQuery, qp.query);
-                      }}
-                      className={`inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full px-3.5 text-label font-semibold transition-colors ${
-                        destQuery.includes(qp.label) || destQuery === qp.query ? 'bg-accent text-on-accent' : 'bg-surface text-ink-2'
-                      }`}
-                    >
-                      {qp.label}
-                    </button>
-                  ))}
+                  {QUICK_DESTINATIONS.map((qp) => {
+                    // The chosen one is filled in, and said: the fill alone told a screen reader nothing.
+                    const chosen = destQuery.includes(qp.label) || destQuery === qp.query;
+                    return (
+                      <button
+                        key={qp.query}
+                        onClick={() => {
+                          setDestQuery(qp.query);
+                          calculate(originQuery, qp.query);
+                        }}
+                        aria-pressed={chosen}
+                        className={`inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full px-3.5 text-label font-semibold transition-colors ${
+                          chosen ? 'bg-accent text-on-accent' : 'bg-surface text-ink-2'
+                        }`}
+                      >
+                        {qp.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

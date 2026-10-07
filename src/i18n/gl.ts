@@ -192,6 +192,8 @@ export const gl = {
     calculating: 'Calculando',
     noticeOnTrip: (lines: string[]) => `Estes días hai cambios ${lines.length === 1 ? 'na liña' : 'nas liñas'} ${lines.join(', ')}, segundo o aviso do operador`,
     swap: 'Inverter orixe e destino',
+    /** Read where the eye sees the arrow between two places. */
+    toSr: 'ata',
     departureLabel: 'Saída',
     arrivalLabel: 'Chegada',
     board: 'Sube en',

@@ -5825,6 +5825,14 @@ ok('nothing on screen is readable only in a hover tooltip', () => {
   for (const file of sourcesUnder('src/components')) assert(!/cursor-help/.test(readFileSync(file, 'utf8')), `${relative(file)} keeps something in a hover tooltip again`);
 });
 
+ok('the planner says which destination is chosen, and reads "to" where the eye sees an arrow', () => {
+  // The quick destination chosen was filled in and said nothing (4.1.2); "from → to" hid the
+  // arrow from a screen reader and the two places ran together with no direction (1.3.1).
+  const planner = read('src/components/RoutePlannerView.tsx');
+  assert(/aria-pressed=\{chosen\}/.test(planner) && /chosen \? 'bg-accent text-on-accent'/.test(planner), 'the chosen quick destination is a fill and nothing else again');
+  assert(/aria-hidden="true">\s*→\s*<\/span>\s*<span className="sr-only">\{t\.planner\.toSr\}<\/span>/.test(planner), 'a recent route’s two places run together for a screen reader again');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

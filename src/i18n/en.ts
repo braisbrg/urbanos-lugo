@@ -171,6 +171,7 @@ export const en: Dict = {
     calculating: 'Planning',
     noticeOnTrip: (lines: string[]) => `These days ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')} ${lines.length === 1 ? 'has' : 'have'} changes, by the operator’s notice`,
     swap: 'Swap origin and destination',
+    toSr: 'to',
     departureLabel: 'Depart',
     arrivalLabel: 'Arrive',
     board: 'Get on at',

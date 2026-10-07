@@ -160,6 +160,7 @@ export const es: Dict = {
     calculating: 'Calculando',
     noticeOnTrip: (lines: string[]) => `Estos días hay cambios en ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')}, según el aviso del operador`,
     swap: 'Invertir origen y destino',
+    toSr: 'hasta',
     departureLabel: 'Salida',
     arrivalLabel: 'Llegada',
     board: 'Sube en',
