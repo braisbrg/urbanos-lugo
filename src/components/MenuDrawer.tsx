@@ -53,6 +53,8 @@ export function MenuDrawer({ open, onClose, onOpenTab, alertCount, ...settings }
             >
               <Icon className={`h-5 w-5 shrink-0 ${id === 'info' ? 'text-estimated' : 'text-ink-2'}`} strokeWidth={2} aria-hidden="true" />
               <span className="min-w-0 flex-1 break-words text-emph font-semibold">{label}</span>
+              {/* A space the row does not draw, between the words and the count: run together, the
+                  text read "servizo1", which did not match the name "servizo (1)" (2.5.3). */}{' '}
               {badge > 0 && <span className="tnum shrink-0 rounded-control bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">{badge}</span>}
               {/* Decoration, the whole row is the link: it goes where the drawer is narrow for its
                   text, and the first link's words had broken mid-word, "servi-zo". */}

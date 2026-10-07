@@ -5708,6 +5708,20 @@ ok('the line page names its arrows, says which run is on show, and names a stop 
   assert(/<span className="sr-only">\{t\.lines\.savedSr\}<\/span>/.test(lines), 'a saved line is a star that says nothing to a screen reader again');
 });
 
+ok('a control named apart from its words still contains the words it shows', () => {
+  // 2.5.3: a voice-control user says what they see. The map's line chips show "7" and were
+  // named by the route alone; the chip that unfolds them shows "24" and was named without
+  // it; the notices link read "servizo1" against a name of "servizo (1)". audit:browser
+  // compares every named control with its visible words, in every state.
+  const chips = read('src/components/Map/LineChips.tsx');
+  assert(/aria-label=\{`\$\{t\.lines\.lineLabel\(line\.number\)\}: \$\{line\.name\}`\}/.test(chips), 'a line chip is named without the number it shows again');
+  assert(/aria-label=\{`\$\{expanded \? t\.map\.collapseLines : t\.map\.expandLines\} \(\$\{listed\.length\}\)`\}/.test(chips), 'the unfold chip is named without the count it shows again');
+  for (const file of ['MenuDrawer.tsx', 'SideNav.tsx']) {
+    assert(/\{label\}<\/span>\s*(\{\/\*[\s\S]*?\*\/\})?\{' '\}\s*\{badge > 0/.test(read(`src/components/${file}`)), `${file}: the words and the count run together again`);
+  }
+  assert(/push\('label', el, 'shows "'/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer compares names with the words controls show');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

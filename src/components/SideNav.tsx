@@ -51,6 +51,7 @@ export function SideNav({ activeTab, setActiveTab, alertCount, tripActive = fals
           <a key={id} {...tabLink(id, setActiveTab, lang)} aria-current={activeTab === id ? 'page' : undefined} aria-label={badge > 0 ? `${label} (${badge})` : undefined} className={row(activeTab === id)}>
             <Icon className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1">{label}</span>
+            {/* As in the menu: a space between the words and the count, so the text matches the name. */}{' '}
             {badge > 0 && <span className="tnum rounded-control bg-warn px-2 py-0.5 text-label font-bold text-warn-ink">{badge}</span>}
           </a>
         ))}
