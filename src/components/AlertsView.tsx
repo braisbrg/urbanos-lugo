@@ -33,23 +33,22 @@ const NOTICES_REVIEWED_ON = '2026-08-27';
 
 const external = 'inline-flex min-h-11 items-center text-label font-bold text-accent underline underline-offset-2';
 
-/** The lines a notice names, or "all"; past three, the rest fold into a "+N" with the names on hover. */
+/**
+ * The lines a notice names, every one, or "all" from ten up. Past three the rest folded into a
+ * "+N" whose names were only in a hover tooltip, which no keyboard and no finger can open, and
+ * which a screen reader may never read out.
+ */
 function LinesAffected({ lines }: { lines: string[] }) {
   const t = useT();
   const chip = 'text-label font-black bg-bg px-1.5 py-0.5 rounded shadow-xs text-ink border border-edge';
   if (lines.length >= 10 || lines.includes('Todas')) return <span className={`${chip} font-bold px-2 whitespace-nowrap`}>{t.fares.allLines}</span>;
   return (
     <>
-      {lines.slice(0, 3).map((l) => (
+      {lines.map((l) => (
         <span key={l} className={chip}>
           {l}
         </span>
       ))}
-      {lines.length > 3 && (
-        <span title={lines.slice(3).join(', ')} className="text-label font-bold bg-surface text-ink-2 px-1.5 py-0.5 rounded shadow-xs border border-edge cursor-help">
-          +{lines.length - 3}
-        </span>
-      )}
     </>
   );
 }

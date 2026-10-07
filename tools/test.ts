@@ -5816,6 +5816,15 @@ ok('a notice quoted from the operator or the council says the language it is wri
   assert(/<span lang=\{NOTICE_LANG\}>\{alert\.description\}<\/span>/.test(lines) && /<p key=\{j\} lang=\{NOTICE_LANG\}/.test(lines), 'the line page quotes the operator without its language');
 });
 
+ok('nothing on screen is readable only in a hover tooltip', () => {
+  // A notice naming more than three lines folded the rest into "+N", with their numbers only in
+  // a title tooltip: no keyboard and no finger opens one, and a screen reader may not read it.
+  // A title may repeat what is on screen; it may not be the only place something is.
+  const view = read('src/components/AlertsView.tsx');
+  assert(!/cursor-help/.test(view) && !/lines\.slice\(3\)/.test(view) && /\{lines\.map\(\(l\) => \(/.test(view), 'a notice’s lines past the third are only in a hover tooltip again');
+  for (const file of sourcesUnder('src/components')) assert(!/cursor-help/.test(readFileSync(file, 'utf8')), `${relative(file)} keeps something in a hover tooltip again`);
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera
