@@ -219,8 +219,8 @@ export class Session {
 }
 
 export interface Browser {
-  /** A fresh page with Page/Runtime/Network/Performance/DOM enabled. */
-  newPage(): Promise<Session>;
+  /** A fresh page with Page/Runtime/Network/Performance/DOM enabled; `isolated`, with storage and a window of its own. */
+  newPage(isolated?: boolean): Promise<Session>;
   /**
    * Pull the plug on every service worker too: emulating conditions on a page reaches
    * only its own requests, and a worker fetching on its behalf would serve fresh answers
@@ -304,8 +304,11 @@ export async function launch(executable: string, headless = true, prefs?: object
     async grant(origin, permissions) {
       await conn.send('Browser.grantPermissions', { origin, permissions });
     },
-    async newPage() {
-      const { targetId } = (await conn.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+    async newPage(isolated = false) {
+      // Isolated: a browser context of its own, so its storage is not the other pages', and a
+      // window of its own, so it is in front and gets frames like the only tab would.
+      const context = isolated ? ((await conn.send('Target.createBrowserContext', { disposeOnDetach: true })) as { browserContextId: string }) : null;
+      const { targetId } = (await conn.send('Target.createTarget', { url: 'about:blank', ...(context ? { browserContextId: context.browserContextId, newWindow: true } : {}) })) as { targetId: string };
       const { sessionId } = (await conn.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
       const session = new Session(conn, sessionId, targetId);
       for (const domain of ['Page', 'Runtime', 'Network', 'Performance', 'DOM']) await session.send(`${domain}.enable`);
