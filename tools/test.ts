@@ -5870,6 +5870,15 @@ ok('a map popup’s close button is readable, named in the reader’s language, 
   for (const lang of LANGS) assert(translations(lang).map.closePopup.trim(), `${lang}: a popup’s close button has no name`);
 });
 
+ok('a bus’s popup is not rebuilt under the keyboard’s focus', () => {
+  // The popup is rebuilt when its bus passes a stop, and the new content replaced the focused
+  // button with the rest: the focus fell to the page (2.4.3). It waits while the focus is in it,
+  // and keeps the old key so it is rebuilt once the focus has gone.
+  const buses = read('src/components/Map/VehicleLayer.tsx');
+  assert(/const holdsFocus = !!existing\?\.getPopup\(\)\?\.getElement\(\)\?\.contains\(document\.activeElement\);/.test(buses) && /drawn\?\.popup !== popupKey && !holdsFocus\) existing\.setPopupContent/.test(buses), 'a bus’s popup is rebuilt under the focus again');
+  assert(/popup: holdsFocus \? \(drawnRef\.current\[bus\.id\]\?\.popup \?\? popupKey\) : popupKey/.test(buses), 'a popup skipped under the focus is never rebuilt after');
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

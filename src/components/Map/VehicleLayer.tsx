@@ -96,6 +96,10 @@ export function VehicleLayer({ map, buses, visibleLineIds, showBuses, onOpenLine
       const popupKey = `${bus.destination}|${bus.nextStopName}|${bus.occupancy}|${lang}`;
       const label = t.map.busMarker(bus.lineNumber, bus.destination);
       const existing = markersRef.current[bus.id];
+      // Not while the focus is inside the popup: new content replaces the old, the focused
+      // button with it, and the focus fell to the page (2.4.3). It catches up once the focus
+      // has gone.
+      const holdsFocus = !!existing?.getPopup()?.getElement()?.contains(document.activeElement);
       if (existing) {
         existing.setLatLng([bus.currentLat, bus.currentLng]);
         const drawn = drawnRef.current[bus.id];
@@ -103,7 +107,7 @@ export function VehicleLayer({ map, buses, visibleLineIds, showBuses, onOpenLine
           existing.setIcon(busIcon(bus));
           name(existing, label); // setIcon rebuilds the element
         }
-        if (drawn?.popup !== popupKey) existing.setPopupContent(popupNode(bus, onOpenLineRef.current, lang));
+        if (drawn?.popup !== popupKey && !holdsFocus) existing.setPopupContent(popupNode(bus, onOpenLineRef.current, lang));
       } else {
         // Out of the Tab order (keyboard: false). Leaflet made each bus a Tab stop, and the
         // focus went to buses past the edge of the map or under the buttons that float on it
@@ -114,7 +118,7 @@ export function VehicleLayer({ map, buses, visibleLineIds, showBuses, onOpenLine
         name(marker, label);
         markersRef.current[bus.id] = marker;
       }
-      drawnRef.current[bus.id] = { icon: iconKey, popup: popupKey };
+      drawnRef.current[bus.id] = { icon: iconKey, popup: holdsFocus ? (drawnRef.current[bus.id]?.popup ?? popupKey) : popupKey };
     }
   }, [map, buses, visibleLineIds, showBuses, lang]);
 
