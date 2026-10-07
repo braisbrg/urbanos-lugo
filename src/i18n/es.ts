@@ -486,8 +486,9 @@ export const es: Dict = {
     positionChecked:
       'La posición de esta parada es la que el operador publica en su propia página, contrastada con el levantamiento independiente de OpenStreetMap.',
     stopMapRegion:
-      'Mapa de esta parada y de las que tiene cerca. Las paradas próximas están en la lista de líneas de arriba.',
+      'Mapa de esta parada y de los postes que tiene cerca. Los mismos postes están en la lista «Otros postes aquí cerca», encima del mapa.',
     stopMapTitle: 'Dónde está este poste',
+    polesNearby: 'Otros postes aquí cerca',
     reportPosition: '¿Esta parada no está donde debería?',
     reportCta: 'Abrir un aviso en el repositorio',
     reportNotCouncil:

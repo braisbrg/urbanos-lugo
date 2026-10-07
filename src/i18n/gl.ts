@@ -535,8 +535,10 @@ export const gl = {
     positionChecked:
       'A posición desta parada é a que o operador publica na súa propia páxina, contrastada co levantamento independente de OpenStreetMap.',
     stopMapRegion:
-      'Mapa desta parada e das que ten preto. As paradas próximas están na lista de liñas de arriba.',
+      'Mapa desta parada e dos postes que ten preto. Os mesmos postes están na lista «Outros postes aquí preto», enriba do mapa.',
     stopMapTitle: 'Onde está este poste',
+    /** The poles on the board's map, as a list a keyboard can reach. */
+    polesNearby: 'Outros postes aquí preto',
     reportPosition: 'Esta parada non está onde debería?',
     reportCta: 'Abrir un aviso no repositorio',
     reportNotCouncil:

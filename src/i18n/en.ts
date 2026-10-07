@@ -497,8 +497,9 @@ export const en: Dict = {
     positionChecked:
       'This stop sits where the operator publishes it on its own page, cross-checked against the independent survey in OpenStreetMap.',
     stopMapRegion:
-      'Map of this stop and the ones near it. The nearby stops are in the lines list above.',
+      'Map of this stop and the poles near it. The same poles are in the list “Other poles close by”, above the map.',
     stopMapTitle: 'Where this pole is',
+    polesNearby: 'Other poles close by',
     reportPosition: 'Is this stop in the wrong place?',
     reportCta: 'Open a report on the repository',
     reportNotCouncil:

@@ -5846,6 +5846,18 @@ ok('every screen can be reached a second way: the search box finds it by its nam
   }
 });
 
+ok('the poles on the board’s map are a list too, which a keyboard reaches', () => {
+  // 2.1.1. The other poles near a stop were dots on the map's canvas, taken by a tap and by
+  // nothing else, and the map's own name said they were "in the list above", which they were
+  // not. A folded list of them sits above the map, and the map's name points to it.
+  const board = read('src/components/StopArrivalsView.tsx');
+  assert(/\{polesNearby\.map\(\(pole\) => \([\s\S]{0,200}onClick=\{\(\) => onSelectStop\(pole\)\}/.test(board), 'the poles near a stop are reached only by a tap on the map again');
+  for (const lang of LANGS) {
+    const a = translations(lang).arrivals;
+    assert(a.stopMapRegion.includes(a.polesNearby), `${lang}: the map's name points to a list that is not the poles' list: "${a.stopMapRegion}"`);
+  }
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

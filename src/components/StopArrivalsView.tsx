@@ -584,6 +584,29 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       {/* Drawn above the question it serves: the other poles nearby are how you tell which one is yours. */}
       <section className="mt-4 border-t border-line pt-3">
         <h2 className="text-label font-semibold text-ink-2">{t.arrivals.stopMapTitle}</h2>
+        {/* The other poles on the map, as a list: on the map they are dots on a canvas, which a
+            pointer can tap and a keyboard cannot reach, and the pole across the road was
+            otherwise reached only by knowing its name (WCAG 2.1.1). Folded like the lines nearby. */}
+        {polesNearby.length > 0 && (
+          <details className="disclosure mt-2 rounded-control border border-edge bg-surface">
+            <summary className="flex h-11 cursor-pointer items-center gap-2 px-3 text-label font-semibold text-ink-2">
+              {t.arrivals.polesNearby}
+              <span className="tnum rounded-control border border-edge px-1.5 py-0.5 text-ink-3">{polesNearby.length}</span>
+              <ChevronDown className="disclosure-chevron ml-auto h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+            </summary>
+            <ul className="flex flex-col gap-1.5 px-3 pb-3">
+              {polesNearby.map((pole) => (
+                <li key={pole.id}>
+                  <button onClick={() => onSelectStop(pole)} className="flex min-h-11 w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-control border border-edge bg-bg px-3 py-2 text-left">
+                    <span className="min-w-[min(6rem,100%)] flex-1 break-words text-body font-semibold">{pole.name}</span>
+                    {poleCode(pole) && <span className="tnum shrink-0 rounded bg-surface px-2 py-1 text-label text-ink-2">{poleCode(pole)}</span>}
+                    <span className="tnum shrink-0 text-label text-ink-2">~{pole.walkMeters} m</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <div className="mt-2 overflow-hidden rounded-control border border-edge">
           <LazyNearbyMiniMap centre={{ lat: selectedStop.lat, lng: selectedStop.lng, label: selectedStop.name, kind: 'stop' }} stops={polesNearby} onSelectStop={onSelectStop} regionLabel={t.arrivals.stopMapRegion} />
         </div>
