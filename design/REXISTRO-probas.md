@@ -2549,6 +2549,142 @@ oficial, e comprobalo todo cun script coma se fose festa.
   12 (52 min, chega ás ~10:54) quedou diante da 1.2 (23 min, ás ~10:51). Pasa igual sen o
   aviso, así que vai aparte.
 
+## Rolda 31: WCAG 2.2 A e AA, criterio por criterio — 7 e 8 de outubro de 2026
+
+Pedido: que a app cumpra WCAG 2.2 AA enteira e que se poida demostrar. Os 55 criterios A e
+AA, un por un, en cada pantalla e estado: os dous temas, os tres idiomas, teléfono e
+escritorio, só teclado, lector de pantalla, zoom e texto grande, movemento reducido, alto
+contraste, sen rede, erros e baleiros. O xa medido só conta se se mide outra vez. Todo o
+que se poida automatizar, en `audit:browser`, para que non volva; o que non, nun guión
+para un teléfono con VoiceOver e TalkBack. Na rama `a11y-wcag22`, sen subir, rebaseada
+sobre as roldas 30 e 32 e a 1.2.9; sae como 1.3.0.
+
+### Medido
+
+- `audit:browser` reescrito sobre axe-core 4.14 (dependencia de desenvolvemento) e sondas
+  propias: 162 estados en catro pasadas (teléfono en galego, castelán e inglés;
+  escritorio en galego), claro e escuro nas dúas galegas, 242 medicións, uns 470 s.
+  Por estado: axe coas etiquetas WCAG 2.2 A e AA; o contraste de cada texto contra o que
+  ten detrás; o nome de cada control e se contén o que mostra; 24 px ou espazo; `lang`,
+  títulos e o destino das ligazóns; o texto cortado a 320 px, ao 200 % (zoom do navegador
+  no escritorio, só o texto no teléfono) e co espazado de 1.4.12; o teléfono deitado; e o
+  tabulador de verdade: alcanza todo, o foco vese, non queda tapado nin fóra da pantalla,
+  vai na orde do debuxo, non sae dun diálogo, non se move só, e Escape pecha e devolve o
+  foco. Á parte, o menú con teclado, o rato no mapa (1.4.13, 2.5.7), cores forzadas e
+  movemento reducido. Reloxo, respostas da API e localización fixos, e calquera petición a
+  outro servidor rexeitada no navegador: a mesma execución dá o mesmo a calquera hora e
+  sen rede.
+- Na `develop` de hoxe (`531877b`, a 1.2.9): **2.328 achados** de WCAG — axe 742, nomes
+  1.118, texto cortado 326, foco 84, teclado 13, anuncios 24, desbordamento 6, contraste 2,
+  cores forzadas 9, rato 2, arrastre 1, movemento 1. Os grandes: 1.118 nomes que non
+  contiñan o que mostraban (2.5.3), 326 textos cortados por `line-clamp` e `truncate`, 84
+  paradas de tabulación sen foco visible ou tapadas.
+- Na rama: **0**, en dúas execucións seguidas. Por debaixo dos 44 px desta casa quedan 337
+  medidas nunha execución e 331 na outra (325 na `develop`), impresas e sen parar a CI; o
+  README di cales.
+- O que a máquina non oe queda en `PROBA-lector-de-pantalla.md`: media hora por lector.
+
+### Feito
+
+Cada arranxo co seu check en `pnpm test`, e cada check probado contra o seu fallo de volta.
+
+- **Foco e teclado.** Os campos de busca amosan o foco (2.4.7). Os resultados da busca e as
+  suxestións vanse con Escape e ao saír o foco (1.4.13, 2.4.11). Os buses do mapa saen da
+  orde do tabulador e quedan como imaxes co seu nome. A barra da viaxe xa non tapa o último
+  control. Un diálogo aberto devolvía o foco ao seu primeiro control en cada repintado da
+  páxina de detrás —no mapa, cada 3 s—, porque `useDialog` tiña `onClose` nas súas
+  dependencias (2.4.3). Cada bus que saía do taboleiro reconstruía todas as filas seguintes,
+  porque a posición ía na chave, e o foco caía ao principio. O globo dun bus reconstruíase
+  baixo o foco. Un globo onde entra o teclado lévase dentro do mapa: o × quedaba fóra da
+  pantalla, porque o navegador desprazaba a caixa do mapa ata el e Leaflet desfacíao. Na
+  folla do mapa do teléfono os filtros debuxábanse enriba e ían despois; sobre o mapa, o
+  aviso dos buses ía antes das liñas (1.3.2); a barra de pestanas tapaba os últimos 67 px da
+  folla.
+- **Nomes (2.5.3, 4.1.2).** Contas despois de dous puntos; liñas co número que amosan e a
+  súa póla; «Menú. Avisos do servizo: N»; as frechas das saídas; `aria-pressed` nas saídas
+  e nos destinos rápidos; o campo do QR; o × dos globos no idioma da páxina.
+- **Texto (1.4.4, 1.4.10, 1.4.12).** Fóra os `line-clamp` e `truncate` que cortaban nomes;
+  envolven.
+- **Estado e erros (4.1.3, 3.3.1, 3.3.4).** «Comprobar» os avisos di que comproba e que
+  atopou. Un código de poste que non existe márcase no campo e anúnciase. «Borrar» as rutas
+  recentes faise «Desfacer».
+- **Idioma (3.1.2).** Os avisos citados do operador e do Concello levan `lang="es"`, tamén
+  os que trouxo a rolda 30.
+- **Vías (2.4.5).** A busca atopa as pantallas polo nome.
+- **Mapa (1.4.13, 2.5.7, 2.1.1).** O nome dunha parada ao pasar o rato agarda 300 ms e
+  deixa ir cara a el, e Escape pécha. Un toque leva ese punto ao centro. Os postes do mapa
+  dun taboleiro son tamén unha lista.
+- **Avisos (2.1.1).** Cada aviso amosa todas as liñas, sen «+N» nun *tooltip*.
+- **Instrucións (1.3.3).** «Preme a estrela» di tamén o nome que le o lector.
+- **No bus (1.4.4).** A fila dos minutos, a hora e «HORARIO OFICIAL» saía 106 px da tarxeta
+  ao 200 % e alargaba a pantalla 58 px; agora envolve.
+- **Movemento (2.2.2).** A marca da seguinte parada en «Vou nesta» late dúas veces cada vez  que cambia e queda quieta. Era o único criterio sen cumprir, deixado así por DECIDIDO, e o
+  dono escolleu a proposta o 8 de outubro.
+- **Cores forzadas.** O premido, a pestana e a liña actual seguen víndose.
+- **CI.** `audit:browser` corre en `ci.yml` contra o servidor construído e para o traballo
+  cun achado de WCAG. Con `CI`, se o navegador non arrinca, falla.
+- **README.** A táboa dos 55 criterios, e `pnpm test` esixe que estean todos, unha vez, cun
+  estado e un porqué.
+
+O que ve quen non usa lector, marcado: no mapa do escritorio, 9 das 24 liñas da lista
+pasan de 52 a 69 px, porque o nome xa non se corta; no teléfono, a folla de filtros tapa a
+barra de pestanas mentres está aberta; tras «Borrar», o título das rutas recentes queda con
+«Desfacer»; e os tres baleiros nomean o botón da estrela.
+
+### Erros nosos durante esta rolda
+
+- Os estados que só cambiaban no fragmento non cargaban: un cambio de `#` non é
+  navegación. Pasan por `about:blank`.
+- 597 contrastes falsos: as páxinas de fondo non pintan e as transicións quedaban no
+  primeiro cadro. Remátanse antes de medir, e cada páxina ten a súa xanela.
+- O idioma dunha pasada entraba noutra por compartir `localStorage`: contextos illados.
+- O foco gardábase co control da preparación aínda enfocado, e as listas que se pechan ao
+  saír o foco contábanse como paradas.
+- Un `outline: none 2px` contaba como cambio visible.
+- O texto ao 200 % no escritorio non é o que pide 1.4.4: alí é o zoom do navegador.
+- Chrome negaba `:focus-visible` a un campo de hora dentro das execucións, e só alí; ese
+  caso xúlgase co estado forzado, como fai DevTools.
+- **A folla de filtros do mapa no teléfono nunca se auditara**: a preparación premía o
+  primeiro botón con «Filtros e capas», que era o de pechar da propia folla, escondido pero
+  con caixa. Agora só se preme o que se ve, e un estado de diálogo sen diálogo é un achado.
+  Ao abrila de verdade saíron a orde e a barra de pestanas. Ese mesmo cambio deixou as
+  preparacións do planificador sen «Calcular ruta» no teléfono. Culpouse primeiro unha
+  transición conxelada, e o arranxo non cambiou nada; medido na páxina, o botón estaba
+  agochado porque escoller a suxestión do destino xa planificara e pregara o formulario.
+  A preparación premía un botón agochado desde sempre e planificaba dúas veces.
+- O × fóra da pantalla saía unha vez de cada cinco. Primeiro culpouse a deriva do bus e
+  logo un tamaño vello de Leaflet; ningunha das dúas era. Un rexistro de quen movía o mapa
+  amosou o primeiro arranxo panorámico ao revés: media o globo coa caixa do mapa xa
+  desprazada polo foco. Agora mídese sen o desprazamento, e a auditoría move o mapa coas
+  súas frechas antes, así que o caso sae sempre que o arranxo falta.
+- **A auditoría nunca subira ao bus.** O estado da viaxe agardaba no poste, onde nada late
+  e onde a tarxeta é outra. Agora o reloxo da páxina pódese adiantar: corenta minutos despois
+  da saída, a viaxe pregunta se se colleu o bus, a auditoría responde que si, e mide alí.
+  Saíron a fila que non envolvía e, cun latexo sen fin posto de volta, o 2.2.2.
+- As comprobacións de tempo de `pnpm test` (o aviso de 512 KB, a busca acoutada) fallan
+  mentres corren catro Chromes da auditoría á vez. Sen eles pasan; en CI corren en serie.
+
+### Mirado e deixado
+
+- **O filete dos controis, 1,37:1** (DECIDIDO): 1.4.11 non o pide se o control se recoñece
+  polo texto ou a icona.
+- **As cores do mapa**: gráfico con información en texto, fóra de 1.4.11.
+- **Os `title` nativos** dos botóns: os pinta o navegador, fóra de 1.4.13.
+- **Os pines do mapa**, 28–32 px: pasan os 24 de 2.5.8.
+- **O «~» das horas estimadas**: «estimado» vai ao lado en texto; como le cada lector o
+  símbolo queda para o guión.
+- **Os indicadores de espera** (2.2.2): rematan coa espera, e a nota de 2.2.2 sobre o
+  progreso cóbreos. O máis discutible é a actualización de Avisos, que pode durar ata 30 s
+  co resto da páxina en uso.
+- **A conta do taboleiro** (2.2.2): actualízase cada minuto e é a razón de ser da pantalla.
+- **1.3.5**: ningún campo pide datos de quen usa a app.
+- `pnpm audit` avisa en dependencias de compilación; non é desta rolda.
+
+### Queda
+
+- O guión do lector de pantalla, nun teléfono (NOTAS, Pendente 6).
+- Safari: a auditoría corre en Chromium.
+
 ## Rolda 32: Ruta, a noite antes e o día despois do aviso — 8 de outubro de 2026
 
 Pedido: revisar que todo funciona, tamén o que a rolda 30 deixara fóra (a orde de Ruta,
