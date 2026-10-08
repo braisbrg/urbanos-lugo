@@ -876,7 +876,9 @@ const planned = `const o = document.getElementById('input-origin-query'), d = do
   let opt = [...o.parentElement.querySelectorAll('button')].find((b) => /Praza Maior/i.test(b.textContent)); if (opt) { opt.click(); await pause(300); }
   fill(d, 'HULA'); await pause(500);
   opt = [...d.parentElement.querySelectorAll('button')].find((b) => /HULA/i.test(b.textContent)); if (opt) { opt.click(); await pause(300); }
-  if (!press(seeText(T.calculate))) return 'no calculate button';
+  // Picking a suggestion plans the trip and folds the form, "Calcular ruta" with it: pressed
+  // only when it is still there to press.
+  const go = seeText(T.calculate); if (go) press(go);
   if (!(await until(() => document.querySelector('main [tabindex="-1"]') && !document.querySelector('[aria-busy="true"]')))) return 'no answer';
   await pause(1200);`;
 
