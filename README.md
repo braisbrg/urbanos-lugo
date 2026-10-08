@@ -1158,7 +1158,7 @@ JSX era `any` e ningunha prop se comprobaba; ao poñelos, dos 1.581 erros que sa
 ### Seguridade
 
 `pnpm audit`: **0 vulnerabilidades** sobre 7 dependencias de produción e 13 de
-desenvolvemento (16 de setembro de 2026). Dependabot revisa semanalmente as dependencias
+desenvolvemento (8 de outubro de 2026). Dependabot revisa semanalmente as dependencias
 e mais as actions, e CodeQL o código en cada push a `main`.
 
 **Content Security Policy.** `script-src 'self'` máis o hash do script do tema, sen
@@ -1212,11 +1212,13 @@ atopou o segundo —no primeiro despregue do repositorio—. Hai unha comprobaci
 unha decisión escrita, que sexa `true` ou `false` e non o marcador que pnpm escribe soa, e
 que non quede unha copia vella en `package.json` contando outra cousa.
 
-**Versións das dependencias.** `pnpm-workspace.yaml` fixa tamén `qs` e `fast-uri` por
-riba do seu aviso de seguridade. `qs` é con quen express analiza a cadea de consulta de
-cada petición, antes de que a vexa ningunha liña deste proxecto. O de `fast-uri` leva
-tope superior a propósito: sen el resolvía a unha versión maior por diante da que pide o
-seu pai, que é xusto como un arranxo de seguridade se converte nunha caída.
+**Versións das dependencias.** `pnpm-workspace.yaml` fixa tamén `qs`, `fast-uri` e
+`brace-expansion` por riba do seu aviso de seguridade. `qs` é con quen express analiza a
+cadea de consulta de cada petición, antes de que a vexa ningunha liña deste proxecto. Os
+outros dous chegan dentro de workbox-build e só len os nosos propios ficheiros ao
+compilar, e levan tope superior a propósito: sen el `fast-uri` resolvía a unha versión
+maior por diante da que pide o seu pai, que é xusto como un arranxo de seguridade se
+converte nunha caída.
 
 O servidor normaliza todo o que chega pola query string (`?q[]=a` facía caer o endpoint
 cun volcado de pila), devolve JSON en caso de erro en lugar da páxina de erro de Express,

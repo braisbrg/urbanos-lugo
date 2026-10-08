@@ -39,5 +39,11 @@ overrides:
   qs: '>=6.16.0'
   # Upper bound on purpose: an open `>=3.1.6` resolved to 4.1.4, and ajv asks for ^3.0.1.
   # An override is allowed to ignore that, which is exactly how a security fix becomes an
-  # outage. Patched, and still inside the range its parent was written against.
-  fast-uri: '>=3.1.6 <4'
+  # outage. Patched, and still inside the range its parent was written against. 3.1.8 since
+  # GHSA-hrr3-gc8f-f4qj.
+  fast-uri: '>=3.1.8 <4'
+  # brace-expansion arrives under minimatch twice, both inside workbox-build and both reading
+  # only our own glob patterns at build time: 2.x through ejs/jake/filelist, 5.x through glob.
+  # GHSA-q2hr-2g5m-vwhr and the two before it; each pinned inside the major its parent asks for.
+  brace-expansion@2: '>=2.1.7 <3'
+  brace-expansion@5: '>=5.0.12 <6'
