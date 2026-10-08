@@ -5968,6 +5968,28 @@ ok('a board row keeps its key while the buses ahead of it leave', () => {
   }
 });
 
+ok('the README’s WCAG table answers for every A and AA criterion of 2.2, once', () => {
+  // The conformance table is the promise the rest of the accessibility work is measured
+  // against; a criterion dropped from it is one nobody is looking at any more.
+  const criteria = [
+    '1.1.1', '1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.3.1', '1.3.2', '1.3.3', '1.3.4', '1.3.5', '1.4.1', '1.4.2', '1.4.3', '1.4.4',
+    '1.4.5', '1.4.10', '1.4.11', '1.4.12', '1.4.13', '2.1.1', '2.1.2', '2.1.4', '2.2.1', '2.2.2', '2.3.1', '2.4.1', '2.4.2', '2.4.3',
+    '2.4.4', '2.4.5', '2.4.6', '2.4.7', '2.4.11', '2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.7', '2.5.8', '3.1.1', '3.1.2', '3.2.1', '3.2.2',
+    '3.2.3', '3.2.4', '3.2.6', '3.3.1', '3.3.2', '3.3.3', '3.3.4', '3.3.7', '3.3.8', '4.1.2', '4.1.3',
+  ];
+  const readme = read('README.md');
+  const start = readme.indexOf('**Conformidade con WCAG 2.2');
+  assert(start > 0, 'the README has no WCAG conformance table');
+  const rows = readme.slice(start).split('\n').filter((line) => /^\| \d/.test(line));
+  const named = rows.flatMap((row) => row.split('|')[1].match(/\d\.\d\.\d+/g) ?? []);
+  assert.deepEqual([...named].sort(), [...criteria].sort(), 'the WCAG table lists other criteria than the 55 of 2.2 A and AA, or one twice');
+  for (const row of rows) {
+    const state = row.split('|')[3].trim().replace(/\*/g, '');
+    assert(['Cumpre', 'Arranxado', 'Non aplica', 'Non cumpre'].includes(state), `a WCAG row says neither cumpre, arranxado, non aplica nor non cumpre: ${row.slice(0, 60)}`);
+    assert(row.split('|')[4].trim().length > 20, `a WCAG row gives no reason: ${row.slice(0, 60)}`);
+  }
+});
+
 ok('the small "never"s in the comments hold', () => {
   // Five promises written as a comment beside the line that keeps them, and held by nothing
   // else: the stops screen never guesses where you are; the scanner never leaves the camera

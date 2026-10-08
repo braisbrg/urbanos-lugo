@@ -304,6 +304,18 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    `braisbrg/urbanos-lugo`: páxinas que redirixan a cada pestana e idioma, un *service
    worker* que se desinstale para liberar a app instalada, e os favoritos e as paradas
    recentes levados no fragmento da ligazón, porque se gardan por orixe e se perderían.
+6. **Un lector de pantalla de verdade, nun teléfono**, cousa do dono: o guión de
+   [`PROBA-lector-de-pantalla.md`](PROBA-lector-de-pantalla.md), unha vez con VoiceOver e
+   outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no
+   código; como os di cada lector, se le o «~» das horas estimadas e se cambia de voz nos
+   avisos en castelán, só se sabe escoitando.
+7. **O latexo de «Vou nesta» e WCAG 2.2.2**, decisión do dono. É o único criterio A ou AA
+   que a app non cumpre (rolda 31, README «Conformidade»): o anel da seguinte parada
+   repítese mentres dura a viaxe, e o criterio pide poder paralo na páxina a todo o que se
+   mova máis de cinco segundos á beira doutro contido; `prefers-reduced-motion` non conta.
+   DECIDIDO («O movemento») quere que lata. Para cumprir abondaría con que latexase uns
+   cinco segundos cada vez que cambia a seguinte parada e despois quedase quieto, que segue
+   dicindo «aquí» no momento que importa.
 
 ### Lista para o iPhone
 
