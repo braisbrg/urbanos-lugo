@@ -5,7 +5,7 @@ import { NOTICE_LANG, namesLine } from '../utils/operatorNotices';
 import { changesNow, closedAt, pastTimetable, runsUntil, type NoticeChanges } from '../utils/noticeChanges';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { lineById, poleCode } from '../data/transitData';
-import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../utils/arrivals';
+import { getArrivalsForStop, nextServiceAtStop, rowKeys, timingPointStopCount } from '../utils/arrivals';
 import { getNearbyLines, getNearbyStops } from '../utils/places';
 import { dayWord } from '../utils/serviceLabels';
 import { LOCALE, useLang, useT } from '../i18n';
@@ -238,6 +238,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
   const withinHour = arrivals.filter((a) => a.etaMinutes <= NEXT_VIEW_HORIZON_MIN);
   // Never a blank board: when the next bus is more than an hour out, that one bus is what someone at the pole needs.
   const soon = withinHour.length > 0 ? withinHour : arrivals.slice(0, 1);
+  const soonKeys = rowKeys(soon);
   const beyondCount = arrivals.length - soon.length;
 
   // `navigator.clipboard` does not exist on a non-secure origin and `writeText` can reject; only say "Copied" if it worked.
@@ -508,7 +509,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       ) : view === 'next' ? (
         <ul className="anim-fade mt-1">
           {soon.map((a, idx) => (
-            <li key={`${a.lineId}-${a.etaTime}-${idx}`} className="border-b border-line px-3 py-3.5">
+            <li key={soonKeys[idx]} className="border-b border-line px-3 py-3.5">
               {/* The destination keeps a floor of 6rem and the minutes wrap under it when both do
                   not fit: with the type at 200% the name was squeezed to one letter a line. */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

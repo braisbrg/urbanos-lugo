@@ -37,7 +37,7 @@ green:
 
 ```
 pnpm run lint          # tsc --noEmit
-pnpm test              # tools/test.ts — prints "N checks passed" (246 as of this writing)
+pnpm test              # tools/test.ts — prints "N checks passed" (247 as of this writing)
 pnpm run check:deep    # invariant + planner sweeps over the whole dataset, ~20s
 pnpm run build         # vite build + esbuild of the server bundle
 ```

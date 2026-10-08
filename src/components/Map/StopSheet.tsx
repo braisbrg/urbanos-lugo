@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { BusStop, BusLine, StopArrival } from '../../types';
 import { lineById, poleCode } from '../../data/transitData';
-import { getArrivalsForStop } from '../../utils/arrivals';
+import { getArrivalsForStop, rowKeys } from '../../utils/arrivals';
 import { useT } from '../../i18n';
 import { useDialog } from '../../hooks/useDialog';
 import { useClock } from '../../hooks/useClock';
@@ -35,6 +35,7 @@ export function StopSheet({ stop, onClose, onOpenLine, onShowLinesHere, onOpenFu
 
   const now = useClock(REFRESH_MS);
   const arrivals = useMemo(() => getArrivalsForStop(stop.id, now).arrivals.slice(0, SHOWN), [stop.id, now]);
+  const keys = rowKeys(arrivals);
 
   const code = poleCode(stop);
   const when = (a: StopArrival) => {
@@ -73,7 +74,7 @@ export function StopSheet({ stop, onClose, onOpenLine, onShowLinesHere, onOpenFu
         ) : (
           <ul className="divide-y divide-line">
             {arrivals.map((a, i) => (
-              <li key={`${a.lineId}-${a.etaTime}-${i}`}>
+              <li key={keys[i]}>
                 <button
                   type="button"
                   onClick={() => {

@@ -47,7 +47,7 @@ import { poleToRecord } from './importStopAmenities';
 import { POLE_SEEN_AT_OSM } from './lib';
 import { planTrips, MAX_HEADLINE_WALK_MIN, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
 import { estimateWalk, getNearbyStops, NEARBY_STOP_LIMIT_METRES, getNearestStopToCoords, findStop, resolveLocationQuery, QUICK_DESTINATIONS, LUGO_LANDMARKS } from '../src/utils/places';
-import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, timingPointStopCount } from '../src/utils/arrivals';
+import { getArrivalsForStop, getNextLineDeparture, networkAtRest, nextServiceAtStop, rowKeys, timingPointStopCount } from '../src/utils/arrivals';
 import { getScheduledBuses } from '../src/utils/vehicles';
 import { getDistanceMeters } from '../src/utils/geo';
 import { hydrateGeometry } from './hydrateGeometry';
@@ -5951,6 +5951,21 @@ ok('a map popup the keyboard goes into is brought inside the map first', () => {
   assert(/inViewOnFocus\.has\(el\)/.test(hook), 'each opening of a bound popup adds another focus listener, and another pan');
   assert(/seen\.left \+ container\.scrollLeft/.test(hook) && /seen\.top \+ container\.scrollTop/.test(hook), 'the popup is measured with the map’s box scrolled to the focus, and panned the wrong way');
   assert(/Three of the map's own arrow keys/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer moves the map before the keyboard reaches a bus popup');
+});
+
+ok('a board row keeps its key while the buses ahead of it leave', () => {
+  // 2.4.3: the row's position was in its key, so every departure gave every later row a new
+  // one, React built them all again, and the focus on any of them fell to the top of the page.
+  // Seen in the browser audit as a board whose Tab stops vanished while it walked them.
+  const row = (lineId: string, etaTime: string) => ({ lineId, etaTime });
+  const before = rowKeys([row('L1', '09:14'), row('L6', '09:20'), row('L6', '09:20'), row('L2', '09:31')]);
+  const after = rowKeys([row('L6', '09:20'), row('L6', '09:20'), row('L2', '09:31')]);
+  assert.deepEqual(after, before.slice(1), 'a departure changes the keys of the rows after it');
+  assert.equal(new Set(before).size, before.length, 'two runs of a line at the same minute share a key');
+  for (const file of ['src/components/StopArrivalsView.tsx', 'src/components/Map/StopSheet.tsx']) {
+    const code = read(file);
+    assert(/rowKeys\(/.test(code) && !/key=\{`\$\{a\.lineId\}-\$\{a\.etaTime\}-\$\{(i|idx)\}`\}/.test(code), `${file} keys its rows by position again`);
+  }
 });
 
 ok('the small "never"s in the comments hold', () => {

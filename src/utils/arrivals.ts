@@ -46,6 +46,22 @@ export function timingPointStopCount(): { published: number; total: number } {
   return timingPointCounts;
 }
 
+/**
+ * A key per board row that stays its own while the rows ahead of it leave. The position was in
+ * the key, so each departure moved every later row to a new key, React built them all again,
+ * and a keyboard or a screen reader on any of them was thrown back to the top of the page
+ * (WCAG 2.4.3). Two runs of a line at the same minute keep apart by which of the two they are.
+ */
+export function rowKeys(arrivals: readonly Pick<StopArrival, 'lineId' | 'etaTime'>[]): string[] {
+  const seen = new Map<string, number>();
+  return arrivals.map(({ lineId, etaTime }) => {
+    const key = `${lineId}-${etaTime}`;
+    const n = seen.get(key) ?? 0;
+    seen.set(key, n + 1);
+    return `${key}-${n}`;
+  });
+}
+
 /** Next arrivals at a stop; an empty board outside the service window rather than invented buses. */
 export function getArrivalsForStop(stopIdOrCode: string, now: Date = new Date()): { stop: BusStop | undefined; arrivals: StopArrival[] } {
   const stop = findStop(stopIdOrCode);
