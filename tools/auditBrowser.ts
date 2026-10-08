@@ -115,7 +115,10 @@ const PREPARE = `(() => {
   const set = JSON.parse(decodeURIComponent(location.hash.slice(at + 7)));
   history.replaceState(history.state, '', location.pathname + location.search);
   const Real = Date;
-  const offset = set.clock - Real.now();
+  let offset = set.clock - Real.now();
+  // A setup can move the clock on: the ride asks whether the bus was caught only once its
+  // departure has gone by, and the pulse of the next stop exists only on the bus.
+  window.__auditLater = (ms) => { offset += ms; };
   class Pinned extends Real { constructor(...a) { if (a.length) super(...a); else super(Real.now() + offset); } static now() { return Real.now() + offset; } }
   window.Date = Pinned;
   try { localStorage.clear(); sessionStorage.clear(); for (const [k, v] of Object.entries(set.stored)) localStorage.setItem(k, v); } catch (e) {}
@@ -840,6 +843,7 @@ const words = (d: typeof gl) => ({
   depart: d.planner.timeModes.depart,
   gps: d.planner.useMyLocation,
   start: d.companion.start,
+  yesOnIt: d.companion.yesOnIt,
   clearRecent: d.stopHome.clearRecent,
   undoClear: d.planner.undoClear,
 });
@@ -1023,6 +1027,19 @@ const STATES: State[] = [
     geo: 'granted',
     setup: `${planned} const s = all().find((b) => b.textContent.trim() === T.start); if (!s) return 'no ride button'; s.click();
       if (!(await until(() => document.querySelector('main ol')))) return 'the ride screen never drew'; await pause(1200); return true;`,
+  },
+  {
+    // On the bus: the clock forty minutes on, past the departure, and "Si, vou nel" answered.
+    // The one screen where a stop pulses; motion() measures 2.2.2 on it.
+    screen: 'ruta',
+    name: 'a bordo',
+    geo: 'granted',
+    setup: `${planned} const s = all().find((b) => b.textContent.trim() === T.start); if (!s) return 'no ride button'; s.click();
+      if (!(await until(() => document.querySelector('main ol')))) return 'the ride screen never drew';
+      window.__auditLater(40 * 60000);
+      const yes = () => all().find((b) => b.textContent.trim() === T.yesOnIt);
+      if (!(await until(yes, 20000))) return 'the ride never asked whether the bus was caught'; press(yes());
+      if (!(await until(() => document.querySelector('.live-dot')))) return 'no stop is next on the bus'; await pause(600); return true;`,
   },
   { screen: 'avisos', name: 'avisos' },
   { screen: 'avisos', name: 'sen avisos', api: 'quiet' },

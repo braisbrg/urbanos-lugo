@@ -5344,6 +5344,16 @@ ok('every animation runs 120 to 240 ms, and only two loop besides the waiting in
   assert(readme.includes('Á parte van os indicadores de espera'), 'the README no longer names the waiting indicators');
 });
 
+ok('on the bus, the card wraps at 200 % text, and the browser audit rides the bus to see it', () => {
+  // The audit had never been on the bus: its ride waited at the pole. It moves the page's
+  // clock past the departure and answers "Si, vou nel"; there, at 200 % text, the minutes,
+  // the time and the provenance chip ran 106 px out of the card and the screen 58 px past
+  // the phone, until the row wrapped (1.4.4).
+  const audit = read('tools/auditBrowser.ts');
+  assert(/name: 'a bordo'/.test(audit) && /window\.__auditLater\(40 \* 60000\)/.test(audit), 'the browser audit no longer rides the bus');
+  assert(/<span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">/.test(read('src/components/TripCompanionView.tsx')), 'on the bus the minutes, the time and the provenance run off the card at 200 % text again');
+});
+
 ok('a tap on «Calcular ruta» says «Calculando» before the plan holds the thread', () => {
   // The plan ran inside the tap: "arrive by" held a slow phone for 5.0-6.4 s with nothing on
   // screen to say why. The button now says «Calculando» in a frame of its own, and the plan

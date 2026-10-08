@@ -1668,7 +1668,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-248 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+249 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
@@ -1823,7 +1823,8 @@ trinta e oito estados —a portada baleira e a dunha persoa con paradas gardadas
 e sen resultados, o taboleiro (por hora, por liña, a outra hora e aberto desde o QR), «preto
 de min» con permiso e sen el, o menú, os favoritos, o lector de QR e o seu erro, as liñas, o
 mapa cos buses e coa ficha dunha parada, o planificador baleiro, coas suxestións abertas,
-planificado, a outra hora, sen ruta e sen GPS, a viaxe en curso, os avisos con incidencias,
+planificado, a outra hora, sen ruta e sen GPS, a viaxe agardando o bus e xa nel (o reloxo da
+páxina pasa da saída e respóndese «Si, vou nel»), os avisos con incidencias,
 sen elas, co servidor caído e sen rede, e a noite—, cada un alcanzado como o alcanza unha
 persoa, nun teléfono e nun escritorio, en galego, castelán e inglés e nos dous temas. O
 reloxo da páxina vai fixado (un martes ás 09:12, e ás 03:00 para a noite), as dúas respostas

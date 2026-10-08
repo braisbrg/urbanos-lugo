@@ -125,8 +125,10 @@ export function TripCompanionView({ companion }: { companion: TripCompanion }) {
                 <span className="tnum text-num font-bold tracking-[-0.025em] text-ink">{progress?.stopsRemaining ?? '—'}</span>
                 <span className="text-body text-ink-3">{t.companion.stops(progress?.stopsRemaining ?? 0)}</span>
               </span>
+              {/* Wrapping, as the card above does: at 200 % text the minutes, the time and the
+                  provenance chip ran 106 px out of the card and the screen 58 px past the phone. */}
               {minutesToAlighting !== null && (
-                <span className="flex items-baseline gap-2">
+                <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <span key={minutesToAlighting} className="anim-roll-in tnum inline-block text-emph font-semibold text-ink">
                     {minutesToAlighting >= 0 ? `~${minutesToAlighting} ${t.common.min}` : t.common.overdue(-minutesToAlighting)}
                   </span>
