@@ -38,7 +38,7 @@ export function minutesNow(date: Date = new Date()): number {
 const HOLIDAYS = new Set(Object.values(festivos).flatMap((year) => year.days));
 
 /** `YYYY-MM-DD` in the device's own calendar, which is the one the reader lives in. */
-const isoDay = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+export const isoDay = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 /** A public holiday in Lugo, on any day of the week. */
 export const isHoliday = (date: Date): boolean => HOLIDAYS.has(isoDay(date));

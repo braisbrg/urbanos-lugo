@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import { ArrowLeft, Bell, Check, ChevronDown, Clock, Map as MapIcon, Share2, TriangleAlert } from 'lucide-react';
 import { BusStop, BusLine, ServiceAlert, StopArrival } from '../types';
 import { namesLine } from '../utils/operatorNotices';
+import { changesNow, closedAt, pastTimetable, runsUntil, type NoticeChanges } from '../utils/noticeChanges';
 import { LazyNearbyMiniMap } from './Map/LazyNearbyMiniMap';
 import { lineById, poleCode } from '../data/transitData';
 import { getArrivalsForStop, nextServiceAtStop, timingPointStopCount } from '../utils/arrivals';
@@ -29,6 +30,8 @@ interface StopArrivalsViewProps {
   viaQr: boolean;
   /** The operator's notices written out line by line, fresh ones only. */
   notices?: ServiceAlert[];
+  /** What those notices change, read out of their words; which of it holds depends on the board's moment. */
+  changes?: NoticeChanges | null;
   onOpenAlerts?: () => void;
 }
 
@@ -64,7 +67,7 @@ interface LineGroup {
 
 const tint = (color: string) => ({ '--line': color }) as CSSProperties;
 
-export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSelectStop, onBack, isFavorite, onToggleFavorite, viaQr, notices = [], onOpenAlerts }: StopArrivalsViewProps) {
+export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSelectStop, onBack, isFavorite, onToggleFavorite, viaQr, notices = [], changes = null, onOpenAlerts }: StopArrivalsViewProps) {
   const t = useT();
   const lang = useLang();
   // The lines here that a notice names; with a notice and none of them named, the strip still shows, since its
@@ -158,16 +161,34 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
     setAlarmOn(true);
   };
 
+  /** The moment the board is read at: now, or the time asked for today. */
+  const boardMoment = (): Date => {
+    if (!atTime) return new Date();
+    const [h, m] = atTime.split(':').map(Number);
+    const when = new Date();
+    when.setHours(h, m, 0, 0);
+    return when;
+  };
+
+  // What the operator's notice changes here at that moment: lines that skip this stop, a stop
+  // moved, lines running past their timetable. Its words, with no departure made up for them.
+  const moment = boardMoment();
+  const noticeNow = changesNow(changes, moment);
+  const closedHere = closedAt(noticeNow, selectedStop.id);
+  const movedHere = (noticeNow?.lines ?? []).flatMap((c) => c.moved.filter((m) => m.stopId === selectedStop.id).map((m) => ({ line: c.line, to: m.to })));
+  const numbersHere = new Set(selectedStop.lines.map((id) => lineById(id)?.number));
+  const lateHere = (noticeNow?.lines ?? []).flatMap((c) => {
+    const end = numbersHere.has(c.line) && !closedHere.lines.includes(c.line) ? runsUntil(c, moment) : undefined;
+    return end ? [{ line: c.line, ...end, now: pastTimetable(c, selectedStop.id, moment) }] : [];
+  });
+  // Past its last printed call here, the notice is all there is: said folded or not, with whose word it is.
+  const lateNow = lateHere.filter((l) => l.now);
+  const lateLater = lateHere.filter((l) => !l.now);
+  const skipsHere = (lineNumber: string) => closedHere.lines.includes(lineNumber);
+
   // Recomputed every 15 s because the minutes count down against the wall clock; nothing is fetched, so no "last updated".
   useEffect(() => {
-    const at = () => {
-      if (!atTime) return new Date();
-      const [h, m] = atTime.split(':').map(Number);
-      const when = new Date();
-      when.setHours(h, m, 0, 0);
-      return when;
-    };
-    const read = () => setArrivals(getArrivalsForStop(selectedStop.id, at()).arrivals);
+    const read = () => setArrivals(getArrivalsForStop(selectedStop.id, boardMoment()).arrivals);
     read();
     if (atTime) return; // a named time does not move
     const interval = setInterval(read, 15000);
@@ -249,6 +270,8 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
     </span>
   );
   const provenance = (a: StopArrival) => <Provenance precision={a.precision} extra={a.etaTime} title={a.precision === 'published' ? t.arrivals.publishedHint : t.arrivals.estimatedHint} />;
+  // The timetable still has these buses here; the operator's notice says they will not stop. Both are said, the time struck through.
+  const notHereChip = <span className="rounded-control border border-warn bg-warn px-1.5 py-0.5 text-label font-semibold text-warn-ink">{t.arrivals.noticeNotHere}</span>;
   // The line is in the name, not only on the badge: fourteen in a row read as "7, button".
   const lineButton = (id: string, number: string, color: string) => (
     <LineBadge
@@ -261,8 +284,9 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
       }}
     />
   );
+  // No bell for a bus the notice says will not stop here: there is nothing to be told about.
   const watchButton = (a: StopArrival) =>
-    !atTime && a.etaMinutes > WATCH_LEAD_MINUTES ? (
+    !atTime && a.etaMinutes > WATCH_LEAD_MINUTES && !skipsHere(a.lineNumber) ? (
       <button
         onClick={() => toggleWatch(a.lineId)}
         title={t.arrivals.watchHint(WATCH_LEAD_MINUTES)}
@@ -323,16 +347,51 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
         </div>
       </header>
 
+      {/* Folded to its heading and what changes at this very stop, which the rows below also
+          mark: the days, the late lines and the traffic cuts are one tap away, and the notice
+          itself one more. Open, it was 166 px of a 375 px phone above the first departure.
+          Once a line is past its last printed call here, its end time and the notice's word
+          for it come up into the heading: then they are the only answer the board has. */}
       {noticeSections.length > 0 && (
-        <Notice warn>
-          <button onClick={onOpenAlerts} disabled={!onOpenAlerts} className="flex min-h-11 w-full items-start gap-2 text-left">
+        <details className="disclosure anim-rise mt-3 rounded-control border border-warn bg-warn text-label leading-relaxed text-warn-ink">
+          <summary className="flex min-h-11 cursor-pointer items-start gap-2 p-3">
             <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
-            <span>
+            <span className="min-w-0 flex-1">
               <span className="block font-semibold">{t.arrivals.operatorNoticeFor(noticeLines)}</span>
-              {noticeDays && <span className="block">{noticeDays}</span>}
+              {closedHere.lines.length > 0 && <span className="mt-1 block font-semibold">{t.arrivals.noticeClosedHere(closedHere.lines, closedHere.instead)}</span>}
+              {movedHere.length > 0 && (
+                <span className="mt-1 block font-semibold">
+                  {t.arrivals.noticeMovedHere(
+                    movedHere.map((m) => m.line),
+                    movedHere[0].to,
+                  )}
+                </span>
+              )}
+              {lateNow.map((l) => (
+                <span key={l.line} className="mt-1 block font-semibold">
+                  {t.arrivals.noticeRunsUntil(l.line, l.time, l.to)}
+                </span>
+              ))}
+              {lateNow.length > 0 && <span className="block">{t.arrivals.noticeNoDepartures}</span>}
             </span>
-          </button>
-        </Notice>
+            <ChevronDown className="disclosure-chevron mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+          </summary>
+          <div className="px-3 pb-1 pl-[34px]">
+            {noticeDays && <p>{noticeDays}</p>}
+            {lateLater.map((l) => (
+              <p key={l.line} className="mt-1">
+                {t.arrivals.noticeRunsUntil(l.line, l.time, l.to)}
+              </p>
+            ))}
+            {lateLater.length > 0 && lateNow.length === 0 && <p>{t.arrivals.noticeNoDepartures}</p>}
+            {(noticeNow?.general.length ?? 0) > 0 && <p className="mt-1">{t.arrivals.noticeGeneral}</p>}
+            {onOpenAlerts && (
+              <button onClick={onOpenAlerts} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
+                {t.lines.seeFullNotice}
+              </button>
+            )}
+          </div>
+        </details>
       )}
 
       {/* By time when you will take whatever comes, by line when you are waiting for one in particular. */}
@@ -457,13 +516,14 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
                 <span className="min-w-[6rem] flex-1 break-words text-emph font-semibold">
                   {a.destination}
                 </span>
-                <span className="ml-auto flex shrink-0 items-end gap-1.5">
+                <span className={`ml-auto flex shrink-0 items-end gap-1.5 ${skipsHere(a.lineNumber) ? 'line-through opacity-60' : ''}`}>
                   <Minutes arrival={a} />
                   {minUnit(a)}
                 </span>
               </div>
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 {provenance(a)}
+                {skipsHere(a.lineNumber) && notHereChip}
                 <span className="flex-1" />
                 {watchButton(a)}
               </div>
@@ -482,7 +542,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
                   </span>
                   {g.headwayMinutes !== null && <span className="mt-0.5 block text-label text-ink-3">{t.arrivals.every(g.headwayMinutes)}</span>}
                 </span>
-                <span className="ml-auto flex shrink-0 items-end gap-1.5">
+                <span className={`ml-auto flex shrink-0 items-end gap-1.5 ${skipsHere(g.lineNumber) ? 'line-through opacity-60' : ''}`}>
                   <Minutes arrival={g.departures[0]} />
                   {minUnit(g.departures[0])}
                 </span>
@@ -490,6 +550,7 @@ export function StopArrivalsView({ selectedStop, onSelectLine, onViewOnMap, onSe
               {/* The rest of this line's departures, so "I'll catch the one after" needs no second tap. */}
               <div className="flex flex-wrap items-center gap-2.5 border-t border-line-soft px-3 py-2.5">
                 {provenance(g.departures[0])}
+                {skipsHere(g.lineNumber) && notHereChip}
                 {g.departures.slice(1).map((d) => (
                   <span key={d.etaTime} className="tnum text-body text-ink-2">
                     {d.precision === 'estimated' && <span className="text-ink-3">~</span>}

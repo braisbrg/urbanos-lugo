@@ -157,6 +157,7 @@ export const es: Dict = {
     locating: 'Obteniendo la ubicación…',
     calculate: 'Calcular ruta',
     calculating: 'Calculando',
+    noticeOnTrip: (lines: string[]) => `Estos días hay cambios en ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')}, según el aviso del operador`,
     swap: 'Invertir origen y destino',
     departureLabel: 'Salida',
     arrivalLabel: 'Llegada',
@@ -423,6 +424,9 @@ export const es: Dict = {
     kilometres: (km: string) => `${km} km`,
     operatorNotice: 'Aviso del operador',
     seeFullNotice: 'Ver el aviso completo',
+    noticeToday: 'Hoy, según el aviso del operador',
+    noticeClosedStop: (stop: string, instead?: string) => `No para en ${stop}${instead ? `; parada provisional: ${instead}` : ''}`,
+    noticeMovedStop: (stop: string, to: string) => `La parada ${stop} se traslada a ${to}`,
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:
       'El trazado de este sentido en el mapa no está topografiado: se construye con la ruta que haría un coche entre las paradas, así que puede desviarse por donde el bus no pasa. Las paradas y los horarios son los oficiales.',
@@ -443,6 +447,13 @@ export const es: Dict = {
       lines.length === 0
         ? 'Aviso del operador sobre cambios en las líneas'
         : `Aviso del operador para ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')}`,
+    noticeClosedHere: (lines: string[], instead?: string) =>
+      `Estos días ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')} no ${lines.length === 1 ? 'para' : 'paran'} aquí${instead ? `. Parada provisional: ${instead}` : ''}`,
+    noticeMovedHere: (lines: string[], to: string) => `Estos días la parada ${lines.length === 1 ? 'de la línea' : 'de las líneas'} ${lines.join(', ')} se traslada a ${to}`,
+    noticeRunsUntil: (line: string, time: string, to?: string) => `La ${line} funciona hasta ${/^01:/.test(time) ? 'la' : 'las'} ${time}${to ? ` (${to})` : ''}`,
+    noticeNoDepartures: 'Según el aviso de buslugo.com, que da la hora final y no las salidas. De esas horas no hay horario oficial, que sepamos.',
+    noticeNotHere: 'No para aquí estos días',
+    noticeGeneral: 'Cortes de tráfico estos días: algunas líneas se desvían y hay paradas provisionales.',
     operatorSaysTitle: 'Lo que muestra el QR de esta parada',
     operatorSaysNote: (at: string) =>
       `Esto es lo que muestra ahora el código de este poste, leído a las ${at}. Es el dato del operador, no el de esta app.`,
@@ -515,6 +526,8 @@ export const es: Dict = {
   nightBanner: {
     closed: (firstDeparture: string, day = '') => `Sin servicio · primer bus ${day ? `${day} ` : ''}a las ${firstDeparture}`,
     festivals: 'En fiestas puede haber refuerzos, sin horario fijo',
+    extended: (lines: string[], last: string) => `Esta noche siguen ${lines.length === 1 ? 'la línea' : 'las líneas'} ${lines.join(', ')}, hasta ${/^01:/.test(last) ? 'la' : 'las'} ${last} como mucho`,
+    extendedSource: 'Según el aviso de buslugo.com; sin horario oficial, que sepamos',
     seeNotices: 'Ver avisos',
     dismiss: 'Ocultar aviso',
   },

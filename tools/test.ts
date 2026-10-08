@@ -20,7 +20,7 @@ import { CACHE_TTL_MS as ALERTS_CACHE_MS, MIN_OUTBOUND_INTERVAL_MS as ALERTS_MIN
 import { clockDriftFromTimetable, lugoOffsetByRule } from '../src/utils/clock';
 import { MAX_QUERY_LENGTH, calculateRelevanceScore, matchesQuery, normalizeText, withinEditDistance } from '../src/utils/searchUtils';
 import { LANGS, translations } from '../src/i18n';
-import type { RoutePlanResult } from '../src/types';
+import type { RoutePlanResult, ServiceAlert, TripSegment } from '../src/types';
 import { tripProgress, rememberPassed, AT_STOP_RADIUS_M, MISSED_AFTER_MIN, BOARDING_SOON_MIN, boardingIsNow, startTrip, advanceTrip, tripPhase, currentLeg, legTimes, shouldAskIfMissed, confirmBoarded, missedBus, packTrip, unpackTrip } from '../src/utils/tripProgress';
 import { ALARM_RADIUS_M, subscribePosition } from '../src/services/stopAlarm';
 import { poleCode, FARES, linesByNumber } from '../src/data/transitData';
@@ -30,6 +30,7 @@ import { RECENT_ROUTES } from '../src/hooks/useStoredList';
 import { SNAPSHOT_AFTER_MS, readSnapshot } from '../src/hooks/useServiceAlerts';
 import { readOperatorTimes } from '../src/hooks/useOperatorTimes';
 import { noticeLink } from '../src/utils/operatorNotices';
+import { changesNow, matchStop, pastTimetable, readNoticeChanges, runsAt, runsUntil, serviceDay, stopSkipper } from '../src/utils/noticeChanges';
 import { plainText } from '../src/utils/html';
 import { STORAGE_KEYS, readJson, readString, writeJson, writeString } from '../src/utils/storage';
 import { LANG_PREFIX, PATHS, SLUGS, isCrawler, parsePath, pathFor, pickLang } from '../src/routes';
@@ -1794,6 +1795,111 @@ ok('what the API sends is read, not trusted: text as text, and links only to the
   // And the two hooks read what they fetch through these, rather than casting it.
   assert(/setData\(readSnapshot\(await res\.json\(\)\)\)/.test(read('src/hooks/useServiceAlerts.ts')), 'the live notices answer reaches the screen unread again');
   assert(/readOperatorTimes\(await res\.json\(\)\)/.test(read('src/hooks/useOperatorTimes.ts')), 'the operator’s minutes reach the board unread again');
+});
+
+/** The San Froilán 2026 notice as the worker served it, the parts that change something. */
+const SAN_FROILAN: ServiceAlert = {
+  id: 'nav-notice-1',
+  title: 'Cambios en las líneas por San Froilán',
+  description: 'Refuerzo de transporte urbano los días 3, 4, 5, 9, 10, 11 y 12 de octubre',
+  severity: 'warning',
+  linesAffected: ['Todas'],
+  date: '2026-10-07',
+  active: true,
+  source: 'operator',
+  sections: [
+    {
+      heading: 'Línea 1.2 : Campus USC – Fingoi – O Ceao – HULA',
+      lines: ['1.2'],
+      paragraphs: [
+        'Prolongación del recorrido hasta las 03:07 (Sindicatos), suprimiendo su recorrido por el HULA y Avda. Benigno Rivera proseguirá por Avda. Infanta Elena, Avenida Paulo Favio Máximo siguiendo su recorrido habitual. Se suprime la parada de Praza de Bretaña y se habilitará una en Celso Emilio Ferreiro esquina Avda. Ramón Ferreiro',
+      ],
+    },
+    {
+      heading: 'Línea 10 : Ramón Ferreiro – Cementerio',
+      lines: ['10'],
+      paragraphs: [
+        'Modificación de la parada Avda. Ramón Ferreiro (Femenino) pasará a ubicarse provisionalmente en Avda. Ramón Ferreiro, 14',
+        'Los días 5 y 12 de octubre el final del servicio tendrá lugar a la 1:00 del día siguiente',
+      ],
+    },
+    {
+      heading: 'Línea 13 : Rda. Muralla (Sindicatos) – As Gándaras',
+      lines: ['13'],
+      paragraphs: ['Prolongación del recorrido hasta las 03:00 (Cementerio)', 'Los días 5 y 12 de octubre el final del servicio tendrá lugar a la 1:00 del día siguiente'],
+    },
+    {
+      heading: 'Resto de líneas',
+      lines: [],
+      paragraphs: ['Corte desde Rda. Muralla (Porta Santiago): desvío por rúa Santiago.', 'Paradas provisionales:'],
+    },
+  ],
+};
+
+ok('an operator notice becomes changes the app uses: stops closed and moved, lines running late, on its own days', () => {
+  // San Froilán 2026 ran five lines to 03:00 and past, closed a stop for two of them and
+  // moved one for another, on seven named days. The app showed the notice and nothing else:
+  // its boards said "no buses" at one in the morning, and the planner sent people to a stop
+  // the 1.2 and the 1.4 did not call at.
+  const changes = readNoticeChanges([SAN_FROILAN], 2026);
+  assert(changes, 'a notice with three lines of changes read as none');
+  assert(changes.days.join(' ') === '2026-10-03 2026-10-04 2026-10-05 2026-10-09 2026-10-10 2026-10-11 2026-10-12', `the notice's days came out as ${changes.days.join(' ')}`);
+  const line = (n: string) => changes.lines.find((c) => c.line === n);
+  assert(line('1.2')?.until?.time === '03:07' && line('1.2')?.until?.to === 'Sindicatos', 'the 1.2 lost its 03:07 to Sindicatos');
+  assert(
+    line('1.2')?.closed[0]?.stopId === 's15' && line('1.2')?.closed[0]?.instead === 'Celso Emilio Ferreiro esquina Avda. Ramón Ferreiro',
+    `the 1.2's closed stop came out as ${JSON.stringify(line('1.2')?.closed)}: the abbreviation's period cut the replacement short once`,
+  );
+  assert(line('10')?.moved[0]?.stopId === 's71' && line('10')?.moved[0]?.to === 'Avda. Ramón Ferreiro, 14', `the 10's moved stop came out as ${JSON.stringify(line('10')?.moved)}`);
+  assert(line('13')?.until?.time === '03:00' && line('13')?.endsEarly?.time === '01:00' && line('13')?.endsEarly?.days.join(' ') === '2026-10-05 2026-10-12', 'the 13 lost its 03:00 or its early end on the 5th and the 12th');
+  assert(changes.general.length === 2, 'the part for every other line was not kept');
+
+  // The night belongs to the day it began on, and a day the notice does not name has nothing.
+  assert(changesNow(changes, new Date(2026, 9, 8, 12, 0)) === null, 'the notice applied on the 8th, a day it does not name');
+  assert(serviceDay(new Date(2026, 9, 10, 2, 0)) === '2026-10-09' && changesNow(changes, new Date(2026, 9, 10, 2, 0)) !== null, 'two in the morning of the 10th was not still the night of the 9th');
+  assert(runsUntil(line('13')!, new Date(2026, 9, 10, 23, 30))?.time === '03:00' && runsUntil(line('13')!, new Date(2026, 9, 12, 23, 30))?.time === '01:00', 'the 13 ran to the wrong hour on the 10th or the 12th');
+  assert(runsUntil(line('10')!, new Date(2026, 9, 10, 23, 30)) === undefined && runsUntil(line('10')!, new Date(2026, 9, 12, 23, 30))?.time === '01:00', 'the 10 ran late on a night the notice gives it no extension, or not on the 12th');
+  assert(!runsAt(line('1.2')!, new Date(2026, 9, 10, 3, 10)) && runsAt(line('13')!, new Date(2026, 9, 10, 0, 30)), 'a line ran past its notice end, or stopped before it');
+  // Read night by night against the live notice: at 05:30 on the 10th, before the first bus,
+  // the banner said five lines kept running; at 04:00 a board said the 9 ran until 03:15; on
+  // the 12th the 13's 01:00 end borrowed «(Cementerio)» from the 03:00 one; the 10 came after the 12.
+  assert(!runsAt(line('1.2')!, new Date(2026, 9, 10, 5, 30)) && runsAt(line('1.2')!, new Date(2026, 9, 10, 23, 30)), 'a festival morning before the first bus read as the festival night');
+  assert(runsUntil(line('1.2')!, new Date(2026, 9, 11, 3, 0))?.time === '03:07' && runsUntil(line('1.2')!, new Date(2026, 9, 11, 4, 0)) === undefined, 'an end time already gone was still announced');
+  assert(runsUntil(line('13')!, new Date(2026, 9, 10, 23, 30))?.to === 'Cementerio' && runsUntil(line('13')!, new Date(2026, 9, 12, 23, 30))?.to === undefined, 'the early end was given the place written with the late one');
+  const backwards = readNoticeChanges([{ ...SAN_FROILAN, sections: [...SAN_FROILAN.sections!].reverse() }], 2026);
+  assert(backwards?.lines.map((c) => c.line).join(' ') === '1.2 10 13', `the lines came out in the notice's order, ${backwards?.lines.map((c) => c.line).join(' ')}`);
+  // From a line's last printed call at a stop the notice is the only answer the board has, so
+  // it is said there unfolded; not before, not after its end, and not on a night it does not extend.
+  const head13 = BUS_LINES.find((l) => l.number === '13')!.directions[0].stops[0];
+  const head10 = BUS_LINES.find((l) => l.number === '10')!.directions[0].stops[0];
+  assert(!pastTimetable(line('13')!, head13, new Date(2026, 9, 10, 20, 0)), 'the 13 was handed to the notice while its timetable still ran');
+  assert(pastTimetable(line('13')!, head13, new Date(2026, 9, 10, 23, 30)) && pastTimetable(line('13')!, head13, new Date(2026, 9, 11, 2, 0)), 'the 13 past its last printed call was not handed to the notice');
+  assert(!pastTimetable(line('13')!, head13, new Date(2026, 9, 11, 3, 30)) && !pastTimetable(line('13')!, head13, new Date(2026, 9, 10, 5, 30)), 'the notice spoke for the 13 after its end, or on the morning before');
+  assert(!pastTimetable(line('10')!, head10, new Date(2026, 9, 10, 23, 30)) && pastTimetable(line('10')!, head10, new Date(2026, 9, 12, 23, 30)), 'the 10 was handed to the notice on a night it does not extend, or not on the 12th');
+
+  // A name in the notice is a stop only when it clearly is one, among the line's own.
+  const ofLine = (id: string) => BUS_STOPS.filter((s) => s.lines.includes(id));
+  assert(matchStop('Praza de Bretaña', ofLine('1.2')) === 's15', '«Praza de Bretaña» is not «Praza Bretaña» any more');
+  assert(matchStop('Avda. Ramón Ferreiro (Femenino)', ofLine('10')) === 's71', '«(Femenino)» did not find «(Feminino)», or found «(Anexa)»');
+  assert(matchStop('Rúa que non existe', ofLine('10')) === undefined, 'a stop nobody serves was matched to one');
+});
+
+ok('the planner never boards or leaves a line at a stop the notice closes', () => {
+  // The 1.2 and the 1.4 did not call at Praza Bretaña on San Froilán; the planner proposed
+  // boarding the 1.4 there all the same.
+  const now = new Date(2026, 9, 9, 10, 0);
+  const legs = (skipsStop?: (lineId: string, stopId: string) => boolean) =>
+    planTrips('Praza Bretaña', 'Benigno Rivera (H. Ferreiro)', { now, skipsStop }).flatMap((p) => p.segments.filter((s) => s.type === 'bus'));
+  const atBretana = (s: TripSegment) => s.fromStop?.id === 's15' || s.toStop?.id === 's15';
+  assert(legs().some((s) => s.line?.id === '1.4' && atBretana(s)), 'with nothing closed no plan boards the 1.4 at Praza Bretaña, so this check proves nothing');
+  const closed = legs((lineId, stopId) => stopId === 's15' && (lineId === '1.2' || lineId === '1.4'));
+  assert(!closed.some((s) => (s.line?.id === '1.2' || s.line?.id === '1.4') && atBretana(s)), 'a plan still boards or leaves the 1.2 or the 1.4 at the closed stop');
+  assert(closed.some((s) => atBretana(s)), 'closing the stop for two lines closed it for every line');
+  // And what the screens are given is what the notice says: the predicate comes from it.
+  const skips = stopSkipper(readNoticeChanges([SAN_FROILAN], 2026), now);
+  assert(skips?.('1.2', 's15') && !skips('1.1', 's15') && stopSkipper(readNoticeChanges([SAN_FROILAN], 2026), new Date(2026, 9, 8, 10, 0)) === undefined, 'the notice closes the wrong lines, or closes them on a day it does not name');
+  const planner = read('src/components/RoutePlannerView.tsx');
+  assert((planner.match(/skipsStop: stopSkipper\(changes, new Date\(\)\)/g) ?? []).length === 3, 'a planTrips call on the Route screen ignores the notice');
 });
 
 ok('no view renders Galician or Spanish text of its own', () => {

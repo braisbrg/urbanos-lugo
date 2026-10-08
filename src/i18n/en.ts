@@ -168,6 +168,7 @@ export const en: Dict = {
     locating: 'Getting your location…',
     calculate: 'Plan the trip',
     calculating: 'Planning',
+    noticeOnTrip: (lines: string[]) => `These days ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')} ${lines.length === 1 ? 'has' : 'have'} changes, by the operator’s notice`,
     swap: 'Swap origin and destination',
     departureLabel: 'Depart',
     arrivalLabel: 'Arrive',
@@ -434,6 +435,9 @@ export const en: Dict = {
     kilometres: (km: string) => `${km} km`,
     operatorNotice: 'Operator notice',
     seeFullNotice: 'See the whole notice',
+    noticeToday: 'Today, by the operator’s notice',
+    noticeClosedStop: (stop: string, instead?: string) => `Does not stop at ${stop}${instead ? `; temporary stop: ${instead}` : ''}`,
+    noticeMovedStop: (stop: string, to: string) => `The ${stop} stop moves to ${to}`,
     approximatePathTitle: 'Approximate path',
     approximatePath:
       'The path drawn for this direction has not been surveyed: it is built from the route a car would take between the stops, so it may detour where the bus does not. The stops and times are the official ones.',
@@ -454,6 +458,13 @@ export const en: Dict = {
       lines.length === 0
         ? 'Operator notice about changes to the lines'
         : `Operator notice for ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')}`,
+    noticeClosedHere: (lines: string[], instead?: string) =>
+      `These days ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')} ${lines.length === 1 ? 'does' : 'do'} not stop here${instead ? `. Temporary stop: ${instead}` : ''}`,
+    noticeMovedHere: (lines: string[], to: string) => `These days the stop for ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')} moves to ${to}`,
+    noticeRunsUntil: (line: string, time: string, to?: string) => `The ${line} runs until ${time}${to ? ` (${to})` : ''}`,
+    noticeNoDepartures: 'From the buslugo.com notice, which gives the last time, not the departures. There is no official timetable for those hours that we know of.',
+    noticeNotHere: 'Not stopping here these days',
+    noticeGeneral: 'Traffic closures these days: some lines are diverted and there are temporary stops.',
     operatorSaysTitle: 'What this stop’s QR shows',
     operatorSaysNote: (at: string) =>
       `This is what the code on this pole shows right now, read at ${at}. The operator’s figure, not this app’s.`,
@@ -526,6 +537,8 @@ export const en: Dict = {
   nightBanner: {
     closed: (firstDeparture: string, day = '') => `No service · first bus ${day ? `${day} ` : ''}at ${firstDeparture}`,
     festivals: 'Extra buses on festival nights, no fixed timetable',
+    extended: (lines: string[], last: string) => `Tonight ${lines.length === 1 ? 'line' : 'lines'} ${lines.join(', ')} ${lines.length === 1 ? 'keeps' : 'keep'} running, until ${last} at the latest`,
+    extendedSource: 'From the buslugo.com notice; no official timetable that we know of',
     seeNotices: 'See notices',
     dismiss: 'Hide notice',
   },

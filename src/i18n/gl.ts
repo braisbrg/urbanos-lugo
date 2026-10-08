@@ -188,6 +188,7 @@ export const gl = {
     locating: 'Obtendo a localización…',
     calculate: 'Calcular ruta',
     calculating: 'Calculando',
+    noticeOnTrip: (lines: string[]) => `Estes días hai cambios ${lines.length === 1 ? 'na liña' : 'nas liñas'} ${lines.join(', ')}, segundo o aviso do operador`,
     swap: 'Inverter orixe e destino',
     departureLabel: 'Saída',
     arrivalLabel: 'Chegada',
@@ -465,6 +466,9 @@ export const gl = {
     kilometres: (km: string) => `${km} km`,
     operatorNotice: 'Aviso do operador',
     seeFullNotice: 'Ver o aviso enteiro',
+    noticeToday: 'Hoxe, segundo o aviso do operador',
+    noticeClosedStop: (stop: string, instead?: string) => `Non para en ${stop}${instead ? `; parada provisional: ${instead}` : ''}`,
+    noticeMovedStop: (stop: string, to: string) => `A parada ${stop} trasládase a ${to}`,
     approximatePathTitle: 'Trazado aproximado',
     approximatePath:
       'O trazado deste sentido no mapa non está topografiado: constrúese coa ruta que faría un coche entre as paradas, así que pode desviarse por onde o bus non pasa. As paradas e as horas son as oficiais.',
@@ -486,6 +490,14 @@ export const gl = {
       lines.length === 0
         ? 'Aviso do operador sobre cambios nas liñas'
         : `Aviso do operador para ${lines.length === 1 ? 'a liña' : 'as liñas'} ${lines.join(', ')}`,
+    /** What the operator's notice changes at this stop these days: read from its words, shown as its words. */
+    noticeClosedHere: (lines: string[], instead?: string) =>
+      `Estes días ${lines.length === 1 ? 'a liña' : 'as liñas'} ${lines.join(', ')} non ${lines.length === 1 ? 'para' : 'paran'} aquí${instead ? `. Parada provisional: ${instead}` : ''}`,
+    noticeMovedHere: (lines: string[], to: string) => `Estes días a parada ${lines.length === 1 ? 'da liña' : 'das liñas'} ${lines.join(', ')} trasládase a ${to}`,
+    noticeRunsUntil: (line: string, time: string, to?: string) => `A ${line} funciona ata ${/^01:/.test(time) ? 'a' : 'as'} ${time}${to ? ` (${to})` : ''}`,
+    noticeNoDepartures: 'Segundo o aviso de buslugo.com, que dá a hora final e non as saídas. Desas horas non hai horario oficial, que saibamos.',
+    noticeNotHere: 'Non para aquí estes días',
+    noticeGeneral: 'Cortes de tráfico estes días: algunhas liñas desvíanse e hai paradas provisionais.',
     operatorSaysTitle: 'O que amosa o QR desta parada',
     operatorSaysNote: (at: string) =>
       `Isto é o que amosa agora o código deste poste, lido ás ${at}. É o dato do operador, non o desta app.`,
@@ -558,6 +570,9 @@ export const gl = {
   nightBanner: {
     closed: (firstDeparture: string, day = '') => `Sen servizo · primeiro bus ${day ? `${day} ` : ''}ás ${firstDeparture}`,
     festivals: 'En festas pode haber reforzos, sen horario fixo',
+    /** A festival night the operator's notice extends: "no service" would not be true. */
+    extended: (lines: string[], last: string) => `Esta noite seguen ${lines.length === 1 ? 'a liña' : 'as liñas'} ${lines.join(', ')}, ata ${/^01:/.test(last) ? 'a' : 'as'} ${last} como moito`,
+    extendedSource: 'Segundo o aviso de buslugo.com; sen horario oficial, que saibamos',
     seeNotices: 'Ver avisos',
     dismiss: 'Ocultar aviso',
   },

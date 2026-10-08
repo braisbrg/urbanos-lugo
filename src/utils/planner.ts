@@ -263,10 +263,10 @@ function polesWithinWalk(stop: BusStop): [BusStop, number][] {
 }
 
 /** Chain two legs through one interchange, allowing time to change platform. */
-function buildTransfer(lang: Lang, startStop: BusStop, endStop: BusStop, hubIn: BusStop, hubOut: BusStop, readyAt: number, now: Date): Itinerary | null {
+function buildTransfer(lang: Lang, startStop: BusStop, endStop: BusStop, hubIn: BusStop, hubOut: BusStop, readyAt: number, now: Date, skips: Skips): Itinerary | null {
   if (hubIn.id === startStop.id || hubOut.id === endStop.id) return null;
-  const leg1Lines = startStop.lines.filter((l) => hubIn.lines.includes(l));
-  const leg2Lines = endStop.lines.filter((l) => hubOut.lines.includes(l));
+  const leg1Lines = servingBoth(startStop, hubIn, skips);
+  const leg2Lines = servingBoth(endStop, hubOut, skips);
   if (!leg1Lines.length || !leg2Lines.length) return null;
 
   const first = buildLeg(lang, leg1Lines, startStop, hubIn, readyAt, now);
@@ -346,18 +346,29 @@ export interface PlanOptions {
    * 1.35, which is good enough to build a plan from and bad to promise a bus on.
    */
   measuredWalkToStop?: (stopId: string) => number | undefined;
+  /**
+   * A stop a line does not call at today, by the operator's notice («Se suprime la parada de
+   * Praza de Bretaña» for the 1.2 and the 1.4 on San Froilán): never boarded or left there.
+   */
+  skipsStop?: Skips;
 }
+
+type Skips = (lineId: string, stopId: string) => boolean;
+const NOTHING_SKIPPED: Skips = () => false;
+
+/** The lines that call at both stops, in the first one's order: a line the notice takes off either is not one of them. */
+const servingBoth = (a: BusStop, b: BusStop, skips: Skips): string[] => a.lines.filter((l) => b.lines.includes(l) && !skips(l, a.id) && !skips(l, b.id));
 
 /** Every distinct way of making the trip, quickest first. */
 export function planTrips(fromQuery: string, toQuery: string, options: PlanOptions = {}): RoutePlanResult[] {
-  const { userLocation, now = new Date(), lang = 'gl', measuredWalkToStop } = options;
+  const { userLocation, now = new Date(), lang = 'gl', measuredWalkToStop, skipsStop = NOTHING_SKIPPED } = options;
   const question = ask(lang, fromQuery, toQuery, userLocation, measuredWalkToStop);
   // One of the two places is not in the dataset: no itinerary beats one from somewhere else.
   if (!question) return [];
-  if (options.arriveBy !== undefined) return planArrivingBy(lang, question, options.arriveBy, now);
+  if (options.arriveBy !== undefined) return planArrivingBy(lang, question, options.arriveBy, now, skipsStop);
   const at = new Date(now);
   if (options.departAt !== undefined) at.setHours(Math.floor(options.departAt / 60), Math.round(options.departAt % 60), 0, 0);
-  return planDeparting(lang, question, at);
+  return planDeparting(lang, question, at, skipsStop);
 }
 
 /** A question with its two places found and its boarding stops chosen: none of that depends on the clock. */
@@ -385,14 +396,14 @@ const journeyKey = (plan: RoutePlanResult, by: (seg: TripSegment) => string | un
  * the same question, found and chosen once rather than once a probe: thirty-seven probes
  * were thirty-seven searches of the place names and seventy-four rankings of every pole.
  */
-function planArrivingBy(lang: Lang, question: Question, arriveBy: number, now: Date): RoutePlanResult[] {
+function planArrivingBy(lang: Lang, question: Question, arriveBy: number, now: Date, skips: Skips): RoutePlanResult[] {
   const earliest = Math.max(now.getHours() * 60 + now.getMinutes(), arriveBy - ARRIVE_BY_LOOKBACK_MIN);
   // The latest departure per journey that still arrives in time.
   const byJourney = new Map<string, RoutePlanResult>();
   for (let depart = earliest; depart <= arriveBy; depart += ARRIVE_BY_STEP_MIN) {
     const at = new Date(now);
     at.setHours(Math.floor(depart / 60), depart % 60, 0, 0);
-    for (const plan of planDeparting(lang, question, at)) {
+    for (const plan of planDeparting(lang, question, at, skips)) {
       if (!plan.isServiceActive || parseTimeToMinutes(plan.arrivalTime) > arriveBy) continue;
       byJourney.set(journeyKey(plan, (seg) => `${seg.line?.id}/${seg.directionId}`), plan);
     }
@@ -400,10 +411,10 @@ function planArrivingBy(lang: Lang, question: Question, arriveBy: number, now: D
   return [...byJourney.values()].sort((a, b) => parseTimeToMinutes(b.departureTime) - parseTimeToMinutes(a.departureTime));
 }
 
-function planDeparting(lang: Lang, { fromRes, toRes, starts, ends }: Question, now: Date): RoutePlanResult[] {
+function planDeparting(lang: Lang, { fromRes, toRes, starts, ends }: Question, now: Date, skips: Skips): RoutePlanResult[] {
   const onFoot = walkingOnlyPlan(lang, fromRes, toRes, now);
   const all: RoutePlanResult[] = [onFoot];
-  for (const from of starts) for (const to of ends) if (from.stop.id !== to.stop.id) all.push(...planBetweenStops(lang, fromRes, toRes, from, to, now));
+  for (const from of starts) for (const to of ends) if (from.stop.id !== to.stop.id) all.push(...planBetweenStops(lang, fromRes, toRes, from, to, now, skips));
 
   // Two itineraries wearing the same badges are one journey to a passenger: keep the quickest.
   const byJourney = new Map<string, RoutePlanResult>();
@@ -486,7 +497,7 @@ function walkingOnlyPlan(lang: Lang, fromRes: LocationResolution, toRes: Locatio
   };
 }
 
-function planBetweenStops(lang: Lang, fromRes: LocationResolution, toRes: LocationResolution, from: BoardingCandidate, to: BoardingCandidate, now: Date): RoutePlanResult[] {
+function planBetweenStops(lang: Lang, fromRes: LocationResolution, toRes: LocationResolution, from: BoardingCandidate, to: BoardingCandidate, now: Date, skips: Skips): RoutePlanResult[] {
   const startStop = from.stop;
   const endStop = to.stop;
   const t = translations(lang).engine;
@@ -502,10 +513,10 @@ function planBetweenStops(lang: Lang, fromRes: LocationResolution, toRes: Locati
 
   // 2. A direct ride against every interchange; whichever gets there first. Taking the
   //    direct line unconditionally once proposed a four-hour wait on a 3-a-day line.
-  const directLines = startStop.lines.filter((l) => endStop.lines.includes(l));
+  const directLines = servingBoth(startStop, endStop, skips);
   const options = [
     buildLeg(lang, directLines, startStop, endStop, cursor, now),
-    ...connectingHubs(startStop, endStop).map(([hubIn, hubOut]) => buildTransfer(lang, startStop, endStop, hubIn, hubOut, cursor, now)),
+    ...connectingHubs(startStop, endStop).map(([hubIn, hubOut]) => buildTransfer(lang, startStop, endStop, hubIn, hubOut, cursor, now, skips)),
   ].filter((o): o is Itinerary => o !== null);
 
   return options.map((option) => {

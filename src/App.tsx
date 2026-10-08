@@ -29,6 +29,7 @@ import { dayWord } from './utils/serviceLabels';
 import { findStop } from './utils/places';
 import { readString, writeString } from './utils/storage';
 import { sectionedNotices } from './utils/operatorNotices';
+import { changesNow, latestRun, readNoticeChanges, runsAt } from './utils/noticeChanges';
 import { isSnapshotStale } from './utils/snapshotAge';
 import { BusStop, BusLine } from './types';
 
@@ -95,6 +96,13 @@ export default function App() {
   const alerts = useServiceAlerts();
   // A notice written out line by line goes on the lines and boards it names; a stale snapshot's would be last week's news.
   const operatorNotices = isSnapshotStale(alerts.snapshotAt) ? [] : sectionedNotices(alerts.data?.alerts);
+  // What those notices change, read once: closed and moved stops, lines running late. Each screen asks it about its own moment.
+  const noticeChanges = useMemo(
+    () => readNoticeChanges(isSnapshotStale(alerts.snapshotAt) ? [] : sectionedNotices(alerts.data?.alerts), now.getFullYear()),
+    [alerts.data, alerts.snapshotAt, now],
+  );
+  // A festival night the notice extends: the timetable says nothing runs, and the banner must not.
+  const runningTonight = isOutOfService ? (changesNow(noticeChanges, now)?.lines ?? []).filter((change) => runsAt(change, now)) : [];
   /** The ride in progress, above the tabs: the planner is unmounted the moment the reader looks at the map. */
   const companion = useTripCompanion(lang);
 
@@ -189,8 +197,17 @@ export default function App() {
                 <span className="min-w-0 flex-1">
                   {/* Wraps rather than cuts: the time is the end of the sentence, and with the day
                       word in it "primeiro bus mañá ás ~06:50" was cut at "~0…". */}
-                  <span className="block text-body font-semibold">{t.nightBanner.closed(rest.firstBus, dayWord(lang, rest.daysAhead, now))}</span>
-                  <span className="block truncate text-label text-ink-3">{t.nightBanner.festivals} ›</span>
+                  {runningTonight.length > 0 ? (
+                    <>
+                      <span className="block text-body font-semibold">{t.nightBanner.extended(runningTonight.map((change) => change.line), latestRun(runningTonight, now)!)}</span>
+                      <span className="block text-label text-ink-3">{t.nightBanner.extendedSource} ›</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="block text-body font-semibold">{t.nightBanner.closed(rest.firstBus, dayWord(lang, rest.daysAhead, now))}</span>
+                      <span className="block truncate text-label text-ink-3">{t.nightBanner.festivals} ›</span>
+                    </>
+                  )}
                 </span>
                 <span className="sr-only">{t.nightBanner.seeNotices}</span>
               </button>
@@ -234,6 +251,7 @@ export default function App() {
                       onToggleFavorite={toggleFavoriteStop}
                       viaQr={qrStopId === selectedStop.id}
                       notices={operatorNotices}
+                      changes={noticeChanges}
                       onOpenAlerts={() => setActiveTab('info')}
                     />
                   </div>
@@ -241,7 +259,7 @@ export default function App() {
               )}
 
               {activeTab === 'lines' && (
-                <LinesView selectedLine={selectedLine} lineRequest={lineRequest} onSelectLine={setSelectedLine} onSelectStop={selectStop} onViewLineOnMap={viewLineOnMap} favoriteLineIds={favoriteLineIds} onToggleFavoriteLine={toggleFavoriteLine} notices={operatorNotices} onOpenAlerts={() => setActiveTab('info')} />
+                <LinesView selectedLine={selectedLine} lineRequest={lineRequest} onSelectLine={setSelectedLine} onSelectStop={selectStop} onViewLineOnMap={viewLineOnMap} favoriteLineIds={favoriteLineIds} onToggleFavoriteLine={toggleFavoriteLine} notices={operatorNotices} changes={noticeChanges} onOpenAlerts={() => setActiveTab('info')} />
               )}
 
               {mapEverOpened && (
@@ -258,7 +276,7 @@ export default function App() {
                 </div>
               )}
 
-              {activeTab === 'plan' && (companion.trip ? <TripCompanionView companion={companion} /> : <RoutePlannerView onSelectStop={selectStop} onSelectLine={openLine} destinationRequest={placeRequest} onStartTrip={companion.start} />)}
+              {activeTab === 'plan' && (companion.trip ? <TripCompanionView companion={companion} /> : <RoutePlannerView onSelectStop={selectStop} onSelectLine={openLine} destinationRequest={placeRequest} onStartTrip={companion.start} changes={noticeChanges} onOpenAlerts={() => setActiveTab('info')} />)}
               {activeTab === 'info' && <AlertsView alerts={alerts} />}
               {activeTab === 'fares' && <FaresView />}
             </ErrorBoundary>

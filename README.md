@@ -421,6 +421,37 @@ fresco. Os horarios non se tocan: se o aviso di «ata as 03:07» sen publicar as
 horas, a app non as inventa, e o aviso ao lado é o que explica a diferenza. Se o formato
 cambia, queda o titular da campá, como antes.
 
+E o que o aviso cambia, a app tamén o usa (`src/utils/noticeChanges.ts`). Le del os días
+(«os días 3, 4, 5, 9, 10, 11 e 12 de outubro»), ata que hora segue cada liña, que paradas
+deixa e onde para no seu lugar, e que paradas se trasladan. O nome que dá o aviso emparéllase
+coas paradas desa liña, e só cando o emparellamento é claro: «Praza de Bretaña» é «Praza
+Bretaña», e «Avda. Ramón Ferreiro (Femenino)» é «Ramón Ferreiro (Feminino)» e non
+«(Anexa)». Eses días:
+
+- No **taboleiro** dunha parada que unha liña deixa, dísese e dise onde para; as súas
+  saídas seguen na lista, riscadas, marcadas e sen campá. A franxa do aviso vai pregada: á
+  vista quedan o titular e o que cambia nesa parada, e os días, as horas finais e os cortes
+  de tráfico, a un toque. Desde a última saída impresa dunha liña nesa parada, a súa hora
+  final e de quen é a palabra despréganse soas: a esa hora son a única resposta que hai.
+- **Ruta** non propón subir nin baixar desa liña alí. A súa franxa vai pregada igual, coa
+  mesma regra na parada onde o traxecto sobe a cada liña.
+- A **ficha** da liña resume os seus cambios; o texto do operador vai pregado debaixo.
+- De noite, o aviso de «sen servizo» di que liñas seguen, ata cando, e que iso o di o aviso
+  de buslugo.com, sen horario oficial que saibamos. Pola mañá, antes do primeiro bus, non:
+  esa noite xa acabou.
+
+A noite pertence ao día no que empezou: ás dúas da mañá do 10 rexe o 9. Todo vai marcado
+como do aviso, e ningunha hora sae como saída: o aviso di ata cando, non cando pasa. Unha
+hora final xa pasada non se di, e o lugar vai coa hora con que se escribiu: «ata as 03:00
+(Cementerio)» non di onde remata a 01:00 dos días 5 e 12. O 8 de outubro de 2026 a páxina
+da 1.2 en buslugo.com remataba ás 22:17, sen ningunha saída despois da medianoite, e a
+portada só tiña o aviso.
+
+Medido ese día nun navegador co reloxo posto en noites e días de festa, nun teléfono de
+375 px: a franxa pregada ocupa 46 px, 108 cunha parada pechada nela e 190 de noite, coas
+horas despregadas; aberta, antes, eran 166 px de día enriba da primeira saída. En Ruta, 62
+px de día. Fóra dos días do aviso, nada se pecha nin se risca.
+
 A consulta faise **desde o servidor** (o navegador non pode por CORS), contra buslugo.com e
 o feed de tráfico do Concello. Se non hai servidor —ou non responde— úsase a copia que
 deixou a tarefa programada e amósase **cando se tomou**, en lugar de facela pasar por
@@ -1539,7 +1570,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-217 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+219 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

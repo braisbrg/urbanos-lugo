@@ -289,6 +289,34 @@ descrición. Catro regras, e o que quedou fóra:
   `?parada=`. Ninguén o pediu. Os postes vistos onde os pon OSM vanse movendo un a un
   (`POLE_SEEN_AT_OSM`, en `tools/lib.ts`), cada un comprobado.
 
+## Os avisos do operador, usados — 8 de outubro de 2026
+
+- **O que un aviso cambia úsase, non só se amosa.** O do San Froilán de 2026 era prosa: cinco
+  liñas ata as 03:00 e máis, unha parada deixada por dúas liñas e outra trasladada, en sete
+  días. A app amosábao e nada máis. O taboleiro dicía «sen servizo» á unha da mañá, e Ruta
+  mandaba subir á 1.4 nunha parada onde non paraba. Agora a app le do aviso os días, as horas
+  de fin e as paradas:
+  - o taboleiro di o que cambia e marca as saídas que non paran;
+  - Ruta non propón esa parada a esas liñas;
+  - a ficha resume os cambios da liña;
+  - o aviso de madrugada di que liñas seguen.
+- **Non se inventan saídas.** O aviso di ata cando, non cando pasa. As súas horas amósanse
+  como do aviso, nunca como saída nin como estimación, e o horario oficial non se toca.
+- **Na dúbida, nada.** Un nome que non casa claramente cunha parada da liña non cambia nada,
+  e o texto do aviso segue aí. O percorrido desviado («suprimindo o seu percorrido polo
+  HULA») queda en palabras.
+- **Pregado, e despregado cando é a única resposta.** A franxa do taboleiro e a de Ruta van
+  pregadas ao titular e ao que cambia nesa parada. Abertas ocupaban 166 px e 185 px de día
+  nun teléfono, enriba da primeira saída e da resposta. Desde a última saída impresa dunha
+  liña na parada, a hora final e de quen é a palabra saen soas. Na ficha, o texto do
+  operador vai pregado baixo o resumo do día, que xa di o mesmo.
+- **A palabra é de buslugo.com, e o horario, «que saibamos».** O 8 de outubro a súa páxina
+  da 1.2 remataba ás 22:17 e a portada só tiña o aviso. Non se afirma que non exista
+  horario: dise que non o coñecemos.
+- **A noite de festa vai do mediodía ao fin.** Ás 05:30, antes do primeiro bus, o aviso de
+  «sen servizo» dicía que cinco liñas seguían: a noite anterior xa acabara. Tampouco se di
+  unha hora final xa pasada, nin se lle pon a unha hora o lugar escrito con outra.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

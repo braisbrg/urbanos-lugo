@@ -3,6 +3,8 @@ import { Navigation, MapPin, ArrowDownUp, Clock, Bus, Footprints, AlertCircle, A
 import { useLang, useT } from '../i18n';
 import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { planTrips } from '../utils/planner';
+import { changesNow, pastTimetable, runsUntil, stopSkipper, type NoticeChanges } from '../utils/noticeChanges';
+import { stopById } from '../data/transitData';
 import { resolveLocationQuery, QUICK_DESTINATIONS } from '../utils/places';
 import { dayWord } from '../utils/serviceLabels';
 import { walkHopKey, walkHopsOf, type Hop } from '../services/walkingPath';
@@ -52,9 +54,12 @@ interface RoutePlannerViewProps {
   destinationRequest?: { query: string; nonce: number } | null;
   /** "Vou nesta": hand the plan on screen to the trip companion. */
   onStartTrip: (plan: RoutePlanResult, origin: TripPlace | null, destination: TripPlace | null) => void;
+  /** What the operator's notice changes: a stop it closes is never boarded or left, and a trip on a changed line says so. */
+  changes?: NoticeChanges | null;
+  onOpenAlerts?: () => void;
 }
 
-export function RoutePlannerView({ onSelectStop, onSelectLine, destinationRequest, onStartTrip }: RoutePlannerViewProps) {
+export function RoutePlannerView({ onSelectStop, onSelectLine, destinationRequest, onStartTrip, changes = null, onOpenAlerts }: RoutePlannerViewProps) {
   const t = useT();
   const lang = useLang();
   const [originQuery, setOriginQuery] = useState(DEFAULT_ORIGIN);
@@ -93,7 +98,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   }, [activeInput]);
 
   // Every viable way of making the trip, quickest first, plus which one is on screen.
-  const [planOptions, setPlanOptions] = useState<RoutePlanResult[]>(() => planTrips(DEFAULT_ORIGIN, DEFAULT_DEST, { lang }));
+  const [planOptions, setPlanOptions] = useState<RoutePlanResult[]>(() => planTrips(DEFAULT_ORIGIN, DEFAULT_DEST, { lang, skipsStop: stopSkipper(changes, new Date()) }));
   const [chosenOption, setChosenOption] = useState(0);
   const planResult = planOptions[chosenOption] ?? null;
   const [endpoints, setEndpoints] = useState<Endpoints>(() => ({ origin: toPoint(resolveLocationQuery(DEFAULT_ORIGIN)), destination: toPoint(resolveLocationQuery(DEFAULT_DEST)) }));
@@ -177,7 +182,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
       if (boarding && path) known.set(boarding.id, path.minutes);
     }
     const { orig, dest, opts } = askedRef.current;
-    const again = planTrips(orig, dest, { ...opts, lang, measuredWalkToStop: (id) => known.get(id) });
+    const again = planTrips(orig, dest, { ...opts, lang, measuredWalkToStop: (id) => known.get(id), skipsStop: stopSkipper(changes, new Date()) });
     if (!again.length) return; // nothing better at the later time: keep what is on screen, marked
     setPlanOptions(again);
     setChosenOption(0);
@@ -206,7 +211,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
         const opts = { ...timeOptions(), userLocation: gps };
         askedRef.current = { orig, dest, opts };
         replannedRef.current = false;
-        const plans = planTrips(orig, dest, { ...opts, lang });
+        const plans = planTrips(orig, dest, { ...opts, lang, skipsStop: stopSkipper(changes, new Date()) });
         setPlanOptions(plans);
         setChosenOption(0);
         setQuestions((n) => n + 1);
@@ -502,6 +507,62 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   </div>
                 </div>
               )}
+
+              {/* The operator's notice on the lines this trip takes: until when they run, which stops they skip (never proposed), and the traffic cuts.
+                  Folded to one line above the answer, as on the board: open by day it pushed the trip 185 px down a phone. Once a line is past
+                  its last printed call where the trip boards it, its end time and whose word it is come up into that line, as on the board. */}
+              {(() => {
+                const now = new Date();
+                const today = changesNow(changes, now);
+                const used = new Set(planResult.segments.filter((seg) => seg.type === 'bus').map((seg) => seg.line?.number));
+                const affected = (today?.lines ?? []).filter((c) => used.has(c.line));
+                if (!today || (!affected.length && !(today.general.length && used.size))) return null;
+                const late = affected.flatMap((c) => {
+                  const end = runsUntil(c, now);
+                  const from = planResult.segments.find((seg) => seg.type === 'bus' && seg.line?.number === c.line)?.fromStop?.id;
+                  return end ? [{ line: c.line, ...end, now: !!from && pastTimetable(c, from, now) }] : [];
+                });
+                const lateNow = late.filter((l) => l.now);
+                const lateLater = late.filter((l) => !l.now);
+                return (
+                  <details className="disclosure rounded-control border border-warn bg-warn text-label text-warn-ink">
+                    <summary className="flex min-h-11 cursor-pointer items-start gap-2.5 p-3.5">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-estimated" aria-hidden="true" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">{affected.length > 0 ? t.planner.noticeOnTrip(affected.map((c) => c.line)) : t.arrivals.noticeGeneral}</span>
+                        {lateNow.map((l) => (
+                          <span key={l.line} className="mt-1 block font-semibold">
+                            {t.arrivals.noticeRunsUntil(l.line, l.time, l.to)}
+                          </span>
+                        ))}
+                        {lateNow.length > 0 && <span className="block">{t.arrivals.noticeNoDepartures}</span>}
+                      </span>
+                      <ChevronDown className="disclosure-chevron mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                    </summary>
+                    <div className="px-3.5 pb-1 pl-10">
+                      {lateLater.map((l) => (
+                        <p key={l.line} className="mt-1 first:mt-0">
+                          {t.arrivals.noticeRunsUntil(l.line, l.time, l.to)}
+                        </p>
+                      ))}
+                      {lateLater.length > 0 && <p>{t.arrivals.noticeNoDepartures}</p>}
+                      {affected.flatMap((c) =>
+                        c.closed.map((s) => (
+                          <p key={`closed-${c.line}-${s.stopId}`} className="mt-1 first:mt-0">
+                            {c.line}: {t.lines.noticeClosedStop(stopById(s.stopId)?.name ?? s.stopId, s.instead)}
+                          </p>
+                        )),
+                      )}
+                      {affected.length > 0 && today.general.length > 0 && <p className="mt-1 first:mt-0">{t.arrivals.noticeGeneral}</p>}
+                      {onOpenAlerts && (
+                        <button onClick={onOpenAlerts} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
+                          {t.lines.seeFullNotice}
+                        </button>
+                      )}
+                    </div>
+                  </details>
+                );
+              })()}
 
               {canStart && boardingSoon && startTripButton(true)}
 
