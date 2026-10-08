@@ -280,7 +280,9 @@ function nextRun(line: BusLine, dirIndex: number, stopIndex: number, targetMinut
       day = askedDay + ahead;
     }
   }
-  const found = { run, day, lastAsked: askedRuns[askedRuns.length - 1]?.minutesByStopIndex[stopIndex] };
+  // "The last one was at ..." is said of the day the question is asked on, which a walk to the pole that ends past midnight does not move.
+  const today = askedDay === 0 ? askedRuns : runsOnDay(0);
+  const found = { run, day, lastAsked: today[today.length - 1]?.minutesByStopIndex[stopIndex] };
   nextRuns.set(key, found);
   return found;
 }
@@ -310,7 +312,11 @@ export function getNextLineDeparture(
   if (run) {
     const offset = day * MINUTES_PER_DAY;
     const departureMinutes = run.minutesByStopIndex[stopIndex] + offset;
-    const rolled = day > askedDay;
+    // Past the last bus of the day the question is asked on, wherever the walk to the pole
+    // ends. Counted from the end of the walk, one past midnight made tomorrow's first bus a
+    // running one: at 23:50 the planner sent people fifteen minutes to Sindicatos for the
+    // 07:15 that passes Praza Bretaña at 07:11, and dropped walking there tonight.
+    const rolled = day > 0;
     const when = dayWord(lang, day, now);
     return {
       departureMinutes: Math.round(departureMinutes),

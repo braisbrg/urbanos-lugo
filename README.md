@@ -237,13 +237,20 @@ como o San Froilán. Antes movía a primeira saída de hoxe ao día seguinte: un
 23:30, 664 das 1.136 saídas ofrecidas para o sábado eran falsas, e 398 delas de liñas que
 o sábado nin circulan.
 
+**E ir andando esa mesma noite vai diante do bus de mañá.** Desde o 28 de setembro, un
+paseo ata a parada que remataba pasada a medianoite facía «en servizo» o primeiro bus do
+día seguinte. Ás 23:50 a resposta era andar quince minutos ata Sindicatos para coller ás
+07:15 o 1.1 que pasa por Praza Bretaña ás 07:11, e ir andando, que chega esa noite, nin
+aparecía entre as opcións. O día dun bus cóntase desde a pregunta, non desde o final do
+paseo.
+
 **«Usar a miña localización» sen permiso dío e non calcula.** Calculaba desde o centro de
 Lugo co rótulo «📍 A miña localización», que é xusto o que a pantalla de paradas se nega a
 facer cunha posición que o móbil non deu.
 
 Non devolve unha soa resposta: amosa as **opcións distintas** de facer o traxecto,
-agrupadas por combinación de liñas e ordenadas por tempo total. Ensínanse as catro
-mellores.
+agrupadas por combinación de liñas e ordenadas pola hora á que chegas, a que di cada fila:
+co paseo medido en canto está calculado. Ensínanse as catro mellores.
 
 **Ir andando é sempre unha das opcións.** Lugo crúzase a pé nunha hora, así que un
 itinerario de 90 minutos con dous transbordos é peor que camiñar, e a aplicación dío en
@@ -446,6 +453,12 @@ hora final xa pasada non se di, e o lugar vai coa hora con que se escribiu: «at
 (Cementerio)» non di onde remata a 01:00 dos días 5 e 12. O 8 de outubro de 2026 a páxina
 da 1.2 en buslugo.com remataba ás 22:17, sen ningunha saída despois da medianoite, e a
 portada só tiña o aviso.
+
+**Un aviso remata cos seus propios días.** Se o do San Froilán segue na páxina do operador
+o 13, a app volve ser a de antes desde as 05:00 dese día, tamén o «1» do menú e Avisos;
+un aviso que non nomea días non remata así. E Ruta le o aviso da noite na que sae a
+viaxe, non o do momento da pregunta: á unha da madrugada do 13 a noite aínda é a do 12,
+pero o primeiro bus da mañá xa para en Praza Bretaña.
 
 Medido ese día nun navegador co reloxo posto en noites e días de festa, nun teléfono de
 375 px: a franxa pregada ocupa 46 px, 108 cunha parada pechada nela e 190 de noite, coas
@@ -971,13 +984,18 @@ servizo que cruzan a medianoite.
    itinerario, e sempre a opción de ir andando todo o camiño.
 4. **Selección** — gaña a que chega antes, priorizando as liñas realmente en servizo. En
    caso de empate gaña a que leva menos tramos de bus: un cambio que non precisas segue
-   sendo un cambio que podes perder.
+   sendo un cambio que podes perder. «En servizo» é no día da pregunta: un bus de mañá non
+   o está, remate onde remate o paseo ata el.
 5. **Tempos** — cada tramo en bus lese da expedición que se colle, co que respecta todos
    os puntos horarios oficiais do percorrido; os tramos a pé aplican un factor de rodeo
    de 1,35 sobre a distancia en liña recta a 75 m/min, e substitúense polo camiño real
    que calcula `walkRouter.ts` sobre a rede peonil que vai no propio paquete.
    **Mídense todas as opcións que se amosan**,
    non só a aberta, ou compararíaslas por estimacións e logo veríaas cambiar ao abrilas.
+   E, medidas, ordénanse outra vez coa mesma regra: a orde saía da estimación, e o 12 de 52
+   minutos ás ~10:54 encabezaba diante do 1.2 de 22 ás ~10:51, porque o paseo do final
+   medía 27 minutos onde a estimación dicía 22. Igual na 1.1.0, do 15 de setembro, e na
+   1.2.8.
 
 Regras que evitan suxestións absurdas ou perigosas:
 
@@ -1570,7 +1588,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-219 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+222 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

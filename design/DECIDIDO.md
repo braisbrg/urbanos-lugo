@@ -316,6 +316,20 @@ descrición. Catro regras, e o que quedou fóra:
 - **A noite de festa vai do mediodía ao fin.** Ás 05:30, antes do primeiro bus, o aviso de
   «sen servizo» dicía que cinco liñas seguían: a noite anterior xa acabara. Tampouco se di
   unha hora final xa pasada, nin se lle pon a unha hora o lugar escrito con outra.
+- **Un aviso remata cos seus días**, siga ou non na páxina do operador. Pasado o último, ás
+  05:00 do día seguinte, sae de todo: franxas, ficha, Ruta, o «1» do menú e Avisos. Un
+  aviso sen días non remata por isto. Un «1 de xaneiro» lido en decembro é do ano que vén.
+- **Ruta pregunta ao aviso pola noite da viaxe.** As paradas pechadas e os cortes son os
+  do día no que sae a viaxe; as horas finais, as que corren agora.
+
+## Ruta: a orde que se le, e o bus de mañá — 8 de outubro de 2026
+
+- **As opcións van na orde do que di cada fila.** A regra do planificador aplícase outra
+  vez sobre os paseos medidos, e mentres non hai medida nada se move. Un bus que o paseo
+  medido xa non colle vai ao final. Cada fila ten por clave a súa viaxe, non o seu número.
+- **«En servizo» cóntase desde a pregunta.** Un paseo que remata pasada a medianoite non
+  fai do primeiro bus de mañá un bus en servizo: ás 23:50 vai diante ir andando esa noite,
+  como na 1.1.0.
 
 ## Quedou aberto
 

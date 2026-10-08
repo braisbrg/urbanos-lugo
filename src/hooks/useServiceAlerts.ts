@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AlertSyncResult } from '../services/alertSyncService';
 import type { ServiceAlert } from '../types';
 import { isSnapshotStale } from '../utils/snapshotAge';
 import { readNotice } from '../utils/operatorNotices';
+import { noticeOver } from '../utils/noticeChanges';
 import { apiUrl } from '../services/apiUrl';
 
 /**
@@ -62,7 +63,7 @@ export interface ServiceAlerts {
   refresh: (force?: boolean) => void;
 }
 
-export function useServiceAlerts(): ServiceAlerts {
+export function useServiceAlerts(now: Date): ServiceAlerts {
   const [data, setData] = useState<AlertSyncResult | null>(null);
   const [snapshotAt, setSnapshotAt] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -119,8 +120,13 @@ export function useServiceAlerts(): ServiceAlerts {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  // Only the operator's own notices count; a council press release is not "something is wrong with your journey".
-  const announcedIncidents = data && !isSnapshotStale(snapshotAt) ? data.alerts.filter((a) => a.source !== 'concello').length : 0;
+  // A notice whose own days are all behind is over, however long the operator's page keeps
+  // it: out of the badge, the boards, the lines, Route and Avisos alike, so the morning after
+  // San Froilán the app is what it was before it.
+  const current = useMemo(() => data && { ...data, alerts: data.alerts.filter((a) => !noticeOver(a, now)) }, [data, now]);
 
-  return { data, snapshotAt, isSyncing, cooldown, announcedIncidents, refresh };
+  // Only the operator's own notices count; a council press release is not "something is wrong with your journey".
+  const announcedIncidents = current && !isSnapshotStale(snapshotAt) ? current.alerts.filter((a) => a.source !== 'concello').length : 0;
+
+  return { data: current, snapshotAt, isSyncing, cooldown, announcedIncidents, refresh };
 }

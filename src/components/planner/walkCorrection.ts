@@ -1,6 +1,7 @@
 import type { RoutePlanResult } from '../../types';
 import { formatMinutes, parseTimeToMinutes } from '../../utils/schedule';
 import { estimateWalk } from '../../utils/places';
+import { isBetterPlan } from '../../utils/planner';
 import { getDistanceMeters } from '../../utils/geo';
 import { WalkingPath, WalkPaths, walkHopKey, walkHopsOf } from '../../services/walkingPath';
 
@@ -40,7 +41,30 @@ export function withMeasuredWalk(plan: RoutePlanResult, fix: WalkCorrection) {
     departure: shiftClock(plan.departureTime, -absorbed),
     arrival: shiftClock(plan.arrivalTime, fix.after),
     durationMinutes: plan.durationMinutes + absorbed + fix.after,
+    slackMinutes: plan.slackMinutes - absorbed,
   };
+}
+
+/**
+ * The options in the order of what each row says. The planner ranks on the estimated walks;
+ * a row prints the measured one, and a longer walk at the far end pushed an arrival past the
+ * next row's without moving it: "12, 52 min, ~10:54" headed "1.2, 22 min, ~10:51". So the
+ * planner's own rule is applied again to the measured figures, and until a walk is measured
+ * nothing moves. A bus the measured walk cannot catch goes last; it stays only to say so.
+ */
+export function rankMeasured<T extends { option: RoutePlanResult; idx: number }>(options: T[], fixFor: (plan: RoutePlanResult) => WalkCorrection): T[] {
+  const measured = new Map(
+    options.map(({ option, idx }) => {
+      const shown = withMeasuredWalk(option, fixFor(option));
+      return [idx, { reachable: shown.reachable, plan: { ...option, slackMinutes: shown.slackMinutes, durationMinutes: shown.durationMinutes } }];
+    }),
+  );
+  return [...options].sort((a, b) => {
+    const x = measured.get(a.idx)!;
+    const y = measured.get(b.idx)!;
+    if (x.reachable !== y.reachable) return x.reachable ? -1 : 1;
+    return isBetterPlan(x.plan, y.plan) ? -1 : isBetterPlan(y.plan, x.plan) ? 1 : a.idx - b.idx;
+  });
 }
 
 /**

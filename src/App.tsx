@@ -92,15 +92,12 @@ export default function App() {
   const rest = useMemo(() => networkAtRest(now), [now]);
   const isOutOfService = rest.atRest;
 
-  /** The operator's notices, fetched once here for everybody who shows them. */
-  const alerts = useServiceAlerts();
+  /** The operator's notices, fetched once here for everybody who shows them, and only while their own days last. */
+  const alerts = useServiceAlerts(now);
   // A notice written out line by line goes on the lines and boards it names; a stale snapshot's would be last week's news.
   const operatorNotices = isSnapshotStale(alerts.snapshotAt) ? [] : sectionedNotices(alerts.data?.alerts);
   // What those notices change, read once: closed and moved stops, lines running late. Each screen asks it about its own moment.
-  const noticeChanges = useMemo(
-    () => readNoticeChanges(isSnapshotStale(alerts.snapshotAt) ? [] : sectionedNotices(alerts.data?.alerts), now.getFullYear()),
-    [alerts.data, alerts.snapshotAt, now],
-  );
+  const noticeChanges = useMemo(() => readNoticeChanges(operatorNotices, now.getFullYear()), [alerts.data, alerts.snapshotAt, now]);
   // A festival night the notice extends: the timetable says nothing runs, and the banner must not.
   const runningTonight = isOutOfService ? (changesNow(noticeChanges, now)?.lines ?? []).filter((change) => runsAt(change, now)) : [];
   /** The ride in progress, above the tabs: the planner is unmounted the moment the reader looks at the map. */

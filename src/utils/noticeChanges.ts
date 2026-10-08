@@ -177,6 +177,24 @@ export function serviceDay(now: Date): string {
   return isoDay(day);
 }
 
+/**
+ * Whether a notice's own days are all behind: one for «los días 3, 4, 5, 9, 10, 11 y 12 de
+ * octubre» says nothing of the 13th, however long the operator's page keeps it. A notice
+ * that names no day never ends by this. A day named in January and read in December is next
+ * year's, and one named in December and read in January was last year's.
+ */
+export function noticeOver(alert: ServiceAlert, now: Date): boolean {
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const nearest = (day: string) => {
+    const gap = Number(day.slice(5, 7)) - month;
+    return gap > 6 ? `${year - 1}${day.slice(4)}` : gap < -6 ? `${year + 1}${day.slice(4)}` : day;
+  };
+  const days = daysIn(`${alert.description} ${alert.title}`, year).map(nearest);
+  const today = serviceDay(now);
+  return days.length > 0 && days.every((day) => day < today);
+}
+
 /** The changes that hold at this moment, or null on a day the notice does not name. */
 export function changesNow(changes: NoticeChanges | null, now: Date): NoticeChanges | null {
   if (!changes) return null;
@@ -249,6 +267,33 @@ export function closedAt(changes: NoticeChanges | null, stopId: string): { lines
 /** Whether a line, by id or number, skips a stop under the notice. */
 export function isClosed(changes: NoticeChanges | null, line: { id: string; number: string }, stopId: string): boolean {
   return (changes?.lines ?? []).some((c) => (c.line === line.number || c.line === line.id) && c.closed.some((s) => s.stopId === stopId));
+}
+
+/** When a plan sets off, as a date: its clock, on its day counted from the moment it was planned from. */
+export function setsOff(plan: { departureTime: string; daysAhead?: number }, from: Date): Date {
+  const [h, m] = plan.departureTime.split(':').map(Number);
+  const at = new Date(from);
+  at.setDate(at.getDate() + (plan.daysAhead ?? 0));
+  at.setHours(h, m, 0, 0);
+  // A clock well before the moment planned from, on the same day, is past midnight.
+  if (at.getTime() < from.getTime() - 60 * 60_000) at.setDate(at.getDate() + 1);
+  return at;
+}
+
+/**
+ * Plans under the notice of the night the trip is on, not of the moment it is asked: at
+ * 01:00 on the 13th the night is still the 12th's, but the first bus of the morning calls at
+ * Praza Bretaña again; at 23:50 on the 8th the first bus of the 9th already does not. Asked
+ * with the moment planned from, and once more when the answer sets off on another night.
+ */
+export function underNotice<P extends { departureTime: string; daysAhead?: number }>(
+  changes: NoticeChanges | null,
+  from: Date,
+  plan: (skipsStop: ((lineId: string, stopId: string) => boolean) | undefined) => P[],
+): P[] {
+  const plans = plan(stopSkipper(changes, from));
+  const leaves = plans[0] && setsOff(plans[0], from);
+  return !changes || !leaves || serviceDay(leaves) === serviceDay(from) ? plans : plan(stopSkipper(changes, leaves));
 }
 
 /** What the planner asks, by line id, at this moment; undefined when the notice closes nothing then. */

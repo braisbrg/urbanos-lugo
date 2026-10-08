@@ -30,11 +30,12 @@ import { RECENT_ROUTES } from '../src/hooks/useStoredList';
 import { SNAPSHOT_AFTER_MS, readSnapshot } from '../src/hooks/useServiceAlerts';
 import { readOperatorTimes } from '../src/hooks/useOperatorTimes';
 import { noticeLink } from '../src/utils/operatorNotices';
-import { changesNow, matchStop, pastTimetable, readNoticeChanges, runsAt, runsUntil, serviceDay, stopSkipper } from '../src/utils/noticeChanges';
+import { changesNow, matchStop, noticeOver, pastTimetable, readNoticeChanges, runsAt, runsUntil, serviceDay, setsOff, stopSkipper, underNotice } from '../src/utils/noticeChanges';
 import { plainText } from '../src/utils/html';
 import { STORAGE_KEYS, readJson, readString, writeJson, writeString } from '../src/utils/storage';
 import { LANG_PREFIX, PATHS, SLUGS, isCrawler, parsePath, pathFor, pickLang } from '../src/routes';
-import { fetchWalkingPath, walkHopsOf } from '../src/services/walkingPath';
+import { fetchWalkingPath, walkHopKey, walkHopsOf, type WalkPaths } from '../src/services/walkingPath';
+import { correctionFor, rankMeasured, withMeasuredWalk } from '../src/components/planner/walkCorrection';
 import { routeOnFoot } from '../src/utils/walkRouter';
 import { metresBetween } from '../src/utils/geo';
 import { syncOfficialAlerts } from '../src/services/alertSyncService';
@@ -1899,7 +1900,39 @@ ok('the planner never boards or leaves a line at a stop the notice closes', () =
   const skips = stopSkipper(readNoticeChanges([SAN_FROILAN], 2026), now);
   assert(skips?.('1.2', 's15') && !skips('1.1', 's15') && stopSkipper(readNoticeChanges([SAN_FROILAN], 2026), new Date(2026, 9, 8, 10, 0)) === undefined, 'the notice closes the wrong lines, or closes them on a day it does not name');
   const planner = read('src/components/RoutePlannerView.tsx');
-  assert((planner.match(/skipsStop: stopSkipper\(changes, new Date\(\)\)/g) ?? []).length === 3, 'a planTrips call on the Route screen ignores the notice');
+  assert((planner.match(/underNotice\(changes, [^,]+, \(skipsStop\) => planTrips\(/g) ?? []).length === 3, 'a planTrips call on the Route screen ignores the notice');
+
+  // Under the notice of the night the trip is on, not of the moment it is asked. Asked at 01:00
+  // on the 13th, the night was still the 12th's and the planner kept the 1.2 off Praza Bretaña
+  // for the 07:10 of a morning the notice no longer names; at 23:50 on the 8th, the other way.
+  const changes = readNoticeChanges([SAN_FROILAN], 2026);
+  const asked = (from: Date, departureTime: string, daysAhead: number) => {
+    const seen: boolean[] = [];
+    const result = underNotice(changes, from, (skipsStop) => {
+      seen.push(!!skipsStop?.('1.2', 's15'));
+      return [{ departureTime, daysAhead }];
+    });
+    return { seen: seen.join(' '), leaves: setsOff(result[0], from) };
+  };
+  assert(asked(new Date(2026, 9, 13, 1, 0), '07:10', 0).seen === 'true false', 'a trip the morning after the festival was planned with the festival night closed');
+  assert(asked(new Date(2026, 9, 8, 23, 50), '07:00', 1).seen === 'false true', 'the first bus of a festival day was planned with the stop open');
+  assert(asked(new Date(2026, 9, 10, 10, 0), '10:15', 0).seen === 'true', 'a trip on the night it is asked was planned twice');
+  assert(setsOff({ departureTime: '00:10', daysAhead: 0 }, new Date(2026, 9, 10, 23, 50)).getDate() === 11, 'a departure past midnight was read as the morning of the day asked');
+});
+
+ok('a notice whose own days are over leaves the app as it was', () => {
+  // San Froilán ended on the 12th; nothing says the operator takes the notice down on the 13th.
+  // Left up, its strip, its count in the badge and its card in Avisos stayed on, a week later.
+  assert(!noticeOver(SAN_FROILAN, new Date(2026, 9, 8, 10, 0)), 'a notice with days still to come was over');
+  assert(!noticeOver(SAN_FROILAN, new Date(2026, 9, 12, 23, 0)) && !noticeOver(SAN_FROILAN, new Date(2026, 9, 13, 2, 0)), 'the last festival night was over before it ended');
+  assert(noticeOver(SAN_FROILAN, new Date(2026, 9, 13, 6, 0)), 'the morning after the last day, the notice still held');
+  assert(!noticeOver({ ...SAN_FROILAN, description: 'Cambios en el servicio', title: 'Aviso' }, new Date(2027, 5, 1)), 'a notice that names no day ended by itself');
+  const newYear = { ...SAN_FROILAN, description: 'Servicio especial los días 1 y 2 de enero', title: 'Año nuevo' };
+  assert(!noticeOver(newYear, new Date(2026, 11, 30, 12, 0)) && noticeOver(newYear, new Date(2027, 0, 3, 12, 0)), 'a January notice read in December was taken as this January, already gone');
+  const newYearsEve = { ...SAN_FROILAN, description: 'Servicio especial los días 30 y 31 de diciembre', title: 'Fin de año' };
+  assert(noticeOver(newYearsEve, new Date(2027, 0, 2, 12, 0)) && !noticeOver(newYearsEve, new Date(2026, 11, 29, 12, 0)), 'a December notice read in January was taken as next December');
+  // Everywhere at once, from the one place every screen reads the notices.
+  assert(/alerts: data\.alerts\.filter\(\(a\) => !noticeOver\(a, now\)\)/.test(read('src/hooks/useServiceAlerts.ts')) && /useServiceAlerts\(now\)/.test(read('src/App.tsx')), 'a notice whose days are over still reaches the screens');
 });
 
 ok('no view renders Galician or Spanish text of its own', () => {
@@ -4340,8 +4373,11 @@ ok('the bounded edit distance agrees with the matrix it replaced', () => {
   const plain = sweep((w, q) => matrix(w, q) <= 2);
   bounded();
   plain(); // once each first, so neither side pays for the other's warm-up
-  const fast = time(bounded);
-  const slow = time(plain);
+  // The fastest of three each: one run against one run read 3.4x on a loaded machine, a
+  // collector's pause in the wrong sweep, and lands in one run only.
+  const fastest = (run: () => void) => Math.min(time(run), time(run), time(run));
+  const fast = fastest(bounded);
+  const slow = fastest(plain);
   assert(slow > fast * 10, `the bounded check is only ${(slow / fast).toFixed(1)}x the matrix (${fast.toFixed(1)} vs ${slow.toFixed(1)} ms); it is computing distances again`);
 });
 
@@ -4685,6 +4721,48 @@ await okAsync('no option promises a bus the measured walk cannot reach', async (
   for (const lang of LANGS) {
     assert(translations(lang).planner.unreachableWalk.trim().length > 0, `${lang}: nothing to say it with`);
   }
+});
+
+await okAsync('the route options are listed in the order of the arrivals they print', async () => {
+  // A row prints its arrival with the measured walk, and the list kept the planner's order,
+  // ranked on the estimated one. From Praza Bretaña to Benigno Rivera on a Saturday at 10:00
+  // «12, 52 min, ~10:54» headed «1.2, 22 min, ~10:51», the headline with it, in every build
+  // since September: the walk at the far end measured 27 minutes where the estimate said 22.
+  const QUESTIONS: [Date, string, string][] = [
+    [new Date(2026, 9, 17, 10, 0), 'Praza Bretaña', 'Benigno Rivera (H. Ferreiro)'],
+    [new Date(2026, 9, 14, 10, 0), 'Praza Bretaña', 'Benigno Rivera (H. Ferreiro)'],
+    [new Date(2026, 9, 14, 10, 0), 'Fonte dos Ranchos', 'Hospital Lucus Augusti (HULA)'],
+    [new Date(2026, 9, 17, 18, 30), 'Praza Maior', 'Hospital Lucus Augusti (HULA)'],
+  ];
+  let disordered = 0;
+  for (const [now, from, to] of QUESTIONS) {
+    const [origin, destination] = [resolveLocationQuery(from), resolveLocationQuery(to)];
+    assert(origin && destination, `${from} -> ${to}: one of the ends is not in the dataset`);
+    const ends = { origin: { ...origin, name: from }, destination: { ...destination, name: to } };
+    const options = planTrips(from, to, { now }).slice(0, 4).map((option, idx) => ({ option, idx }));
+    const paths: WalkPaths = {};
+    for (const { option } of options) for (const [a, b] of walkHopsOf(option, origin, destination)) paths[walkHopKey(a, b)] = await routeOnFoot(a, b);
+    const fix = (plan: RoutePlanResult) => correctionFor(plan, ends, paths);
+    // What each catchable bus row prints, in minutes from the question: the planner's own measure.
+    const reached = (list: typeof options) =>
+      list
+        .filter(({ option }) => option.segments.some((seg) => seg.type === 'bus'))
+        .map(({ option }) => withMeasuredWalk(option, fix(option)))
+        .filter((shown) => shown.reachable)
+        .map((shown) => shown.slackMinutes + shown.durationMinutes);
+    const inOrder = (minutes: number[]) => minutes.every((m, i) => i === 0 || minutes[i - 1] <= m);
+    if (!inOrder(reached(options))) disordered++;
+    const ranked = rankMeasured(options, fix);
+    assert(inOrder(reached(ranked)), `${from} -> ${to} at ${now.toTimeString().slice(0, 5)}: the rows print ${reached(ranked).join(', ')} minutes, out of order`);
+    // Until a walk is measured nothing moves.
+    assert(rankMeasured(options, () => ({ before: 0, after: 0 })).every((o, i) => o.idx === i), `${from} -> ${to}: with no walk measured the planner's order changed`);
+  }
+  assert(disordered > 0, 'no question in the sample prints its rows out of order any more, so this check proves nothing');
+  // And the screen lists the ranked rows and heads them with the first.
+  const view = read('src/components/RoutePlannerView.tsx');
+  assert(/options=\{ranked\}/.test(view) && /const planResult = planOptions\[chosen\]/.test(view) && /chosenOption \?\? ranked\[0\]\?\.idx/.test(view), 'the screen lists or heads the options in the planner order again');
+  // Keyed by the trip, so a re-rank or the one replan never leaves a focused row on another trip (WCAG 2.4.3).
+  assert(/key=\{tripKey\(option\)\}/.test(read('src/components/planner/TripOptions.tsx')), 'a route option row is keyed by its number in the list again');
 });
 
 await okAsync('walking up a hill costs more than walking down it', async () => {
@@ -5333,6 +5411,19 @@ ok('past the last bus, the next one comes from the timetable of the day it runs,
   const tuesday = getNextLineDeparture('gl', weekdayOnly, dir.id, dir.stops[0], 23 * 60 + 30, friday);
   assert(tuesday.daysAhead === 4 && dayWord('gl', 4, friday) === 'o martes' && (tuesday.serviceNotice ?? '').includes('o martes'), `the notice for Tuesday's bus does not say Tuesday: "${tuesday.serviceNotice}"`);
   assert(dayWord('gl', 3, friday) === 'o luns' && dayWord('es', 1, friday) === 'mañana' && dayWord('en', 0, friday) === '', 'the day words are wrong');
+});
+
+ok('asked before midnight, a walk that ends past it does not make tomorrow a running service', () => {
+  // From 28 Sep "rolled over" was counted from the minute the walk to the pole ended, so a walk
+  // past midnight made the next morning's first bus a running one. At 23:50 the planner then
+  // headed with a fifteen-minute walk to Sindicatos for the 07:15 1.1, which passes Praza Bretaña
+  // at 07:11, and walking there tonight was not among the options at all; on 15 Sep it led them.
+  const night = new Date(2026, 9, 15, 23, 50);
+  const plans = planTrips('Praza Bretaña', 'Benigno Rivera (H. Ferreiro)', { now: night });
+  assert(plans[0]?.segments.every((seg) => seg.type === 'walk'), `at 23:50 the first answer is ${plans[0]?.departureTime}, not the walk that gets there tonight`);
+  const direct = plans.map((p) => p.segments.filter((seg) => seg.type === 'bus')).filter((legs) => legs.length === 1 && legs[0].line?.number === '1.1');
+  assert(direct.length > 0 && direct.every(([leg]) => leg.fromStop?.name === 'Praza Bretaña'), `the 1.1 straight there is boarded at ${direct.map(([leg]) => leg.fromStop?.name).join(', ')}, a walk away from the pole it passes first`);
+  for (const plan of sampleTrips(night)) assert(!plan.daysAhead || !plan.isServiceActive, `a trip that sets off tomorrow at ${plan.departureTime} was counted as running tonight`);
 });
 
 ok('an empty board names a bus that can be boarded there, on the day it runs', () => {

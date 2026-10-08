@@ -432,7 +432,7 @@ const busLegCount = (p: RoutePlanResult) => p.segments.filter((s) => s.type === 
 const reachedAt = (p: RoutePlanResult): number => p.slackMinutes + p.durationMinutes;
 
 /** A running service first, then whichever arrives sooner — except that a long walk never leads. */
-function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
+export function isBetterPlan(a: RoutePlanResult, b: RoutePlanResult): boolean {
   if (a.isServiceActive !== b.isServiceActive) return a.isServiceActive;
   if (isWalkOnly(a) !== isWalkOnly(b)) {
     const walk = isWalkOnly(a) ? a : b;

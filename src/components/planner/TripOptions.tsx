@@ -10,6 +10,17 @@ import { withMeasuredWalk, type WalkCorrection } from './walkCorrection';
 /** How many alternatives stand on the screen before you ask for the rest: the answer and the one somebody would weigh. */
 const VISIBLE_OPTIONS = 2;
 
+/**
+ * A row is keyed by its trip, not by its number in the list: the rows are re-ranked once the
+ * walks are measured and replanned once when one cannot be caught, and a reused key keeps its
+ * node, and a focused reader's place, under a different trip.
+ */
+const tripKey = (option: RoutePlanResult) =>
+  option.segments
+    .filter((seg) => seg.type === 'bus')
+    .map((seg) => `${seg.line?.id}/${seg.directionId}@${seg.fromStop?.id}`)
+    .join('>') || 'walk';
+
 interface TripOptionsProps {
   options: { option: RoutePlanResult; idx: number }[];
   chosen: number;
@@ -34,8 +45,10 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
     setShownFor(resetKey);
     setShowAll(false);
   }
-  // Never fold away the row that is currently open.
-  const expanded = showAll || chosen >= VISIBLE_OPTIONS;
+  // Never fold away the row that is currently open: by where it stands in the list, which is
+  // not its number once the rows are ranked on the measured walks.
+  const openAt = options.findIndex((o) => o.idx === chosen);
+  const expanded = showAll || openAt >= VISIBLE_OPTIONS;
 
   const row = ({ option, idx }: (typeof options)[number]) => {
     const busLegs = option.segments.filter((seg) => seg.type === 'bus');
@@ -46,7 +59,7 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
       : [];
     return (
       <button
-        key={idx}
+        key={tripKey(option)}
         onClick={() => onChoose(idx)}
         aria-pressed={idx === chosen}
         className={`grid min-h-11 w-full grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-1 border-l-[3px] py-1.5 pl-2 pr-1 text-left @min-[18rem]:grid-cols-[auto_1fr_auto] transition-colors ${idx > 0 ? 'border-t border-t-line' : ''} ${
@@ -99,7 +112,7 @@ export function TripOptions({ options, chosen, onChoose, correctionFor, resetKey
             <div>{options.slice(VISIBLE_OPTIONS).map(row)}</div>
           </div>
         )}
-        {options.length > VISIBLE_OPTIONS && chosen < VISIBLE_OPTIONS && (
+        {options.length > VISIBLE_OPTIONS && openAt < VISIBLE_OPTIONS && (
           <button type="button" onClick={() => setShowAll(!showAll)} aria-expanded={expanded} className="flex min-h-11 w-full items-center justify-center gap-1.5 border-t border-t-line text-label font-semibold text-ink-3">
             {expanded ? t.planner.fewerOptions : t.planner.moreOptions(options.length - VISIBLE_OPTIONS)}
             <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} strokeWidth={2.5} aria-hidden="true" />

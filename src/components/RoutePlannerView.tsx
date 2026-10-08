@@ -3,7 +3,7 @@ import { Navigation, MapPin, ArrowDownUp, Clock, Bus, Footprints, AlertCircle, A
 import { useLang, useT } from '../i18n';
 import { BusStop, BusLine, RoutePlanResult } from '../types';
 import { planTrips } from '../utils/planner';
-import { changesNow, pastTimetable, runsUntil, stopSkipper, type NoticeChanges } from '../utils/noticeChanges';
+import { changesNow, pastTimetable, runsUntil, setsOff, underNotice, type NoticeChanges } from '../utils/noticeChanges';
 import { stopById } from '../data/transitData';
 import { resolveLocationQuery, QUICK_DESTINATIONS } from '../utils/places';
 import { dayWord } from '../utils/serviceLabels';
@@ -17,7 +17,7 @@ import { Segmented } from './ui/controls';
 import { PlaceField, suggestionsFor, type Suggestion } from './planner/PlaceField';
 import { TripOptions } from './planner/TripOptions';
 import { Itinerary } from './planner/Itinerary';
-import { correctionFor, formatKm, measuredWalkFor, withMeasuredWalk, type Endpoints } from './planner/walkCorrection';
+import { correctionFor, formatKm, measuredWalkFor, rankMeasured, withMeasuredWalk, type Endpoints } from './planner/walkCorrection';
 // Leaflet loads with the map, not with the app.
 const RouteMap = lazy(() => import('./Map/RouteMap').then((m) => ({ default: m.RouteMap })));
 
@@ -27,6 +27,12 @@ const DEFAULT_DEST = 'Hospital Lucus Augusti (HULA)';
 const MAX_OPTIONS = 4;
 
 const toPoint = (r: { name: string; lat: number; lng: number } | null) => (r ? { name: r.name, lat: r.lat, lng: r.lng } : undefined);
+/** The moment a question is planned from, as planTrips reads it: now, or today at the time asked to leave. */
+const plannedFrom = (opts: { departAt?: number }): Date => {
+  const at = new Date();
+  if (opts.departAt !== undefined) at.setHours(Math.floor(opts.departAt / 60), Math.round(opts.departAt % 60), 0, 0);
+  return at;
+};
 /** Once the frame already committed is on screen: the next animation frame, then a task after it. */
 const afterPaint = (run: () => void) => requestAnimationFrame(() => setTimeout(run, 0));
 const clockNow = () => {
@@ -98,9 +104,9 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   }, [activeInput]);
 
   // Every viable way of making the trip, quickest first, plus which one is on screen.
-  const [planOptions, setPlanOptions] = useState<RoutePlanResult[]>(() => planTrips(DEFAULT_ORIGIN, DEFAULT_DEST, { lang, skipsStop: stopSkipper(changes, new Date()) }));
-  const [chosenOption, setChosenOption] = useState(0);
-  const planResult = planOptions[chosenOption] ?? null;
+  const [planOptions, setPlanOptions] = useState<RoutePlanResult[]>(() => underNotice(changes, new Date(), (skipsStop) => planTrips(DEFAULT_ORIGIN, DEFAULT_DEST, { lang, skipsStop })));
+  /** The option the reader opened; null until they open one, and then the first row is the answer. */
+  const [chosenOption, setChosenOption] = useState<number | null>(null);
   const [endpoints, setEndpoints] = useState<Endpoints>(() => ({ origin: toPoint(resolveLocationQuery(DEFAULT_ORIGIN)), destination: toPoint(resolveLocationQuery(DEFAULT_DEST)) }));
   const shownOptions = useMemo(() => planOptions.slice(0, MAX_OPTIONS), [planOptions]);
 
@@ -157,6 +163,10 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
   );
 
   const correction = (plan: RoutePlanResult) => correctionFor(plan, endpoints, walkPaths);
+  // In the order of what each row prints once its walks are measured, and the headline is the first of them.
+  const ranked = useMemo(() => rankMeasured(offeredOptions, (plan) => correctionFor(plan, endpoints, walkPaths)), [offeredOptions, endpoints, walkPaths]);
+  const chosen = chosenOption ?? ranked[0]?.idx ?? 0;
+  const planResult = planOptions[chosen] ?? null;
   const measuredWalk = measuredWalkFor(planResult, endpoints, walkPaths);
   const shown = planResult && withMeasuredWalk(planResult, correction(planResult));
 
@@ -182,10 +192,10 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
       if (boarding && path) known.set(boarding.id, path.minutes);
     }
     const { orig, dest, opts } = askedRef.current;
-    const again = planTrips(orig, dest, { ...opts, lang, measuredWalkToStop: (id) => known.get(id), skipsStop: stopSkipper(changes, new Date()) });
+    const again = underNotice(changes, plannedFrom(opts), (skipsStop) => planTrips(orig, dest, { ...opts, lang, measuredWalkToStop: (id) => known.get(id), skipsStop }));
     if (!again.length) return; // nothing better at the later time: keep what is on screen, marked
     setPlanOptions(again);
-    setChosenOption(0);
+    setChosenOption(null);
   }, [planResult, shown?.reachable, lang]);
 
   const timeOptions = () => {
@@ -211,9 +221,9 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
         const opts = { ...timeOptions(), userLocation: gps };
         askedRef.current = { orig, dest, opts };
         replannedRef.current = false;
-        const plans = planTrips(orig, dest, { ...opts, lang, skipsStop: stopSkipper(changes, new Date()) });
+        const plans = underNotice(changes, plannedFrom(opts), (skipsStop) => planTrips(orig, dest, { ...opts, lang, skipsStop }));
         setPlanOptions(plans);
-        setChosenOption(0);
+        setChosenOption(null);
         setQuestions((n) => n + 1);
         if (fold) {
           setFolding(true);
@@ -512,16 +522,22 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                   Folded to one line above the answer, as on the board: open by day it pushed the trip 185 px down a phone. Once a line is past
                   its last printed call where the trip boards it, its end time and whose word it is come up into that line, as on the board. */}
               {(() => {
+                // Two moments: the end times running now are tonight's, and the stops and cuts the trip meets are those of the night it sets off on.
                 const now = new Date();
-                const today = changesNow(changes, now);
+                const tonight = changesNow(changes, now);
+                const onTheDay = changesNow(changes, setsOff(planResult, plannedFrom(askedRef.current.opts)));
                 const used = new Set(planResult.segments.filter((seg) => seg.type === 'bus').map((seg) => seg.line?.number));
-                const affected = (today?.lines ?? []).filter((c) => used.has(c.line));
-                if (!today || (!affected.length && !(today.general.length && used.size))) return null;
-                const late = affected.flatMap((c) => {
-                  const end = runsUntil(c, now);
-                  const from = planResult.segments.find((seg) => seg.type === 'bus' && seg.line?.number === c.line)?.fromStop?.id;
-                  return end ? [{ line: c.line, ...end, now: !!from && pastTimetable(c, from, now) }] : [];
-                });
+                const late = (tonight?.lines ?? [])
+                  .filter((c) => used.has(c.line))
+                  .flatMap((c) => {
+                    const end = runsUntil(c, now);
+                    const from = planResult.segments.find((seg) => seg.type === 'bus' && seg.line?.number === c.line)?.fromStop?.id;
+                    return end ? [{ line: c.line, ...end, now: !!from && pastTimetable(c, from, now) }] : [];
+                  });
+                const stops = (onTheDay?.lines ?? []).filter((c) => used.has(c.line) && c.closed.length + c.moved.length > 0);
+                const cuts = used.size > 0 && (onTheDay?.general.length ?? 0) > 0;
+                const affected = [...new Set([...late.map((l) => l.line), ...stops.map((c) => c.line)])].sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+                if (!affected.length && !cuts) return null;
                 const lateNow = late.filter((l) => l.now);
                 const lateLater = late.filter((l) => !l.now);
                 return (
@@ -529,7 +545,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                     <summary className="flex min-h-11 cursor-pointer items-start gap-2.5 p-3.5">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-estimated" aria-hidden="true" />
                       <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">{affected.length > 0 ? t.planner.noticeOnTrip(affected.map((c) => c.line)) : t.arrivals.noticeGeneral}</span>
+                        <span className="block font-semibold">{affected.length > 0 ? t.planner.noticeOnTrip(affected) : t.arrivals.noticeGeneral}</span>
                         {lateNow.map((l) => (
                           <span key={l.line} className="mt-1 block font-semibold">
                             {t.arrivals.noticeRunsUntil(l.line, l.time, l.to)}
@@ -546,14 +562,19 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                         </p>
                       ))}
                       {lateLater.length > 0 && <p>{t.arrivals.noticeNoDepartures}</p>}
-                      {affected.flatMap((c) =>
-                        c.closed.map((s) => (
+                      {stops.flatMap((c) => [
+                        ...c.closed.map((s) => (
                           <p key={`closed-${c.line}-${s.stopId}`} className="mt-1 first:mt-0">
                             {c.line}: {t.lines.noticeClosedStop(stopById(s.stopId)?.name ?? s.stopId, s.instead)}
                           </p>
                         )),
-                      )}
-                      {affected.length > 0 && today.general.length > 0 && <p className="mt-1 first:mt-0">{t.arrivals.noticeGeneral}</p>}
+                        ...c.moved.map((s) => (
+                          <p key={`moved-${c.line}-${s.stopId}`} className="mt-1 first:mt-0">
+                            {c.line}: {t.lines.noticeMovedStop(stopById(s.stopId)?.name ?? s.stopId, s.to)}
+                          </p>
+                        )),
+                      ])}
+                      {affected.length > 0 && cuts && <p className="mt-1 first:mt-0">{t.arrivals.noticeGeneral}</p>}
                       {onOpenAlerts && (
                         <button onClick={onOpenAlerts} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
                           {t.lines.seeFullNotice}
@@ -646,7 +667,7 @@ export function RoutePlannerView({ onSelectStop, onSelectLine, destinationReques
                 </div>
               </details>
 
-              {planOptions.length > 1 && <TripOptions options={offeredOptions} chosen={chosenOption} onChoose={setChosenOption} correctionFor={correction} resetKey={questions} />}
+              {planOptions.length > 1 && <TripOptions options={ranked} chosen={chosen} onChoose={setChosenOption} correctionFor={correction} resetKey={questions} />}
 
               {/* Reading a list of streets is much harder than seeing the shape of the trip. */}
               <div>
