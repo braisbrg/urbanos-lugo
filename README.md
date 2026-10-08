@@ -1300,7 +1300,7 @@ outro baixa á liña seguinte en lugar de espremelo. `audit:browser` conta o tex
 ve a 200 % sen que a páxina se alargue: 177 textos en claro e 179 en escuro nos doce
 estados antes desta rolda, 0 despois. A rolda 31 estendeuno a todos os estados, tres idiomas,
 320 px e o espazado do texto de 1.4.12, e quitou os `line-clamp` e `truncate` que aínda
-cortaban nomes: 319 textos na `develop` de antes da rolda, 0 despois.
+cortaban nomes: 326 textos na `develop` de antes da rolda, 0 despois.
 
 **Movemento.** O que se move é a interface, nunca un número. Os paneis entran polo bordo
 ao que pertencen (o menú pola dereita, a ficha de parada e a barra da viaxe por abaixo),
@@ -1308,15 +1308,15 @@ os despregables abren coa frecha xirando, o control Próximas/Por liña leva un 
 esvara, e a estrela, a campá e o tick confírmanse unha vez ao activalos. Todo en CSS,
 só `opacity` e `transform`, e só de entrada: pechar segue sendo instantáneo. Cada un dura
 entre 120 e 240 ms, tamén as confirmacións (o anel arredor de «Vou nesta» agarda 300 ms
-antes de saír), e só dous movementos se repiten: o latexo da seguinte parada en «Vou nesta» e os puntos de
-«Calculando» mentres calcula. Á parte van os indicadores de espera, que duran o que dura
+antes de saír), e só un se repite: os puntos de «Calculando» mentres calcula. A marca da
+seguinte parada en «Vou nesta» late dúas veces cada vez que cambia, e queda quieta. Á parte van os indicadores de espera, que duran o que dura
 a espera: o oco do mapa latexa mentres carga, a icona da localización mentres busca e a
 de actualizar xira mentres se sincronizan os avisos. Unha hora nunca se anima —un número que roda parece unha medición—;
 a única excepción é a pantalla «Vou nesta», onde a conta ata un só bus roda ao cambiar
 e a marca da seguinte parada late, porque aí a posición si vén do GPS. Con
 `prefers-reduced-motion` non queda nada en movemento, e `audit:browser` compróbao. O latexo
-de «Vou nesta» é o único criterio A ou AA que a app non cumpre: 2.2.2 pide poder paralo na
-propia páxina, e iso queda por decidir (táboa de abaixo).
+repetíase mentres duraba a viaxe; dúas veces e quieto é o que pide WCAG 2.2.2, que non
+deixa moverse máis de cinco segundos á beira doutro contido sen un xeito de paralo.
 
 **Estado anunciado.** Os conmutadores levan `aria-pressed` (vistas do taboleiro, capas
 do mapa, filtros de liña, modo de hora, opcións de traxecto, saídas dunha liña, destinos
@@ -1325,8 +1325,8 @@ rápidos, tema e idioma) e a navegación usa `aria-current="page"`.
 **Conformidade con WCAG 2.2, niveis A e AA.** Os 55 criterios, un por un, medidos na rolda
 31 (outubro de 2026) en cada pantalla e estado: claro e escuro, galego, castelán e inglés,
 teléfono e escritorio, só teclado, texto ao 200 %, 320 px, espazado do texto, teléfono
-deitado, movemento reducido, cores forzadas, sen rede, erros e baleiros: 236 medicións de
-158 estados. Antes da rolda, `audit:browser` atopaba 2.308 fallos; despois, 0, en dúas
+deitado, movemento reducido, cores forzadas, sen rede, erros e baleiros: 242 medicións de
+162 estados. Antes da rolda, `audit:browser` atopaba 2.328 fallos; despois, 0, en dúas
 execucións seguidas, e desde entón é unha porta da CI. «Arranxado» quere dicir que fallaba
 e que agora o comproba algo que falla se volve. Do que unha máquina non pode oír, o lector
 de pantalla de verdade, hai un guión para seguir a man:
@@ -1345,7 +1345,7 @@ de pantalla de verdade, hai un guión para seguir a man:
 | 1.4.1 Uso da cor | A | Cumpre | A liña leva sempre o número; oficial e estimado levan palabra e «~», e o estimado trazo descontinuo; o premido leva `aria-pressed` e recheo. `pnpm test`. |
 | 1.4.2 Control do son | A | Cumpre | O único son é o aviso da alarma, 1,2 s, por baixo dos 3 do criterio. |
 | 1.4.3 Contraste (mínimo) | AA | Arranxado | O × dos globos do mapa estaba en 4,19:1 en escuro. `audit:browser` mide cada texto en cada estado e tema; o máis xusto queda en 4,50:1. |
-| 1.4.4 Cambio do tamaño do texto | AA | Arranxado | 140 textos cortados (`line-clamp`, `truncate`) ao 200 %, e a pantalla da viaxe 11 px máis ancha ca o seu desprazamento. No escritorio mídese co zoom do navegador; no teléfono, co texto só. |
+| 1.4.4 Cambio do tamaño do texto | AA | Arranxado | 147 textos cortados (`line-clamp`, `truncate`) ao 200 %; a pantalla da viaxe, 11 px máis ancha ca o seu desprazamento; e xa no bus, a fila dos minutos, a hora e «HORARIO OFICIAL» saía 106 px da tarxeta. No escritorio mídese co zoom do navegador; no teléfono, co texto só. |
 | 1.4.5 Imaxes de texto | AA | Cumpre | Non hai: todo texto é texto. |
 | 1.4.10 Reaxuste | AA | Arranxado | 52 textos cortados a 320 px. O mapa é contido en dúas dimensións, que o criterio exime. |
 | 1.4.11 Contraste non textual | AA | Cumpre | O anel do foco mídese contra o que ten detrás en cada parada de tabulación. O filete dos controis (1,37:1) non conta: cada control se recoñece polo seu texto ou icona. O mapa é gráfico con información en texto. |
@@ -1355,7 +1355,7 @@ de pantalla de verdade, hai un guión para seguir a man:
 | 2.1.2 Sen trampas para o teclado | A | Cumpre | Os diálogos reteñen o foco a propósito e pechan con Escape. `audit:browser`, en cada un. |
 | 2.1.4 Atallos de teclado | A | Cumpre | Non hai atallos dunha tecla; as do mapa (frechas, + e −) só van co mapa enfocado. |
 | 2.2.1 Tempo axustable | A | Cumpre | Non hai límites de tempo. |
-| 2.2.2 Pausar, deter, ocultar | A | **Non cumpre** | O latexo da seguinte parada en «Vou nesta» repítese mentres dura a viaxe e a páxina non ten como paralo; `prefers-reduced-motion` párao, pero o criterio pide un control na páxina. Decidido así (DECIDIDO, «O movemento»). Os buses do mapa empezan ocultos e ocúltanse cun botón; os indicadores de espera rematan coa espera. |
+| 2.2.2 Pausar, deter, ocultar | A | Arranxado | O latexo da seguinte parada en «Vou nesta» repetíase mentres duraba a viaxe, e a páxina non tiña como paralo (`prefers-reduced-motion` non conta). Agora late dúas veces, uns 4 s, cada vez que cambia a seguinte parada, e queda quieto. Os buses do mapa empezan ocultos e ocúltanse cun botón; os indicadores de espera rematan coa espera. `pnpm test`. |
 | 2.3.1 Tres escintileos | A | Cumpre | Nada escintila: o único bucle é un anel que medra cada 2 s. |
 | 2.4.1 Saltar bloques | A | Cumpre | Ligazón «Ir ao contido» e rexións. axe. |
 | 2.4.2 Titulado das páxinas | A | Cumpre | Cada pantalla, parada e liña ten o seu título. `audit:browser`. |
@@ -1367,7 +1367,7 @@ de pantalla de verdade, hai un guión para seguir a man:
 | 2.4.11 Foco non tapado (mínimo) | AA | Arranxado | Os resultados da busca quedaban enriba do taboleiro, a barra da viaxe tapaba o último control, os buses caían baixo os botóns do mapa, a barra de pestanas tapaba o final da folla do mapa e o × do globo dun bus quedaba fóra da pantalla. `audit:browser`. |
 | 2.5.1 Xestos do punteiro | A | Cumpre | O único xesto é o de dous dedos no mapa, e + e − fan o mesmo. |
 | 2.5.2 Cancelación do punteiro | A | Cumpre | Nada actúa ao baixar o dedo: todo vai no `click`. |
-| 2.5.3 Etiqueta no nome | A | Arranxado | 1.112 controis cun nome que non contiña o que mostraban: contas entre parénteses, números de liña, o botón do menú co número de avisos. `audit:browser` e axe. |
+| 2.5.3 Etiqueta no nome | A | Arranxado | 1.118 controis cun nome que non contiña o que mostraban: contas entre parénteses, números de liña, o botón do menú co número de avisos. `audit:browser` e axe. |
 | 2.5.4 Activación por movemento | A | Non aplica | Nada responde a mover ou inclinar o teléfono. |
 | 2.5.7 Movementos de arrastre | AA | Arranxado | O mapa só se movía arrastrando: agora un toque leva ese punto ao centro. `audit:browser`. |
 | 2.5.8 Tamaño do obxectivo (mínimo) | AA | Arranxado | O × dos globos do mapa non chegaba aos 24 px. Por debaixo só quedan as ligazóns da atribución, dentro dunha liña de texto, que o criterio exime. |
@@ -1668,7 +1668,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-249 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+250 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

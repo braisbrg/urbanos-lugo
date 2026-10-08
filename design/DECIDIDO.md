@@ -331,6 +331,15 @@ descrición. Catro regras, e o que quedou fóra:
   fai do primeiro bus de mañá un bus en servizo: ás 23:50 vai diante ir andando esa noite,
   como na 1.1.0.
 
+## O latexo de «Vou nesta», dúas veces — 8 de outubro de 2026
+
+- **A marca da seguinte parada late dúas veces cada vez que cambia, uns catro segundos, e
+  queda quieta.** Repetíase mentres duraba a viaxe, e WCAG 2.2.2 pide un xeito de parar na
+  propia páxina todo o que se move máis de cinco segundos á beira doutro contido;
+  `prefers-reduced-motion` non conta como tal. Segue dicindo «aquí» cando importa, ao
+  cambiar a seguinte parada, e con iso a app cumpre os 55 criterios A e AA (rolda 31 do
+  rexistro). O único bucle que queda é «Calculando», que dura o que dura o cálculo.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

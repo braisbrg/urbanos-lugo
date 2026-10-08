@@ -100,7 +100,8 @@ Antes de empezar: o teléfono en galego ou non, dá igual; a app en galego desde
 5. «Borrar» as rutas recentes: debe anunciarse que se borraron, e o mesmo botón debe
    dicir agora «Desfacer». Activalo: as rutas volven.
 6. «Vou nesta»: a pantalla da viaxe. A barra de abaixo non debe tapar o control que ten o
-   foco. Apuntar se o latexo da seguinte parada molesta ao lector (non debería dicir nada).
+   foco. Xa no bus, a marca da seguinte parada late dúas veces cada vez que cambia e queda
+   quieta; apuntar se o lector di algo dela (non debería).
 
 ## 6. Avisos e tarifas
 

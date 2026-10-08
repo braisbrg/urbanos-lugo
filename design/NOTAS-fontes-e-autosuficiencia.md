@@ -309,13 +309,6 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no
    código; como os di cada lector, se le o «~» das horas estimadas e se cambia de voz nos
    avisos en castelán, só se sabe escoitando.
-7. **O latexo de «Vou nesta» e WCAG 2.2.2**, decisión do dono. É o único criterio A ou AA
-   que a app non cumpre (rolda 31, README «Conformidade»): o anel da seguinte parada
-   repítese mentres dura a viaxe, e o criterio pide poder paralo na páxina a todo o que se
-   mova máis de cinco segundos á beira doutro contido; `prefers-reduced-motion` non conta.
-   DECIDIDO («O movemento») quere que lata. Para cumprir abondaría con que latexase uns
-   cinco segundos cada vez que cambia a seguinte parada e despois quedase quieto, que segue
-   dicindo «aquí» no momento que importa.
 
 ### Lista para o iPhone
 
@@ -345,6 +338,10 @@ Media hora cun iPhone real, en Safari, con iOS 16.4 ou máis. Anotar o modelo e 
 Un fallo en calquera punto é un erro de verdade e vai ao rexistro con modelo e versión.
 
 ## Feito dende que se escribiu isto
+
+- **O latexo de «Vou nesta» e WCAG 2.2.2** (8 de outubro de 2026, rolda 31). Era o único
+  criterio A ou AA que a app non cumpría. O dono escolleu a proposta: dúas batidas cada vez
+  que cambia a seguinte parada, e quieta despois (DECIDIDO). A app cumpre os 55.
 
 - **O zoom do mapa volve estar dentro do seu orzamento no *runner*** (6 de outubro de 2026,
   rolda 28 do rexistro). Os catro pasos bloqueaban o fío 733 ms o 21 de setembro e

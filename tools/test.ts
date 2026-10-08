@@ -5290,24 +5290,26 @@ ok('every animation moves on the compositor: opacity and transform, nothing else
   }
 });
 
-ok('every animation runs 120 to 240 ms, and only two loop besides the waiting indicators', () => {
+ok('every animation runs 120 to 240 ms, and only «Calculando» loops besides the waiting indicators', () => {
   // The README said none ran over 240 ms while four did, from the day the sentence was
   // written; it then named them, and on 6 October they came down to 240 (DECIDIDO). An
   // animation outside 120-240 ms, a new loop, or a transition over 240 fails here, and so
   // does the README if it stops saying so. The reduced-motion block zeroes every duration
-  // and is not read.
+  // and is not read. The ride's pulse looped too until 8 October; it beats twice now, and
+  // the check after this one holds it to that.
   const css = read('src/index.css').replace(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\n\s{2}\}\n/, '');
   const ms = (value: string, unit: string) => Number(value) * (unit === 's' ? 1000 : 1);
-  const LOOPS = ['pulse-ring', 'dot-bounce'];
+  const LOOPS = ['dot-bounce'];
   const readme = read('README.md').replace(/\s+/g, ' ');
   assert(readme.includes('Cada un dura entre 120 e 240 ms'), 'the README no longer says every animation runs 120 to 240 ms');
   const animations = [...css.matchAll(/animation:\s*([\w-]+)\s+(\d+(?:\.\d+)?)(ms|s)\b([^;]*);/g)];
   assert(animations.length > 12, `found ${animations.length} animations, so this is reading the wrong thing`);
   for (const [, name, value, unit, rest] of animations) {
     if (/\binfinite\b/.test(rest)) {
-      assert(LOOPS.includes(name), `${name} loops for ever; the README names two loops, the ride's pulse and «Calculando»`);
+      assert(LOOPS.includes(name), `${name} loops for ever; the README names one loop, «Calculando»`);
       continue;
     }
+    if (name === 'pulse-ring') continue;
     const duration = ms(value, unit);
     assert(duration >= 120 && duration <= 240, `${name} runs ${duration} ms, outside the 120-240 ms the README gives every animation`);
     // The one delay is the ring around «Vou nesta», and the README gives it.
@@ -5342,6 +5344,22 @@ ok('every animation runs 120 to 240 ms, and only two loop besides the waiting in
   const tailwindLoops = sourcesUnder('src').flatMap((file) => [...readFileSync(file, 'utf8').matchAll(/\banimate-(?!none\b)[\w-]+/g)].map(([cls]) => `${relative(file).replace(/\\/g, '/')} ${cls}`));
   assert.deepStrictEqual(tailwindLoops.sort(), [...WAITING].sort(), `the Tailwind loops are not the five waiting indicators DECIDIDO keeps: ${tailwindLoops.join(', ')}`);
   assert(readme.includes('Á parte van os indicadores de espera'), 'the README no longer names the waiting indicators');
+});
+
+ok('the ride’s pulse beats twice when the next stop changes, then holds still', () => {
+  // WCAG 2.2.2: what moves for more than five seconds beside other content needs a way to
+  // stop it on the page, and the reduced-motion setting is not one. The mark of the next stop
+  // in «Vou nesta» pulsed for the whole ride, the one A or AA criterion the app failed; on 8
+  // October 2026 the owner chose two beats each time the next stop changes (DECIDIDO).
+  const pulse = /\.live-dot::after \{[^}]*animation: pulse-ring (\d+(?:\.\d+)?)s [\w-]+ (\w+);/.exec(read('src/index.css'));
+  assert(pulse, 'the ride’s pulse is no longer drawn by .live-dot::after');
+  assert(/^\d+$/.test(pulse[2]) && Number(pulse[1]) * Number(pulse[2]) <= 5, `the ride’s pulse runs ${pulse[2]} times ${pulse[1]} s, past the five seconds 2.2.2 allows without a way to stop it`);
+  // It starts again on each change because the class moves to the row of the stop that is
+  // next now, a row of its own (keyed by the stop), whose ring starts from its first beat.
+  const ride = read('src/components/TripCompanionView.tsx');
+  assert(/<li key=\{stop\.id\}/.test(ride) && /isNext \? 'live-dot' : ''/.test(ride), 'the pulse no longer starts again on the stop that becomes next');
+  assert(/^\| 2\.2\.2 [^|]*\| A \| Arranxado \|/m.test(read('README.md')), 'the README’s WCAG table no longer says 2.2.2 is met');
+  assert(/2\.2\.2: \$\{e\}, and nothing on the page stops it/.test(read('tools/auditBrowser.ts')), 'the browser audit no longer looks for a pulse that does not stop');
 });
 
 ok('on the bus, the card wraps at 200 % text, and the browser audit rides the bus to see it', () => {

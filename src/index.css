@@ -208,8 +208,10 @@
    None of this animates a measurement. What moves is the interface -- a panel arriving, a
    thumb sliding, a tick appearing -- never a number that would then read as live. The one
    pulse, `.live-dot`, marks the GPS position on the ride, which is the one thing in this
-   app that is measured; the one other loop, `.calc-dots`, lasts as long as the planner is
-   working and no longer. Five waits in the components pulse or spin with Tailwind's own
+   app that is measured: two beats each time the next stop changes, then still, since WCAG
+   2.2.2 asks a way to stop anything that moves for more than five seconds beside other
+   content. The one loop, `.calc-dots`, lasts as long as the planner is working and no
+   longer. Five waits in the components pulse or spin with Tailwind's own
    classes, and stop when the wait does. `prefers-reduced-motion` at the foot of this file
    stops every one of them. */
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
@@ -261,7 +263,7 @@
   .calc-dots > span:nth-child(3) { animation-delay: 300ms; }
   /* `isolation` keeps the disc behind the arrow but in front of the list's own background. */
   .live-dot { position: relative; isolation: isolate; border-radius: 9999px; }
-  .live-dot::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--c-accent); animation: pulse-ring 2s ease-out infinite; }
+  .live-dot::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--c-accent); animation: pulse-ring 2s ease-out 2; }
 
   /* A block that opens and closes in place: the grid-row trick, which needs no measured
      height. Closed, the content is also invisible to the Tab key and the screen reader

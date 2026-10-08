@@ -79,7 +79,7 @@ const KINDS = {
   hover: '1.4.13 content on hover',
   drag: '2.5.7 dragging',
   forced: 'forced colours (1.4.1 / 1.4.11)',
-  motion: '2.3 / reduced motion',
+  motion: '2.2.2 / 2.3 / reduced motion',
   console: 'console',
   reach: 'state not reached',
   size: 'house bar: text under 12 px',
@@ -1403,6 +1403,16 @@ async function motion(browser: Browser): Promise<Finding[]> {
     })()`);
     for (const m of moving) findings.push({ kind: 'motion', where: name, detail: m });
   }
+  // 2.2.2 with the preference left alone: on the ride nothing moves for more than five seconds
+  // but the waits, which end with the wait. The next stop's pulse looped for the whole ride
+  // until 8 October 2026; it beats twice now. A finished beat has left the page by the time
+  // this looks, so what is here and longer than five seconds is a loop.
+  const ride = STATES.find((s) => s.name === 'a bordo')!;
+  await runState(w, pass, { ...ride, expect: undefined });
+  const endless = await w.page.evaluate<string[]>(`document.getAnimations()
+    .filter((a) => !['dot-bounce', 'pulse', 'spin'].includes(a.animationName) && a.effect.getComputedTiming().activeDuration > 5000)
+    .map((a) => (a.animationName || a.constructor.name) + ' runs ' + a.effect.getComputedTiming().activeDuration + ' ms')`);
+  for (const e of endless) findings.push({ kind: 'motion', where: 'a bordo', detail: `2.2.2: ${e}, and nothing on the page stops it` });
   await w.page.close();
   return findings;
 }
