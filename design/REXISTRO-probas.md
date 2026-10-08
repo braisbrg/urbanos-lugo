@@ -2548,3 +2548,74 @@ oficial, e comprobalo todo cun script coma se fose festa.
 - Ruta non reordena as opcións cando mide os paseos no dispositivo. O sábado ás 10:00, a
   12 (52 min, chega ás ~10:54) quedou diante da 1.2 (23 min, ás ~10:51). Pasa igual sen o
   aviso, así que vai aparte.
+
+## Rolda 32: Ruta, a noite antes e o día despois do aviso — 8 de outubro de 2026
+
+Pedido: revisar que todo funciona, tamén o que a rolda 30 deixara fóra (a orde de Ruta,
+que antes non era así), puír o novo e asegurar que, pasadas as festas, a app volve ser a
+de antes sen tocar nada.
+
+### Medido
+
+- Ruta, a mesma pregunta co mesmo reloxo en tres compilacións, lida da pantalla cando xa
+  chegaron os paseos medidos: a 1.1.0, do 15 de setembro, e a 1.2.8, cada unha no seu
+  worktree, e a de traballo.
+  - Sábado 17 ás 10:00, de Praza Bretaña a Benigno Rivera: nas tres, «12, 52 min,
+    ~10:54» diante de «1.2, 22 min, ~10:51», tamén no titular.
+  - Martes 14 ás 10:00: «12, ~10:54» diante de dúas que chegan ás 10:51, na 1.2.8 e na
+    de traballo; a 1.1.0 só listaba dúas opcións.
+  - O paseo do final do 12: estimado, 22 minutos; medido, 27.
+
+  Non era o cambio dos avisos.
+- Xoves 15 ás 23:50, a mesma viaxe:
+  - na 1.1.0 ía primeiro ir andando, con chegada ás ~00:55, e despois o 1.1 desde Praza
+    Bretaña ás 07:07;
+  - na 1.2.8 e na de traballo ía primeiro o 1.1 subindo en Sindicatos ás 07:15, tras
+    quince minutos andando, cando ese bus pasa por Praza Bretaña ás 07:11; ir andando
+    nin aparecía.
+
+  A causa é a regra `rolled = day > askedDay` de 69a85a0 (28 de setembro): contaba o día
+  desde o final do paseo, e un paseo que remataba pasada a medianoite facía «en servizo» o
+  bus de mañá. Pasa igual sen aviso, preguntando o 12 ou o 15.
+- Á 01:00 do 13, Ruta planificaba o primeiro bus da mañá co peche da noite do 12. Ás
+  23:50 do 8, planificaba o do 9 sen o seu.
+- Un aviso que segue na páxina do operador despois dos seus días seguía na franxa, no «1»
+  do menú e en Avisos.
+- A comprobación de `withinEditDistance` leu 3,4× nunha máquina cargada, onde pide 10×.
+  Comparaba unha soa medida contra outra.
+- `pnpm audit` deu oito avisos, cinco altos, todos en dependencias de compilación. De
+  produción, ningún.
+- Erro meu: os guións do navegador abrían os taboleiros con `?parada=`, que a app le como
+  un QR. O servidor de desenvolvemento pedía entón os minutos do poste a buslugo.com
+  (`/api/paradas/<código>/agora`), con 20 s de caché por poste. Foron unhas noventa
+  aperturas en hora e media. O primeiro bloqueo apuntaba a unha ruta que non existe e non
+  cortou nada. O bo, `*/api/paradas/*`, comprobouse cunha páxina: a petición morre no
+  navegador e a caixa do QR non sae.
+
+### Feito (`23a3877`, `d0e47a9`)
+
+- Ruta ordena as opcións coa regra do propio planificador sobre o que di cada fila, co
+  paseo medido. Mentres non hai medida nada se move, e un bus que xa non se colle vai ao
+  final. O titular é a primeira fila ata que se abre outra.
+- Cada fila ten por clave a súa viaxe (WCAG 2.4.3), indicación da sesión de
+  accesibilidade.
+- «En servizo» cóntase desde o día da pregunta.
+- Un aviso remata cos seus días (`noticeOver`), siga ou non publicado.
+- Ruta pregunta ao aviso pola noite da viaxe (`underNotice`, `setsOff`), e a súa franxa
+  amosa tamén as paradas trasladadas.
+- A comprobación de tempo toma o mellor de tres medidas.
+- `brace-expansion` e `fast-uri` quedan fixados en `pnpm-workspace.yaml` dentro da versión
+  maior que pide o seu pai, e `source-map-js` dentro do seu rango. `pnpm audit` queda
+  limpo, e o service worker sae igual: 32 entradas, 4.429,09 KiB.
+- Tres comprobacións novas (222) e a de Ruta adaptada á nova chamada, cada unha probada
+  contra o seu fallo.
+- No navegador, co reloxo posto: 93 comprobacións, ningunha falla. Cubriron os días e as
+  noites de festa, as dúas beiras, a semana despois co aviso aínda publicado e un día
+  entre medias.
+
+### Mirado e deixado
+
+- Á 00:30, os buses das 07:xx contan como «en servizo» porque son do mesmo día natural; ás
+  23:50, non. Non se tocou nesta rolda. Ás 23:50 vai diante ir andando; á 00:30 a opción a
+  pé nin entra entre as catro, porque a súa estimación son 78 minutos e o límite para
+  encabezar é 75.
