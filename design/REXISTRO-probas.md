@@ -2464,3 +2464,87 @@ subministración, segredos e *subdomain takeover*.
 - Harden-Runner, CODEOWNERS e a aprobación de despregues engaden fricción para un proxecto
   dunha persoa. A espera de Dependabot xa estaba decidida.
 - zizmor sobra: CodeQL xa le os workflows. E 405 en vez de 404 é cosmético.
+
+## Rolda 30: o aviso do San Froilán, usado e lido noite a noite — 8 de outubro de 2026
+
+Pedido: que a app use o aviso do operador e non só o amose (as paradas que non se poden
+usar e as horas ampliadas das liñas), marcado como do aviso. Despois: que ocupe o que
+debe, que se poida pregar, que as horas e as liñas sexan só as do aviso, que desde a hora
+en que acaba o horario diga que é palabra de buslugo.com e que non coñecemos horario
+oficial, e comprobalo todo cun script coma se fose festa.
+
+### Medido
+
+- O aviso en vivo, liña a liña, contra o que a app le del:
+  - 1.2 ata as 03:07 (Sindicatos), e Praza Bretaña pechada só para ela e para a 1.4;
+  - 1.4 ata as 03:12;
+  - 9 e 12 ata as 03:15;
+  - 13 ata as 03:00, e a 01:00 os días 5 e 12;
+  - 10 coa parada de Ramón Ferreiro (Feminino) trasladada, e a 01:00 os días 5 e 12.
+
+  Ningunha liña de fóra do aviso. Praza Bretaña ten oito liñas; as outras seis seguen
+  parando.
+- Noite a noite, do 2 ao 14 de outubro, catro fallos:
+  - ás 05:30 dun día de festa, antes do primeiro bus, o aviso de «sen servizo» dicía que
+    cinco liñas seguían;
+  - ás 04:00 un taboleiro seguía dicindo «a 9 ata as 03:15»;
+  - a 01:00 do día 12 levaba «(Cementerio)», que o aviso escribiu coa hora das 03:00;
+  - o día 12 a orde era «9, 12, 10, 13».
+- A última saída impresa de cada liña do aviso na súa primeira parada, o venres 9: 1.2 ás
+  20:50, 1.4 ás 21:35, 9 e 12 ás 21:45, 13 ás 22:15; a 10, o día 12, ás 21:45. Máis
+  adiante no percorrido é máis tarde: a 1.2 segue na rúa ata as 22:11. Desde esa hora,
+  parada a parada, o aviso é a única resposta para esa liña. A chegada ao final dun
+  sentido non conta como saída, como no taboleiro: contada, atrasaba o cambio da 12 do
+  venres ata as 22:17.
+- buslugo.com, tres peticións a man: a portada só ten o aviso, sen táboa nin PDF. A páxina
+  da 1.2 remata ás 22:17 (chega a Sindicatos ás 22:37) e non ten ningunha saída despois
+  da medianoite.
+- Nun Chromium sen cabeza (`tools/cdp.ts`), co reloxo cambiado antes do primeiro script
+  da app, a 375×812, contra o servidor de desenvolvemento. Momentos:
+  - sábado 10 ás 10:00 e ás 22:30;
+  - domingo 11 ás 00:30 e ás 03:20;
+  - sábado 10 ás 05:30;
+  - martes 13 ás 00:30 e ás 01:30;
+  - e dous días sen aviso, o 8 e o 13 ás 10:00.
+
+  En cada un leuse da pantalla o aviso da noite, os taboleiros de catro paradas
+  (pechada, trasladada, cabeceira da 9 e unha normal), as fichas da 1.2, 10, 13 e 5.1, e
+  unha pregunta en Ruta. Todas as comprobacións pasan, sen erros na consola nin
+  desprazamento lateral.
+- Alturas no teléfono:
+  - franxa do taboleiro: 46 px pregada, 108 px cunha parada pechada nela, 190-194 px de
+    noite coas horas despregadas; aberta, antes, 166 px;
+  - Ruta: 62 px de día (antes 185 px), 147 px de noite;
+  - ficha: o texto do operador pregado ocupa 85 px.
+- Ruta o sábado 10 ás 10:00, de Praza Bretaña a Benigno Rivera: a primeira opción (a 12
+  desde Bolaño) é a mesma o sábado 17, que non é de festa. O aviso só cambia a segunda: a
+  1.2 sobe en Rúa Dinán e non en Praza Bretaña.
+
+### Feito (`413b6ef`)
+
+- `src/utils/noticeChanges.ts` le os días, a hora final de cada liña e o lugar onde
+  remata, os remates dos días 5 e 12, e as paradas pechadas e trasladadas. Cada nome
+  emparéllase coas paradas da propia liña, e só cando o emparellamento é claro.
+- O taboleiro pecha a franxa ao titular e ao que cambia nesa parada. As saídas dunha liña
+  que non para alí saen riscadas, coa marca, e sen campá. Desde a última saída impresa
+  da liña alí, a hora final e de quen é a palabra saen despregadas.
+- Ruta nunca sube nin baixa unha liña nunha parada que deixa. A súa franxa pregase coa
+  mesma regra, na parada onde sobe cada tramo.
+- A ficha ten un resumo do día, e o texto do operador vai pregado debaixo.
+- O aviso da noite di que liñas seguen e ata cando, só do mediodía ata esa hora. A fonte é
+  «o aviso de buslugo.com», e o horario, «sen horario oficial, que saibamos».
+- Unha hora final xa pasada non se di, e o lugar vai só coa hora coa que se escribiu.
+  As liñas van en orde de número, e «ata a 01:00» co artigo en singular.
+- Dúas comprobacións novas (219 en total). A primeira leva unha aserción por cada fallo
+  de arriba, e cada unha probouse contra o seu fallo de volta.
+
+### Mirado e deixado
+
+- Ruta pregunta ao aviso coa hora de agora, non coa do traxecto. A noite do 8 ao 9, un
+  plan feito de madrugada para o primeiro bus do 9 aínda podería subir á 1.2 en Praza
+  Bretaña. Son unhas horas, e o aviso segue á vista.
+- O percorrido da 1.2 de madrugada sen pasar polo HULA queda en palabras, no texto
+  pregado da ficha.
+- Ruta non reordena as opcións cando mide os paseos no dispositivo. O sábado ás 10:00, a
+  12 (52 min, chega ás ~10:54) quedou diante da 1.2 (23 min, ás ~10:51). Pasa igual sen o
+  aviso, así que vai aparte.
