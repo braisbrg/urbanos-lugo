@@ -1484,8 +1484,9 @@ calcúlanse no navegador a partir dos datos empaquetados, así que todo son fich
 estáticos. `.github/workflows/deploy-pages.yml` publica en Pages en cada `push` a `main`
 e por calendario, refrescando antes a copia dos avisos oficiais. O calendario di cada hora;
 GitHub execútao cando pode, e na práctica foron entre cinco e sete veces ao día en setembro
-de 2026 —por iso a copia leva a súa data en pantalla e deixa de contar incidencias ás seis
-horas.
+de 2026 e catro o 7 e o 8 de outubro, con ocos de ata oito horas. Por iso a copia leva a
+súa data en pantalla e deixa de contar incidencias ás doce horas: ás seis caducaba entre
+dúas execucións boas.
 
 Para activalo: **Settings → Pages → Source: GitHub Actions**. O workflow define
 `BASE_PATH` co nome do repositorio para que as rutas apunten a

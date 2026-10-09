@@ -2166,7 +2166,9 @@ ok('a saved snapshot stops speaking for the present once it is old', () => {
   assert(!isSnapshotStale(null, now), 'a live answer is not a snapshot');
   assert(!isSnapshotStale(iso(1), now), 'an hour-old snapshot should still count');
   assert(!isSnapshotStale(iso(5), now), 'five hours is inside the refresh window');
-  assert(isSnapshotStale(iso(7), now), 'seven hours should read as stale');
+  // GitHub ran the "hourly" refresh four times a day on 7 and 8 October, eight hours apart at worst.
+  assert(!isSnapshotStale(iso(8.5), now), 'a gap between two real refreshes read as a stopped one');
+  assert(isSnapshotStale(iso(13), now), 'thirteen hours should read as stale');
   assert(isSnapshotStale(iso(24 * 5), now), 'a five-day-old snapshot is not evidence about now');
   assert(isSnapshotStale('not a date', now), 'an unreadable date is not a fresh one');
 });
@@ -2803,7 +2805,7 @@ ok('the figures the documents quote are the ones the code runs and the data hold
   // it reads the same constant. So each figure is read out of the sentence that quotes it,
   // whitespace folded so a line break cannot hide it, and compared with what runs.
   const doc = (file: string) => read(file).replace(/\s+/g, ' ');
-  const WORDS: Record<string, number> = { un: 1, one: 1, once: 1, dous: 2, two: 2, tres: 3, three: 3, catro: 4, four: 4, cinco: 5, five: 5, seis: 6, six: 6, dez: 10, ten: 10, vinte: 20, twenty: 20, trinta: 30, thirty: 30 };
+  const WORDS: Record<string, number> = { un: 1, one: 1, once: 1, dous: 2, two: 2, tres: 3, three: 3, catro: 4, four: 4, cinco: 5, five: 5, seis: 6, six: 6, dez: 10, ten: 10, doce: 12, twelve: 12, vinte: 20, twenty: 20, trinta: 30, thirty: 30 };
   // Galician writes 21.093 and 0,1: a dot groups thousands, a comma marks the decimal.
   const figure = (raw: string) => (raw.toLowerCase() in WORDS ? WORDS[raw.toLowerCase()] : raw.includes(',') ? Number(raw.replace(',', '.')) : Number(raw.replace(/\./g, '')));
   const walk = JSON.parse(read('src/data/walk-network.json')) as { junctions: number[]; edges: number[] };

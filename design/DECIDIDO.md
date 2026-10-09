@@ -327,6 +327,10 @@ descrición. Catro regras, e o que quedou fóra:
 - **As opcións van na orde do que di cada fila.** A regra do planificador aplícase outra
   vez sobre os paseos medidos, e mentres non hai medida nada se move. Un bus que o paseo
   medido xa non colle vai ao final. Cada fila ten por clave a súa viaxe, non o seu número.
+- **A copia dos avisos caduca ás doce horas, non ás seis** (9 de outubro). O calendario
+  «de cada hora» corría catro veces ao día, con ocos de ata oito horas, e ás seis a copia
+  caducaba entre dúas execucións boas. Só se usa cando o worker non responde, leva a súa
+  hora en Avisos, e un aviso xa remata cos seus días.
 - **«En servizo» cóntase desde a pregunta.** Un paseo que remata pasada a medianoite non
   fai do primeiro bus de mañá un bus en servizo: ás 23:50 vai diante ir andando esa noite,
   como na 1.1.0.

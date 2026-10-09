@@ -13,7 +13,7 @@ non.
 
 | | Cada canto | Como |
 |---|---|---|
-| **Avisos do operador** | cada hora | `deploy-pages.yml` corre `tools/fetchAlerts.ts` e volve despregar |
+| **Avisos do operador** | cada hora no calendario; catro veces ao día en outubro de 2026 | `deploy-pages.yml` corre `tools/fetchAlerts.ts` e volve despregar |
 | **Itinerarios e horarios** | cada semana | `check-source.yml` corre `reconcile --fresh` e **falla** se a páxina do operador xa non di o que publicamos |
 
 Iso cobre o obxectivo: mentres non cambie unha ruta nin un bus, ninguén ten que
