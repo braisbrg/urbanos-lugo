@@ -1327,7 +1327,10 @@ rápidos, tema e idioma) e a navegación usa `aria-current="page"`.
 teléfono e escritorio, só teclado, texto ao 200 %, 320 px, espazado do texto, teléfono
 deitado, movemento reducido, cores forzadas, sen rede, erros e baleiros: 242 medicións de
 162 estados. Antes da rolda, `audit:browser` atopaba 2.328 fallos; despois, 0, en dúas
-execucións seguidas, e desde entón é unha porta da CI. «Arranxado» quere dicir que fallaba
+execucións seguidas en Windows, e desde entón é unha porta da CI. A súa primeira execución
+no executor de GitHub atopou tres máis, que Windows non ensinaba: ao 200 %, a fila da hora
+de Ruta saía 14–49 px da pantalla, porque alí a letra monoespazada é máis ancha. Arranxada,
+o executor tamén dá 0. «Arranxado» quere dicir que fallaba
 e que agora o comproba algo que falla se volve. Do que unha máquina non pode oír, o lector
 de pantalla de verdade, hai un guión para seguir a man:
 [`design/PROBA-lector-de-pantalla.md`](design/PROBA-lector-de-pantalla.md).

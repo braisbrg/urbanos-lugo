@@ -2755,3 +2755,49 @@ de antes sen tocar nada.
   23:50, non. Non se tocou nesta rolda. Ás 23:50 vai diante ir andando; á 00:30 a opción a
   pé nin entra entre as catro, porque a súa estimación son 78 minutos e o límite para
   encabezar é 75.
+
+## Rolda 33: a 1.2.9 e a 1.3.0 — 8 e 9 de outubro de 2026
+
+Pedido: decidir como saía a rama de accesibilidade e publicar. Primeiro, a 1.2.9 só coas
+festas e Ruta, e a 1.3.0 despois das festas. Logo, coa web aínda sen uso, todo o que se
+puidese facer xa.
+
+### Medido
+
+- A rama de accesibilidade, comprobada fóra da súa sesión, nun worktree propio: en
+  `d8752df` e outra vez en `64915f1`, xa sobre a 1.2.9 e co latexo de dous pulsos. Lint,
+  248 e 250 comprobacións, `check:deep`, o dataset sen cambios, o build, a suite contra o
+  build e o worker, todo en verde. O guión do navegador das festas (93 comprobacións) sobre
+  o build de `64915f1`: ningunha falla.
+- A primeira execución do paso de accesibilidade no executor de GitHub (CI 37863436052,
+  529 s) deu 3 achados que en Windows non saían. Ao 200 %, en Ruta co modo de hora, `main`
+  quedaba 14, 33 e 49 px máis ancho que a pantalla, en galego, inglés e castelán. A fila
+  (a etiqueta e o campo de hora) non partía, e a letra monoespazada do campo é máis ancha
+  en Linux. Reproducido aquí cun campo forzado a 210 px: 38 px de desbordamento sen partir,
+  0 partindo.
+- Con `a7ab79d`, o executor deu 0 achados en 242 medicións de 162 estados, en 506 s.
+- O feed do Concello, desde os despregues de Pages posteriores á 1.2.5: 5 lecturas de 10,
+  cunha mediana de 1.184 ms, e 5 esgotadas aos 4 s.
+- O despregue «de cada hora» correu por calendario oito veces en dous días, con ocos de 4
+  a 8 horas; en setembro eran de 5 a 7 ao día. A copia dos avisos deixa de contar ás seis
+  horas.
+- As notas da 1.3.0 saíron coas cifras do 8 de outubro anteriores á rolda 32 (2.303
+  fallos). As da 1.2.9 son 2.328: 1.118 nomes, 326 textos cortados e 84 focos. Corrixíronse
+  na versión de GitHub. A etiqueta `v1.3.0` quedou co texto primeiro, porque reescribir
+  unha etiqueta publicada sería peor.
+
+### Feito
+
+- A 1.2.9 (`531877b`) e a 1.3.0 (`a7ab79d`). En cada unha, `develop` en verde na CI antes
+  de `main`, etiqueta anotada, versión en GitHub, e Pages e o worker despregados; o worker
+  responde co sha de cada unha.
+- `a7ab79d`: a fila da hora de Ruta parte, como a do taboleiro, e unha aserción sostena.
+- A medición dos luns lanzouse a man sobre a 1.3.0 (37866039342).
+
+### Queda
+
+- Os rexistros do worker en Deno co feed do Concello, para decidir se se segue lendo desde
+  alí. Son do dono.
+- O limiar de seis horas da copia fronte a ocos de ata oito. Decisión.
+- O guión do lector de pantalla e a lista do iPhone, do dono.
+- A organización de GitHub (Pendente 5), mellor antes de que haxa quen use a web. Do dono.
