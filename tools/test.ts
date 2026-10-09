@@ -5651,6 +5651,8 @@ ok('where a name shares its row, it keeps a floor and the rest goes under it', (
   const options = read('src/components/planner/TripOptions.tsx');
   assert(/@container border-y/.test(options) && /@min-\[18rem\]:grid-cols-\[auto_1fr_auto\]/.test(options) && /col-span-2 row-start-2/.test(options), 'the route options squeeze their clocks between the lines and the minutes again');
   assert(!/truncate/.test(options), 'a route option cuts its sentence again');
+  // Found by the audit's first run on the CI runner, not on Windows: the platform's monospace face decides the clock field's width.
+  assert(/<label className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1[^"]*">\s*<Clock/.test(read('src/components/RoutePlannerView.tsx')), "Route's time row pushes the screen sideways at 200 % text again");
   assert(/tnum ml-auto shrink-0 text-emph font-bold/.test(read('src/components/planner/Itinerary.tsx')), 'a leg pushes its minutes off the screen again');
   assert(!/truncate/.test(read('src/components/Map/MapControls.tsx')), 'a list on the map cuts a name again');
   assert(/\.seg-btn \{ overflow-wrap: anywhere; \}/.test(read('src/index.css')), 'a word wider than its option spills into the next again');
