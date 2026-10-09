@@ -2157,6 +2157,18 @@ ok('no colour is written straight into a class name', () => {
   assert(offenders.length === 0, `${offenders.length} fixed palette classes, which will not follow the theme: ` + [...new Set(offenders)].join(', '));
 });
 
+ok('a repository named <owner>.github.io deploys at the root', () => {
+  // The app is to move to an organisation site, urbanos-lugo.github.io, which Pages serves at
+  // the root. The deploy built every asset under /<repository>/, which there would have been
+  // /urbanos-lugo.github.io/, and the first deploy after the rename would have drawn nothing.
+  const deploy = read('.github/workflows/deploy-pages.yml');
+  assert(
+    /if \[ "\$\{NAME,,\}" = "\$\{OWNER,,\}\.github\.io" \]; then\s+export BASE_PATH="\/"\s+export SITE_URL="https:\/\/\$\{NAME,,\}\/"/.test(deploy),
+    'the deploy builds an <owner>.github.io repository under its own name again',
+  );
+  assert(/export BASE_PATH="\/\$NAME\/"\s+export SITE_URL="https:\/\/\$OWNER\.github\.io\/\$NAME\/"/.test(deploy), 'a project site is no longer built under its repository name');
+});
+
 ok('a saved snapshot stops speaking for the present once it is old', () => {
   // On static hosting the notices always come from the committed snapshot, and a stale one
   // kept asserting "running normally" in the present tense.

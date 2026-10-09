@@ -304,6 +304,9 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    `braisbrg/urbanos-lugo`: páxinas que redirixan a cada pestana e idioma, un *service
    worker* que se desinstale para liberar a app instalada, e os favoritos e as paradas
    recentes levados no fragmento da ligazón, porque se gardan por orixe e se perderían.
+   *Preparado o 9 de outubro de 2026, para facelo antes de que haxa quen use a web:
+   [`MUDANZA-organizacion.md`](MUDANZA-organizacion.md) ten os pasos en orde, e o
+   despregue xa constrúe para a raíz un repositorio `<propietario>.github.io`.*
 6. **Un lector de pantalla de verdade, nun teléfono**, cousa do dono: o guión de
    [`PROBA-lector-de-pantalla.md`](PROBA-lector-de-pantalla.md), unha vez con VoiceOver e
    outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no

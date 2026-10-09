@@ -54,7 +54,9 @@ jobs:
       - name: Refresh service notices
         run: pnpm exec tsx tools/fetchAlerts.ts || echo "notice refresh failed, keeping the committed snapshot"
 
-      # Project sites live at https://<user>.github.io/<repo>/. For a user site or a
+      # Project sites live at https://<user>.github.io/<repo>/. A repository named
+      # <owner>.github.io is its owner's own site, served at the root, and is built for the
+      # root: under the project rule every asset would go under /<owner>.github.io/. For a
       # custom domain, set BASE_PATH to "/" and SITE_URL to that domain.
       #
       # Both are derived in the shell from GITHUB_REPOSITORY ("owner/name"), which every
@@ -78,8 +80,15 @@ jobs:
         env:
           VITE_API_ORIGIN: ${{ vars.API_ORIGIN }}
         run: |
-          export BASE_PATH="/${GITHUB_REPOSITORY#*/}/"
-          export SITE_URL="https://${GITHUB_REPOSITORY%%/*}.github.io/${GITHUB_REPOSITORY#*/}/"
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          NAME="${GITHUB_REPOSITORY#*/}"
+          if [ "${NAME,,}" = "${OWNER,,}.github.io" ]; then
+            export BASE_PATH="/"
+            export SITE_URL="https://${NAME,,}/"
+          else
+            export BASE_PATH="/$NAME/"
+            export SITE_URL="https://$OWNER.github.io/$NAME/"
+          fi
           echo "building for $SITE_URL"
           pnpm run build
 

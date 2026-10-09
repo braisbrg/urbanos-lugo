@@ -1490,8 +1490,9 @@ dúas execucións boas.
 
 Para activalo: **Settings → Pages → Source: GitHub Actions**. O workflow define
 `BASE_PATH` co nome do repositorio para que as rutas apunten a
-`https://<usuario>.github.io/<repo>/`. Con dominio propio ou nunha *user page*, pon
-`BASE_PATH: /`.
+`https://<usuario>.github.io/<repo>/`. Un repositorio chamado `<propietario>.github.io` é o
+sitio do seu propietario, servido na raíz, e o workflow constrúeo para a raíz el só. Con
+dominio propio, pon `BASE_PATH: /`.
 
 A build escribe unha páxina en cada enderezo de pestana —`paradas/`, `linhas/`, `mapa/`,
 `ruta/`, `avisos/`, `tarifas/`— e deixa `404.html` detrás para todo o demais. Con só o
@@ -1672,7 +1673,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-250 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+251 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos
