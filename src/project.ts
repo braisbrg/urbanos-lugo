@@ -3,7 +3,7 @@
  * the User-Agent the alert fetcher sends both point here, and a test asserts nothing else
  * hardcodes the URL.
  */
-export const REPO_URL = 'https://github.com/braisbrg/urbanos-lugo';
+export const REPO_URL = 'https://github.com/urbanos-lugo/urbanos-lugo.github.io';
 
 /**
  * A prefilled issue: plain `issues/new` rather than an issue form, because the body is

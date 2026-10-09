@@ -4703,7 +4703,7 @@ ok('the three front doors say the same true things', () => {
   const gl = read('README.md');
   assert(/README\.es\.md/.test(gl) && /README\.en\.md/.test(gl), 'README.md does not offer the other two');
   // And each opens the app in its own language, now that each language has an address.
-  for (const [door, url] of [['README.md', 'https://braisbrg.github.io/urbanos-lugo/'], ['README.es.md', 'https://braisbrg.github.io/urbanos-lugo/es/'], ['README.en.md', 'https://braisbrg.github.io/urbanos-lugo/en/']]) {
+  for (const [door, url] of [['README.md', 'https://urbanos-lugo.github.io/'], ['README.es.md', 'https://urbanos-lugo.github.io/es/'], ['README.en.md', 'https://urbanos-lugo.github.io/en/']]) {
     assert(read(door).split('\n').slice(0, 4).join('\n').includes(`](${url})`), `${door} does not open the app at ${url}`);
   }
 });

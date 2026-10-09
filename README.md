@@ -1,6 +1,6 @@
 # Urbanos de Lugo
 
-### 👉 [**braisbrg.github.io/urbanos-lugo**](https://braisbrg.github.io/urbanos-lugo/)
+### 👉 [**urbanos-lugo.github.io**](https://urbanos-lugo.github.io/)
 
 **Cando pasa o teu bus en Lugo.** Todas as liñas, todas as paradas e a hora á que
 pasan, nunha web lixeira que funciona sen cobertura.

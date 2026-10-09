@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Open a [private security advisory](https://github.com/braisbrg/urbanos-lugo/security/advisories/new).
+Open a [private security advisory](https://github.com/urbanos-lugo/urbanos-lugo.github.io/security/advisories/new).
 Please do not use a public issue for anything exploitable.
 
 Expect a first reply within a week. This is one person's side project, not a staffed

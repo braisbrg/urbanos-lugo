@@ -1,6 +1,6 @@
 # Urbanos de Lugo
 
-### 👉 [**braisbrg.github.io/urbanos-lugo/en**](https://braisbrg.github.io/urbanos-lugo/en/)
+### 👉 [**urbanos-lugo.github.io/en**](https://urbanos-lugo.github.io/en/)
 
 **When your bus comes in Lugo.** Every line, every stop and when it passes, on a light
 site that works with no signal.
