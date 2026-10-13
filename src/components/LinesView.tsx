@@ -106,8 +106,11 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
 
   return (
     <div className="mx-auto h-full w-full max-w-7xl px-cap-3.5 py-4 lg:px-6 lg:pb-0">
+      {/* From lg up each pane scrolls on its own, so each is positioned: otherwise the absolute
+          boxes inside (screen-reader text, timeline dots) take <main> as containing block,
+          escape the pane's clip, and <main> scrolls a second time into an empty page. */}
       <div className="lg:grid lg:h-full lg:grid-cols-12 lg:gap-6">
-        <div className={`space-y-4 lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? 'hidden' : ''}`}>
+        <div className={`space-y-4 lg:relative lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? 'hidden' : ''}`}>
           <div className="space-y-4 bg-bg rounded-card border border-edge py-4 px-cap-4 lg:p-5">
             <div>
               <h2 className="font-bold text-ink text-body uppercase tracking-wider flex items-center gap-2">
@@ -210,7 +213,7 @@ export function LinesView({ selectedLine, lineRequest = 0, onSelectLine, onSelec
           </div>
         </div>
 
-        <div className={`anim-push-in space-y-4 lg:animate-none lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? '' : 'hidden'}`}>
+        <div className={`anim-push-in space-y-4 lg:relative lg:animate-none lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto lg:pb-4 ${showDetail ? '' : 'hidden'}`}>
           <button onClick={() => setShowDetail(false)} className="-ml-1 flex h-11 items-center gap-1.5 pr-3 text-body font-medium text-ink-2 lg:hidden">
             <ArrowLeft className="h-4.5 w-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
             {t.lines.backToLines}

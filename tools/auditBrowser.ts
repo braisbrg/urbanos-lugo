@@ -500,6 +500,15 @@ const PROBE = `async function (expectLang) {
   // narrowed the bottom bar every time the tab opened.
   const overY = root.scrollHeight - root.clientHeight;
   if (overY > 1) push('overflow', document.body, 'the page is ' + overY + ' px taller than the viewport, and scrolls under its bars');
+  // Nor twice: an absolute box inside a pane that scrolls by itself has to take that pane,
+  // or something in it, as its containing block. On a desktop the lines tab's took <main>,
+  // escaped both panes' clip, and <main> scrolled 156 px past them at 1280 x 800 into an
+  // empty page, a third scrollbar beside the panes' own.
+  for (const pane of document.querySelectorAll('main *')) {
+    if (!/auto|scroll/.test(getComputedStyle(pane).overflowY)) continue;
+    const loose = [...pane.querySelectorAll('*')].find((a) => getComputedStyle(a).position === 'absolute' && a.offsetParent && !pane.contains(a.offsetParent));
+    if (loose) push('overflow', loose, 'is placed against ' + loose.offsetParent.tagName.toLowerCase() + ', outside the pane that scrolls it, and stretches that instead');
+  }
   const lang = (root.getAttribute('lang') || '').toLowerCase();
   if (lang !== expectLang) push('lang', root, '<html lang="' + lang + '">, the app speaks ' + expectLang);
   const h1s = document.querySelectorAll('h1').length;

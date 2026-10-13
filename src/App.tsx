@@ -231,14 +231,14 @@ export default function App() {
               {/* One heading for the page, naming what is on screen: correct in both the one-pane and the two-pane layout. */}
               <h1 className="sr-only">{screenTitle}</h1>
 
-              {/* Below lg the two panes take turns; from lg up the saved stops stay beside the board. */}
+              {/* Below lg the two panes take turns; from lg up the saved stops stay beside the board, each pane positioned for the reason LinesView gives. */}
               {activeTab === 'stops' && (
                 <div className="mx-auto h-full w-full max-w-7xl lg:grid lg:grid-cols-12 lg:gap-6 lg:px-6 lg:pt-4">
-                  <div className={`lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? 'hidden' : ''}`}>
+                  <div className={`lg:relative lg:col-span-5 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? 'hidden' : ''}`}>
                     <StopHome favoriteStopIds={favoriteStopIds} favoriteLineIds={favoriteLineIds} onSelectLine={openLine} recentStopIds={recentStopIds} onClearRecent={clearRecentStops} onSelectStop={selectStop} onOpenQrScanner={() => setIsQrModalOpen(true)} />
                   </div>
                   {/* In from the right when it takes the list's place, like every push on a phone; the way back is not animated. From lg up the panes never take turns. */}
-                  <div className={`anim-push-in lg:animate-none lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
+                  <div className={`anim-push-in lg:animate-none lg:relative lg:col-span-7 lg:block lg:h-full lg:overflow-y-auto ${showStopBoard ? '' : 'hidden'}`}>
                     <StopArrivalsView
                       selectedStop={selectedStop}
                       onSelectLine={openLine}

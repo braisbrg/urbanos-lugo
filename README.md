@@ -1870,7 +1870,11 @@ mesma navegación na mesma orde (3.2.3), o que un estado ten que anunciar (4.1.3
 en cada carga fresca; o desbordamento lateral e vertical, do documento e de `<main>`, que é
 onde as pantallas fan scroll (o formulario da ruta chegou a medir 553 px máis có teléfono
 sen que o `scrollWidth` da páxina dixese nada, e a lista de liñas alargou a páxina 1.392
-px); e o texto que non se ve —cortado cunha elipse ou cun `line-clamp`, saíndo da súa caixa
+px); que ningunha caixa absoluta dun panel con scroll propio se coloque contra `<main>`,
+que así fai scroll unha segunda vez (Liñas, no escritorio, cunha liña aberta, baixaba 156 px
+a 1280 × 800 ata unha páxina baleira, cun terceiro scroll ao carón dos dous paneis; sen esa
+regra a auditoría dá 36 achados en Liñas e Paradas, e con ela 0); e o texto que non se ve
+—cortado cunha elipse ou cun `line-clamp`, saíndo da súa caixa
 ou pasado do bordo— a 320 px de ancho (1.4.10), co texto ao 200 %, que é o que fai o axuste
 «texto máis grande» dun móbil, e no escritorio co zoom do navegador ao 200 % (1.4.4), e cos
 espazados de texto de 1.4.12. Despois pulsa Tab de verdade por cada estado: o foco ten que
