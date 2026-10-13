@@ -5,6 +5,7 @@ import { ServiceAlert } from '../types';
 import { isSnapshotStale } from '../utils/snapshotAge';
 import { NOTICE_LANG } from '../utils/operatorNotices';
 import type { ServiceAlerts } from '../hooks/useServiceAlerts';
+import { NOTICE_META, NOTICES_REVIEWED_ON } from '../data/structuralNotices';
 
 interface AlertsViewProps {
   /** Fetched once in App, so this screen and the navigation badge cannot disagree. */
@@ -17,19 +18,6 @@ function formatInstant(value: string | undefined, locale: string): string {
   const at = new Date(value);
   return Number.isNaN(at.getTime()) ? value : at.toLocaleString(locale);
 }
-
-/**
- * Permanent notices about the city rather than today's incidents. The prose lives in the
- * dictionary; the ids, severities and affected lines are facts and stay here. The date
- * is when a person last checked them: a file cannot know whether roadworks are still
- * "current". Move it forward only after actually re-reading the sources.
- */
-const NOTICE_META = [
-  { id: 'struct-1', severity: 'warning' as const, linesAffected: ['1.3', '3.1', '3.2'] },
-  { id: 'struct-2', severity: 'info' as const, linesAffected: ['7', '8', '9', '12'] },
-  { id: 'struct-3', severity: 'info' as const, linesAffected: ['Todas'] },
-];
-const NOTICES_REVIEWED_ON = '2026-08-27';
 
 const external = 'inline-flex min-h-11 items-center text-label font-bold text-accent underline underline-offset-2';
 
@@ -217,8 +205,8 @@ export function AlertsView({ alerts }: AlertsViewProps) {
         <div className="pt-2">
           <h3 className="text-label font-bold text-ink-2 uppercase tracking-wider">{t.fares.structuralTitle}</h3>
           <p className="mt-1 text-label leading-relaxed text-ink-3">{t.fares.structuralSource}</p>
-          {/* Six months is roughly how long a set of roadworks can outlive its own description. */}
-          {monthsSinceReview >= 6 && <p className="mt-1 text-label font-semibold leading-relaxed text-estimated">{t.fares.structuralStale(monthsSinceReview)}</p>}
+          {/* They are reviewed monthly; two months means a review was missed, and the reader is told. */}
+          {monthsSinceReview >= 2 && <p className="mt-1 text-label font-semibold leading-relaxed text-estimated">{t.fares.structuralStale(monthsSinceReview)}</p>}
           <div className="mb-3" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {structuralNotices.map((alert) => (

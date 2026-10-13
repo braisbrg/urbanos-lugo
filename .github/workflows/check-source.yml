@@ -105,3 +105,9 @@ jobs:
       - name: Next year's holidays are in before January
         if: always()
         run: pnpm exec tsx tools/checkHolidaysAhead.ts
+
+      # The structural notices on Avisos are written by hand; two of three had gone wrong
+      # when they were last read after seven weeks. Over five weeks, this fails. No request.
+      - name: The structural notices were reviewed in the last five weeks
+        if: always()
+        run: pnpm exec tsx tools/checkNoticesReviewed.ts

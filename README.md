@@ -417,7 +417,13 @@ mesturalas facía que a barra dixese «1» por unha noticia sobre asfaltado. Lí
 etiquetas —tamén *Buses urbanos* e *Obras*— e durante sesenta días; auditadas o 15 de
 setembro de 2026, en dous meses deran un récord de viaxeiros, unha declaración política e
 os cortes dunha carreira que seguirían en pantalla ata novembro. Ademais, os avisos
-estruturais escritos neste proxecto, cada un coa súa data de revisión.
+estruturais escritos neste proxecto, cada un coa súa data de revisión. Revísanse cada mes
+contra as súas fontes: «Check the sources» falla o luns en que a última revisión pasa das
+cinco semanas, e a pantalla avisa a quen le cando pasa dos dous meses. Revisados o 13 de
+outubro de 2026 tras sete semanas, dous dos tres xa non eran certos —as obras da
+intermodal, entregadas o 9 de setembro, e un «50 % e Xente Nova» que era a tarifa social
+máis unha tarxeta da Xunta só para o transporte interurbano— e quitáronse; queda a
+cabeceira das liñas 7, 8, 9 e 12 no casco histórico.
 
 Cando o operador escribe un aviso liña a liña na súa portada —o do San Froilán de 2026
 chegou así, e a campá só dicía «Cambios en las líneas por San Froilán»—, a app le esa
@@ -1692,7 +1698,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-254 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+255 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

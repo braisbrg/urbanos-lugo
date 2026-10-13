@@ -269,19 +269,9 @@ export const en: Dict = {
     ],
     notices: [
       {
-        title: 'Works at the new Lugo intermodal station (Montero Ríos)',
-        description:
-          'Because of the works on the future intermodal station at Montero Ríos and Conde de Fontao, follow the signed pedestrian route to the stops around the railway station.',
-      },
-      {
         title: 'Old town terminus (lines 7, 8, 9 and 12)',
         description:
           'All four lines end at Bolaño Ribadeneira, inside the walls. They come in through Porta do Bispo Odoario, beside Hospital Quirónsalud, and leave through Porta de San Fernando — always that way round, all four. Between 230 and 385 metres of each route run along streets OpenStreetMap marks pedestrian, without the bus exception they should carry. Seen on 2 September 2026: what is missing is the tag, not the passage.',
-      },
-      {
-        title: '50% discount and the Xente Nova card (under 21)',
-        description:
-          'The 50% discount on the municipal Tarxeta Cidadá still applies, and travel is free (up to 60 trips a month) for under-21s holding the regional Xente Nova card.',
       },
     ],
   },

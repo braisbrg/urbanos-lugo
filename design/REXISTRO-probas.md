@@ -2963,3 +2963,35 @@ historia, e deixar a documentación e as comprobacións ao día.
   que gardaba (favoritos, paradas recentes, tema, idioma) quedou na orixe vella.
 - Crear o repositorio de redirección `braisbrg/urbanos-lugo` rompería o 301 de GitHub ao
   repositorio novo; non se fixo, e a guía di por que.
+
+## Rolda 36: os avisos estruturais, revisados contra as súas fontes — 13 de outubro de 2026
+
+Pedido: os avisos estruturais de Avisos dicían «revisado o 27/8/2026»; revisalos máis a
+miúdo.
+
+### Medido
+
+- As obras da intermodal: Adif recibiu a obra o 9 de setembro de 2026 e Conde de Fontao
+  abriu ese día (El Progreso, 9 de setembro; COPE, 7 e 10 de setembro). A estación aínda non
+  ten data de apertura. Ningunha fonte actual fala de paradas nin de camiños afectados.
+- «Bonificación do 50 % e Xente Nova»: a nota da Xunta do 26 de novembro de 2025 leva Xente
+  Nova ata o 31 de decembro de 2026, con ata 60 viaxes gratuítas ao mes no transporte
+  interurbano da Xunta, sen mención do urbano de Lugo. buslugo.com/gl/tarifas, lida unha vez
+  o 13 de outubro: billete 0,64, bono 0,45, bono social 0,31, transbordos 0, e nada de 50 %
+  nin de Xente Nova. O «50 %» era o bono social, que xa está en Tarifas coa súa fonte.
+- A cabeceira das liñas 7, 8, 9 e 12 en Bolaño Ribadeneira: o dataset (`lines.json`) dao
+  así; ningunha fonte nova o contradí.
+
+### Feito
+
+- Quítanse os dous avisos que xa non eran certos, nos tres idiomas; queda o da cabeceira,
+  revisado o 13 de outubro. A data e os metadatos pasan a `src/data/structuralNotices.ts`.
+- «Check the sources» falla o luns en que a revisión pasa das cinco semanas
+  (`tools/checkNoticesReviewed.ts`), e Avisos avisa a quen le desde os dous meses.
+- Un check: o recordatorio cala no día 35 e salta no 36, o luns o corre, e cada aviso ten
+  o seu texto nos tres idiomas. Probado contra o seu fallo: o límite a 36 días, o paso
+  quitado do traballo e un aviso sen texto fallan os tres.
+
+### Queda
+
+- A seguinte revisión, antes do 17 de novembro de 2026.

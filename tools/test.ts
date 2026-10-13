@@ -43,6 +43,8 @@ import { HOLIDAY_YEARS, buildRuns, dayKind, expandHeadway, handoverMinutes, isHo
 import { MAX_BODY_BYTES, readCapped } from '../src/services/readCapped';
 import festivos from '../src/data/festivos.json';
 import { holidaysDue } from './checkHolidaysAhead';
+import { noticesReviewDue } from './checkNoticesReviewed';
+import { NOTICE_META } from '../src/data/structuralNotices';
 import { poleToRecord } from './importStopAmenities';
 import { POLE_SEEN_AT_OSM } from './lib';
 import { planTrips, MAX_HEADLINE_WALK_MIN, TRANSFER_BUFFER_MIN, TRANSFER_BUFFER_ESTIMATED_MIN, WALK_MUST_BEAT_BUS_BY_MIN } from '../src/utils/planner';
@@ -2721,6 +2723,7 @@ ok('the gates run on every push and proposal, offline, and only the schedule rea
   const weekly = runs(workflow('check-source.yml')).join('\n');
   assert(weekly.includes('rules/branches/main') && weekly.includes('.context == "checks"') && weekly.includes('for branch in main develop'), 'check-source.yml no longer asks GitHub that main requires the checks and that main and develop cannot be rewritten');
   assert(weekly.includes('pnpm exec tsx tools/checkHolidaysAhead.ts'), 'check-source.yml no longer warns from November that next year’s holidays are missing');
+  assert(weekly.includes('pnpm exec tsx tools/checkNoticesReviewed.ts'), 'check-source.yml no longer asks every Monday for the structural notices to be reviewed');
   const pkg = JSON.parse(read('package.json'));
   assert(pkg.scripts['check:deep'] === 'tsx tools/stressInvariants.ts && tsx tools/stressPlanner.ts', `check:deep runs "${pkg.scripts['check:deep']}", not the two offline sweeps`);
   for (const sweep of ['tools/stressInvariants.ts', 'tools/stressPlanner.ts']) assert(!/\bfetch\(|overpass\(/.test(read(sweep)), `${sweep} reaches the network, and it is a gate`);
@@ -3437,7 +3440,8 @@ ok('every tab has a path, and the sitemap lists exactly those', () => {
 ok('the hand-written notices are dated, not declared current', () => {
   // Three notices about the city are written into the repository; they used to claim
   // "vixente" and "activo", which a file cannot know. A review date cannot go out of date.
-  const view = read('src/components/AlertsView.tsx');
+  // The date moved out of the component on 13 October 2026, so the Monday tool can read it.
+  const view = read('src/data/structuralNotices.ts');
 
   const stamp = view.match(/NOTICES_REVIEWED_ON = '(\d{4}-\d{2}-\d{2})'/);
   assert(stamp, 'the hand-written notices no longer carry a review date');
@@ -3685,6 +3689,20 @@ ok('a public holiday runs the Sunday timetable, and the file that says which day
   assert(holidaysDue(['2026'], new Date(2026, 11, 31))?.includes('2027'), 'the holiday reminder is quiet on 31 December with next year missing');
   assert(holidaysDue(['2026', '2027'], new Date(2026, 10, 1)) === null, 'the holiday reminder fires with next year already in');
   assert(holidaysDue(['2027'], new Date(2027, 0, 5)) === null, 'the holiday reminder fires in January, which the suite already covers');
+});
+
+ok('the structural notices are reviewed every five weeks, and each has its words in the three languages', () => {
+  // Reviewed on 27 August, by 13 October two of the three were wrong: the intermodal works
+  // had been handed over on 9 September, and the "50% and Xente Nova" one was the social fare
+  // plus a Xunta card that covers interurban buses only. The Monday job now asks after 35 days.
+  assert(noticesReviewDue('2026-10-13', new Date('2026-11-17T12:00:00Z')) === null, 'the notices reminder fires on day 35');
+  assert(noticesReviewDue('2026-10-13', new Date('2026-11-18T12:00:00Z'))?.includes('36 days'), 'the notices reminder is quiet on day 36');
+  // The texts are matched to NOTICE_META by position: a notice taken out of one list and not
+  // the other shows another notice's words under its lines.
+  for (const lang of LANGS) {
+    const texts = translations(lang).faresContent.notices.length;
+    assert(texts === NOTICE_META.length, `${lang} has ${texts} structural notice texts for ${NOTICE_META.length} notices`);
+  }
 });
 
 ok('a line\u2019s trip time comes from the timetable, not from a road model', () => {

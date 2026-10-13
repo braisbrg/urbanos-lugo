@@ -382,6 +382,22 @@ descrición. Catro regras, e o que quedou fóra:
 - **Un check impide que o enderezo vello volva** a un ficheiro que non sexa rexistro
   (rexistro, auditoría, notas e guía) nin ao README fóra do parágrafo que di que dá 404.
 
+## Os avisos estruturais, cada mes — 13 de outubro de 2026
+
+- **Revísanse cada mes, e o luns avísase.** Revisados o 27 de agosto, ao volver lelos o 13
+  de outubro dous dos tres xa non eran certos. «Check the sources» falla cando a revisión
+  pasa das cinco semanas (`tools/checkNoticesReviewed.ts`), e Avisos dillo a quen le
+  desde os dous meses, non desde os seis.
+- **Quítanse as obras da intermodal.** Adif recibiu a obra o 9 de setembro de 2026 e a rúa
+  Conde de Fontao abriu ese día (El Progreso, 9 de setembro; COPE, 10 de setembro); nada
+  actual di que as paradas ou o camiño a elas estean afectados.
+- **Quítase «Bonificación do 50 % e Tarxeta Xente Nova».** O 50 % era o bono social da
+  Tarxeta Cidadá (0,31 € fronte a 0,64 €), que xa está, coa súa fonte, en Tarifas. Xente
+  Nova dá ata 60 viaxes gratuítas ao mes no transporte interurbano da Xunta, ata o 31 de
+  decembro de 2026 (nota da Xunta do 26 de novembro de 2025), e non consta no urbano de
+  Lugo; buslugo.com/gl/tarifas, lida o 13 de outubro, non a nomea.
+- **Queda a cabeceira das liñas 7, 8, 9 e 12 no casco histórico**, que o dataset confirma.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

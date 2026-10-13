@@ -258,19 +258,9 @@ export const es: Dict = {
     ],
     notices: [
       {
-        title: 'Obras de la Nueva Estación Intermodal de Lugo (Montero Ríos)',
-        description:
-          'Debido a las obras de la futura Estación Intermodal en Montero Ríos y Conde de Fontao, se sigue la señalización peatonal habilitada hacia las paradas del entorno ferroviario.',
-      },
-      {
         title: 'Cabecera en el casco histórico (líneas 7, 8, 9 y 12)',
         description:
           'Las cuatro líneas terminan en Bolaño Ribadeneira, dentro de la muralla. Entran por la Porta do Bispo Odoario, junto al Hospital Quirónsalud, y salen por la Porta de San Fernando: siempre en ese sentido, las cuatro. Entre 230 y 385 metros de cada recorrido van por calles que OpenStreetMap tiene como peatonales, sin la excepción de bus que les correspondería. Visto el 2 de septiembre de 2026: lo que falta es la etiqueta, no el paso.',
-      },
-      {
-        title: 'Bonificación del 50% y Tarjeta Xente Nova (<21 años)',
-        description:
-          'Se mantienen aplicadas las bonificaciones del 50% en la Tarjeta Ciudadana municipal y la gratuidad (hasta 60 viajes/mes) para menores de 21 años con la Tarjeta Xente Nova de la Xunta.',
       },
     ],
   },
