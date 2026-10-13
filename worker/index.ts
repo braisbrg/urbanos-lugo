@@ -71,7 +71,10 @@ export async function handle(request: Request): Promise<Response> {
 
   if (url.pathname === '/api/alerts') {
     const force = url.searchParams.get('refresh') === 'true';
-    const data = await syncOfficialAlerts(force);
+    // Without the council's feed: from Deno Deploy it never connected (none of the seven reads
+    // logged on 6 and 13 October 2026), and every try held the answer back its four seconds.
+    // The hourly snapshot and a self-hosted server.ts still read it.
+    const data = await syncOfficialAlerts(force, Date.now(), false);
     return respond(data, 200, force ? 0 : data.status === 'unreachable' ? EDGE_SECONDS.unreachable : EDGE_SECONDS.alerts);
   }
 

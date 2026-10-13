@@ -134,7 +134,7 @@ export const en: Dict = {
     unknownStatusDesc: 'We could not read the operator page. That does not mean everything is fine — it means we do not know. Check buslugo.com if this trip matters.',
     normalStatusTitle: 'The network is running normally',
     normalStatusDesc:
-      'No incidents, roadworks or temporary diversions have been announced by AULUSA / Monbus or by the Concello de Lugo.',
+      'No incidents, roadworks or temporary diversions have been announced by AULUSA / Monbus.',
     nightWindowTitle: 'Night hours (daytime service finished)',
     nightWindowBody:
       'Most Lugo city lines finish their last run between 22:00 and 22:30. The first morning departures start again from 07:00.',

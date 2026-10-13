@@ -21,8 +21,9 @@ So the interesting surface is small:
 - **The Express server** in `server.ts`, if you self-host it, and **the Deno worker** in
   `worker/index.ts`, which answers the same two endpoints for the static site when one is
   configured. Both read outside sources on the browser's behalf, because CORS stops the
-  browser doing it: buslugo.com, the council's traffic feed, and the operator's own stop
-  page behind the QR stickers. Every one of those reads goes to a fixed host, follows no
+  browser doing it: buslugo.com, the operator's own stop page behind the QR stickers, and,
+  from `server.ts` only, the council's traffic feed (the worker stopped asking it in
+  October 2026: from there it never answered). Every one of those reads goes to a fixed host, follows no
   redirect, and is capped at 512 KB and timed out;
   buslugo.com and the feed are read at most once a minute, and the stop page at most 120
   times a minute, per server process or worker instance, however many people ask. Anything

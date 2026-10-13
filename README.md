@@ -471,7 +471,11 @@ deixou a tarefa programada e amósase **cando se tomou**, en lugar de facela pas
 actual. O feed do Concello lese despois da páxina do operador e ten catro segundos, non
 quince. O 6 de outubro de 2026 o servidor tardou 16 s en responder porque o feed non
 conectaba e os avisos do operador agardaban por el. Cada lectura deixa unha liña no
-rexistro do servidor, co que tardou e, se falla, o motivo.
+rexistro do servidor, co que tardou e, se falla, o motivo. Esas liñas dixeron que desde o
+worker de Deno non conecta nunca: sete lecturas o 6 e o 13 de outubro, as sete sen resposta
+aos catro segundos. Desde aquela o worker só le buslugo.com, e o feed léno a copia de cada
+hora, que desde GitHub conecta algunhas veces, e un `server.ts` propio. Na app publicada,
+logo, os avisos do Concello só aparecen cando se amosa esa copia.
 
 **Tarifas** (`/tarifas`) leva os títulos de transporte tal e como os publica o operador,
 **cada un coa súa fonte enlazada**: billete ordinario, bono ordinario e bono social da
@@ -1539,8 +1543,8 @@ abonda cun servizo pequeno que responda `/api/…`.
 delas pon a Cache API —trinta minutos para os avisos, un se a lectura fallou, vinte segundos
 para unha parada—, que é a que mantén preto de unha por xanela as preguntas que chegan ao
 código, porque a caché en memoria dos módulos vive por illa. O teito que non depende de
-cantas illas haxa pono o propio código, en cada unha: buslugo.com e o feed do Concello como
-moito unha vez por minuto, e a páxina do operador detrás do QR como moito 120 veces por
+cantas illas haxa pono o propio código, en cada unha: buslugo.com como moito unha vez por
+minuto (o feed do Concello xa non o le), e a páxina do operador detrás do QR como moito 120 veces por
 minuto en total, pregunte quen pregunte e pola parada que sexa. Antes non había ese
 segundo teito: un só cliente percorrendo os postes con código facía 813 peticións por
 minuto a `info.urbanoslugo.com`, e cunha resposta de erro, que non se garda, cada
@@ -1676,7 +1680,7 @@ Agrupa os postes duplicados, resolve os identificadores oficiais, asigna zonas e
 pnpm test
 ```
 
-251 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
+252 comprobacións con asercións sobre o que xa estivo mal algunha vez: unicidade de
 códigos, coherencia entre `stop.lines` e os itinerarios, xeometría que segue as rúas,
 tramos non máis curtos ca a liña recta, ventás de servizo nocturnas, monotonía das horas
 de paso, flota baleira fóra de servizo, puntos de interese preto da rede, traxectos

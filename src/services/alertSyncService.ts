@@ -317,11 +317,14 @@ export function extractAlertsFromHtml(html: string): ServiceAlert[] {
   return alerts;
 }
 
-/** Both sources, with one outbound request shared between everyone waiting for it. */
-export async function syncOfficialAlerts(forceRefresh = false, now = Date.now()): Promise<AlertSyncResult> {
+/**
+ * Both sources, with one outbound request shared between everyone waiting for it. `council`
+ * is false where the feed never connects; one runtime always asks the same way.
+ */
+export async function syncOfficialAlerts(forceRefresh = false, now = Date.now(), council = true): Promise<AlertSyncResult> {
   if (inFlight) return inFlight;
   if (cachedAlerts && cacheHolds(cachedAlerts, now - lastFetchTimestamp, forceRefresh)) return cachedAlerts;
-  inFlight = fetchAlerts(now);
+  inFlight = fetchAlerts(now, council);
   try {
     return await inFlight;
   } finally {
@@ -329,7 +332,7 @@ export async function syncOfficialAlerts(forceRefresh = false, now = Date.now())
   }
 }
 
-async function fetchAlerts(now: number): Promise<AlertSyncResult> {
+async function fetchAlerts(now: number, council: boolean): Promise<AlertSyncResult> {
   let result: AlertSyncResult | null = null;
   try {
     const response = await fetch(`${OPERATOR_URL}/`, {
@@ -341,7 +344,7 @@ async function fetchAlerts(now: number): Promise<AlertSyncResult> {
     if (response.ok) {
       const operatorAlerts = extractAlertsFromHtml(await readCapped(response)).map((a) => ({ ...a, source: 'operator' as const }));
       // The city's feed second, and only ever after the operator's: a failure there changes none of this.
-      const cityNotices = await fetchConcelloNotices();
+      const cityNotices = council ? await fetchConcelloNotices() : [];
       // The state of the network is the operator's to declare; a council press release is not an incident.
       result = {
         alerts: [...operatorAlerts, ...cityNotices],

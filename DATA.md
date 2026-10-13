@@ -188,7 +188,10 @@ are not the same claim:
 Both are read **from the server**, never from the browser: neither sends CORS headers.
 Each read is capped at 512 KB and given a deadline. On the static build there is no server
 to do it, so the screen shows the snapshot a scheduled job committed, and says when it was
-taken.
+taken. The Deno worker reads the operator's page only: from there the council's feed
+never connected (seven logged reads on 6 and 13 October 2026, all timed out at four
+seconds). The scheduled snapshot and a self-hosted `server.ts` still read it, so on the
+published app the council's notices appear only when the screen falls back to that snapshot.
 
 ## The minutes behind the QR sticker — info.urbanoslugo.com
 

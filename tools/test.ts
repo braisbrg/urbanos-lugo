@@ -1781,6 +1781,32 @@ await okAsync('the council’s feed cannot hold the operator’s notices back, a
   }
 });
 
+await okAsync('the worker does not ask the council’s feed, which never answered it', async () => {
+  // Deno Deploy's log held seven council reads on 6 and 13 October 2026, every one "not read
+  // after 4 s": each held the operator's notices back four seconds and brought nothing. The
+  // hourly snapshot and a self-hosted server.ts still read it, so only the worker asks without it.
+  const realFetch = globalThis.fetch;
+  const realLog = console.log;
+  const asked: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    asked.push(String(url));
+    return new Response('<html><body></body></html>', { status: 200 });
+  }) as typeof fetch;
+  console.log = () => {};
+  try {
+    // Three hours ahead, past whatever the checks above left in the module's cache.
+    await syncOfficialAlerts(true, Date.now() + 3 * 60 * 60_000, false);
+    assert(asked.length === 1 && !asked.some((url) => url.includes('concellodelugo.gal')), `asked without the council, the sync read ${asked.join(', ')}`);
+    await syncOfficialAlerts(true, Date.now() + 4 * 60 * 60_000);
+    assert(asked.some((url) => url.includes('concellodelugo.gal')), 'the snapshot and server.ts no longer read the council’s feed');
+  } finally {
+    globalThis.fetch = realFetch;
+    console.log = realLog;
+  }
+  assert(/syncOfficialAlerts\(force, Date\.now\(\), false\)/.test(read('worker/index.ts')), 'the worker asks the council’s feed again');
+  assert(!/syncOfficialAlerts\([^)]*false\)/.test(read('server.ts') + read('tools/fetchAlerts.ts')), 'server.ts or the snapshot stopped reading the council’s feed');
+});
+
 ok('what the API sends is read, not trusted: text as text, and links only to the two notice sites', () => {
   // The snapshot was narrowed but the live answer went to the screen as sent, and so did the
   // operator's minutes: a malformed answer could take a screen down, and any link was

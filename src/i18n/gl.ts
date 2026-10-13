@@ -154,7 +154,7 @@ export const gl = {
     unknownStatusDesc: 'Non conseguimos ler a páxina do operador. Iso non quere dicir que todo estea ben: quere dicir que non o sabemos. Consulta buslugo.com se vas facer un traxecto importante.',
     normalStatusTitle: 'Rede de transporte operando con total normalidade',
     normalStatusDesc:
-      'Non hai incidencias, obras nin desvíos temporais activos comunicados oficialmente por AULUSA / Monbus nin polo Concello de Lugo.',
+      'Non hai incidencias, obras nin desvíos temporais activos comunicados oficialmente por AULUSA / Monbus.',
     nightWindowTitle: 'Franxa horaria nocturna (servizo diurno finalizado)',
     nightWindowBody:
       'A maioría das liñas do servizo urbano de Lugo rematan os seus percorridos entre as 22:00 e as 22:30. As primeiras saídas da mañá reactívanse a partir das 07:00.',
