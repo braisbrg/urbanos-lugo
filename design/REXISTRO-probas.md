@@ -2868,3 +2868,98 @@ de Dependabot (#29–#32), a imaxe de Ubuntu que cambia o 19, e os rexistros de 
   propiedade e o sitemap novos, sen reenviar o vello.
 - Ubuntu 26.04 a propósito: unha rama de proba coa CI enteira, auditoría incluída.
 - O guión do lector de pantalla e a lista do iPhone, do dono.
+
+## Rolda 35: a mudanza á organización, o enderezo novo e todo o que apuntaba ao vello — 13 de outubro de 2026
+
+Pedido: o repositorio pasou o 13 de outubro de `braisbrg/urbanos-lugo` á organización
+`urbanos-lugo`, renomeado a `urbanos-lugo.github.io`, e a web de
+`braisbrg.github.io/urbanos-lugo/` á raíz de `urbanos-lugo.github.io`. Pregunta: que
+ligazón, URL ou instrución apuntaba ao enderezo vello, cal hai que cambiar e cal é
+historia, e deixar a documentación e as comprobacións ao día.
+
+### Medido
+
+- A web nova, lida na rede o 13. O `sitemap.xml` dá 200 e as súas 18 URL dan 200, cada
+  unha coa súa canónica, os catro `hreflang` (gl, es, en, x-default), a `og:image` e o
+  JSON-LD no `urbanos-lugo.github.io`; ningún `href` nin `src` leva `braisbrg` nin
+  `/urbanos-lugo/`. O manifesto: `start_url` e `scope` `/`, iconas relativas. `robots.txt`
+  existe, `Allow: /` e o sitemap novo. `sw.js` precachea rutas relativas. `/paradas/` dá 200
+  e non vai no sitemap, como estaba decidido.
+- A única `braisbrg` nas páxinas publicadas é a do worker, `urbanos-lugo-api.braisbrg.deno.net`,
+  que non se move. O worker responde a `/api/version` con 200 e
+  `access-control-allow-origin: https://urbanos-lugo.github.io`, e `vary: Origin`: xa está na
+  orixe nova.
+- O enderezo vello. `braisbrg.github.io/urbanos-lugo/`, `/linhas/`, `/sitemap.xml` e
+  `braisbrg.github.io/` dan 404, sen redirección. `github.com/braisbrg/urbanos-lugo` dá un
+  301 ao repositorio novo. Os metadatos do repositorio: páxina de inicio
+  `https://urbanos-lugo.github.io/`, Pages por workflow con HTTPS obrigado e sen dominio
+  propio. As variables `API_ORIGIN` e `DENO_DEPLOY_ORG` son as de antes. O segredo, o
+  ambiente `deno-deploy`, as regras das ramas e a imaxe de vista previa social non se len
+  pola API.
+- A portada de GitHub, nas ramas `develop` e `main`, aínda ligaba a
+  `braisbrg.github.io/urbanos-lugo`, que dá 404: é a única ligazón viva ao enderezo vello
+  nun ficheiro seguido, e di o que di até que `org-move` se fusione.
+- Nos ficheiros seguidos, `braisbrg.github.io` aparecía en catro sitios: a
+  auditoría de SEO do 14 de setembro, as notas (observacións datadas do 6 e do 13 e o
+  punto 1 da lista do iPhone), a guía da mudanza, e unha mostra de `siteUrl()` en
+  `tools/test.ts`. A mostra non era unha ligazón. Tampouco `PRIVACY.md`, `DATA.md`,
+  `NOTICE.md` nin `package.json` levan enderezo do sitio; as claves de almacenamento
+  (`urbanos-lugo-lang`, `-theme`…) son nomes, non URL.
+- Construído para a raíz e a URL nova (`BASE_PATH=/`, `SITE_URL=https://urbanos-lugo.github.io/`):
+  18 URL no `sitemap.xml`, canónicas `https://urbanos-lugo.github.io/`, `…/linhas/` e
+  `…/es/lineas/`, `robots.txt` co sitemap novo, manifesto con `start_url` e `scope` `/`, e
+  ningunha `braisbrg` nos `.html`, `.xml`, `.txt` nin `.webmanifest` de `dist/`. O único
+  enderezo de GitHub no JavaScript é `REPO_URL`, o novo.
+- Lint, `tsc --noEmit` limpo. 254 comprobacións (eran 253). `check:deep`: 1.050 pares
+  planificados, 38.343 viaxes ofrecidas, todas coherentes. Despois da build con esas
+  variables, a suite outra vez: 254. A comprobación nova probada contra o seu fallo: cunha
+  liña con `braisbrg.github.io` engadida a `PRIVACY.md` falla e nomea o ficheiro, e engadida
+  a un parágrafo do README que non di 404, tamén. As dúas probas desfixéronse.
+
+### Feito
+
+- `README.md`: «Un enderezo por idioma» di agora o galego na raíz (`/`, `/linhas/`,
+  `/mapa/`…) en vez do subcartafol; o despregue di que este repositorio é o caso
+  `<propietario>.github.io` (`BASE_PATH` é `/`, o sitio `https://urbanos-lugo.github.io/`),
+  que o enderezo vello dá 404 e non redirixe, e que as copias instaladas e o que gardaban
+  non pasan; o worker di cal é a súa orixe permitida para este repositorio; a sección de
+  buscadores di que o «verificado» era do enderezo de entón, que a propiedade nova, a
+  etiqueta nova, o sitemap e Bing son do dono, e que `robots.txt` xa se serve na raíz. A
+  cifra de comprobacións, 254, en `README.md` e en `CLAUDE.md`. As portadas en castelán e
+  inglés non cambian máis do que xa levaban (o enderezo novo): non levan nada máis disto.
+- `design/MUDANZA-organizacion.md`: un apartado «Como vai» e os pasos 1 a 6 marcados como
+  feitos o 13 (o 4 só en parte), o 7 na rama, o 8 do dono; o enderezo vello como cousa
+  opcional que non se fixo e que non se recomenda, coa advertencia das ligazóns profundas
+  (só redirixen cun `404.html`). `design/DECIDIDO.md`: a decisión de vivir na raíz, de non
+  redirixir o enderezo vello e de non levar o almacenamento. `design/NOTAS-…`: Pendente 5
+  remite á guía e a esta rolda.
+- `tools/test.ts`: a mostra de `siteUrl()` pasa a `https://owner.github.io/repo`, o
+  comentario do check do despregue xa non di que a mudanza «vai» facerse, e un check novo
+  fai fallar a suite se un ficheiro seguido que non sexa rexistro (este, a auditoría, as
+  notas, DECIDIDO, a guía, README, a propia suite) nomea `braisbrg.github.io`, e se o
+  README o nomea fóra do parágrafo que di que dá 404.
+- Quedan como están por ser historia: as roldas anteriores deste rexistro, a auditoría de
+  SEO, as observacións datadas das notas, e os comentarios de `deploy-worker.yml` sobre a
+  organización de Deno, `braisbrg`, que non cambia. `deploy-pages.yml`, `check-source.yml`,
+  `vite.config.ts`, `src/seo.ts`, `src/routes.ts` e `server.ts` derivan o enderezo de
+  `GITHUB_REPOSITORY`, `BASE_PATH` e `SITE_URL`, e non levan nada que cambiar.
+
+### Queda
+
+- Do dono, no navegador: Search Console, unha propiedade de prefixo de URL para
+  `https://urbanos-lugo.github.io/` coa súa etiqueta HTML (a de `index.html` é da
+  propiedade vella: cámbiase o valor, non a liña), o sitemap novo e, en Bing, a
+  importación desde Search Console; despois «solicitar indexación» das seis pestanas e
+  `/es/`, `/en/`. Quitar o sitemap vello das propiedades vellas.
+- Do dono, en GitHub: o segredo `DENO_DEPLOY_TOKEN` e o ambiente `deno-deploy`, as regras de
+  `main` e `develop` (que `checks` siga resolvendo, e os actores de omisión que nomeaban a
+  conta antiga), a imaxe de vista previa social, e correr «Check the sources» unha vez a man. No tablero de
+  Deno, que `ALLOWED_ORIGIN` sexa `https://urbanos-lugo.github.io`, sen barra final. Despois
+  do primeiro push, que o alerta de CodeQL #16 (`tools/auditBrowser.ts`) se peche co
+  commit `bcb72ab`.
+- Fusionar `org-move` en `develop` e despois en `main`, cando o dono o diga: a portada de
+  GitHub segue ligando ao 404 até entón.
+- Quen instalase a app desde o enderezo vello ten que desinstalala e instalar a nova; o
+  que gardaba (favoritos, paradas recentes, tema, idioma) quedou na orixe vella.
+- Crear o repositorio de redirección `braisbrg/urbanos-lugo` rompería o 301 de GitHub ao
+  repositorio novo; non se fixo, e a guía di por que.
