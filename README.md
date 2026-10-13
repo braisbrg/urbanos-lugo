@@ -1107,19 +1107,19 @@ o navegador di que sabe lelos. Medido contra a build de produción:
 
 | | sen comprimir | gzip | brotli |
 | :--- | ---: | ---: | ---: |
-| Anaco de entrada | 604 KB | 163 KB | **136 KB** |
-| Folla de estilos | 59 KB | 11 KB | **10 KB** |
+| Anaco de entrada | 631 KB | 172 KB | **142 KB** |
+| Folla de estilos | 60 KB | 12 KB | **10 KB** |
 | `index.html` | 5 KB | 2 KB | **2 KB** |
-| **Primeira carga** | **668 KB** | ~177 KB | **~148 KB** |
+| **Primeira carga** | **696 KB** | ~186 KB | **~154 KB** |
 | Tipografía | 51 KB | — | 51 KB, en paralelo |
-| Renderizador do mapa, co estilo e a paleta | 1.191 KB | 314 KB | 258 KB, ao abrir un mapa |
+| Renderizador do mapa, co estilo e a paleta | 1.204 KB | 318 KB | 261 KB, ao abrir un mapa |
 | Estilos do renderizador | 96 KB | 16 KB | 14 KB, ao abrir un mapa |
-| Worker do renderizador | 498 KB | 142 KB | 116 KB, ao abrir un mapa |
+| Worker do renderizador | 496 KB | 141 KB | 116 KB, ao abrir un mapa |
 | Xeometría viaria | 511 KB | 82 KB | 28 KB, ao abrir un mapa |
 | Rede peonil con alturas | 1.282 KB | 446 KB | 396 KB, ao trazar o primeiro camiño a pé |
 
-Medido o 5 de outubro de 2026, na 1.2.2, con MapLibre 6.11. O anaco de entrada medra co
-que leva dentro, as cabeceiras por pestana;
+Medido o 13 de outubro de 2026, na 1.3.2, con Vite 8.3 e MapLibre 6.14. O anaco de
+entrada medra co que leva dentro, as cabeceiras por pestana;
 MapLibre non vai nel, senón enteiro no anaco do renderizador, que baixa ao abrir un mapa.
 A instantánea de avisos tampouco: é un ficheiro á parte, `alerts.json`, e o motivo está
 xusto debaixo.
@@ -1135,12 +1135,12 @@ deixa ao lado de cada ficheiro.
 **O que si baixa enteiro, en segundo plano.** «Só cando fan falta» describe o que a
 páxina pide para pintarse; o service worker é outra cousa. Para que a app funcione sen
 cobertura, na primeira visita garda **todo** o que a build produce — 28 ficheiros
-distintos (o manifesto lista 32: catro iconas van dúas veces e baixan unha), 4,30 MB sen
-comprimir, 1,27 MB en gzip e 1,05 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
+distintos (o manifesto lista 32: catro iconas van dúas veces e baixan unha), 4,34 MB sen
+comprimir, 1,28 MB en gzip e 1,06 MB en brotli, medidos sobre `dist/sw.js` — sen esperar a que
 se abra un mapa nin se trace un camiño. Non bloquea nada: vai detrás da primeira
 pantalla, e a partir de aí cada anaco sae da caché. É o prezo de que o planificador e o
 mapa vaian dentro do móbil, e está á vista aquí para que ninguén o tome por unha primeira
-carga de ~148 KB.
+carga de ~154 KB.
 
 E cando un despregue cambia os nomes deses ficheiros debaixo dunha páxina aberta, a
 páxina que pide o mapa despois de publicado recarga unha soa vez en lugar de amosar «a
@@ -1161,8 +1161,8 @@ JSX era `any` e ningunha prop se comprobaba; ao poñelos, dos 1.581 erros que sa
 
 ### Seguridade
 
-`pnpm audit`: **0 vulnerabilidades** sobre 7 dependencias de produción e 13 de
-desenvolvemento (8 de outubro de 2026). Dependabot revisa semanalmente as dependencias
+`pnpm audit`: **0 vulnerabilidades** sobre 7 dependencias de produción e 14 de
+desenvolvemento (13 de outubro de 2026). Dependabot revisa semanalmente as dependencias
 e mais as actions, e CodeQL o código en cada push a `main`.
 
 **Content Security Policy.** `script-src 'self'` máis o hash do script do tema, sen
