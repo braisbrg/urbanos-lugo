@@ -256,6 +256,15 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    dezaoito. Cando estea publicado: na inspección de Google e de Bing, pedir unha vez a
    indexación de `/es/` e `/en/`, e mirar en dúas semanas que o resultado sae no idioma de
    quen busca.*
+   *Mirado o 13 de outubro, igual que o 6. Google: «/sitemap.xml», lido por última vez o 6,
+   «non se puido ler» e 0 páxinas; ese é o da raíz do dominio, que dá 404. Bing: o bo, 7 URL
+   da lectura do 15 de setembro, sen volver ler. O sitemap publicado dá 200 e
+   `application/xml`, e as súas 18 URL responden 200, cada unha coa súa canónica, catro
+   `hreflang` e sen `noindex`: nada que arranxar no sitio. Non se volve enviar: a mudanza
+   (punto 5) leva o sitio á raíz dun dominio, o único lugar onde os buscadores len
+   `robots.txt`; nun subcartafol ese ficheiro e a súa liña `Sitemap:` non os le ninguén.
+   Despois da mudanza, propiedade nova en Search Console co sitemap da raíz, e Bing
+   impórtaa.*
 3. **Os festivos de 2027.** `src/data/festivos.json` ten só 2026. O decreto galego de 2027
    xa saíu: Decreto 68/2026, DOG do 2 de xullo de 2026, co 19 de marzo e o 17 de maio no
    lugar do 25 de xullo e do 15 de agosto, que caen en domingo. Faltan os dous festivos
@@ -288,6 +297,10 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    soa: 48 de 48 rutas iguais, en 559 s, moito máis que a principal. O feed do Concello ten
    agora 4 s e deixa unha liña por lectura. O que queda é ler esas liñas no worker e no
    despregue.*
+   *Lidas o 13 de outubro. No worker de Deno, sete lecturas o 6 e o 13, ningunha conectou:
+   o worker xa non o le (DECIDIDO, rolda 34). No despregue de cada hora, 2 de 12 entre o 10
+   e o 13, e 5 de 10 antes; aí séguese lendo. Overpass respondeu o luns 12 (48 rutas no
+   disco, 48 no mapa, todas coa mesma forma).*
 5. **Unha organización de GitHub para que a app teña nome e icona nos buscadores**, cando
    todo estea estable. Google toma o nome do sitio e a icona da raíz do dominio, e
    `braisbrg.github.io/` dá 404: por iso o resultado di «GitHub Pages documentation» cun

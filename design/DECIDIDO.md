@@ -344,6 +344,25 @@ descrición. Catro regras, e o que quedou fóra:
   cambiar a seguinte parada, e con iso a app cumpre os 55 criterios A e AA (rolda 31 do
   rexistro). O único bucle que queda é «Calculando», que dura o que dura o cálculo.
 
+## O feed do Concello fóra do worker, e a imaxe do executor polo seu nome — 13 de outubro de 2026
+
+- **O worker de Deno xa non le o feed do Concello.** Era o paso decidido o 6 de outubro se
+  o rexistro dicía que desde alí non conecta nunca, e dixo iso: sete lecturas o 6 e o 13 de
+  outubro, as sete esgotadas aos catro segundos, que eran catro segundos de espera para os
+  avisos do operador en cada lectura nova. A copia de cada hora séguea lendo (desde GitHub
+  conecta ás veces, 2 de 12 entre o 10 e o 13) e tamén un `server.ts` propio. Na app
+  publicada as notas do Concello só se ven cando se amosa esa copia; xa era así na
+  práctica, porque a resposta do worker substitúe a copia e nunca as traía. Xuntar as da
+  copia coas do worker queda sen facer mentres non haxa razón para iso.
+- **Avisos xa non di que o Concello non comunicou nada**, nos tres idiomas: quen declara o
+  estado da rede é o operador, e o worker xa non pregunta ao Concello.
+- **Os traballos de GitHub piden `ubuntu-24.04`, non `ubuntu-latest`.** GitHub pasa
+  `ubuntu-latest` a 26.04 desde o 19 de outubro de 2026, e a auditoría de accesibilidade
+  mide o texto coas letras da imaxe: a primeira execución no executor xa atopou tres
+  desbordamentos que Windows non ensinaba. Na rolda 28 a CI e a medida pasaron en 26.04,
+  pero daquela a auditoría aínda non era unha porta. Cambiar de imaxe faise a propósito,
+  nunha rama de proba coa auditoría enteira.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

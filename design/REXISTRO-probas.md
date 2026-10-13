@@ -2801,3 +2801,70 @@ puidese facer xa.
 - O limiar de seis horas da copia fronte a ocos de ata oito. Decisión.
 - O guión do lector de pantalla e a lista do iPhone, do dono.
 - A organización de GitHub (Pendente 5), mellor antes de que haxa quen use a web. Do dono.
+
+## Rolda 34: o luns 12, o feed do Concello, os buscadores e as dependencias — 13 de outubro de 2026
+
+Pedido: o que quedaba aberto despois das festas, e facer xa o que se puidese. Os catro PR
+de Dependabot (#29–#32), a imaxe de Ubuntu que cambia o 19, e os rexistros de Deno.
+
+### Medido
+
+- Os traballos do luns 12 en `main`, por calendario. «Check the sources»: en verde,
+  tamén o paso das regras das ramas; Overpass respondeu (48 rutas no disco, 48 no mapa,
+  todas coa mesma forma). «Measure in a browser»: nada pasa do seu orzamento. Ruta, da
+  pulsación á resposta, 389 ms (1.000); «chegar ás», 3,9 s (9.000); «Calculando», 24–40 ms
+  (200); catro pasos de zoom, 308 ms (900). A auditoría, 0 achados.
+- O 13 ás 12:01, Avisos na web publicada: «Rede de transporte operando con total
+  normalidade», mentres buslugo.com seguía co aviso do San Froilán (a copia das 03:35
+  aínda o levaba). O aviso saíu só, polos seus días.
+- O feed do Concello. No worker de Deno, dúas lecturas o 13 (10:01 e 10:14) que,
+  xuntas coas cinco do 6, fan sete de sete sen conectar aos catro segundos. Nos despregues
+  de Pages entre o 10 e o 13, 2 de 12 (1.664 e 1.369 ms).
+- Pages correu 12 veces do 10 ao 13 por calendario. O oco máis longo foi de 9,4 h, o 12
+  entre as 05:55 e as 15:21, dentro das doce horas da copia.
+- Os buscadores. Google ten «/sitemap.xml», lido o 6 por última vez, «non se puido ler»,
+  0 páxinas: é o da raíz do dominio, que dá 404. Bing ten o bo, coas 7 URL que leu o 15 de
+  setembro. O sitemap publicado dá 200 e `application/xml`, e as súas 18 URL responden
+  200, cada unha coa súa canónica, catro `hreflang` e sen `noindex`. `robots.txt` só
+  existe no subcartafol, onde ningún buscador o le.
+- Dependabot. #29 non medraba 9 KB: vite 8.3.2 engadía 47 bytes en gzip ao asistente de
+  precarga. A cifra do README, 163 KB, era a da 1.2.2, e `develop` pasaba por 2 bytes.
+  #30, vite-plugin-pwa 2.0, é maior só de nome: o código do paquete é idéntico byte a
+  byte, e `dist/sw.js` sae igual. #31 e #32, sen nada que nos toque nos seus rexistros de
+  cambios. vite 8.3.1 e 8.3.2 levan tres avisos de seguridade do servidor de
+  desenvolvemento (GHSA-vfpm-58rq-9qcg, GHSA-rq7h-c2jc-7f22, GHSA-9jrq-w75r-8gcw),
+  corrixidos na 8.3.3. MapLibre 6.13 fixo autónomo o seu worker, e a 6.14 arranxa unha
+  regresión da 6.12 (`setStyle` co contexto WebGL perdido) no camiño do cambio de tema.
+- Na rama coas actualizacións: o dataset sen cambios, lint, 252 comprobacións,
+  `check:deep`, o build, a suite contra o build e o worker, en verde. `audit:browser`, 0
+  achados en 242 medicións de 162 estados (489 s). Un só ficheiro de worker de MapLibre,
+  508 KB, sen ningún anaco `shared`. O mapa nun Chromium sen fiestra, contra o da web
+  publicada: debuxa igual, e o cambio de tema claro→escuro no momento redebuxa o mapa base
+  sen erros na consola.
+- lucide-react 1.56.0 tiña seis horas: pnpm négase a instalar o que ten menos dun día e
+  quixo engadirlle unha excepción en `pnpm-workspace.yaml`. Non se deixou; vai a 1.55.0.
+
+### Feito
+
+- Dependencias: vite 8.3.4, @vitejs/plugin-react 6.1.2, @types/node 26.6.5,
+  vite-plugin-pwa 2.0.0, lucide-react 1.55.0 e maplibre-gl 6.14.0. A táboa de tamaños do
+  README medida de novo enteira: entrada 631 / 172 / 142 KB, primeira carga 696 / ~186 /
+  ~154, mapa 1.204 / 318 / 261, worker 496 / 141 / 116; precaché 4,34 / 1,28 / 1,06 MB.
+  `pnpm audit`, 0 vulnerabilidades; o README dicía 13 dependencias de desenvolvemento e
+  son 14.
+- O worker xa non le o feed do Concello (DECIDIDO). Avisos deixa de dicir, nos tres
+  idiomas, que o Concello non comunicou nada. README, PRIVACY, DATA e SECURITY din quen
+  le o feed agora. Un check novo: o worker pregunta sen el, e `server.ts` e a copia
+  seguen preguntando.
+- Os seis traballos de GitHub piden `ubuntu-24.04`, e o check das workflows falla se un
+  volve a `latest`.
+- Os checks novos, probados contra o seu fallo de volta: a chamada do worker sen `false`,
+  o servizo lendo o feed de todos xeitos, e `measure.yml` en `ubuntu-latest`. Fallan os
+  tres.
+
+### Queda
+
+- A mudanza á organización (Pendente 5), do dono. Despois, Search Console e Bing coa
+  propiedade e o sitemap novos, sen reenviar o vello.
+- Ubuntu 26.04 a propósito: unha rama de proba coa CI enteira, auditoría incluída.
+- O guión do lector de pantalla e a lista do iPhone, do dono.
