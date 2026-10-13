@@ -363,6 +363,25 @@ descrición. Catro regras, e o que quedou fóra:
   pero daquela a auditoría aínda non era unha porta. Cambiar de imaxe faise a propósito,
   nunha rama de proba coa auditoría enteira.
 
+## A web na raíz dunha organización, sen redirección do enderezo vello — 13 de outubro de 2026
+
+- **A web vive en `https://urbanos-lugo.github.io/`**, o repositorio é
+  `urbanos-lugo/urbanos-lugo.github.io`, e `BASE_PATH` é `/`. A razón era a de Pendente 5:
+  Google toma o nome e a icona da raíz do dominio, e un sitio nun subcartafol non pode ter
+  nome propio. O worker de Deno non se move (`urbanos-lugo-api.braisbrg.deno.net`, organización
+  `braisbrg`); só cambia a orixe que permite, e sae do dono do repositorio en cada despregue.
+- **O enderezo vello, `braisbrg.github.io/urbanos-lugo/`, dá 404 e non se redirixe.** O
+  repositorio de redirección que describe `MUDANZA-organizacion.md` non se creou: crealo
+  rompe a redirección que GitHub fai de `github.com/braisbrg/urbanos-lugo` ao repositorio
+  novo, e só serviría a quen conserve a ligazón vella, que non se sabe que sexa ninguén. Os
+  buscadores deixan caer o 404 por si sós. Se algún día se quere limpar a app instalada
+  desde o enderezo vello, o texto está listo na guía.
+- **Non se leva o que se garda no navegador.** Favoritos, paradas recentes, tema e idioma
+  están por orixe; non hai usuarios aos que custe, e a ruta de levalo, no fragmento da
+  ligazón, queda descrita na guía.
+- **Un check impide que o enderezo vello volva** a un ficheiro que non sexa rexistro
+  (rexistro, auditoría, notas e guía) nin ao README fóra do parágrafo que di que dá 404.
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

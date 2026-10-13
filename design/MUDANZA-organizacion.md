@@ -4,6 +4,21 @@ NOTAS, Pendente 5: a web en `https://urbanos-lugo.github.io/`, na raíz, para qu
 buscadores lle dean nome e icona propios. Preparado o 9 de outubro de 2026, para facer
 cando aínda ninguén usa a web, e o enderezo pode cambiar sen custarlle nada a ninguén.
 
+## Como vai (13 de outubro de 2026)
+
+Os pasos 1 a 6 están feitos o 13 de outubro: a organización `urbanos-lugo`, o repositorio
+transferido e renomeado a `urbanos-lugo.github.io`, Pages e o worker despregados de novo e
+o remoto local apuntando ao novo. A web serve en `https://urbanos-lugo.github.io/` e o
+worker responde con `access-control-allow-origin: https://urbanos-lugo.github.io`. O
+paso 7, o que cambia no repositorio, está na rama `org-move` (tres portadas, `SECURITY.md`,
+`src/project.ts`, a documentación e as comprobacións); cando se fusione en `develop` e
+`main`, a portada de GitHub deixa de apuntar ao enderezo que dá 404.
+
+Queda, e é do dono: o paso 8 (buscadores), con etiqueta de verificación nova, e a
+comprobación do que non se pode ler pola API (segredo `DENO_DEPLOY_TOKEN`, ambiente
+`deno-deploy`, regras de `main` e `develop`, imaxe de vista previa social). O enderezo vello
+non redirixe: non se creou o repositorio da última sección, e non se recomenda (ver abaixo).
+
 ## Xa feito
 
 - O despregue de Pages constrúe para a raíz cando o repositorio se chama
@@ -13,28 +28,30 @@ cando aínda ninguén usa a web, e o enderezo pode cambiar sen custarlle nada a 
   pasará a `https://urbanos-lugo.github.io` el só.
 - O código da app non leva o enderezo: usa `BASE_URL` e `SITE_URL`. Construída para a raíz
   e a URL nova, o canónico, o `sitemap.xml`, o `robots.txt` e o manifesto saen ben.
-- A rama local `org-move` leva o que cambia despois do traspaso: as tres portadas,
-  `SECURITY.md`, `src/project.ts` (ligazón de incidencias e User-Agent) e as comprobacións.
+- A rama `org-move` leva o que cambia despois do traspaso: as tres portadas,
+  `SECURITY.md`, `src/project.ts` (ligazón de incidencias e User-Agent), a documentación
+  do traslado e as comprobacións, incluída unha que falla se un ficheiro que non sexa
+  rexistro volve nomear `braisbrg.github.io`.
 
 ## Os pasos, en orde
 
-1. **Crear a organización** `urbanos-lugo`, no plan gratuíto:
+1. **Feito.** **Crear a organización** `urbanos-lugo`, no plan gratuíto:
    <https://github.com/account/organizations/new>.
-2. **Transferir o repositorio**: Settings → General → Danger Zone → *Transfer ownership* →
+2. **Feito.** **Transferir o repositorio**: Settings → General → Danger Zone → *Transfer ownership* →
    `urbanos-lugo`.
-3. **Renomealo** a `urbanos-lugo.github.io`: Settings → General → *Repository name*.
-4. **Comprobar** no repositorio xa movido:
+3. **Feito.** **Renomealo** a `urbanos-lugo.github.io`: Settings → General → *Repository name*.
+4. **Feito en parte.** **Comprobar** no repositorio xa movido (Pages, a variable `API_ORIGIN` e `DENO_DEPLOY_ORG` están lidas e correctas; o resto non se le pola API e é do dono):
    - Settings → Pages: *Source: GitHub Actions*.
    - Settings → Environments: o do worker, co segredo de Deno.
    - Settings → Secrets and variables → Actions: o segredo, e a variable `API_ORIGIN`.
    - Settings → Rules → Rulesets: `main` e `develop`, como estaban.
-5. **Despregar de novo os dous**: Actions → *Deploy to GitHub Pages* → *Run workflow*, e
+5. **Feito.** **Despregar de novo os dous**: Actions → *Deploy to GitHub Pages* → *Run workflow*, e
    o mesmo con *Deploy the API worker*. O primeiro constrúe para a raíz; o segundo cambia
    `ALLOWED_ORIGIN`. Ata entón, a web nova ve a copia dos avisos en vez do worker.
-6. **No clon local**:
+6. **Feito.** **No clon local**:
    `git remote set-url origin https://github.com/urbanos-lugo/urbanos-lugo.github.io.git`.
-7. **Fusionar `org-move`** en `develop`, pasar as portas e publicar.
-8. **Buscadores**: en Search Console, unha propiedade nova de prefixo de URL,
+7. **Na rama `org-move`, por fusionar.** **Fusionar `org-move`** en `develop`, pasar as portas e publicar.
+8. **Pendente, do dono.** **Buscadores**: en Search Console, unha propiedade nova de prefixo de URL,
    `https://urbanos-lugo.github.io/`. Verificala coa etiqueta HTML: a de agora vai en
    `index.html`, e se Google dá outra hai que cambiala. Enviar
    `https://urbanos-lugo.github.io/sitemap.xml`. En Bing Webmaster, importar desde Search
@@ -42,11 +59,20 @@ cando aínda ninguén usa a web, e o enderezo pode cambiar sen custarlle nada a 
 
 ## O enderezo vello, se se quere que redirixa
 
-Ao transferir, `braisbrg.github.io/urbanos-lugo/` deixa de servirse. Para que redirixa,
+Opcional, e non feito. Desde o traspaso `braisbrg.github.io/urbanos-lugo/` dá 404, e o
+repositorio que o servía non existe baixo ese nome. Para que redirixa,
 hai que crear un repositorio novo `braisbrg/urbanos-lugo` con estes tres ficheiros na súa
 raíz, e Settings → Pages → *Deploy from a branch*, `main`, `/ (root)`. Crealo rompe a
 redirección que GitHub fai por si só de `github.com/braisbrg/urbanos-lugo` ao repositorio
-movido, que deixa de facer falta unha vez actualizadas as ligazóns.
+movido, que deixa de facer falta unha vez actualizadas as ligazóns. Sen usuarios que
+conserven a ligazón, e con ese custo, o razoable é non crealo: os buscadores deixan caer
+os enderezos vellos por si sós despois do 404. O que si daría é limpar o *service worker* de
+quen instalase a app vella, e só importa se alguén o fixo.
+
+Unha advertencia sobre as ligazóns profundas: unha páxina de proxecto só pode responder
+en `braisbrg.github.io/urbanos-lugo/…` con ficheiros do repositorio, así que
+`/urbanos-lugo/linhas/` só redirixe se o repositorio ten un `404.html` na súa raíz coa mesma
+escritura de `index.html`, como se indica abaixo; sen el, dá o 404 de Pages.
 
 `index.html`, e o mesmo como `404.html`, para que tamén redirixan as ligazóns profundas:
 

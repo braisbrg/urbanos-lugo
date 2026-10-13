@@ -322,7 +322,8 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    despregue xa constrúe para a raíz un repositorio `<propietario>.github.io`.*
    *Feito o 13 de outubro: o repositorio é `urbanos-lugo/urbanos-lugo.github.io`, e os dous
    despregues relanzados serven a web en `https://urbanos-lugo.github.io/`. Queda o dono:
-   Search Console e Bing (punto 8 da guía). O enderezo vello non redirixe.*
+   Search Console e Bing (punto 8 da guía), con etiqueta de verificación nova en
+   `index.html`. O enderezo vello non redirixe (DECIDIDO, 13 de outubro; rolda 35).*
 6. **Un lector de pantalla de verdade, nun teléfono**, cousa do dono: o guión de
    [`PROBA-lector-de-pantalla.md`](PROBA-lector-de-pantalla.md), unha vez con VoiceOver e
    outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no

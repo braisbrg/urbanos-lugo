@@ -1416,7 +1416,7 @@ o poste e co que di o condutor.
 
 ### Un enderezo por idioma
 
-O galego vive nos enderezos de sempre (`/urbanos-lugo/`, `/urbanos-lugo/linhas/`…), o
+O galego vive na raíz do sitio (`/`, `/linhas/`, `/mapa/`…), o
 castelán en `/es/…` e o inglés en `/en/…`, cada un coas súas palabras (`/es/lineas/`,
 `/en/lines/`, `/en/stops/`; `SLUGS` en `src/routes.ts`). Unha palabra doutro idioma
 tamén abre a pestana, e a app reescribe o enderezo. Cada copia leva o `lang`, o título e a
@@ -1501,6 +1501,17 @@ Para activalo: **Settings → Pages → Source: GitHub Actions**. O workflow def
 sitio do seu propietario, servido na raíz, e o workflow constrúeo para a raíz el só. Con
 dominio propio, pon `BASE_PATH: /`.
 
+Este repositorio é dese segundo caso: desde o 13 de outubro de 2026 chámase
+`urbanos-lugo/urbanos-lugo.github.io` (antes `braisbrg/urbanos-lugo`), así que `BASE_PATH`
+é `/` e o sitio está en `https://urbanos-lugo.github.io/`. O enderezo anterior,
+`https://braisbrg.github.io/urbanos-lugo/`, dá 404 e non redirixe a ningures: o repositorio
+que o servía xa non existe baixo ese nome, e unha páxina que o fixese redirixir
+([`design/MUDANZA-organizacion.md`](design/MUDANZA-organizacion.md)) só serviría a quen
+aínda garde a ligazón. A `github.com/braisbrg/urbanos-lugo` si a redirixe GitHub ao
+repositorio novo. As copias instaladas desde o enderezo vello, e o que gardaban
+(favoritos, paradas recentes, tema, idioma), quedan na súa orixe e non pasan: instálase
+de novo desde o enderezo novo.
+
 A build escribe unha páxina en cada enderezo de pestana —`paradas/`, `linhas/`, `mapa/`,
 `ruta/`, `avisos/`, `tarifas/`— e deixa `404.html` detrás para todo o demais. Con só o
 `404.html`, Pages **debuxaba** ben `/tarifas` pero respondía 404 ao facelo, e iso non é
@@ -1575,7 +1586,8 @@ Organization tokens*) como segredo `DENO_DEPLOY_TOKEN` do ambiente `deno-deploy`
 nome tamén chega ao job), e a organización como variable `DENO_DEPLOY_ORG`. O resto ponno
 o workflow: crea a app
 `urbanos-lugo-api` se non existe e fixa no seu ambiente `ALLOWED_ORIGIN` co enderezo do
-sitio (`https://<usuario>.github.io`, derivado do dono do repositorio) — é o único que
+sitio (`https://<usuario>.github.io`, derivado do dono do repositorio; para este,
+`https://urbanos-lugo.github.io`) — é o único que
 poderá chamalo. Sen ese valor o worker responde sen cabeceira de CORS e o navegador
 rexéitao: falla pechado, e desde a mesma rolda tampouco garda esa resposta en ningunha
 caché, porque a do edge de Deno serviu nove días unha resposta sen cabeceira dun arranque
@@ -2076,8 +2088,14 @@ substituír o scraper por un lector de GTFS afectaría só a `tools/importOffici
 
 A 14 de setembro de 2026 ningún buscador devolvía o sitio. Desde o 15 está feito o que
 dependía de nós: título, descrición e canónica por pestana, pestanas como ligazóns,
-`og:image`, e o sitio verificado en Search Console e Bing co sitemap enviado. O que
-segue é esperar a que o indexen. Unha páxina por liña e por parada —que hoxe non teñen URL
+`og:image`, e o sitio verificado en Search Console e Bing co sitemap enviado. Iso era
+para o enderezo de entón: co traslado ao `urbanos-lugo.github.io` (13 de outubro) hai que
+dar de alta o novo, unha propiedade de prefixo de URL en Search Console coa súa propia
+etiqueta de verificación HTML (a de `index.html` é a da propiedade vella), o sitemap
+`https://urbanos-lugo.github.io/sitemap.xml` e a importación en Bing, e é cousa do dono.
+Na raíz do sitio, `robots.txt` xa se serve —no subcartafol vello ningún buscador o lía— e
+o nome e a icona do sitio poden ser os propios. O que segue é esperar a que o indexen.
+Unha páxina por liña e por parada —que hoxe non teñen URL
 propia— queda descrita na auditoría e non se fai por agora: non hai présa por competir
 con ninguén. A auditoría, coas medidas e o plan, está en
 [`design/AUDITORIA-seo.md`](design/AUDITORIA-seo.md). Nada diso cambia as regras:
