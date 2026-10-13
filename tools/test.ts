@@ -2184,9 +2184,10 @@ ok('no colour is written straight into a class name', () => {
 });
 
 ok('a repository named <owner>.github.io deploys at the root', () => {
-  // The app is to move to an organisation site, urbanos-lugo.github.io, which Pages serves at
-  // the root. The deploy built every asset under /<repository>/, which there would have been
-  // /urbanos-lugo.github.io/, and the first deploy after the rename would have drawn nothing.
+  // The app moved on 13 October 2026 to an organisation site, urbanos-lugo.github.io, which
+  // Pages serves at the root. The deploy built every asset under /<repository>/, which there
+  // would have been /urbanos-lugo.github.io/, and the first deploy after the rename would
+  // have drawn nothing.
   const deploy = read('.github/workflows/deploy-pages.yml');
   assert(
     /if \[ "\$\{NAME,,\}" = "\$\{OWNER,,\}\.github\.io" \]; then\s+export BASE_PATH="\/"\s+export SITE_URL="https:\/\/\$\{NAME,,\}\/"/.test(deploy),
@@ -2539,6 +2540,28 @@ ok('the repository URL is written in one place', () => {
     .map(relative);
   assert(offenders.length === 0, `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`);
   assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
+});
+
+ok('no tracked file outside the records names the old address', () => {
+  // The site moved from https://braisbrg.github.io/urbanos-lugo/ to https://urbanos-lugo.github.io/
+  // on 13 October 2026, and the old address gives 404 and redirects nowhere. A link, a
+  // canonical, a sample in a script or a line in the README that still named it would send a
+  // reader to a dead page and nothing would say so. The dated records and the move's own guide
+  // keep it on purpose, as what was true then, and the README to say it is dead; this file
+  // keeps it as the thing to look for.
+  const RECORDS = ['README.md', 'design/DECIDIDO.md', 'design/REXISTRO-probas.md', 'design/AUDITORIA-seo.md', 'design/NOTAS-fontes-e-autosuficiencia.md', 'design/MUDANZA-organizacion.md', 'tools/test.ts'];
+  const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+  assert(tracked.length > 100, `git lists ${tracked.length} files, so this is not reading the repository`);
+  const offenders = tracked.filter((file) => {
+    if (RECORDS.includes(file) || !existsSync(join(root, file))) return false;
+    if (/\.(png|jpe?g|gif|webp|ico|woff2?|ttf|pdf|zip|gz)$/i.test(file)) return false;
+    return /braisbrg\.github\.io/i.test(readFileSync(join(root, file), 'utf8'));
+  });
+  assert(offenders.length === 0, `still names braisbrg.github.io, which is not the site any more: ${offenders.join(', ')}`);
+  // The README names it once, to say it is dead and does not redirect. Any other paragraph
+  // naming it would be a link to follow.
+  const mentions = read('README.md').split(/\r?\n\s*\n/).filter((paragraph) => /braisbrg\.github\.io/i.test(paragraph));
+  assert(mentions.every((paragraph) => paragraph.includes('404')), 'README.md names braisbrg.github.io outside the paragraph that says it gives 404');
 });
 
 ok('the install-script setting uses the name the pinned pnpm reads', () => {
@@ -3231,7 +3254,7 @@ ok('the search-engine tags are omitted rather than guessed', () => {
     assert(siteUrl(bad) === null, `"${bad}" was accepted as a site URL`);
   }
   assert(siteUrl('http://localhost:3001') === 'http://localhost:3001/', 'localhost is refused, so a local build cannot be checked');
-  assert(siteUrl('https://braisbrg.github.io/urbanos-lugo') === 'https://braisbrg.github.io/urbanos-lugo/', 'the trailing slash is not added, so every generated URL would be joined wrong');
+  assert(siteUrl('https://owner.github.io/repo') === 'https://owner.github.io/repo/', 'the trailing slash is not added, so every generated URL would be joined wrong');
 });
 
 ok('the structured data does not pass this off as the operator', () => {
