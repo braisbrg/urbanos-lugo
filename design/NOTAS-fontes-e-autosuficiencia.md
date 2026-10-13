@@ -320,6 +320,9 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    *Preparado o 9 de outubro de 2026, para facelo antes de que haxa quen use a web:
    [`MUDANZA-organizacion.md`](MUDANZA-organizacion.md) ten os pasos en orde, e o
    despregue xa constrúe para a raíz un repositorio `<propietario>.github.io`.*
+   *Feito o 13 de outubro: o repositorio é `urbanos-lugo/urbanos-lugo.github.io`, e os dous
+   despregues relanzados serven a web en `https://urbanos-lugo.github.io/`. Queda o dono:
+   Search Console e Bing (punto 8 da guía). O enderezo vello non redirixe.*
 6. **Un lector de pantalla de verdade, nun teléfono**, cousa do dono: o guión de
    [`PROBA-lector-de-pantalla.md`](PROBA-lector-de-pantalla.md), unha vez con VoiceOver e
    outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no
@@ -330,7 +333,7 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
 
 Media hora cun iPhone real, en Safari, con iOS 16.4 ou máis. Anotar o modelo e a versión.
 
-1. Abrir `braisbrg.github.io/urbanos-lugo/`. O taboleiro con horas en menos de 3 s, sen
+1. Abrir `urbanos-lugo.github.io`. O taboleiro con horas en menos de 3 s, sen
    marco branco antes do tema escuro.
 2. Compartir → **Engadir á pantalla de inicio**. Abrir desde a icona: pantalla completa,
    sen barra de Safari, a icona correcta.
