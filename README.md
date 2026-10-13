@@ -1330,7 +1330,10 @@ deitado, movemento reducido, cores forzadas, sen rede, erros e baleiros: 242 med
 execucións seguidas en Windows, e desde entón é unha porta da CI. A súa primeira execución
 no executor de GitHub atopou tres máis, que Windows non ensinaba: ao 200 %, a fila da hora
 de Ruta saía 14–49 px da pantalla, porque alí a letra monoespazada é máis ancha. Arranxada,
-o executor tamén dá 0. «Arranxado» quere dicir que fallaba
+o executor tamén dá 0. Por iso os traballos piden `ubuntu-24.04` polo seu nome e non
+`ubuntu-latest`, que GitHub pasa a 26.04 desde o 19 de outubro de 2026: outra imaxe trae
+outras letras, e cambiala é unha decisión con auditoría, non algo que pase un luns.
+«Arranxado» quere dicir que fallaba
 e que agora o comproba algo que falla se volve. Do que unha máquina non pode oír, o lector
 de pantalla de verdade, hai un guión para seguir a man:
 [`design/PROBA-lector-de-pantalla.md`](design/PROBA-lector-de-pantalla.md).

@@ -2686,6 +2686,11 @@ ok('the gates run on every push and proposal, offline, and only the schedule rea
     const text = workflow(name);
     for (const step of runs(text).filter((s) => /pnpm (i|install)\b/.test(s))) assert(step === 'pnpm install --frozen-lockfile', `${name}: "${step}" is not the locked install`);
     for (const step of text.split(/\n(?=\s*- )/).filter((s) => /uses:\s*pnpm\/action-setup@/.test(s))) assert(!/^\s*version:/m.test(step), `${name}: pnpm/action-setup is given a version, so the workflow and package.json can drift apart`);
+    // The image is named, not "latest": the browser audit measures text in the runner's own
+    // fonts, which already found three reflows Windows did not, and GitHub moves ubuntu-latest
+    // to 26.04 from 19 October 2026. A new image is a change made on purpose, with an audit.
+    const images = [...text.matchAll(/runs-on:\s*(\S+)/g)].map((m) => m[1]);
+    assert(images.length > 0 && images.every((image) => image === 'ubuntu-24.04'), `${name} runs on ${images.join(', ')}, not the pinned ubuntu-24.04`);
     // Somebody else's site only on the clock: Mondays in check-source.yml, and the notices
     // snapshot in the hourly Pages build. Never in the gates.
     const reaching = runs(text).filter((s) => network.test(s));
