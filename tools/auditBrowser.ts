@@ -591,10 +591,11 @@ function layoutFindings(got: Layout, sc: string, condition: string): Finding[] {
 /** axe-core, injected through CDP (which the page's policy does not govern), every WCAG A and AA rule. */
 async function axe(page: Session): Promise<{ findings: Finding[]; passed: number; review: string[] }> {
   await page.evaluate(AXE_SOURCE);
-  const r = await page.evaluate<{ violations: { id: string; help: string; tags: string[]; nodes: { target: string[]; failureSummary?: string }[] }[]; passed: number; review: string[] }>(
-    `axe.run(document, { runOnly: { type: 'tag', values: ${JSON.stringify(AXE_TAGS)} }, resultTypes: ['violations', 'incomplete'] })
+  const r = await page.call<{ violations: { id: string; help: string; tags: string[]; nodes: { target: string[]; failureSummary?: string }[] }[]; passed: number; review: string[] }>(
+    `(tags) => axe.run(document, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations', 'incomplete'] })
        .then((r) => ({ violations: r.violations.map((v) => ({ id: v.id, help: v.help, tags: v.tags, nodes: v.nodes.map((n) => ({ target: n.target, failureSummary: n.failureSummary })) })),
                        passed: r.passes.length, review: r.incomplete.map((i) => i.id + ' x' + i.nodes.length) }))`,
+    AXE_TAGS,
   );
   const findings: Finding[] = [];
   for (const v of r.violations) {
@@ -776,7 +777,11 @@ async function traverse(page: Session, dialog: boolean): Promise<{ findings: Fin
     for (const issue of got.issues) findings.push({ kind: issue.startsWith('2.4.3') ? 'keyboard' : 'focus', where: got.where, detail: issue });
   }
   if (count && reached.size < count) {
-    const missed = await page.evaluate<string[]>(`window.__auditList.filter((el, i) => !(${JSON.stringify([...reached])}).includes(i)).slice(0, 6).map((el) => el.tagName.toLowerCase() + ' "' + ((el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30)) + '"')`);
+    // The indices go in as an argument, not spliced into the code: CodeQL flagged the splice.
+    const missed = await page.call<string[]>(
+      `(seen) => window.__auditList.filter((el, i) => !seen.includes(i)).slice(0, 6).map((el) => el.tagName.toLowerCase() + ' "' + ((el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30)) + '"')`,
+      [...reached],
+    );
     findings.push({ kind: 'keyboard', where: missed.join(', '), detail: `2.1.1: Tab reached ${reached.size} of ${count} focusable controls` });
   }
   if (dialog && !modal) findings.push({ kind: 'reach', where: 'dialog', detail: 'the dialog had closed before the keyboard reached it' });
@@ -1463,10 +1468,11 @@ async function keyboard(browser: Browser): Promise<{ findings: Finding[]; visite
     if (stops.size < Math.min(count, 3)) findings.push({ kind: 'reach', where: 'menu', detail: `Tab visited ${stops.size} distinct controls of ${count}: the key is not moving focus, so this proved nothing` });
     await press(page, 'Escape', 27);
     await sleep(500);
-    const after = await page.evaluate<string>(
-      `(() => { if (document.querySelector('[role=dialog]')) return 'the menu is still open';
+    const after = await page.call<string>(
+      `(opener) => { if (document.querySelector('[role=dialog]')) return 'the menu is still open';
          const a = document.activeElement; if (!a || a === document.body) return 'focus fell to body';
-         return (a.getAttribute('aria-label') || '').startsWith(${JSON.stringify(gl.menu.open)}) ? 'ok' : 'focus on ' + a.tagName.toLowerCase() + ' "' + ((a.getAttribute('aria-label') || a.textContent || '').trim().slice(0, 24)) + '"'; })()`,
+         return (a.getAttribute('aria-label') || '').startsWith(opener) ? 'ok' : 'focus on ' + a.tagName.toLowerCase() + ' "' + ((a.getAttribute('aria-label') || a.textContent || '').trim().slice(0, 24)) + '"'; }`,
+      gl.menu.open,
     );
     if (after !== 'ok') findings.push({ kind: 'keyboard', where: 'menu', detail: `after Escape: ${after}` });
   }

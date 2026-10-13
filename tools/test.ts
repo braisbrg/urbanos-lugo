@@ -2771,6 +2771,18 @@ ok('the app imports nothing from the tools, and the browser never imports the po
   assert(/from '\.\/src\/security\/csp'/.test(read('server.ts')) && /from '\.\/src\/security\/csp'/.test(read('vite.config.ts')), 'server.ts or vite.config.ts no longer imports the policy');
 });
 
+ok('the browser tools hand values to the page as arguments, never spliced into its code', () => {
+  // CodeQL alert 16 (js/bad-code-sanitization): auditBrowser.ts built an expression with
+  // JSON.stringify of the indices Tab had reached. Harmless numbers, but code built from data
+  // is the pattern, and `page.call` (cdp.ts) passes values over the protocol instead. The two
+  // other splices this found in the same tool, unflagged, went the same way. `tools/_*.ts` are
+  // gitignored scratch files and not read.
+  const spliced = readdirSync(join(root, 'tools'))
+    .filter((f) => f.endsWith('.ts') && f !== 'test.ts' && !f.startsWith('_'))
+    .flatMap((f) => [...read(`tools/${f}`).matchAll(/\.evaluate(?:<[^>]*>)?\(\s*`(?:[^`\\]|\\.)*\$\{\s*JSON\.stringify/g)].map(() => f));
+  assert(spliced.length === 0, `values spliced into page code with JSON.stringify in: ${[...new Set(spliced)].join(', ')}`);
+});
+
 ok('no translated string claims a live feed, a remote router or a wake lock', () => {
   // Nobody publishes where this network's buses are: the README says the app never says
   // "real time", and DATA.md keeps EN DIRECTO unused until a feed exists. Those words may
