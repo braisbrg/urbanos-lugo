@@ -2534,9 +2534,13 @@ ok('dark is the default, and only a choice is remembered', () => {
 
 ok('the repository URL is written in one place', () => {
   // Two things break quietly on a rename: the "wrong place" link and the User-Agent buslugo
-  // sees. Prose may spell the URL out; shipped code may not.
+  // sees. Prose may spell the URL out; shipped code may not. The URL itself is looked for, not
+  // its owner: matched by owner, the move left this looking for a repository that had gone.
   const offenders = sourcesUnder('src')
-    .filter((full) => !full.endsWith(join('src', 'project.ts')) && /github\.com\/braisbrg/.test(readFileSync(full, 'utf8')))
+    .filter((full) => {
+      const code = readFileSync(full, 'utf8');
+      return !full.endsWith(join('src', 'project.ts')) && (code.includes(REPO_URL) || /github\.com\/braisbrg/.test(code));
+    })
     .map(relative);
   assert(offenders.length === 0, `hardcodes the repository URL instead of importing REPO_URL: ${offenders.join(', ')}`);
   assert(REPO_URL.startsWith('https://github.com/'), 'REPO_URL is not a GitHub URL');
@@ -2555,9 +2559,10 @@ ok('no tracked file outside the records names the old address', () => {
   const offenders = tracked.filter((file) => {
     if (RECORDS.includes(file) || !existsSync(join(root, file))) return false;
     if (/\.(png|jpe?g|gif|webp|ico|woff2?|ttf|pdf|zip|gz)$/i.test(file)) return false;
-    return /braisbrg\.github\.io/i.test(readFileSync(join(root, file), 'utf8'));
+    // The old repository too: GitHub redirects it only until somebody creates one by that name.
+    return /braisbrg\.github\.io|github\.com\/braisbrg\/urbanos-lugo/i.test(readFileSync(join(root, file), 'utf8'));
   });
-  assert(offenders.length === 0, `still names braisbrg.github.io, which is not the site any more: ${offenders.join(', ')}`);
+  assert(offenders.length === 0, `still names the old site or repository: ${offenders.join(', ')}`);
   // The README names it once, to say it is dead and does not redirect. Any other paragraph
   // naming it would be a link to follow.
   const mentions = read('README.md').split(/\r?\n\s*\n/).filter((paragraph) => /braisbrg\.github\.io/i.test(paragraph));
