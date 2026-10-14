@@ -10,14 +10,16 @@ Os pasos 1 a 6 están feitos o 13 de outubro: a organización `urbanos-lugo`, o 
 transferido e renomeado a `urbanos-lugo.github.io`, Pages e o worker despregados de novo e
 o remoto local apuntando ao novo. A web serve en `https://urbanos-lugo.github.io/` e o
 worker responde con `access-control-allow-origin: https://urbanos-lugo.github.io`. O
-paso 7, o que cambia no repositorio, está na rama `org-move` (tres portadas, `SECURITY.md`,
-`src/project.ts`, a documentación e as comprobacións); cando se fusione en `develop` e
-`main`, a portada de GitHub deixa de apuntar ao enderezo que dá 404.
+paso 7, o que cambia no repositorio (tres portadas, `SECURITY.md`, `src/project.ts`, a
+documentación e as comprobacións), saíu na 1.4.0 o 14 de outubro.
 
-Queda, e é do dono: o paso 8 (buscadores), con etiqueta de verificación nova, e a
-comprobación do que non se pode ler pola API (segredo `DENO_DEPLOY_TOKEN`, ambiente
-`deno-deploy`, regras de `main` e `develop`, imaxe de vista previa social). O enderezo vello
-non redirixe: non se creou o repositorio da última sección, e non se recomenda (ver abaixo).
+O paso 8 fíxose o 14 de outubro. A propiedade nova de Search Console verificouse soa coa
+etiqueta HTML que xa levaba `index.html`: o seu valor é o da conta de Google, non o do
+enderezo, así que non houbo que cambiala. O sitemap novo enviouse; a proba en tempo real
+dixo que Google o pode ler, e o informe tarda uns días en pasar a «Correcto». Bing
+importouno de Search Console, e o sitemap e o sitio vellos quitáronse dos dous paneis. O
+enderezo vello non redirixe: non se creou o repositorio da última sección, e non se
+recomenda (ver abaixo).
 
 ## Xa feito
 
@@ -50,10 +52,10 @@ non redirixe: non se creou o repositorio da última sección, e non se recomenda
    `ALLOWED_ORIGIN`. Ata entón, a web nova ve a copia dos avisos en vez do worker.
 6. **Feito.** **No clon local**:
    `git remote set-url origin https://github.com/urbanos-lugo/urbanos-lugo.github.io.git`.
-7. **Na rama `org-move`, por fusionar.** **Fusionar `org-move`** en `develop`, pasar as portas e publicar.
-8. **Pendente, do dono.** **Buscadores**: en Search Console, unha propiedade nova de prefixo de URL,
-   `https://urbanos-lugo.github.io/`. Verificala coa etiqueta HTML: a de agora vai en
-   `index.html`, e se Google dá outra hai que cambiala. Enviar
+7. **Feito (1.4.0).** **Fusionar `org-move`** en `develop`, pasar as portas e publicar.
+8. **Feito.** **Buscadores**: en Search Console, unha propiedade nova de prefixo de URL,
+   `https://urbanos-lugo.github.io/`. Verificala coa etiqueta HTML: a de `index.html` valeu
+   tal como estaba, porque é a da conta. Enviar
    `https://urbanos-lugo.github.io/sitemap.xml`. En Bing Webmaster, importar desde Search
    Console.
 

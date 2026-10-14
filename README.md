@@ -2099,11 +2099,11 @@ substituír o scraper por un lector de GTFS afectaría só a `tools/importOffici
 A 14 de setembro de 2026 ningún buscador devolvía o sitio. Desde o 15 está feito o que
 dependía de nós: título, descrición e canónica por pestana, pestanas como ligazóns,
 `og:image`, e o sitio verificado en Search Console e Bing co sitemap enviado. Iso era
-para o enderezo de entón: co traslado ao `urbanos-lugo.github.io` (13 de outubro) hai que
-dar de alta o novo, unha propiedade de prefixo de URL en Search Console coa súa propia
-etiqueta de verificación HTML (a de `index.html` é a da propiedade vella), o sitemap
-`https://urbanos-lugo.github.io/sitemap.xml` e a importación en Bing, e é cousa do dono.
-Na raíz do sitio, `robots.txt` xa se serve —no subcartafol vello ningún buscador o lía— e
+para o enderezo de entón. Co traslado ao `urbanos-lugo.github.io` deuse de alta o novo o
+14 de outubro: unha propiedade de prefixo de URL en Search Console, que se verificou coa
+mesma etiqueta HTML de `index.html` (o seu valor é o da conta, non o do enderezo), o
+sitemap `https://urbanos-lugo.github.io/sitemap.xml`, que a proba en tempo real de Google
+le, e a importación en Bing. Na raíz do sitio, `robots.txt` xa se serve —no subcartafol vello ningún buscador o lía— e
 o nome e a icona do sitio poden ser os propios. O que segue é esperar a que o indexen.
 Unha páxina por liña e por parada —que hoxe non teñen URL
 propia— queda descrita na auditoría e non se fai por agora: non hai présa por competir

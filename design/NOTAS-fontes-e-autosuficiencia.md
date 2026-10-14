@@ -265,6 +265,13 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    `robots.txt`; nun subcartafol ese ficheiro e a súa liña `Sitemap:` non os le ninguén.
    Despois da mudanza, propiedade nova en Search Console co sitemap da raíz, e Bing
    impórtaa.*
+   *Feito o 14 de outubro. A propiedade `https://urbanos-lugo.github.io/` verificouse soa
+   coa etiqueta de `index.html`. O sitemap enviado amosou primeiro «Non se puido obter»,
+   como o 21 de setembro, mentres a proba en tempo real dicía «A URL está dispoñible para
+   Google»; pídese a indexación da raíz, `/es/` e `/en/`. Bing importouno de Search
+   Console. O sitemap vello e o sitio vello quitáronse dos dous paneis. O que queda é
+   mirar en dúas semanas que «Páxinas» amose as 18 e que cada idioma saia a quen busca
+   nel.*
 3. **Os festivos de 2027.** `src/data/festivos.json` ten só 2026. O decreto galego de 2027
    xa saíu: Decreto 68/2026, DOG do 2 de xullo de 2026, co 19 de marzo e o 17 de maio no
    lugar do 25 de xullo e do 15 de agosto, que caen en domingo. Faltan os dous festivos
@@ -321,9 +328,10 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    [`MUDANZA-organizacion.md`](MUDANZA-organizacion.md) ten os pasos en orde, e o
    despregue xa constrúe para a raíz un repositorio `<propietario>.github.io`.*
    *Feito o 13 de outubro: o repositorio é `urbanos-lugo/urbanos-lugo.github.io`, e os dous
-   despregues relanzados serven a web en `https://urbanos-lugo.github.io/`. Queda o dono:
-   Search Console e Bing (punto 8 da guía), con etiqueta de verificación nova en
-   `index.html`. O enderezo vello non redirixe (DECIDIDO, 13 de outubro; rolda 35).*
+   despregues relanzados serven a web en `https://urbanos-lugo.github.io/`. O enderezo vello
+   non redirixe (DECIDIDO, 13 de outubro; rolda 35). O 14, coa 1.4.0 publicada, Search
+   Console e Bing (punto 8 da guía): a propiedade nova verificouse coa etiqueta que xa
+   levaba `index.html`, que é a da conta.*
 6. **Un lector de pantalla de verdade, nun teléfono**, cousa do dono: o guión de
    [`PROBA-lector-de-pantalla.md`](PROBA-lector-de-pantalla.md), unha vez con VoiceOver e
    outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no
