@@ -32,7 +32,7 @@ concurrency:
 
 jobs:
   reconcile:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       # As in the deploy workflow: without this the token stays in .git/config for every
       # later step, where a compromised dependency's install script could read it.

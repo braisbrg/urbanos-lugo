@@ -35,7 +35,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # Where the token lives: a secret of this environment, which Settings → Environments
     # lets only main deploy from, so a run from any other branch is refused before it starts.
     # A repository secret of the same name still reaches the job, so moving the token here
