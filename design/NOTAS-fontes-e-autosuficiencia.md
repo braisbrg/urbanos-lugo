@@ -337,6 +337,13 @@ datos estean mal, e facer fallar a semana por iso ensina a todo o mundo a ignora
    outra con TalkBack (rolda 31). `audit:browser` mide nomes, estados, orde e idioma no
    código; como os di cada lector, se le o «~» das horas estimadas e se cambia de voz nos
    avisos en castelán, só se sabe escoitando.
+7. **Ubuntu 26.04 no executor, cando o zoom caiba nel.** Os traballos piden `ubuntu-24.04`
+   polo nome. Probado o 14 e o 15 de outubro de 2026 (rolda 38): en 26.04 a CI enteira e a
+   auditoría pasan, pero os catro pasos de zoom de `measure:browser` bloquean o fío
+   921–1.140 ms en tres execucións, fronte a 305–308 en 24.04 (orzamento 900). Antes de
+   cambiar: ver que Chrome e que GL de software trae cada imaxe e comparalos; na rolda 28
+   un Chrome novo xa moveu esta medida. A rama de proba é `ubuntu-26` (o seu único commit
+   cambia as seis liñas `runs-on` e o check). 24.04 ten soporte de GitHub para anos.
 
 ### Lista para o iPhone
 

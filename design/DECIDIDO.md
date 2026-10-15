@@ -398,6 +398,14 @@ descrición. Catro regras, e o que quedou fóra:
   Lugo; buslugo.com/gl/tarifas, lida o 13 de outubro, non a nomea.
 - **Queda a cabeceira das liñas 7, 8, 9 e 12 no casco histórico**, que o dataset confirma.
 
+## O executor segue en Ubuntu 24.04 — 15 de outubro de 2026
+
+- **Non se pasa a 26.04 de momento.** Probada nunha rama (rolda 38), a CI e a auditoría de
+  accesibilidade pasan enteiras, pero os catro pasos de zoom da medida semanal bloquean o
+  fío entre 921 e 1.140 ms en tres execucións, por riba do orzamento de 900, onde 24.04 dá
+  305–308. Subir o orzamento para que caiba sería medir o executor e non a app. Quédase en
+  24.04 ata saber a causa (NOTAS, Pendente 7).
+
 ## Quedou aberto
 
 - O filete dos bordos a 1,37:1 (arriba).

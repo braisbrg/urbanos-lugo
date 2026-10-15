@@ -2995,3 +2995,34 @@ miúdo.
 ### Queda
 
 - A seguinte revisión, antes do 17 de novembro de 2026.
+
+## Rolda 38: Ubuntu 26.04 no executor, probado e deixado — 14 e 15 de outubro de 2026
+
+Pedido: pasar os traballos de GitHub a Ubuntu 26.04, a imaxe que `ubuntu-latest` toma
+desde o 19 de outubro, como un cambio feito a propósito e con auditoría.
+
+### Medido
+
+- Na rama `ubuntu-26` (as seis liñas `runs-on` e o check, 7ccf3b2), a CI enteira en
+  26.04 (imaxe 20260927.149.1, execución 38610521182): 255 comprobacións antes e despois
+  do build, e a auditoría con 0 achados en 242 medicións de 162 estados, en 514 s.
+- A medida semanal, tres veces en 26.04 (38610540377, 38741775524, 38744034633) e unha en
+  24.04 o mesmo día (38650544268), máis a do luns 12 en 24.04. Catro pasos de zoom: 921,
+  1.140 e 1.003 ms en 26.04, fronte a 308 e 305 en 24.04; orzamento 900. A espera antes de
+  pedir a entrada: 1.377, 261 e 129 ms en 26.04, 178 e 136 en 24.04; orzamento 200. Primeira
+  pintura: 4,4, 3,8 e 3,1 s en 26.04, 3,7 e 3,5 en 24.04; orzamento 4. O zoom pasa do
+  orzamento nas tres; as outras dúas, só ás veces.
+- Dúas medidas lanzadas á vez cancelaronse: `measure.yml` ten `concurrency: measure` con
+  `cancel-in-progress`, e a terceira levou por diante as outras dúas. Van de unha en unha.
+- A causa do zoom non se buscou: nin a versión de Chrome nin o GL de software de cada imaxe.
+
+### Feito
+
+- Nada cambia en `develop`: os traballos seguen en `ubuntu-24.04`. README, DECIDIDO e
+  NOTAS (Pendente 7) din por que, con estas cifras. A rama `ubuntu-26` queda para cando
+  se volva probar.
+
+### Queda
+
+- Comparar Chrome e o GL de software das dúas imaxes, e volver medir en 26.04 cando
+  cambie algún dos dous.
